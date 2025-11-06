@@ -1,24 +1,35 @@
 import React, { Suspense, useState, useMemo } from "react";
 import { Canvas, ThreeEvent } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Box, Plane } from "@react-three/drei";
+import { OrbitControls, useGLTF, Box } from "@react-three/drei";
 import { GLTF } from "three-stdlib";
+import { useSpring, a } from "@react-spring/three";
 import * as THREE from "three";
 
-// Helper to convert world coordinates to chess grid coordinates
+// Global constant
+const BOARD_SIZE = 170;
+const BOARD_MIN = -85;
+const BOARD_MAX = 85;
+const GRID_COUNT = 8;
+const SPACING = BOARD_SIZE / (GRID_COUNT - 1); // 24.285714
+
+// Converts world coordinates → grid coordinates
 const worldToGrid = (x: number, z: number): [number, number] => {
-  const gridX = Math.round((x + 85) / 21.25); // 170/8 = 21.25 per square
-  const gridZ = Math.round((z + 85) / 21.25);
-  return [gridX, gridZ];
+  const gridX = Math.round((x - BOARD_MIN) / SPACING);
+  const gridZ = Math.round((z - BOARD_MIN) / SPACING);
+  return [
+    Math.max(0, Math.min(GRID_COUNT - 1, gridX)),
+    Math.max(0, Math.min(GRID_COUNT - 1, gridZ)),
+  ];
 };
 
-// Helper to convert grid coordinates to world coordinates
+// Converts grid coordinates → world coordinates
 const gridToWorld = (
   gridX: number,
   gridZ: number,
   y: number
 ): [number, number, number] => {
-  const worldX = gridX * 21.25 - 85;
-  const worldZ = gridZ * 21.25 - 85;
+  const worldX = BOARD_MIN + gridX * SPACING;
+  const worldZ = BOARD_MIN + gridZ * SPACING;
   return [worldX, y, worldZ];
 };
 
@@ -61,24 +72,36 @@ const Rook: React.FC<{
 }> = ({ id, position, rotation = [0, 0, 0], isSelected, onClick }) => {
   const gltf = useGLTF("chessboard/black-pieces/black-rook.glb") as GLTF;
 
+  // Use react-spring to interpolate the position
+  const { springPos } = useSpring({
+    springPos: position,
+    config: {
+      mass: 1,
+      tension: 200,
+      friction: 20,
+    },
+  });
+
   return (
-    <group position={position}>
+    <a.group
+      position={springPos}
+      onClick={(e: ThreeEvent<MouseEvent>) => {
+        e.stopPropagation();
+        onClick(id);
+      }}
+    >
       <primitive
         object={gltf.scene.clone()}
         rotation={rotation}
         scale={[1, 1, 1]}
-        onClick={(e: ThreeEvent<MouseEvent>) => {
-          e.stopPropagation();
-          onClick(id);
-        }}
       />
-      {/* Selection indicator */}
+
       {isSelected && (
         <Box position={[0, 0, 0]} args={[25, 25, 25]}>
           <meshBasicMaterial color="yellow" opacity={0.2} transparent />
         </Box>
       )}
-    </group>
+    </a.group>
   );
 };
 
@@ -108,8 +131,8 @@ const ChessboardScene: React.FC = () => {
   // Generate all board squares for click detection
   const boardSquares = useMemo(() => {
     const squares: { position: [number, number, number]; key: string }[] = [];
-    for (let x = 0; x < 8; x++) {
-      for (let z = 0; z < 8; z++) {
+    for (let x = 0; x <= 7; x++) {
+      for (let z = 0; z <= 7; z++) {
         // Top surface
         squares.push({
           position: gridToWorld(x, z, 25),
@@ -133,35 +156,46 @@ const ChessboardScene: React.FC = () => {
     const [currentX, y, currentZ] = position;
     const [gridX, gridZ] = worldToGrid(currentX, currentZ);
 
+    console.log(`Calculating moves for position:`, position);
+    console.log(`Grid coordinates:`, gridX, gridZ);
+
     // Horizontal moves (along X axis)
-    for (let x = 0; x < 8; x++) {
+    for (let x = 0; x <= 7; x++) {
       if (x !== gridX) {
-        moves.push(gridToWorld(x, gridZ, y));
+        const move = gridToWorld(x, gridZ, y);
+        moves.push(move);
       }
     }
 
     // Vertical moves (along Z axis)
-    for (let z = 0; z < 8; z++) {
+    for (let z = 0; z <= 7; z++) {
       if (z !== gridZ) {
-        moves.push(gridToWorld(gridX, z, y));
+        const move = gridToWorld(gridX, z, y);
+        moves.push(move);
       }
     }
 
+    console.log(`Generated ${moves.length} possible moves`);
     return moves;
   };
 
   // Handle piece selection
   const handlePieceClick = (pieceId: string) => {
+    console.log(`Piece clicked: ${pieceId}`);
+
     if (selectedPiece === pieceId) {
       // Deselect if clicking the same piece
+      console.log("Deselecting piece");
       setSelectedPiece(null);
       setPossibleMoves([]);
     } else {
       // Select new piece and calculate possible moves
+      console.log("Selecting new piece");
       setSelectedPiece(pieceId);
       const position = piecePositions[pieceId];
       const moves = calculateRookMoves(position);
       setPossibleMoves(moves);
+      console.log(`Possible moves: ${moves}`);
     }
   };
 
@@ -179,8 +213,9 @@ const ChessboardScene: React.FC = () => {
 
     if (isValidMove) {
       // Check if another piece is already at this position
-      const isOccupied = Object.values(piecePositions).some(
-        (pos) =>
+      const isOccupied = Object.entries(piecePositions).some(
+        ([id, pos]) =>
+          id !== selectedPiece && // Don't check against itself
           Math.abs(pos[0] - targetPosition[0]) < 1 &&
           Math.abs(pos[1] - targetPosition[1]) < 1 &&
           Math.abs(pos[2] - targetPosition[2]) < 1
@@ -192,6 +227,12 @@ const ChessboardScene: React.FC = () => {
           ...prev,
           [selectedPiece]: targetPosition,
         }));
+        console.log(
+          `Moved ${selectedPiece} to ${worldToGrid(
+            targetPosition[0],
+            targetPosition[2]
+          )}`
+        );
 
         // Clear selection
         setSelectedPiece(null);
