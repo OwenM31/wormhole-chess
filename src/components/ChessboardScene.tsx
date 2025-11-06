@@ -1,98 +1,84 @@
-import React, { Suspense, useState, useRef } from "react";
+import React, { Suspense, useState, useMemo } from "react";
 import { Canvas, ThreeEvent } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
+import { OrbitControls, useGLTF, Box, Plane } from "@react-three/drei";
 import { GLTF } from "three-stdlib";
 import * as THREE from "three";
+
+// Helper to convert world coordinates to chess grid coordinates
+const worldToGrid = (x: number, z: number): [number, number] => {
+  const gridX = Math.round((x + 85) / 21.25); // 170/8 = 21.25 per square
+  const gridZ = Math.round((z + 85) / 21.25);
+  return [gridX, gridZ];
+};
+
+// Helper to convert grid coordinates to world coordinates
+const gridToWorld = (
+  gridX: number,
+  gridZ: number,
+  y: number
+): [number, number, number] => {
+  const worldX = gridX * 21.25 - 85;
+  const worldZ = gridZ * 21.25 - 85;
+  return [worldX, y, worldZ];
+};
 
 const ChessboardModel: React.FC = () => {
   const gltf = useGLTF("/chessboard/wormhole-chessboard.glb") as GLTF;
   return <primitive object={gltf.scene} />;
 };
 
-// Calculate the nearest valid square position
-const snapToGrid = (
-  x: number,
-  z: number,
-  y: number
-): [number, number, number] => {
-  // Assuming 8x8 board with squares at intervals of ~21.25 units
-  // Board ranges from -85 to 85 (170 units total / 8 squares = 21.25 per square)
-  const squareSize = 170 / 8;
-  const boardMin = -85;
-  const boardMax = 85;
-
-  // Calculate grid positions (center of squares)
-  const gridX = Math.round((x - boardMin) / squareSize) * squareSize + boardMin;
-  const gridZ = Math.round((z - boardMin) / squareSize) * squareSize + boardMin;
-
-  // Clamp to board boundaries
-  const clampedX = Math.max(boardMin, Math.min(boardMax, gridX));
-  const clampedZ = Math.max(boardMin, Math.min(boardMax, gridZ));
-
-  // Determine which surface (top or bottom) based on current y position
-  const surfaceY = y > 0 ? 25 : -25;
-
-  return [clampedX, surfaceY, clampedZ];
-};
-
-// Rook component
-const Rook: React.FC<{
+// Interactive square component for move targets
+const BoardSquare: React.FC<{
   position: [number, number, number];
-  rotation?: [number, number, number];
-  onMove: (
-    from: [number, number, number],
-    to: [number, number, number]
-  ) => void;
-  isSelected: boolean;
-  onSelect: () => void;
-}> = ({ position, rotation = [0, 0, 0], onMove, isSelected, onSelect }) => {
-  const gltf = useGLTF("chessboard/black-pieces/black-rook.glb") as GLTF;
-  const meshRef = useRef<THREE.Group>(null);
-
-  const handleClick = (event: ThreeEvent<MouseEvent>) => {
-    event.stopPropagation();
-    onSelect();
-  };
-
-  // Highlight selected piece
-  const model = gltf.scene.clone();
-  if (isSelected) {
-    model.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        // Add emissive glow to selected piece
-        if (mesh.material instanceof THREE.MeshStandardMaterial) {
-          mesh.material = mesh.material.clone();
-          mesh.material.emissive = new THREE.Color(0x444444);
-          mesh.material.emissiveIntensity = 0.3;
-        }
-      }
-    });
-  }
-
+  onSquareClick: (position: [number, number, number]) => void;
+  isHighlighted: boolean;
+}> = ({ position, onSquareClick, isHighlighted }) => {
   return (
-    <primitive
-      ref={meshRef}
-      object={model}
+    <Box
       position={position}
-      rotation={rotation}
-      scale={[1, 1, 1]}
-      onClick={handleClick}
-    />
+      args={[20, 0.5, 20]} // Size of each square
+      onClick={(e: ThreeEvent<MouseEvent>) => {
+        e.stopPropagation();
+        onSquareClick(position);
+      }}
+    >
+      <meshBasicMaterial
+        color={isHighlighted ? "yellow" : "white"}
+        opacity={isHighlighted ? 0.3 : 0.01}
+        transparent
+      />
+    </Box>
   );
 };
 
-// Board Square Indicator component
-const BoardSquare: React.FC<{
+// Enhanced Rook component with click functionality
+const Rook: React.FC<{
+  id: string;
   position: [number, number, number];
-  onClick: () => void;
-  highlighted?: boolean;
-}> = ({ position, onClick, highlighted = false }) => {
+  rotation?: [number, number, number];
+  isSelected: boolean;
+  onClick: (id: string) => void;
+}> = ({ id, position, rotation = [0, 0, 0], isSelected, onClick }) => {
+  const gltf = useGLTF("chessboard/black-pieces/black-rook.glb") as GLTF;
+
   return (
-    <mesh position={position} onClick={onClick} visible={highlighted}>
-      <boxGeometry args={[20, 0.5, 20]} />
-      <meshBasicMaterial color={0x00ff00} opacity={0.3} transparent={true} />
-    </mesh>
+    <group position={position}>
+      <primitive
+        object={gltf.scene.clone()}
+        rotation={rotation}
+        scale={[1, 1, 1]}
+        onClick={(e: ThreeEvent<MouseEvent>) => {
+          e.stopPropagation();
+          onClick(id);
+        }}
+      />
+      {/* Selection indicator */}
+      {isSelected && (
+        <Box position={[0, 0, 0]} args={[25, 25, 25]}>
+          <meshBasicMaterial color="yellow" opacity={0.2} transparent />
+        </Box>
+      )}
+    </group>
   );
 };
 
@@ -100,87 +86,128 @@ const BoardSquare: React.FC<{
 useGLTF.preload("chessboard/black-pieces/black-rook.glb");
 
 const ChessboardScene: React.FC = () => {
-  const [selectedRookIndex, setSelectedRookIndex] = useState<number | null>(
-    null
-  );
-  const [rookPositions, setRookPositions] = useState({
-    topSurface: [
-      [-85, 25, -85],
-      [-85, 25, 85],
-      [85, 25, -85],
-      [85, 25, 85],
-    ] as [number, number, number][],
-    bottomSurface: [
-      [-85, -25, -85],
-      [-85, -25, 85],
-      [85, -25, -85],
-      [85, -25, 85],
-    ] as [number, number, number][],
+  // State for piece positions - using an object with piece IDs as keys
+  const [piecePositions, setPiecePositions] = useState<{
+    [key: string]: [number, number, number];
+  }>({
+    "top-rook-0": [-85, 25, -85],
+    "top-rook-1": [-85, 25, 85],
+    "top-rook-2": [85, 25, -85],
+    "top-rook-3": [85, 25, 85],
+    "bottom-rook-0": [-85, -25, -85],
+    "bottom-rook-1": [-85, -25, 85],
+    "bottom-rook-2": [85, -25, -85],
+    "bottom-rook-3": [85, -25, 85],
   });
 
-  // Generate all possible square positions for move indicators
-  const generateSquares = () => {
-    const squares: [number, number, number][] = [];
-    const squareSize = 170 / 8;
-    const boardMin = -85;
+  const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
+  const [possibleMoves, setPossibleMoves] = useState<
+    [number, number, number][]
+  >([]);
 
-    for (let i = 0; i < 8; i++) {
-      for (let j = 0; j < 8; j++) {
-        const x = boardMin + i * squareSize;
-        const z = boardMin + j * squareSize;
-        // Add squares for both surfaces
-        squares.push([x, 25, z]);
-        squares.push([x, -25, z]);
+  // Generate all board squares for click detection
+  const boardSquares = useMemo(() => {
+    const squares: { position: [number, number, number]; key: string }[] = [];
+    for (let x = 0; x < 8; x++) {
+      for (let z = 0; z < 8; z++) {
+        // Top surface
+        squares.push({
+          position: gridToWorld(x, z, 25),
+          key: `top-${x}-${z}`,
+        });
+        // Bottom surface
+        squares.push({
+          position: gridToWorld(x, z, -25),
+          key: `bottom-${x}-${z}`,
+        });
       }
     }
     return squares;
+  }, []);
+
+  // Calculate possible moves for a rook (horizontal and vertical lines)
+  const calculateRookMoves = (
+    position: [number, number, number]
+  ): [number, number, number][] => {
+    const moves: [number, number, number][] = [];
+    const [currentX, y, currentZ] = position;
+    const [gridX, gridZ] = worldToGrid(currentX, currentZ);
+
+    // Horizontal moves (along X axis)
+    for (let x = 0; x < 8; x++) {
+      if (x !== gridX) {
+        moves.push(gridToWorld(x, gridZ, y));
+      }
+    }
+
+    // Vertical moves (along Z axis)
+    for (let z = 0; z < 8; z++) {
+      if (z !== gridZ) {
+        moves.push(gridToWorld(gridX, z, y));
+      }
+    }
+
+    return moves;
   };
 
-  const allSquares = generateSquares();
-
-  const handleRookMove = (
-    rookIndex: number,
-    surface: "topSurface" | "bottomSurface",
-    from: [number, number, number],
-    to: [number, number, number]
-  ) => {
-    setRookPositions((prev) => {
-      const newPositions = { ...prev };
-      newPositions[surface] = [...newPositions[surface]];
-      newPositions[surface][rookIndex] = to;
-      return newPositions;
-    });
-    setSelectedRookIndex(null);
+  // Handle piece selection
+  const handlePieceClick = (pieceId: string) => {
+    if (selectedPiece === pieceId) {
+      // Deselect if clicking the same piece
+      setSelectedPiece(null);
+      setPossibleMoves([]);
+    } else {
+      // Select new piece and calculate possible moves
+      setSelectedPiece(pieceId);
+      const position = piecePositions[pieceId];
+      const moves = calculateRookMoves(position);
+      setPossibleMoves(moves);
+    }
   };
 
-  const handleSquareClick = (squarePos: [number, number, number]) => {
-    if (selectedRookIndex === null) return;
+  // Handle square click for movement
+  const handleSquareClick = (targetPosition: [number, number, number]) => {
+    if (!selectedPiece) return;
 
-    const { index, surface } =
-      selectedRookIndex < 4
-        ? { index: selectedRookIndex, surface: "topSurface" as const }
-        : { index: selectedRookIndex - 4, surface: "bottomSurface" as const };
+    // Check if the target position is a valid move
+    const isValidMove = possibleMoves.some(
+      (move) =>
+        Math.abs(move[0] - targetPosition[0]) < 1 &&
+        Math.abs(move[1] - targetPosition[1]) < 1 &&
+        Math.abs(move[2] - targetPosition[2]) < 1
+    );
 
-    const currentPos = rookPositions[surface][index];
-    const snappedPos = snapToGrid(squarePos[0], squarePos[2], squarePos[1]);
+    if (isValidMove) {
+      // Check if another piece is already at this position
+      const isOccupied = Object.values(piecePositions).some(
+        (pos) =>
+          Math.abs(pos[0] - targetPosition[0]) < 1 &&
+          Math.abs(pos[1] - targetPosition[1]) < 1 &&
+          Math.abs(pos[2] - targetPosition[2]) < 1
+      );
 
-    handleRookMove(index, surface, currentPos, snappedPos);
+      if (!isOccupied) {
+        // Move the piece
+        setPiecePositions((prev) => ({
+          ...prev,
+          [selectedPiece]: targetPosition,
+        }));
+
+        // Clear selection
+        setSelectedPiece(null);
+        setPossibleMoves([]);
+      }
+    }
   };
 
-  const handleBoardClick = (event: ThreeEvent<MouseEvent>) => {
-    if (selectedRookIndex === null) return;
-
-    // Get intersection point with the board
-    const point = event.point;
-    const snappedPos = snapToGrid(point.x, point.z, point.y);
-
-    const { index, surface } =
-      selectedRookIndex < 4
-        ? { index: selectedRookIndex, surface: "topSurface" as const }
-        : { index: selectedRookIndex - 4, surface: "bottomSurface" as const };
-
-    const currentPos = rookPositions[surface][index];
-    handleRookMove(index, surface, currentPos, snappedPos);
+  // Check if a square should be highlighted as a possible move
+  const isHighlightedSquare = (position: [number, number, number]) => {
+    return possibleMoves.some(
+      (move) =>
+        Math.abs(move[0] - position[0]) < 1 &&
+        Math.abs(move[1] - position[1]) < 1 &&
+        Math.abs(move[2] - position[2]) < 1
+    );
   };
 
   return (
@@ -191,49 +218,27 @@ const ChessboardScene: React.FC = () => {
       <directionalLight position={[10, 10, 10]} intensity={1} />
 
       <Suspense fallback={null}>
-        <group onClick={handleBoardClick}>
-          <ChessboardModel />
-        </group>
+        <ChessboardModel />
 
-        {/* Visual indicators for valid moves */}
-        {selectedRookIndex !== null &&
-          allSquares.map((pos, idx) => (
-            <BoardSquare
-              key={`square-${idx}`}
-              position={pos}
-              onClick={() => handleSquareClick(pos)}
-              highlighted={true}
-            />
-          ))}
-
-        {/* Rooks on top surface */}
-        {rookPositions.topSurface.map((pos, index) => (
-          <Rook
-            key={`top-rook-${index}`}
-            position={pos}
-            onMove={(from, to) => handleRookMove(index, "topSurface", from, to)}
-            isSelected={selectedRookIndex === index}
-            onSelect={() =>
-              setSelectedRookIndex(selectedRookIndex === index ? null : index)
-            }
+        {/* Board squares for click detection */}
+        {boardSquares.map((square) => (
+          <BoardSquare
+            key={square.key}
+            position={square.position}
+            onSquareClick={handleSquareClick}
+            isHighlighted={isHighlightedSquare(square.position)}
           />
         ))}
 
-        {/* Rooks on bottom surface */}
-        {rookPositions.bottomSurface.map((pos, index) => (
+        {/* Render rooks from state */}
+        {Object.entries(piecePositions).map(([id, position]) => (
           <Rook
-            key={`bottom-rook-${index}`}
-            position={pos}
-            rotation={[Math.PI, 0, 0]}
-            onMove={(from, to) =>
-              handleRookMove(index, "bottomSurface", from, to)
-            }
-            isSelected={selectedRookIndex === index + 4}
-            onSelect={() =>
-              setSelectedRookIndex(
-                selectedRookIndex === index + 4 ? null : index + 4
-              )
-            }
+            key={id}
+            id={id}
+            position={position}
+            rotation={id.includes("bottom") ? [Math.PI, 0, 0] : [0, 0, 0]}
+            isSelected={selectedPiece === id}
+            onClick={handlePieceClick}
           />
         ))}
       </Suspense>
