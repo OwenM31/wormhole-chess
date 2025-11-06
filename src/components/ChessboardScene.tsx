@@ -1,28 +1,84 @@
-import React, { Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useGLTF } from "@react-three/drei";
+import React, { Suspense, useState, useMemo } from "react";
+import { Canvas, ThreeEvent } from "@react-three/fiber";
+import { OrbitControls, useGLTF, Box, Plane } from "@react-three/drei";
 import { GLTF } from "three-stdlib";
 import * as THREE from "three";
+
+// Helper to convert world coordinates to chess grid coordinates
+const worldToGrid = (x: number, z: number): [number, number] => {
+  const gridX = Math.round((x + 85) / 21.25); // 170/8 = 21.25 per square
+  const gridZ = Math.round((z + 85) / 21.25);
+  return [gridX, gridZ];
+};
+
+// Helper to convert grid coordinates to world coordinates
+const gridToWorld = (
+  gridX: number,
+  gridZ: number,
+  y: number
+): [number, number, number] => {
+  const worldX = gridX * 21.25 - 85;
+  const worldZ = gridZ * 21.25 - 85;
+  return [worldX, y, worldZ];
+};
 
 const ChessboardModel: React.FC = () => {
   const gltf = useGLTF("/chessboard/wormhole-chessboard.glb") as GLTF;
   return <primitive object={gltf.scene} />;
 };
 
-// Rook component
+// Interactive square component for move targets
+const BoardSquare: React.FC<{
+  position: [number, number, number];
+  onSquareClick: (position: [number, number, number]) => void;
+  isHighlighted: boolean;
+}> = ({ position, onSquareClick, isHighlighted }) => {
+  return (
+    <Box
+      position={position}
+      args={[20, 0.5, 20]} // Size of each square
+      onClick={(e: ThreeEvent<MouseEvent>) => {
+        e.stopPropagation();
+        onSquareClick(position);
+      }}
+    >
+      <meshBasicMaterial
+        color={isHighlighted ? "yellow" : "white"}
+        opacity={isHighlighted ? 0.3 : 0.01}
+        transparent
+      />
+    </Box>
+  );
+};
+
+// Enhanced Rook component with click functionality
 const Rook: React.FC<{
+  id: string;
   position: [number, number, number];
   rotation?: [number, number, number];
-}> = ({ position, rotation = [0, 0, 0] }) => {
-  const gltf = useGLTF("chessboard/black-pieces/black-rook.glb") as GLTF; // Update path to your rook model
+  isSelected: boolean;
+  onClick: (id: string) => void;
+}> = ({ id, position, rotation = [0, 0, 0], isSelected, onClick }) => {
+  const gltf = useGLTF("chessboard/black-pieces/black-rook.glb") as GLTF;
 
   return (
-    <primitive
-      object={gltf.scene.clone()}
-      position={position}
-      rotation={rotation}
-      scale={[1, 1, 1]} // Adjust scale as needed
-    />
+    <group position={position}>
+      <primitive
+        object={gltf.scene.clone()}
+        rotation={rotation}
+        scale={[1, 1, 1]}
+        onClick={(e: ThreeEvent<MouseEvent>) => {
+          e.stopPropagation();
+          onClick(id);
+        }}
+      />
+      {/* Selection indicator */}
+      {isSelected && (
+        <Box position={[0, 0, 0]} args={[25, 25, 25]}>
+          <meshBasicMaterial color="yellow" opacity={0.2} transparent />
+        </Box>
+      )}
+    </group>
   );
 };
 
@@ -30,20 +86,128 @@ const Rook: React.FC<{
 useGLTF.preload("chessboard/black-pieces/black-rook.glb");
 
 const ChessboardScene: React.FC = () => {
-  // Define corner positions for both playing surfaces
-  const cornerPositions = {
-    topSurface: [
-      [-6.5, -6.5, 20], // Bottom-left
-      [-6.5, 6.5, 20], // Top-left
-      [6.5, -6.5, 20], // Bottom-right
-      [90, 25, 90], // Top-right
-    ],
-    bottomSurface: [
-      [-6.5, -6.5, -20], // Bottom-left
-      [-6.5, 6.5, -20], // Top-left
-      [6.5, -6.5, -20], // Bottom-right
-      [6.5, 6.5, -20], // Top-right
-    ],
+  // State for piece positions - using an object with piece IDs as keys
+  const [piecePositions, setPiecePositions] = useState<{
+    [key: string]: [number, number, number];
+  }>({
+    "top-rook-0": [-85, 25, -85],
+    "top-rook-1": [-85, 25, 85],
+    "top-rook-2": [85, 25, -85],
+    "top-rook-3": [85, 25, 85],
+    "bottom-rook-0": [-85, -25, -85],
+    "bottom-rook-1": [-85, -25, 85],
+    "bottom-rook-2": [85, -25, -85],
+    "bottom-rook-3": [85, -25, 85],
+  });
+
+  const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
+  const [possibleMoves, setPossibleMoves] = useState<
+    [number, number, number][]
+  >([]);
+
+  // Generate all board squares for click detection
+  const boardSquares = useMemo(() => {
+    const squares: { position: [number, number, number]; key: string }[] = [];
+    for (let x = 0; x < 8; x++) {
+      for (let z = 0; z < 8; z++) {
+        // Top surface
+        squares.push({
+          position: gridToWorld(x, z, 25),
+          key: `top-${x}-${z}`,
+        });
+        // Bottom surface
+        squares.push({
+          position: gridToWorld(x, z, -25),
+          key: `bottom-${x}-${z}`,
+        });
+      }
+    }
+    return squares;
+  }, []);
+
+  // Calculate possible moves for a rook (horizontal and vertical lines)
+  const calculateRookMoves = (
+    position: [number, number, number]
+  ): [number, number, number][] => {
+    const moves: [number, number, number][] = [];
+    const [currentX, y, currentZ] = position;
+    const [gridX, gridZ] = worldToGrid(currentX, currentZ);
+
+    // Horizontal moves (along X axis)
+    for (let x = 0; x < 8; x++) {
+      if (x !== gridX) {
+        moves.push(gridToWorld(x, gridZ, y));
+      }
+    }
+
+    // Vertical moves (along Z axis)
+    for (let z = 0; z < 8; z++) {
+      if (z !== gridZ) {
+        moves.push(gridToWorld(gridX, z, y));
+      }
+    }
+
+    return moves;
+  };
+
+  // Handle piece selection
+  const handlePieceClick = (pieceId: string) => {
+    if (selectedPiece === pieceId) {
+      // Deselect if clicking the same piece
+      setSelectedPiece(null);
+      setPossibleMoves([]);
+    } else {
+      // Select new piece and calculate possible moves
+      setSelectedPiece(pieceId);
+      const position = piecePositions[pieceId];
+      const moves = calculateRookMoves(position);
+      setPossibleMoves(moves);
+    }
+  };
+
+  // Handle square click for movement
+  const handleSquareClick = (targetPosition: [number, number, number]) => {
+    if (!selectedPiece) return;
+
+    // Check if the target position is a valid move
+    const isValidMove = possibleMoves.some(
+      (move) =>
+        Math.abs(move[0] - targetPosition[0]) < 1 &&
+        Math.abs(move[1] - targetPosition[1]) < 1 &&
+        Math.abs(move[2] - targetPosition[2]) < 1
+    );
+
+    if (isValidMove) {
+      // Check if another piece is already at this position
+      const isOccupied = Object.values(piecePositions).some(
+        (pos) =>
+          Math.abs(pos[0] - targetPosition[0]) < 1 &&
+          Math.abs(pos[1] - targetPosition[1]) < 1 &&
+          Math.abs(pos[2] - targetPosition[2]) < 1
+      );
+
+      if (!isOccupied) {
+        // Move the piece
+        setPiecePositions((prev) => ({
+          ...prev,
+          [selectedPiece]: targetPosition,
+        }));
+
+        // Clear selection
+        setSelectedPiece(null);
+        setPossibleMoves([]);
+      }
+    }
+  };
+
+  // Check if a square should be highlighted as a possible move
+  const isHighlightedSquare = (position: [number, number, number]) => {
+    return possibleMoves.some(
+      (move) =>
+        Math.abs(move[0] - position[0]) < 1 &&
+        Math.abs(move[1] - position[1]) < 1 &&
+        Math.abs(move[2] - position[2]) < 1
+    );
   };
 
   return (
@@ -56,21 +220,25 @@ const ChessboardScene: React.FC = () => {
       <Suspense fallback={null}>
         <ChessboardModel />
 
-        {/* Rooks on top surface (z = 20) */}
-        {cornerPositions.topSurface.map((pos, index) => (
-          <Rook
-            key={`top-rook-${index}`}
-            position={pos as [number, number, number]}
+        {/* Board squares for click detection */}
+        {boardSquares.map((square) => (
+          <BoardSquare
+            key={square.key}
+            position={square.position}
+            onSquareClick={handleSquareClick}
+            isHighlighted={isHighlightedSquare(square.position)}
           />
         ))}
 
-        {/* Rooks on bottom surface (z = -20) */}
-        {/* These might need to be rotated 180 degrees around X axis to face the right way */}
-        {cornerPositions.bottomSurface.map((pos, index) => (
+        {/* Render rooks from state */}
+        {Object.entries(piecePositions).map(([id, position]) => (
           <Rook
-            key={`bottom-rook-${index}`}
-            position={pos as [number, number, number]}
-            rotation={[Math.PI, 0, 0]} // Flip upside down for bottom surface
+            key={id}
+            id={id}
+            position={position}
+            rotation={id.includes("bottom") ? [Math.PI, 0, 0] : [0, 0, 0]}
+            isSelected={selectedPiece === id}
+            onClick={handlePieceClick}
           />
         ))}
       </Suspense>
