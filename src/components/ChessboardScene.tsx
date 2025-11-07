@@ -118,7 +118,7 @@ const WORMHOLE_CONNECTIONS: { [key: string]: string[] } = {
   "e6'": ["d6'", "f6'", "e5'", "e7'"],
 };
 
-// ==================== WORMHOLE GEOMETRY ====================
+// ==================== WORMHOLE GEOMETRY (REFACTORED FOR XY PLANE) ====================
 
 // Get the angle (in radians) for inner layer squares arranged in a circle
 const getInnerLayerAngle = (notation: string): number => {
@@ -147,10 +147,10 @@ const getInnerLayerAngle = (notation: string): number => {
   return startAngle + index * angleStep;
 };
 
-// Calculate wormhole-adjusted position for special squares
+// Calculate wormhole-adjusted position for special squares (now in XY plane)
 const getWormholePosition = (
   notation: string,
-  baseY: number
+  baseZ: number
 ): [number, number, number] => {
   const cleanNotation = notation.replace("'", "");
   const isPrime = notation.endsWith("'");
@@ -161,16 +161,16 @@ const getWormholePosition = (
     const radius = SPACING * 0.6; // Distance from center for inner layer
 
     const x = Math.cos(angle) * radius;
-    const z = Math.sin(angle) * radius;
+    const y = Math.sin(angle) * radius;
 
-    // Y position: move towards center (0) based on tilt
-    const yOffset = Math.sin(INNER_LAYER_TILT) * radius * 0.5;
-    const y = isPrime ? baseY + yOffset : baseY - yOffset;
+    // Z position: move towards center (0) based on tilt
+    const zOffset = Math.sin(INNER_LAYER_TILT) * radius * 0.5;
+    const z = isPrime ? baseZ - zOffset : baseZ + zOffset;
 
     return [x, y, z];
   }
 
-  return [0, baseY, 0]; // Fallback
+  return [0, 0, baseZ]; // Fallback
 };
 
 // Get transformation properties for a square in the wormhole
@@ -179,7 +179,7 @@ const getWormholeTransform = (
 ): {
   scale: number;
   tilt: number;
-  yOffset: number;
+  zOffset: number;
 } => {
   const cleanNotation = notation.replace("'", "");
 
@@ -187,7 +187,7 @@ const getWormholeTransform = (
     return {
       scale: INNER_LAYER_SCALE,
       tilt: INNER_LAYER_TILT,
-      yOffset: 0,
+      zOffset: 0,
     };
   }
 
@@ -195,14 +195,14 @@ const getWormholeTransform = (
     return {
       scale: OUTER_LAYER_SCALE,
       tilt: OUTER_LAYER_TILT,
-      yOffset: 0,
+      zOffset: 0,
     };
   }
 
-  return { scale: 1, tilt: 0, yOffset: 0 };
+  return { scale: 1, tilt: 0, zOffset: 0 };
 };
 
-// Calculate rotation to point towards origin
+// Calculate rotation to point towards origin (refactored for XY plane)
 const getRotationTowardsOrigin = (
   position: [number, number, number],
   notation: string,
@@ -211,62 +211,77 @@ const getRotationTowardsOrigin = (
   const cleanNotation = notation.replace("'", "");
   const isPrime = notation.endsWith("'");
 
-  // Inner layer or non-outer special squares → keep existing tilt logic
+  // Inner layer squares - tilt radially outward in XY plane
   if (INNER_LAYER_SQUARES.includes(cleanNotation)) {
     const angle = getInnerLayerAngle(notation);
-    return [-tilt, angle, 0]; // still radial
+    // Tilt away from center in the XY plane
+    return [Math.cos(angle) * tilt, Math.sin(angle) * tilt, 0];
   }
 
   // Outer squares
   if (OUTER_LAYER_SQUARES.includes(cleanNotation)) {
-    // Determine base tilt
-    let tiltX = -tilt; // default top layer
-    if (cleanNotation.endsWith("3") || cleanNotation.endsWith("4")) {
-      tiltX = tilt; // bottom-facing side mirrored
+    // Calculate angle from center
+    const angleXY = Math.atan2(position[1], position[0]);
+
+    // Determine tilt direction based on square position
+    let tiltAmount = tilt;
+
+    // For squares on the edges, tilt outward
+    if (["c3", "c6", "f3", "f6"].includes(cleanNotation)) {
+      // Corner squares - tilt diagonally
+      const xTilt = Math.cos(angleXY) * tiltAmount;
+      const yTilt = Math.sin(angleXY) * tiltAmount;
+      return isPrime ? [-xTilt, -yTilt, 0] : [xTilt, yTilt, 0];
     }
 
-    // Mirror for prime pieces
-    if (isPrime) tiltX = -tiltX;
-
-    // Side squares perpendicular
-    if (["c4", "c5", "f4", "f5"].includes(cleanNotation)) {
-      return [0, 0, tiltX]; // rotate along Z axis
+    // Side squares
+    if (["c4", "c5"].includes(cleanNotation)) {
+      // Left side - tilt left
+      return isPrime ? [tiltAmount, 0, 0] : [-tiltAmount, 0, 0];
     }
-
-    // For top/bottom faces
-    const angleXZ = Math.atan2(-position[0], -position[2]);
-    return [tiltX, angleXZ, 0];
+    if (["f4", "f5"].includes(cleanNotation)) {
+      // Right side - tilt right
+      return isPrime ? [-tiltAmount, 0, 0] : [tiltAmount, 0, 0];
+    }
+    if (["d3", "e3"].includes(cleanNotation)) {
+      // Bottom side - tilt down
+      return isPrime ? [0, tiltAmount, 0] : [0, -tiltAmount, 0];
+    }
+    if (["d6", "e6"].includes(cleanNotation)) {
+      // Top side - tilt up
+      return isPrime ? [0, -tiltAmount, 0] : [0, tiltAmount, 0];
+    }
   }
 
   // Default no tilt
   return [0, 0, 0];
 };
 
-// ==================== COORDINATE CONVERSION FUNCTIONS ====================
+// ==================== COORDINATE CONVERSION FUNCTIONS (REFACTORED) ====================
 
-const worldToGrid = (x: number, z: number): [number, number] => {
+const worldToGrid = (x: number, y: number): [number, number] => {
   const gridX = Math.round((x - BOARD_MIN) / SPACING);
-  const gridZ = Math.round((z - BOARD_MIN) / SPACING);
+  const gridY = Math.round((y - BOARD_MIN) / SPACING);
   return [
     Math.max(0, Math.min(GRID_COUNT - 1, gridX)),
-    Math.max(0, Math.min(GRID_COUNT - 1, gridZ)),
+    Math.max(0, Math.min(GRID_COUNT - 1, gridY)),
   ];
 };
 
 const gridToWorld = (
   gridX: number,
-  gridZ: number,
-  y: number
+  gridY: number,
+  z: number
 ): [number, number, number] => {
   const worldX = BOARD_MIN + gridX * SPACING;
-  const worldZ = BOARD_MIN + gridZ * SPACING;
-  return [worldX, y, worldZ];
+  const worldY = BOARD_MIN + gridY * SPACING;
+  return [worldX, worldY, z];
 };
 
-const gridToChess = (gridX: number, gridZ: number, y: number): string => {
+const gridToChess = (gridX: number, gridY: number, z: number): string => {
   const file = FILES[gridX];
-  const rank = RANKS[7 - gridZ]; // Reverse the rank order
-  const prime = y < 0 ? "'" : "";
+  const rank = RANKS[gridY]; // Now direct mapping since we're in XY plane
+  const prime = z < 0 ? "'" : "";
   return `${file}${rank}${prime}`;
 };
 
@@ -282,24 +297,24 @@ const chessToGrid = (notation: string): [number, number, number] | null => {
   const rank = cleanNotation[1];
 
   const gridX = FILES.indexOf(file);
-  const gridZ = 7 - RANKS.indexOf(rank); // Reverse the rank order
-  const y = isPrime ? -25 : 25;
+  const gridY = RANKS.indexOf(rank); // Direct mapping in XY plane
+  const z = isPrime ? -25 : 25;
 
-  if (gridX === -1 || gridZ === -1) {
+  if (gridX === -1 || gridY === -1) {
     throw new Error(`Invalid chess notation: ${notation}`);
   }
 
-  return [gridX, gridZ, y];
+  return [gridX, gridY, z];
 };
 
 const chessToWorld = (notation: string): [number, number, number] => {
   const isPrime = notation.endsWith("'");
   const cleanNotation = notation.replace("'", "");
-  const baseY = isPrime ? -25 : 25;
+  const baseZ = isPrime ? -25 : 25;
 
   // Handle special inner layer squares
   if (cleanNotation.startsWith("x") || cleanNotation.startsWith("y")) {
-    return getWormholePosition(notation, baseY);
+    return getWormholePosition(notation, baseZ);
   }
 
   // Handle regular squares
@@ -307,16 +322,16 @@ const chessToWorld = (notation: string): [number, number, number] => {
   if (!gridCoords)
     throw new Error(`Cannot convert ${notation} to world coordinates`);
 
-  const [gridX, gridZ, y] = gridCoords;
-  let [worldX, worldY, worldZ] = gridToWorld(gridX, gridZ, y);
+  const [gridX, gridY, z] = gridCoords;
+  let [worldX, worldY, worldZ] = gridToWorld(gridX, gridY, z);
 
   // Apply wormhole transformations for outer layer squares
   const transform = getWormholeTransform(notation);
   if (transform.tilt > 0) {
     // Calculate distance from center
-    const distFromCenter = Math.sqrt(worldX * worldX + worldZ * worldZ);
-    const yOffset = Math.sin(transform.tilt) * distFromCenter * 0.15;
-    worldY = isPrime ? worldY + yOffset : worldY - yOffset;
+    const distFromCenter = Math.sqrt(worldX * worldX + worldY * worldY);
+    const zOffset = Math.sin(transform.tilt) * distFromCenter * 0.15;
+    worldZ = isPrime ? worldZ - zOffset : worldZ + zOffset;
   }
 
   return [worldX, worldY, worldZ];
@@ -324,12 +339,17 @@ const chessToWorld = (notation: string): [number, number, number] => {
 
 // ==================== COMPONENTS ====================
 
+// ChessboardModel needs rotation to lie in XY plane
 const ChessboardModel: React.FC = () => {
   const gltf = useGLTF("/chessboard/wormhole-chessboard.glb") as GLTF;
-  return <primitive object={gltf.scene} />;
+  return (
+    <group rotation={[Math.PI / 2, 0, 0]}>
+      <primitive object={gltf.scene} />
+    </group>
+  );
 };
 
-// Interactive square component
+// Interactive square component (refactored for XY plane)
 const BoardSquare: React.FC<{
   position: [number, number, number];
   notation: string;
@@ -352,7 +372,7 @@ const BoardSquare: React.FC<{
     <Box
       position={position}
       rotation={rotation}
-      args={[boxSize, 0.5, boxSize]}
+      args={[boxSize, boxSize, 0.5]} // Changed dimensions for XY plane
       onClick={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
         onSquareClick(position, notation);
@@ -367,7 +387,7 @@ const BoardSquare: React.FC<{
   );
 };
 
-// Enhanced Rook component with wormhole transformations
+// Enhanced Rook component with wormhole transformations (refactored)
 const Rook: React.FC<{
   id: string;
   position: [number, number, number];
@@ -393,11 +413,18 @@ const Rook: React.FC<{
     transform.tilt
   );
 
-  // Combine base rotation with wormhole rotation
+  // Base rotation for piece orientation (now rotated for XY plane)
+  const baseRotation: [number, number, number] = [
+    Math.PI / 2, // Rotate to stand upright on XY plane
+    0,
+    notation.includes("'") ? Math.PI : 0,
+  ];
+
+  // Combine rotations
   const finalRotation: [number, number, number] = [
-    rotation[0] + wormholeRotation[0],
-    rotation[1] + wormholeRotation[1],
-    rotation[2] + wormholeRotation[2],
+    baseRotation[0] + rotation[0] + wormholeRotation[0],
+    baseRotation[1] + rotation[1] + wormholeRotation[1],
+    baseRotation[2] + rotation[2] + wormholeRotation[2],
   ];
 
   const { springPos, springScale, springRot } = useSpring({
@@ -462,19 +489,19 @@ const ChessboardScene: React.FC = () => {
 
     // Regular board squares
     for (let x = 0; x <= 7; x++) {
-      for (let z = 0; z <= 7; z++) {
-        const topNotation = gridToChess(x, z, 25);
+      for (let y = 0; y <= 7; y++) {
+        const topNotation = gridToChess(x, y, 25);
         const topPos = chessToWorld(topNotation);
         const isPentTop = PENTAGONAL_SQUARES.includes(topNotation);
 
         squares.push({
           position: topPos,
           notation: topNotation,
-          key: `top-${x}-${z}`,
+          key: `top-${x}-${y}`,
           isPentagonal: isPentTop,
         });
 
-        const bottomNotation = gridToChess(x, z, -25);
+        const bottomNotation = gridToChess(x, y, -25);
         const bottomPos = chessToWorld(bottomNotation);
         const isPentBottom = PENTAGONAL_SQUARES.includes(
           bottomNotation.replace("'", "")
@@ -483,7 +510,7 @@ const ChessboardScene: React.FC = () => {
         squares.push({
           position: bottomPos,
           notation: bottomNotation,
-          key: `bottom-${x}-${z}`,
+          key: `bottom-${x}-${y}`,
           isPentagonal: isPentBottom,
         });
       }
@@ -629,7 +656,7 @@ const ChessboardScene: React.FC = () => {
   };
 
   return (
-    <Canvas camera={{ position: [0, 200, 0], fov: 50, near: 0.1, far: 1000 }}>
+    <Canvas camera={{ position: [0, 0, 200], fov: 50, near: 0.1, far: 1000 }}>
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 10]} intensity={1} />
 
@@ -649,17 +676,12 @@ const ChessboardScene: React.FC = () => {
 
         {Object.entries(piecePositions).map(([id, notation]) => {
           const worldPos = chessToWorld(notation);
-          const baseRotation: [number, number, number] = notation.includes("'")
-            ? [Math.PI, 0, 0]
-            : [0, 0, 0];
-
           return (
             <Rook
               key={id}
               id={id}
               position={worldPos}
               notation={notation}
-              rotation={baseRotation}
               isSelected={selectedPiece === id}
               onClick={handlePieceClick}
             />
@@ -671,11 +693,11 @@ const ChessboardScene: React.FC = () => {
         target={[0, 0, 0]}
         enableZoom={true}
         enablePan={true}
-        // Lock to top-down view (looking straight down the Y-axis)
-        minAzimuthAngle={0}
-        maxAzimuthAngle={0}
-        // Allow rotation left/right to see the reverse side
-        // No azimuth limits = full 360° horizontal rotation
+        enableRotate={true}
+        // Now you can use polar angle to "flip" the board
+        // And azimuth to rotate around it
+        minPolarAngle={Math.PI / 2}
+        maxPolarAngle={Math.PI / 2}
       />
     </Canvas>
   );
