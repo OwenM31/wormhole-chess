@@ -672,8 +672,8 @@ const ChessboardScene: React.FC = () => {
         enableZoom={true}
         enablePan={true}
         // Lock to top-down view (looking straight down the Y-axis)
-        minPolarAngle={0}
-        maxPolarAngle={0}
+        minAzimuthAngle={0}
+        maxAzimuthAngle={0}
         // Allow rotation left/right to see the reverse side
         // No azimuth limits = full 360° horizontal rotation
       />
