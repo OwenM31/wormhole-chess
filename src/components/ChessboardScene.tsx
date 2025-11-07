@@ -265,7 +265,7 @@ const gridToWorld = (
 
 const gridToChess = (gridX: number, gridZ: number, y: number): string => {
   const file = FILES[gridX];
-  const rank = RANKS[gridZ];
+  const rank = RANKS[7 - gridZ]; // Reverse the rank order
   const prime = y < 0 ? "'" : "";
   return `${file}${rank}${prime}`;
 };
@@ -282,7 +282,7 @@ const chessToGrid = (notation: string): [number, number, number] | null => {
   const rank = cleanNotation[1];
 
   const gridX = FILES.indexOf(file);
-  const gridZ = RANKS.indexOf(rank);
+  const gridZ = 7 - RANKS.indexOf(rank); // Reverse the rank order
   const y = isPrime ? -25 : 25;
 
   if (gridX === -1 || gridZ === -1) {
@@ -671,12 +671,11 @@ const ChessboardScene: React.FC = () => {
         target={[0, 0, 0]}
         enableZoom={true}
         enablePan={true}
-        // Lock the polar angle (vertical tilt) to keep board orientation fixed
-        minPolarAngle={-Math.PI} // ~60 degrees from vertical
-        maxPolarAngle={Math.PI} // Lock it at this angle
-        // Optional: Limit azimuthal rotation to keep A file generally at bottom
-        minAzimuthAngle={-Math.PI / 2} // -90 degrees
-        maxAzimuthAngle={Math.PI / 2} // +90 degrees
+        // Lock to top-down view (looking straight down the Y-axis)
+        minPolarAngle={0}
+        maxPolarAngle={0}
+        // Allow rotation left/right to see the reverse side
+        // No azimuth limits = full 360° horizontal rotation
       />
     </Canvas>
   );
