@@ -1,16 +1,28 @@
-import React, { Suspense, useState, useMemo } from "react";
+import React, { Suspense, useState, useMemo, useEffect } from "react";
 import { Canvas, ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Box } from "@react-three/drei";
 import { GLTF } from "three-stdlib";
 import { useSpring, a } from "@react-spring/three";
 import * as THREE from "three";
 
+// Color Palette
+const COLORS = {
+  smokeyTaupe: "#8B7E74",
+  lodenGreen: "#4C5C4C",
+  warmWhite: "#FAF9F6",
+  charcoal: "#2F2F2F",
+  charcoalLight: "#3A3A3A",
+  lodenGreenDark: "#3C493F",
+  lodenGreenLight: "#5C6C5C",
+  accent: "#D4AF37", // Gold accent for highlights
+};
+
 // Global constants
 const BOARD_SIZE = 170;
 const BOARD_MIN = -85;
 const BOARD_MAX = 85;
 const GRID_COUNT = 8;
-const SPACING = BOARD_SIZE / (GRID_COUNT - 1); // 24.285714
+const SPACING = BOARD_SIZE / (GRID_COUNT - 1);
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"];
@@ -47,10 +59,10 @@ const INNER_LAYER_SQUARES = [
 ];
 
 // Wormhole transformation settings
-const OUTER_LAYER_SCALE = 0.75; // 25% smaller
-const INNER_LAYER_SCALE = 0.5; // 50% smaller
-const OUTER_LAYER_TILT = Math.PI / 4; // 45 degrees
-const INNER_LAYER_TILT = (Math.PI * 5) / 12; // 75 degrees
+const OUTER_LAYER_SCALE = 0.75;
+const INNER_LAYER_SCALE = 0.5;
+const OUTER_LAYER_TILT = Math.PI / 4;
+const INNER_LAYER_TILT = (Math.PI * 5) / 12;
 
 // Pentagonal squares
 const PENTAGONAL_SQUARES = ["c3", "c6", "f3", "f6"];
@@ -118,9 +130,8 @@ const WORMHOLE_CONNECTIONS: { [key: string]: string[] } = {
   "e6'": ["d6'", "f6'", "e5'", "e7'"],
 };
 
-// ==================== WORMHOLE GEOMETRY (REFACTORED FOR XY PLANE) ====================
+// ==================== WORMHOLE GEOMETRY ====================
 
-// Get the angle (in radians) for inner layer squares arranged in a circle
 const getInnerLayerAngle = (notation: string): number => {
   const cleanNotation = notation.replace("'", "");
   const sequence = [
@@ -138,16 +149,12 @@ const getInnerLayerAngle = (notation: string): number => {
     "e4",
   ];
   const index = sequence.indexOf(cleanNotation);
-
   if (index === -1) return 0;
-
-  // Start at 6 o'clock (270 degrees) and go clockwise
-  const startAngle = Math.PI * 1.5; // 270 degrees
+  const startAngle = Math.PI * 1.5;
   const angleStep = (Math.PI * 2) / sequence.length;
   return startAngle + index * angleStep;
 };
 
-// Calculate wormhole-adjusted position for special squares (now in XY plane)
 const getWormholePosition = (
   notation: string,
   baseZ: number
@@ -155,25 +162,18 @@ const getWormholePosition = (
   const cleanNotation = notation.replace("'", "");
   const isPrime = notation.endsWith("'");
 
-  // For inner layer special squares (x1-x4, y1-y4)
   if (cleanNotation.startsWith("x") || cleanNotation.startsWith("y")) {
     const angle = getInnerLayerAngle(notation);
-    const radius = SPACING * 0.6; // Distance from center for inner layer
-
+    const radius = SPACING * 0.6;
     const x = Math.cos(angle) * radius;
     const y = Math.sin(angle) * radius;
-
-    // Z position: move towards center (0) based on tilt
     const zOffset = Math.sin(INNER_LAYER_TILT) * radius * 0.5;
     const z = isPrime ? baseZ - zOffset : baseZ + zOffset;
-
     return [x, y, z];
   }
-
-  return [0, 0, baseZ]; // Fallback
+  return [0, 0, baseZ];
 };
 
-// Get transformation properties for a square in the wormhole
 const getWormholeTransform = (
   notation: string
 ): {
@@ -182,27 +182,15 @@ const getWormholeTransform = (
   zOffset: number;
 } => {
   const cleanNotation = notation.replace("'", "");
-
   if (INNER_LAYER_SQUARES.includes(cleanNotation)) {
-    return {
-      scale: INNER_LAYER_SCALE,
-      tilt: INNER_LAYER_TILT,
-      zOffset: 0,
-    };
+    return { scale: INNER_LAYER_SCALE, tilt: INNER_LAYER_TILT, zOffset: 0 };
   }
-
   if (OUTER_LAYER_SQUARES.includes(cleanNotation)) {
-    return {
-      scale: OUTER_LAYER_SCALE,
-      tilt: OUTER_LAYER_TILT,
-      zOffset: 0,
-    };
+    return { scale: OUTER_LAYER_SCALE, tilt: OUTER_LAYER_TILT, zOffset: 0 };
   }
-
   return { scale: 1, tilt: 0, zOffset: 0 };
 };
 
-// Calculate rotation to point towards origin (refactored for XY plane)
 const getRotationTowardsOrigin = (
   position: [number, number, number],
   notation: string,
@@ -211,53 +199,38 @@ const getRotationTowardsOrigin = (
   const cleanNotation = notation.replace("'", "");
   const isPrime = notation.endsWith("'");
 
-  // Inner layer squares - tilt radially outward in XY plane
   if (INNER_LAYER_SQUARES.includes(cleanNotation)) {
     const angle = getInnerLayerAngle(notation);
-    // Tilt away from center in the XY plane
     return [Math.cos(angle) * tilt, Math.sin(angle) * tilt, 0];
   }
 
-  // Outer squares
   if (OUTER_LAYER_SQUARES.includes(cleanNotation)) {
-    // Calculate angle from center
     const angleXY = Math.atan2(position[1], position[0]);
-
-    // Determine tilt direction based on square position
     let tiltAmount = tilt;
 
-    // For squares on the edges, tilt outward
     if (["c3", "c6", "f3", "f6"].includes(cleanNotation)) {
-      // Corner squares - tilt diagonally
       const xTilt = Math.cos(angleXY) * tiltAmount;
       const yTilt = Math.sin(angleXY) * tiltAmount;
       return isPrime ? [-xTilt, -yTilt, 0] : [xTilt, yTilt, 0];
     }
 
-    // Side squares
     if (["c4", "c5"].includes(cleanNotation)) {
-      // Left side - tilt left
       return isPrime ? [tiltAmount, 0, 0] : [-tiltAmount, 0, 0];
     }
     if (["f4", "f5"].includes(cleanNotation)) {
-      // Right side - tilt right
       return isPrime ? [-tiltAmount, 0, 0] : [tiltAmount, 0, 0];
     }
     if (["d3", "e3"].includes(cleanNotation)) {
-      // Bottom side - tilt down
       return isPrime ? [0, tiltAmount, 0] : [0, -tiltAmount, 0];
     }
     if (["d6", "e6"].includes(cleanNotation)) {
-      // Top side - tilt up
       return isPrime ? [0, -tiltAmount, 0] : [0, tiltAmount, 0];
     }
   }
-
-  // Default no tilt
   return [0, 0, 0];
 };
 
-// ==================== COORDINATE CONVERSION FUNCTIONS (REFACTORED) ====================
+// ==================== COORDINATE CONVERSION FUNCTIONS ====================
 
 const worldToGrid = (x: number, y: number): [number, number] => {
   const gridX = Math.round((x - BOARD_MIN) / SPACING);
@@ -280,7 +253,7 @@ const gridToWorld = (
 
 const gridToChess = (gridX: number, gridY: number, z: number): string => {
   const file = FILES[gridX];
-  const rank = RANKS[gridY]; // Now direct mapping since we're in XY plane
+  const rank = RANKS[gridY];
   const prime = z < 0 ? "'" : "";
   return `${file}${rank}${prime}`;
 };
@@ -295,15 +268,13 @@ const chessToGrid = (notation: string): [number, number, number] | null => {
 
   const file = cleanNotation[0];
   const rank = cleanNotation[1];
-
   const gridX = FILES.indexOf(file);
-  const gridY = RANKS.indexOf(rank); // Direct mapping in XY plane
+  const gridY = RANKS.indexOf(rank);
   const z = isPrime ? -25 : 25;
 
   if (gridX === -1 || gridY === -1) {
     throw new Error(`Invalid chess notation: ${notation}`);
   }
-
   return [gridX, gridY, z];
 };
 
@@ -312,12 +283,10 @@ const chessToWorld = (notation: string): [number, number, number] => {
   const cleanNotation = notation.replace("'", "");
   const baseZ = isPrime ? -25 : 25;
 
-  // Handle special inner layer squares
   if (cleanNotation.startsWith("x") || cleanNotation.startsWith("y")) {
     return getWormholePosition(notation, baseZ);
   }
 
-  // Handle regular squares
   const gridCoords = chessToGrid(notation);
   if (!gridCoords)
     throw new Error(`Cannot convert ${notation} to world coordinates`);
@@ -325,10 +294,8 @@ const chessToWorld = (notation: string): [number, number, number] => {
   const [gridX, gridY, z] = gridCoords;
   let [worldX, worldY, worldZ] = gridToWorld(gridX, gridY, z);
 
-  // Apply wormhole transformations for outer layer squares
   const transform = getWormholeTransform(notation);
   if (transform.tilt > 0) {
-    // Calculate distance from center
     const distFromCenter = Math.sqrt(worldX * worldX + worldY * worldY);
     const zOffset = Math.sin(transform.tilt) * distFromCenter * 0.15;
     worldZ = isPrime ? worldZ - zOffset : worldZ + zOffset;
@@ -337,9 +304,8 @@ const chessToWorld = (notation: string): [number, number, number] => {
   return [worldX, worldY, worldZ];
 };
 
-// ==================== COMPONENTS ====================
+// ==================== 3D COMPONENTS ====================
 
-// ChessboardModel needs rotation to lie in XY plane
 const ChessboardModel: React.FC = () => {
   const gltf = useGLTF("/chessboard/wormhole-chessboard.glb") as GLTF;
   return (
@@ -349,7 +315,6 @@ const ChessboardModel: React.FC = () => {
   );
 };
 
-// Interactive square component (refactored for XY plane)
 const BoardSquare: React.FC<{
   position: [number, number, number];
   notation: string;
@@ -365,14 +330,13 @@ const BoardSquare: React.FC<{
 }) => {
   const transform = getWormholeTransform(notation);
   const rotation = getRotationTowardsOrigin(position, notation, transform.tilt);
-
   const boxSize = 20 * transform.scale;
 
   return (
     <Box
       position={position}
       rotation={rotation}
-      args={[boxSize, boxSize, 0.5]} // Changed dimensions for XY plane
+      args={[boxSize, boxSize, 0.5]}
       onClick={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
         onSquareClick(position, notation);
@@ -387,7 +351,6 @@ const BoardSquare: React.FC<{
   );
 };
 
-// Enhanced Rook component with wormhole transformations (refactored)
 const Rook: React.FC<{
   id: string;
   position: [number, number, number];
@@ -405,22 +368,18 @@ const Rook: React.FC<{
 }) => {
   const gltf = useGLTF("chessboard/black-pieces/black-rook.glb") as GLTF;
   const transform = getWormholeTransform(notation);
-
-  // Calculate wormhole rotation
   const wormholeRotation = getRotationTowardsOrigin(
     position,
     notation,
     transform.tilt
   );
 
-  // Base rotation for piece orientation (now rotated for XY plane)
   const baseRotation: [number, number, number] = [
-    Math.PI / 2, // Rotate to stand upright on XY plane
+    Math.PI / 2,
     0,
     notation.includes("'") ? Math.PI : 0,
   ];
 
-  // Combine rotations
   const finalRotation: [number, number, number] = [
     baseRotation[0] + rotation[0] + wormholeRotation[0],
     baseRotation[1] + rotation[1] + wormholeRotation[1],
@@ -431,11 +390,7 @@ const Rook: React.FC<{
     springPos: position,
     springScale: transform.scale,
     springRot: finalRotation,
-    config: {
-      mass: 1,
-      tension: 200,
-      friction: 20,
-    },
+    config: { mass: 1, tension: 200, friction: 20 },
   });
 
   return (
@@ -449,7 +404,6 @@ const Rook: React.FC<{
       }}
     >
       <primitive object={gltf.scene.clone()} scale={[1, 1, 1]} />
-
       {isSelected && (
         <Box position={[0, 0, 0]} args={[25, 25, 25]}>
           <meshBasicMaterial color="yellow" opacity={0.2} transparent />
@@ -460,6 +414,265 @@ const Rook: React.FC<{
 };
 
 useGLTF.preload("chessboard/black-pieces/black-rook.glb");
+
+// ==================== UI COMPONENTS ====================
+
+interface MoveLogEntry {
+  moveNumber: number;
+  piece: string;
+  from: string;
+  to: string;
+  timestamp: Date;
+  isWormholeMove?: boolean;
+}
+
+const MoveLog: React.FC<{ moves: MoveLogEntry[] }> = ({ moves }) => {
+  const moveLogRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (moveLogRef.current) {
+      moveLogRef.current.scrollTop = moveLogRef.current.scrollHeight;
+    }
+  }, [moves]);
+
+  return (
+    <div
+      style={{
+        backgroundColor: COLORS.charcoal,
+        borderRadius: "12px",
+        padding: "20px",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
+      }}
+    >
+      <h2
+        style={{
+          color: COLORS.warmWhite,
+          fontSize: "1.5rem",
+          fontWeight: "600",
+          marginBottom: "20px",
+          borderBottom: `2px solid ${COLORS.lodenGreen}`,
+          paddingBottom: "10px",
+        }}
+      >
+        Move History
+      </h2>
+
+      <div
+        ref={moveLogRef}
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          paddingRight: "10px",
+        }}
+      >
+        {moves.length === 0 ? (
+          <div
+            style={{
+              color: COLORS.smokeyTaupe,
+              fontStyle: "italic",
+              textAlign: "center",
+              marginTop: "20px",
+            }}
+          >
+            No moves yet
+          </div>
+        ) : (
+          moves.map((move, index) => (
+            <div
+              key={index}
+              style={{
+                backgroundColor:
+                  index % 2 === 0 ? COLORS.charcoalLight : "transparent",
+                padding: "10px",
+                borderRadius: "6px",
+                marginBottom: "8px",
+                transition: "all 0.3s ease",
+                border: `1px solid ${
+                  move.isWormholeMove ? COLORS.accent : "transparent"
+                }`,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  style={{
+                    color: COLORS.lodenGreenLight,
+                    fontWeight: "600",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  {move.moveNumber}.
+                </span>
+                <span
+                  style={{
+                    color: COLORS.warmWhite,
+                    fontFamily: "monospace",
+                    fontSize: "1rem",
+                  }}
+                >
+                  {move.from} → {move.to}
+                </span>
+              </div>
+              {move.isWormholeMove && (
+                <div
+                  style={{
+                    color: COLORS.accent,
+                    fontSize: "0.75rem",
+                    marginTop: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <span>🌀</span>
+                  <span>Wormhole traversal</span>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+const GameInfo: React.FC<{
+  selectedPiece: string | null;
+  currentPlayer: "white" | "black";
+}> = ({ selectedPiece, currentPlayer }) => {
+  return (
+    <div
+      style={{
+        backgroundColor: COLORS.charcoal,
+        borderRadius: "12px",
+        padding: "20px",
+        marginBottom: "20px",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "15px",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              color: COLORS.smokeyTaupe,
+              fontSize: "0.875rem",
+              marginBottom: "4px",
+            }}
+          >
+            Current Turn
+          </div>
+          <div
+            style={{
+              color: COLORS.warmWhite,
+              fontSize: "1.25rem",
+              fontWeight: "600",
+              textTransform: "capitalize",
+            }}
+          >
+            {currentPlayer}
+          </div>
+        </div>
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            backgroundColor:
+              currentPlayer === "white"
+                ? COLORS.warmWhite
+                : COLORS.charcoalLight,
+            border: `3px solid ${COLORS.lodenGreen}`,
+          }}
+        />
+      </div>
+
+      {selectedPiece && (
+        <div
+          style={{
+            backgroundColor: COLORS.lodenGreenDark,
+            borderRadius: "8px",
+            padding: "10px",
+            borderLeft: `4px solid ${COLORS.accent}`,
+          }}
+        >
+          <div
+            style={{
+              color: COLORS.warmWhite,
+              fontSize: "0.875rem",
+            }}
+          >
+            Selected: <strong>{selectedPiece}</strong>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ControlsInfo: React.FC = () => {
+  return (
+    <div
+      style={{
+        backgroundColor: COLORS.charcoal,
+        borderRadius: "12px",
+        padding: "20px",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
+      }}
+    >
+      <h3
+        style={{
+          color: COLORS.warmWhite,
+          fontSize: "1.125rem",
+          fontWeight: "600",
+          marginBottom: "15px",
+        }}
+      >
+        Controls
+      </h3>
+      <div
+        style={{
+          color: COLORS.smokeyTaupe,
+          fontSize: "0.875rem",
+          lineHeight: "1.6",
+        }}
+      >
+        <div style={{ marginBottom: "8px" }}>
+          <span style={{ color: COLORS.lodenGreenLight }}>🖱️ Left Click:</span>{" "}
+          Select piece / Move
+        </div>
+        <div style={{ marginBottom: "8px" }}>
+          <span style={{ color: COLORS.lodenGreenLight }}>🖱️ Drag:</span> Rotate
+          view
+        </div>
+        <div style={{ marginBottom: "8px" }}>
+          <span style={{ color: COLORS.lodenGreenLight }}>🖱️ Scroll:</span> Zoom
+          in/out
+        </div>
+        <div>
+          <span style={{ color: COLORS.lodenGreenLight }}>🖱️ Right Drag:</span>{" "}
+          Pan camera
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ==================== MAIN COMPONENT ====================
 
 const ChessboardScene: React.FC = () => {
   const [piecePositions, setPiecePositions] = useState<{
@@ -477,8 +690,11 @@ const ChessboardScene: React.FC = () => {
 
   const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
+  const [moveHistory, setMoveHistory] = useState<MoveLogEntry[]>([]);
+  const [currentPlayer, setCurrentPlayer] = useState<"white" | "black">(
+    "white"
+  );
 
-  // Generate all board squares including special wormhole squares
   const boardSquares = useMemo(() => {
     const squares: {
       position: [number, number, number];
@@ -487,7 +703,6 @@ const ChessboardScene: React.FC = () => {
       isPentagonal: boolean;
     }[] = [];
 
-    // Regular board squares
     for (let x = 0; x <= 7; x++) {
       for (let y = 0; y <= 7; y++) {
         const topNotation = gridToChess(x, y, 25);
@@ -516,7 +731,6 @@ const ChessboardScene: React.FC = () => {
       }
     }
 
-    // Add special wormhole squares (inner layer)
     const innerSquares = ["x1", "x2", "x3", "x4", "y1", "y2", "y3", "y4"];
     innerSquares.forEach((sq) => {
       const topPos = chessToWorld(sq);
@@ -540,12 +754,9 @@ const ChessboardScene: React.FC = () => {
     return squares;
   }, []);
 
-  // Calculate rook moves with wormhole mechanics
   const calculateRookMoves = (notation: string): string[] => {
     const moves = new Set<string>();
     const visited = new Set<string>();
-
-    console.log(`🌀 Calculating moves for rook at ${notation}`);
 
     const explorePath = (
       current: string,
@@ -560,7 +771,6 @@ const ChessboardScene: React.FC = () => {
         connections.forEach((connected) => {
           if (connected !== startNotation) {
             moves.add(connected);
-
             if (connected.includes("'") !== current.includes("'")) {
               explorePath(connected, "wormhole", startNotation);
             }
@@ -599,17 +809,12 @@ const ChessboardScene: React.FC = () => {
 
     explorePath(notation, "file", notation);
     explorePath(notation, "rank", notation);
-
     moves.delete(notation);
 
-    const moveArray = Array.from(moves);
-    console.log(`Generated ${moveArray.length} possible moves`);
-    return moveArray;
+    return Array.from(moves);
   };
 
   const handlePieceClick = (pieceId: string, notation: string) => {
-    console.log(`Piece clicked: ${pieceId} at ${notation}`);
-
     if (selectedPiece === pieceId) {
       setSelectedPiece(null);
       setPossibleMoves([]);
@@ -627,7 +832,6 @@ const ChessboardScene: React.FC = () => {
     if (!selectedPiece) return;
 
     const isValidMove = possibleMoves.includes(targetNotation);
-
     if (isValidMove) {
       const isOccupied = Object.entries(piecePositions).some(
         ([id, notation]) => id !== selectedPiece && notation === targetNotation
@@ -635,18 +839,35 @@ const ChessboardScene: React.FC = () => {
 
       if (!isOccupied) {
         const previousNotation = piecePositions[selectedPiece];
+
+        // Check if it's a wormhole move
+        const isWormholeMove =
+          previousNotation.includes("'") !== targetNotation.includes("'") ||
+          targetNotation.includes("x") ||
+          targetNotation.includes("y") ||
+          previousNotation.includes("x") ||
+          previousNotation.includes("y");
+
         setPiecePositions((prev) => ({
           ...prev,
           [selectedPiece]: targetNotation,
         }));
-        console.log(
-          `♜ Moved ${selectedPiece} from ${previousNotation} to ${targetNotation}`
-        );
 
+        setMoveHistory((prev) => [
+          ...prev,
+          {
+            moveNumber: prev.length + 1,
+            piece: selectedPiece,
+            from: previousNotation,
+            to: targetNotation,
+            timestamp: new Date(),
+            isWormholeMove,
+          },
+        ]);
+
+        setCurrentPlayer((prev) => (prev === "white" ? "black" : "white"));
         setSelectedPiece(null);
         setPossibleMoves([]);
-      } else {
-        console.log(`Square ${targetNotation} is occupied`);
       }
     }
   };
@@ -656,50 +877,140 @@ const ChessboardScene: React.FC = () => {
   };
 
   return (
-    <Canvas camera={{ position: [0, 0, 200], fov: 50, near: 0.1, far: 1000 }}>
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 10, 10]} intensity={1} />
+    <div
+      style={{
+        width: "100vw",
+        height: "100vh",
+        display: "flex",
+        backgroundColor: COLORS.smokeyTaupe,
+        fontFamily: "'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "80px",
+          backgroundColor: COLORS.charcoal,
+          display: "flex",
+          alignItems: "center",
+          padding: "0 40px",
+          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.5)",
+          zIndex: 10,
+        }}
+      >
+        <h1
+          style={{
+            color: COLORS.warmWhite,
+            fontSize: "2rem",
+            fontWeight: "700",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Wormhole Chess
+          <span
+            style={{
+              color: COLORS.lodenGreenLight,
+              fontSize: "1rem",
+              marginLeft: "15px",
+              fontWeight: "400",
+            }}
+          >
+            3D Variant
+          </span>
+        </h1>
+      </div>
 
-      <Suspense fallback={null}>
-        <ChessboardModel />
+      {/* Main Content Area */}
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          marginTop: "80px",
+        }}
+      >
+        {/* Canvas Container */}
+        <div
+          style={{
+            flex: 1,
+            position: "relative",
+            backgroundColor: COLORS.charcoalLight,
+            borderRight: `1px solid ${COLORS.lodenGreenDark}`,
+          }}
+        >
+          <Canvas
+            camera={{ position: [0, 0, 200], fov: 50, near: 0.1, far: 1000 }}
+            style={{ width: "100%", height: "100%" }}
+          >
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[10, 10, 10]} intensity={1} />
 
-        {boardSquares.map((square) => (
-          <BoardSquare
-            key={square.key}
-            position={square.position}
-            notation={square.notation}
-            onSquareClick={handleSquareClick}
-            isHighlighted={isHighlightedSquare(square.notation)}
-            isPentagonal={square.isPentagonal}
-          />
-        ))}
+            <Suspense fallback={null}>
+              <ChessboardModel />
 
-        {Object.entries(piecePositions).map(([id, notation]) => {
-          const worldPos = chessToWorld(notation);
-          return (
-            <Rook
-              key={id}
-              id={id}
-              position={worldPos}
-              notation={notation}
-              isSelected={selectedPiece === id}
-              onClick={handlePieceClick}
+              {boardSquares.map((square) => (
+                <BoardSquare
+                  key={square.key}
+                  position={square.position}
+                  notation={square.notation}
+                  onSquareClick={handleSquareClick}
+                  isHighlighted={isHighlightedSquare(square.notation)}
+                  isPentagonal={square.isPentagonal}
+                />
+              ))}
+
+              {Object.entries(piecePositions).map(([id, notation]) => {
+                const worldPos = chessToWorld(notation);
+                return (
+                  <Rook
+                    key={id}
+                    id={id}
+                    position={worldPos}
+                    notation={notation}
+                    isSelected={selectedPiece === id}
+                    onClick={handlePieceClick}
+                  />
+                );
+              })}
+            </Suspense>
+
+            <OrbitControls
+              target={[0, 0, 0]}
+              enableZoom={true}
+              enablePan={true}
+              enableRotate={true}
             />
-          );
-        })}
-      </Suspense>
+          </Canvas>
+        </div>
 
-      <OrbitControls
-        target={[0, 0, 0]}
-        enableZoom={true}
-        enablePan={true}
-        enableRotate={true}
-        // Now you can use polar angle to "flip" the board
-        // And azimuth to rotate around it
-        minPolarAngle={Math.PI / 2}
-        maxPolarAngle={Math.PI / 2}
-      />
-    </Canvas>
+        {/* Right Sidebar */}
+        <div
+          style={{
+            width: "380px",
+            backgroundColor: COLORS.lodenGreenDark,
+            padding: "30px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+            overflowY: "auto",
+          }}
+        >
+          <GameInfo
+            selectedPiece={selectedPiece}
+            currentPlayer={currentPlayer}
+          />
+
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <MoveLog moves={moveHistory} />
+          </div>
+
+          <ControlsInfo />
+        </div>
+      </div>
+    </div>
   );
 };
 
