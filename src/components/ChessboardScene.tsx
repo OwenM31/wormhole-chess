@@ -672,8 +672,8 @@ const ChessboardScene: React.FC = () => {
         enableZoom={true}
         enablePan={true}
         // Lock the polar angle (vertical tilt) to keep board orientation fixed
-        minPolarAngle={Math.PI / 3} // ~60 degrees from vertical
-        maxPolarAngle={Math.PI / 3} // Lock it at this angle
+        minPolarAngle={-Math.PI} // ~60 degrees from vertical
+        maxPolarAngle={Math.PI} // Lock it at this angle
         // Optional: Limit azimuthal rotation to keep A file generally at bottom
         minAzimuthAngle={-Math.PI / 2} // -90 degrees
         maxAzimuthAngle={Math.PI / 2} // +90 degrees
