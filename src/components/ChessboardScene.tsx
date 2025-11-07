@@ -942,7 +942,7 @@ const ChessboardScene: React.FC = () => {
           }}
         >
           <Canvas
-            camera={{ position: [0, 0, 200], fov: 50, near: 0.1, far: 1000 }}
+            camera={{ position: [0, 0, 300], fov: 50, near: 0.1, far: 1000 }}
             style={{ width: "100%", height: "100%" }}
           >
             <ambientLight intensity={0.5} />
@@ -982,6 +982,8 @@ const ChessboardScene: React.FC = () => {
               enableZoom={true}
               enablePan={true}
               enableRotate={true}
+              minPolarAngle={Math.PI / 2}
+              maxPolarAngle={Math.PI / 2}
             />
           </Canvas>
         </div>
