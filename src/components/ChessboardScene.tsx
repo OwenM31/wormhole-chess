@@ -15,6 +15,91 @@ const SPACING = BOARD_SIZE / (GRID_COUNT - 1); // 24.285714
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"];
 
+// Special wormhole squares
+const SPECIAL_FILES = ["x", "y"];
+const SPECIAL_RANKS = ["1", "2", "3", "4"];
+
+// Pentagonal squares (corner squares of the central 4x4)
+const PENTAGONAL_SQUARES = ["c3", "c6", "f3", "f6"];
+
+// ==================== WORMHOLE TOPOLOGY ====================
+
+// Define the wormhole connections and adjacencies
+const WORMHOLE_CONNECTIONS: { [key: string]: string[] } = {
+  // Top surface pentagonal connections
+  c3: ["b3", "c2", "d3", "c4", "x1"], // x1 bridges the diagonal c3-d4
+  c6: ["b6", "c7", "d6", "c5", "x4"], // x4 bridges the diagonal c6-d5
+  f3: ["g3", "f2", "e3", "f4", "y1"], // y1 bridges the diagonal f3-e4
+  f6: ["g6", "f7", "e6", "f5", "y4"], // y4 bridges the diagonal f6-e5
+
+  // Bottom surface pentagonal connections (primed)
+  "c3'": ["b3'", "c2'", "d3'", "c4'", "x1'"],
+  "c6'": ["b6'", "c7'", "d6'", "c5'", "x4'"],
+  "f3'": ["g3'", "f2'", "e3'", "f4'", "y1'"],
+  "f6'": ["g6'", "f7'", "e6'", "f5'", "y4'"],
+
+  // Special x squares connections
+  x1: ["c3", "d4", "x2", "x1'"], // connects to c3 pentagonal edge and through wormhole
+  x2: ["x1", "x3", "x2'"],
+  x3: ["x2", "x4", "x3'"],
+  x4: ["c6", "d5", "x3", "x4'"],
+
+  "x1'": ["c3'", "d4'", "x2'", "x1"],
+  "x2'": ["x1'", "x3'", "x2"],
+  "x3'": ["x2'", "x4'", "x3"],
+  "x4'": ["c6'", "d5'", "x3'", "x4"],
+
+  // Special y squares connections
+  y1: ["f3", "e4", "y2", "y1'"],
+  y2: ["y1", "y3", "y2'"],
+  y3: ["y2", "y4", "y3'"],
+  y4: ["f6", "e5", "y3", "y4'"],
+
+  "y1'": ["f3'", "e4'", "y2'", "y1"],
+  "y2'": ["y1'", "y3'", "y2"],
+  "y3'": ["y2'", "y4'", "y3"],
+  "y4'": ["f6'", "e5'", "y3'", "y4"],
+
+  // D-file wormhole connections
+  d4: ["d3", "x1", "d4'"], // d4 connects through wormhole to d4'
+  d5: ["d6", "x4", "d5'"],
+  "d4'": ["d3'", "x1'", "d4"],
+  "d5'": ["d6'", "x4'", "d5"],
+
+  // E-file wormhole connections
+  e4: ["e3", "y1", "e4'"],
+  e5: ["e6", "y4", "e5'"],
+  "e4'": ["e3'", "y1'", "e4"],
+  "e5'": ["e6'", "y4'", "e5"],
+};
+
+// Get world coordinates for special squares
+const getSpecialSquarePosition = (
+  notation: string
+): [number, number, number] | null => {
+  const isPrime = notation.endsWith("'");
+  const cleanNotation = isPrime ? notation.slice(0, -1) : notation;
+  const y = isPrime ? -25 : 25;
+
+  // X squares are positioned between c and d files
+  if (cleanNotation.startsWith("x")) {
+    const rank = parseInt(cleanNotation[1]);
+    const x = BOARD_MIN + 2.5 * SPACING; // Between c (2) and d (3)
+    const z = BOARD_MIN + (rank + 1.5) * SPACING; // Offset for x1-x4
+    return [x, y, z];
+  }
+
+  // Y squares are positioned between e and f files
+  if (cleanNotation.startsWith("y")) {
+    const rank = parseInt(cleanNotation[1]);
+    const x = BOARD_MIN + 4.5 * SPACING; // Between e (4) and f (5)
+    const z = BOARD_MIN + (rank + 1.5) * SPACING; // Offset for y1-y4
+    return [x, y, z];
+  }
+
+  return null;
+};
+
 // ==================== COORDINATE CONVERSION FUNCTIONS ====================
 
 // Converts world coordinates → grid coordinates
@@ -47,9 +132,14 @@ const gridToChess = (gridX: number, gridZ: number, y: number): string => {
 };
 
 // Converts chess notation → grid coordinates
-const chessToGrid = (notation: string): [number, number, number] => {
+const chessToGrid = (notation: string): [number, number, number] | null => {
   const isPrime = notation.endsWith("'");
   const cleanNotation = isPrime ? notation.slice(0, -1) : notation;
+
+  // Handle special squares
+  if (cleanNotation.startsWith("x") || cleanNotation.startsWith("y")) {
+    return null; // Special squares don't have grid coordinates
+  }
 
   const file = cleanNotation[0];
   const rank = cleanNotation[1];
@@ -65,15 +155,18 @@ const chessToGrid = (notation: string): [number, number, number] => {
   return [gridX, gridZ, y];
 };
 
-// Converts world coordinates → chess notation
-const worldToChess = (x: number, y: number, z: number): string => {
-  const [gridX, gridZ] = worldToGrid(x, z);
-  return gridToChess(gridX, gridZ, y);
-};
-
 // Converts chess notation → world coordinates
 const chessToWorld = (notation: string): [number, number, number] => {
-  const [gridX, gridZ, y] = chessToGrid(notation);
+  // Check for special squares first
+  const specialPos = getSpecialSquarePosition(notation);
+  if (specialPos) return specialPos;
+
+  // Handle regular squares
+  const gridCoords = chessToGrid(notation);
+  if (!gridCoords)
+    throw new Error(`Cannot convert ${notation} to world coordinates`);
+
+  const [gridX, gridZ, y] = gridCoords;
   return gridToWorld(gridX, gridZ, y);
 };
 
@@ -90,26 +183,44 @@ const BoardSquare: React.FC<{
   notation: string;
   onSquareClick: (position: [number, number, number], notation: string) => void;
   isHighlighted: boolean;
-}> = ({ position, notation, onSquareClick, isHighlighted }) => {
+  isPentagonal?: boolean;
+}> = ({
+  position,
+  notation,
+  onSquareClick,
+  isHighlighted,
+  isPentagonal = false,
+}) => {
+  // Use different geometry for pentagonal squares
+  const geometry = isPentagonal ? (
+    <meshBasicMaterial
+      color={isHighlighted ? "yellow" : "cyan"}
+      opacity={isHighlighted ? 0.3 : 0.05}
+      transparent
+    />
+  ) : (
+    <meshBasicMaterial
+      color={isHighlighted ? "yellow" : "white"}
+      opacity={isHighlighted ? 0.3 : 0.01}
+      transparent
+    />
+  );
+
   return (
     <Box
       position={position}
-      args={[20, 0.5, 20]}
+      args={isPentagonal ? [22, 0.5, 22] : [20, 0.5, 20]}
       onClick={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
         onSquareClick(position, notation);
       }}
     >
-      <meshBasicMaterial
-        color={isHighlighted ? "yellow" : "white"}
-        opacity={isHighlighted ? 0.3 : 0.01}
-        transparent
-      />
+      {geometry}
     </Box>
   );
 };
 
-// Enhanced Rook component with click functionality
+// Enhanced Rook component
 const Rook: React.FC<{
   id: string;
   position: [number, number, number];
@@ -162,9 +273,9 @@ const Rook: React.FC<{
 useGLTF.preload("chessboard/black-pieces/black-rook.glb");
 
 const ChessboardScene: React.FC = () => {
-  // State for piece positions - using chess notation as keys
+  // State for piece positions
   const [piecePositions, setPiecePositions] = useState<{
-    [key: string]: string; // piece ID → chess notation
+    [key: string]: string;
   }>({
     "top-rook-0": "a1",
     "top-rook-1": "a8",
@@ -177,65 +288,173 @@ const ChessboardScene: React.FC = () => {
   });
 
   const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
-  const [possibleMoves, setPossibleMoves] = useState<string[]>([]); // Now stores chess notation
+  const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
 
-  // Generate all board squares for click detection
+  // Generate all board squares including special wormhole squares
   const boardSquares = useMemo(() => {
     const squares: {
       position: [number, number, number];
       notation: string;
       key: string;
+      isPentagonal: boolean;
     }[] = [];
 
+    // Regular board squares
     for (let x = 0; x <= 7; x++) {
       for (let z = 0; z <= 7; z++) {
         // Top surface
-        const topPos = gridToWorld(x, z, 25);
         const topNotation = gridToChess(x, z, 25);
+        const topPos = gridToWorld(x, z, 25);
+        const isPentTop = PENTAGONAL_SQUARES.includes(topNotation);
+
         squares.push({
           position: topPos,
           notation: topNotation,
           key: `top-${x}-${z}`,
+          isPentagonal: isPentTop,
         });
 
         // Bottom surface
-        const bottomPos = gridToWorld(x, z, -25);
         const bottomNotation = gridToChess(x, z, -25);
+        const bottomPos = gridToWorld(x, z, -25);
+        const isPentBottom = PENTAGONAL_SQUARES.includes(
+          bottomNotation.replace("'", "")
+        );
+
         squares.push({
           position: bottomPos,
           notation: bottomNotation,
           key: `bottom-${x}-${z}`,
+          isPentagonal: isPentBottom,
         });
       }
     }
+
+    // Add special wormhole squares
+    for (const file of ["x", "y"]) {
+      for (let rank = 1; rank <= 4; rank++) {
+        const notation = `${file}${rank}`;
+        const notationPrime = `${notation}'`;
+
+        const pos = getSpecialSquarePosition(notation);
+        const posPrime = getSpecialSquarePosition(notationPrime);
+
+        if (pos) {
+          squares.push({
+            position: pos,
+            notation: notation,
+            key: `special-${notation}`,
+            isPentagonal: false,
+          });
+        }
+
+        if (posPrime) {
+          squares.push({
+            position: posPrime,
+            notation: notationPrime,
+            key: `special-${notationPrime}`,
+            isPentagonal: false,
+          });
+        }
+      }
+    }
+
     return squares;
   }, []);
 
-  // Calculate possible moves for a rook (horizontal and vertical lines)
+  // Enhanced rook move calculation with wormhole mechanics
   const calculateRookMoves = (notation: string): string[] => {
-    const moves: string[] = [];
-    const [gridX, gridZ, y] = chessToGrid(notation);
+    const moves = new Set<string>();
+    const visited = new Set<string>();
 
-    console.log(`Calculating moves for ${notation} (grid: ${gridX}, ${gridZ})`);
+    console.log(`Calculating moves for rook at ${notation}`);
 
-    // Horizontal moves (along X axis / files)
-    for (let x = 0; x <= 7; x++) {
-      if (x !== gridX) {
-        const moveNotation = gridToChess(x, gridZ, y);
-        moves.push(moveNotation);
+    // Helper function for recursive pathfinding through wormholes
+    const explorePath = (
+      current: string,
+      direction: "file" | "rank" | "wormhole",
+      startNotation: string
+    ) => {
+      if (visited.has(`${current}-${direction}`)) return;
+      visited.add(`${current}-${direction}`);
+
+      // Check for wormhole connections
+      const connections = WORMHOLE_CONNECTIONS[current];
+      if (connections) {
+        connections.forEach((connected) => {
+          if (connected !== startNotation) {
+            moves.add(connected);
+
+            // Continue exploring through wormhole connections
+            if (connected.includes("'") !== current.includes("'")) {
+              // This is a wormhole transition
+              explorePath(connected, "wormhole", startNotation);
+            }
+          }
+        });
       }
-    }
 
-    // Vertical moves (along Z axis / ranks)
-    for (let z = 0; z <= 7; z++) {
-      if (z !== gridZ) {
-        const moveNotation = gridToChess(gridX, z, y);
-        moves.push(moveNotation);
+      // For regular squares, continue in straight lines
+      const isPrime = current.endsWith("'");
+      const cleanCurrent = isPrime ? current.slice(0, -1) : current;
+
+      if (!cleanCurrent.startsWith("x") && !cleanCurrent.startsWith("y")) {
+        const file = cleanCurrent[0];
+        const rank = cleanCurrent[1];
+        const fileIdx = FILES.indexOf(file);
+        const rankIdx = RANKS.indexOf(rank);
+
+        if (direction === "file" || direction === "wormhole") {
+          // Continue along file
+          for (let r = 0; r < 8; r++) {
+            if (r !== rankIdx) {
+              const newNotation = `${file}${RANKS[r]}${isPrime ? "'" : ""}`;
+
+              // Check for wormhole interruption
+              if (
+                (file === "d" || file === "e") &&
+                (RANKS[r] === "4" || RANKS[r] === "5")
+              ) {
+                // These squares connect through wormhole
+                const wormholeSquare = `${file}${RANKS[r]}${
+                  isPrime ? "'" : ""
+                }`;
+                if (WORMHOLE_CONNECTIONS[wormholeSquare]) {
+                  moves.add(wormholeSquare);
+                  explorePath(wormholeSquare, "wormhole", startNotation);
+                }
+              } else {
+                moves.add(newNotation);
+              }
+            }
+          }
+        }
+
+        if (direction === "rank" || direction === "wormhole") {
+          // Continue along rank
+          for (let f = 0; f < 8; f++) {
+            if (f !== fileIdx) {
+              const newNotation = `${FILES[f]}${rank}${isPrime ? "'" : ""}`;
+              moves.add(newNotation);
+            }
+          }
+        }
       }
-    }
+    };
 
-    console.log(`Generated ${moves.length} possible moves:`, moves.join(", "));
-    return moves;
+    // Start exploration
+    explorePath(notation, "file", notation);
+    explorePath(notation, "rank", notation);
+
+    // Remove the starting position
+    moves.delete(notation);
+
+    const moveArray = Array.from(moves);
+    console.log(
+      `Generated ${moveArray.length} possible moves:`,
+      moveArray.join(", ")
+    );
+    return moveArray;
   };
 
   // Handle piece selection
@@ -261,17 +480,14 @@ const ChessboardScene: React.FC = () => {
   ) => {
     if (!selectedPiece) return;
 
-    // Check if the target notation is a valid move
     const isValidMove = possibleMoves.includes(targetNotation);
 
     if (isValidMove) {
-      // Check if another piece is already at this position
       const isOccupied = Object.entries(piecePositions).some(
         ([id, notation]) => id !== selectedPiece && notation === targetNotation
       );
 
       if (!isOccupied) {
-        // Move the piece
         const previousNotation = piecePositions[selectedPiece];
         setPiecePositions((prev) => ({
           ...prev,
@@ -281,7 +497,6 @@ const ChessboardScene: React.FC = () => {
           `♜ Moved ${selectedPiece} from ${previousNotation} to ${targetNotation}`
         );
 
-        // Clear selection
         setSelectedPiece(null);
         setPossibleMoves([]);
       } else {
@@ -290,7 +505,6 @@ const ChessboardScene: React.FC = () => {
     }
   };
 
-  // Check if a square should be highlighted as a possible move
   const isHighlightedSquare = (notation: string) => {
     return possibleMoves.includes(notation);
   };
@@ -313,6 +527,7 @@ const ChessboardScene: React.FC = () => {
             notation={square.notation}
             onSquareClick={handleSquareClick}
             isHighlighted={isHighlightedSquare(square.notation)}
+            isPentagonal={square.isPentagonal}
           />
         ))}
 
