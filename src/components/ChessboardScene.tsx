@@ -15,94 +15,235 @@ const SPACING = BOARD_SIZE / (GRID_COUNT - 1); // 24.285714
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"];
 
-// Special wormhole squares
-const SPECIAL_FILES = ["x", "y"];
-const SPECIAL_RANKS = ["1", "2", "3", "4"];
+// Wormhole layer definitions
+const OUTER_LAYER_SQUARES = [
+  "c3",
+  "d3",
+  "e3",
+  "f3",
+  "c4",
+  "f4",
+  "c5",
+  "f5",
+  "c6",
+  "d6",
+  "e6",
+  "f6",
+];
 
-// Pentagonal squares (corner squares of the central 4x4)
+const INNER_LAYER_SQUARES = [
+  "d4",
+  "x1",
+  "x2",
+  "x3",
+  "x4",
+  "d5",
+  "e5",
+  "y4",
+  "y3",
+  "y2",
+  "y1",
+  "e4",
+];
+
+// Wormhole transformation settings
+const OUTER_LAYER_SCALE = 0.75; // 25% smaller
+const INNER_LAYER_SCALE = 0.5; // 50% smaller
+const OUTER_LAYER_TILT = Math.PI / 4; // 45 degrees
+const INNER_LAYER_TILT = (Math.PI * 5) / 12; // 75 degrees
+
+// Pentagonal squares
 const PENTAGONAL_SQUARES = ["c3", "c6", "f3", "f6"];
 
 // ==================== WORMHOLE TOPOLOGY ====================
 
-// Define the wormhole connections and adjacencies
 const WORMHOLE_CONNECTIONS: { [key: string]: string[] } = {
   // Top surface pentagonal connections
-  c3: ["b3", "c2", "d3", "c4", "x1"], // x1 bridges the diagonal c3-d4
-  c6: ["b6", "c7", "d6", "c5", "x4"], // x4 bridges the diagonal c6-d5
-  f3: ["g3", "f2", "e3", "f4", "y1"], // y1 bridges the diagonal f3-e4
-  f6: ["g6", "f7", "e6", "f5", "y4"], // y4 bridges the diagonal f6-e5
+  c3: ["b3", "c2", "d3", "c4", "x1"],
+  c6: ["b6", "c7", "d6", "c5", "x4"],
+  f3: ["g3", "f2", "e3", "f4", "y1"],
+  f6: ["g6", "f7", "e6", "f5", "y4"],
 
-  // Bottom surface pentagonal connections (primed)
+  // Bottom surface pentagonal connections
   "c3'": ["b3'", "c2'", "d3'", "c4'", "x1'"],
   "c6'": ["b6'", "c7'", "d6'", "c5'", "x4'"],
   "f3'": ["g3'", "f2'", "e3'", "f4'", "y1'"],
   "f6'": ["g6'", "f7'", "e6'", "f5'", "y4'"],
 
-  // Special x squares connections
-  x1: ["c3", "d4", "x2", "x1'"], // connects to c3 pentagonal edge and through wormhole
-  x2: ["x1", "x3", "x2'"],
-  x3: ["x2", "x4", "x3'"],
-  x4: ["c6", "d5", "x3", "x4'"],
-
-  "x1'": ["c3'", "d4'", "x2'", "x1"],
-  "x2'": ["x1'", "x3'", "x2"],
-  "x3'": ["x2'", "x4'", "x3"],
-  "x4'": ["c6'", "d5'", "x3'", "x4"],
-
-  // Special y squares connections
-  y1: ["f3", "e4", "y2", "y1'"],
-  y2: ["y1", "y3", "y2'"],
-  y3: ["y2", "y4", "y3'"],
-  y4: ["f6", "e5", "y3", "y4'"],
-
-  "y1'": ["f3'", "e4'", "y2'", "y1"],
-  "y2'": ["y1'", "y3'", "y2"],
-  "y3'": ["y2'", "y4'", "y3"],
-  "y4'": ["f6'", "e5'", "y3'", "y4"],
-
-  // D-file wormhole connections
-  d4: ["d3", "x1", "d4'"], // d4 connects through wormhole to d4'
-  d5: ["d6", "x4", "d5'"],
-  "d4'": ["d3'", "x1'", "d4"],
-  "d5'": ["d6'", "x4'", "d5"],
-
-  // E-file wormhole connections
-  e4: ["e3", "y1", "e4'"],
+  // Inner layer connections (clockwise from d4)
+  d4: ["d3", "x1", "e4", "d4'"],
+  x1: ["c3", "d4", "x2"],
+  x2: ["x1", "x3"],
+  x3: ["x2", "x4"],
+  x4: ["x3", "c6", "d5"],
+  d5: ["x4", "d6", "d5'"],
   e5: ["e6", "y4", "e5'"],
-  "e4'": ["e3'", "y1'", "e4"],
+  y4: ["f6", "e5", "y3"],
+  y3: ["y4", "y2"],
+  y2: ["y3", "y1"],
+  y1: ["y2", "f3", "e4"],
+  e4: ["e3", "y1", "d4", "e4'"],
+
+  // Prime versions
+  "d4'": ["d3'", "x1'", "e4'", "d4"],
+  "x1'": ["c3'", "d4'", "x2'"],
+  "x2'": ["x1'", "x3'"],
+  "x3'": ["x2'", "x4'"],
+  "x4'": ["x3'", "c6'", "d5'"],
+  "d5'": ["x4'", "d6'", "d5"],
   "e5'": ["e6'", "y4'", "e5"],
+  "y4'": ["f6'", "e5'", "y3'"],
+  "y3'": ["y4'", "y2'"],
+  "y2'": ["y3'", "y1'"],
+  "y1'": ["y2'", "f3'", "e4'"],
+  "e4'": ["e3'", "y1'", "d4'", "e4"],
+
+  // Outer layer connections
+  d3: ["c3", "e3", "d4", "d2"],
+  e3: ["d3", "f3", "e4", "e2"],
+  c4: ["c3", "c5", "b4"],
+  f4: ["f3", "f5", "g4"],
+  c5: ["c4", "c6", "b5"],
+  f5: ["f4", "f6", "g5"],
+  d6: ["c6", "e6", "d5", "d7"],
+  e6: ["d6", "f6", "e5", "e7"],
+
+  "d3'": ["c3'", "e3'", "d4'", "d2'"],
+  "e3'": ["d3'", "f3'", "e4'", "e2'"],
+  "c4'": ["c3'", "c5'", "b4'"],
+  "f4'": ["f3'", "f5'", "g4'"],
+  "c5'": ["c4'", "c6'", "b5'"],
+  "f5'": ["f4'", "f6'", "g5'"],
+  "d6'": ["c6'", "e6'", "d5'", "d7'"],
+  "e6'": ["d6'", "f6'", "e5'", "e7'"],
 };
 
-// Get world coordinates for special squares
-const getSpecialSquarePosition = (
-  notation: string
-): [number, number, number] | null => {
+// ==================== WORMHOLE GEOMETRY ====================
+
+// Get the angle (in radians) for inner layer squares arranged in a circle
+const getInnerLayerAngle = (notation: string): number => {
+  const cleanNotation = notation.replace("'", "");
+  const sequence = [
+    "d4",
+    "x1",
+    "x2",
+    "x3",
+    "x4",
+    "d5",
+    "e5",
+    "y4",
+    "y3",
+    "y2",
+    "y1",
+    "e4",
+  ];
+  const index = sequence.indexOf(cleanNotation);
+
+  if (index === -1) return 0;
+
+  // Start at 6 o'clock (270 degrees) and go clockwise
+  const startAngle = Math.PI * 1.5; // 270 degrees
+  const angleStep = (Math.PI * 2) / sequence.length;
+  return startAngle + index * angleStep;
+};
+
+// Calculate wormhole-adjusted position for special squares
+const getWormholePosition = (
+  notation: string,
+  baseY: number
+): [number, number, number] => {
+  const cleanNotation = notation.replace("'", "");
   const isPrime = notation.endsWith("'");
-  const cleanNotation = isPrime ? notation.slice(0, -1) : notation;
-  const y = isPrime ? -25 : 25;
 
-  // X squares are positioned between c and d files
-  if (cleanNotation.startsWith("x")) {
-    const rank = parseInt(cleanNotation[1]);
-    const x = BOARD_MIN + 2.5 * SPACING; // Between c (2) and d (3)
-    const z = BOARD_MIN + (rank + 1.5) * SPACING; // Offset for x1-x4
+  // For inner layer special squares (x1-x4, y1-y4)
+  if (cleanNotation.startsWith("x") || cleanNotation.startsWith("y")) {
+    const angle = getInnerLayerAngle(notation);
+    const radius = SPACING * 0.6; // Distance from center for inner layer
+
+    const x = Math.cos(angle) * radius;
+    const z = Math.sin(angle) * radius;
+
+    // Y position: move towards center (0) based on tilt
+    const yOffset = Math.sin(INNER_LAYER_TILT) * radius * 0.5;
+    const y = isPrime ? baseY + yOffset : baseY - yOffset;
+
     return [x, y, z];
   }
 
-  // Y squares are positioned between e and f files
-  if (cleanNotation.startsWith("y")) {
-    const rank = parseInt(cleanNotation[1]);
-    const x = BOARD_MIN + 4.5 * SPACING; // Between e (4) and f (5)
-    const z = BOARD_MIN + (rank + 1.5) * SPACING; // Offset for y1-y4
-    return [x, y, z];
+  return [0, baseY, 0]; // Fallback
+};
+
+// Get transformation properties for a square in the wormhole
+const getWormholeTransform = (
+  notation: string
+): {
+  scale: number;
+  tilt: number;
+  yOffset: number;
+} => {
+  const cleanNotation = notation.replace("'", "");
+
+  if (INNER_LAYER_SQUARES.includes(cleanNotation)) {
+    return {
+      scale: INNER_LAYER_SCALE,
+      tilt: INNER_LAYER_TILT,
+      yOffset: 0,
+    };
   }
 
-  return null;
+  if (OUTER_LAYER_SQUARES.includes(cleanNotation)) {
+    return {
+      scale: OUTER_LAYER_SCALE,
+      tilt: OUTER_LAYER_TILT,
+      yOffset: 0,
+    };
+  }
+
+  return { scale: 1, tilt: 0, yOffset: 0 };
+};
+
+// Calculate rotation to point towards origin
+const getRotationTowardsOrigin = (
+  position: [number, number, number],
+  notation: string,
+  tilt: number
+): [number, number, number] => {
+  const cleanNotation = notation.replace("'", "");
+  const isPrime = notation.endsWith("'");
+
+  // Inner layer or non-outer special squares → keep existing tilt logic
+  if (INNER_LAYER_SQUARES.includes(cleanNotation)) {
+    const angle = getInnerLayerAngle(notation);
+    return [-tilt, angle, 0]; // still radial
+  }
+
+  // Outer squares
+  if (OUTER_LAYER_SQUARES.includes(cleanNotation)) {
+    // Determine base tilt
+    let tiltX = -tilt; // default top layer
+    if (cleanNotation.endsWith("3") || cleanNotation.endsWith("4")) {
+      tiltX = tilt; // bottom-facing side mirrored
+    }
+
+    // Mirror for prime pieces
+    if (isPrime) tiltX = -tiltX;
+
+    // Side squares perpendicular
+    if (["c4", "c5", "f4", "f5"].includes(cleanNotation)) {
+      return [0, 0, tiltX]; // rotate along Z axis
+    }
+
+    // For top/bottom faces
+    const angleXZ = Math.atan2(-position[0], -position[2]);
+    return [tiltX, angleXZ, 0];
+  }
+
+  // Default no tilt
+  return [0, 0, 0];
 };
 
 // ==================== COORDINATE CONVERSION FUNCTIONS ====================
 
-// Converts world coordinates → grid coordinates
 const worldToGrid = (x: number, z: number): [number, number] => {
   const gridX = Math.round((x - BOARD_MIN) / SPACING);
   const gridZ = Math.round((z - BOARD_MIN) / SPACING);
@@ -112,7 +253,6 @@ const worldToGrid = (x: number, z: number): [number, number] => {
   ];
 };
 
-// Converts grid coordinates → world coordinates
 const gridToWorld = (
   gridX: number,
   gridZ: number,
@@ -123,7 +263,6 @@ const gridToWorld = (
   return [worldX, y, worldZ];
 };
 
-// Converts grid coordinates → chess notation
 const gridToChess = (gridX: number, gridZ: number, y: number): string => {
   const file = FILES[gridX];
   const rank = RANKS[gridZ];
@@ -131,14 +270,12 @@ const gridToChess = (gridX: number, gridZ: number, y: number): string => {
   return `${file}${rank}${prime}`;
 };
 
-// Converts chess notation → grid coordinates
 const chessToGrid = (notation: string): [number, number, number] | null => {
   const isPrime = notation.endsWith("'");
   const cleanNotation = isPrime ? notation.slice(0, -1) : notation;
 
-  // Handle special squares
   if (cleanNotation.startsWith("x") || cleanNotation.startsWith("y")) {
-    return null; // Special squares don't have grid coordinates
+    return null;
   }
 
   const file = cleanNotation[0];
@@ -155,11 +292,15 @@ const chessToGrid = (notation: string): [number, number, number] | null => {
   return [gridX, gridZ, y];
 };
 
-// Converts chess notation → world coordinates
 const chessToWorld = (notation: string): [number, number, number] => {
-  // Check for special squares first
-  const specialPos = getSpecialSquarePosition(notation);
-  if (specialPos) return specialPos;
+  const isPrime = notation.endsWith("'");
+  const cleanNotation = notation.replace("'", "");
+  const baseY = isPrime ? -25 : 25;
+
+  // Handle special inner layer squares
+  if (cleanNotation.startsWith("x") || cleanNotation.startsWith("y")) {
+    return getWormholePosition(notation, baseY);
+  }
 
   // Handle regular squares
   const gridCoords = chessToGrid(notation);
@@ -167,7 +308,18 @@ const chessToWorld = (notation: string): [number, number, number] => {
     throw new Error(`Cannot convert ${notation} to world coordinates`);
 
   const [gridX, gridZ, y] = gridCoords;
-  return gridToWorld(gridX, gridZ, y);
+  let [worldX, worldY, worldZ] = gridToWorld(gridX, gridZ, y);
+
+  // Apply wormhole transformations for outer layer squares
+  const transform = getWormholeTransform(notation);
+  if (transform.tilt > 0) {
+    // Calculate distance from center
+    const distFromCenter = Math.sqrt(worldX * worldX + worldZ * worldZ);
+    const yOffset = Math.sin(transform.tilt) * distFromCenter * 0.15;
+    worldY = isPrime ? worldY + yOffset : worldY - yOffset;
+  }
+
+  return [worldX, worldY, worldZ];
 };
 
 // ==================== COMPONENTS ====================
@@ -177,7 +329,7 @@ const ChessboardModel: React.FC = () => {
   return <primitive object={gltf.scene} />;
 };
 
-// Interactive square component for move targets
+// Interactive square component
 const BoardSquare: React.FC<{
   position: [number, number, number];
   notation: string;
@@ -191,36 +343,31 @@ const BoardSquare: React.FC<{
   isHighlighted,
   isPentagonal = false,
 }) => {
-  // Use different geometry for pentagonal squares
-  const geometry = isPentagonal ? (
-    <meshBasicMaterial
-      color={isHighlighted ? "yellow" : "cyan"}
-      opacity={isHighlighted ? 0.3 : 0.05}
-      transparent
-    />
-  ) : (
-    <meshBasicMaterial
-      color={isHighlighted ? "yellow" : "white"}
-      opacity={isHighlighted ? 0.3 : 0.01}
-      transparent
-    />
-  );
+  const transform = getWormholeTransform(notation);
+  const rotation = getRotationTowardsOrigin(position, notation, transform.tilt);
+
+  const boxSize = 20 * transform.scale;
 
   return (
     <Box
       position={position}
-      args={isPentagonal ? [22, 0.5, 22] : [20, 0.5, 20]}
+      rotation={rotation}
+      args={[boxSize, 0.5, boxSize]}
       onClick={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
         onSquareClick(position, notation);
       }}
     >
-      {geometry}
+      <meshBasicMaterial
+        color={isHighlighted ? "yellow" : isPentagonal ? "cyan" : "white"}
+        opacity={isHighlighted ? 0.3 : isPentagonal ? 0.05 : 0.01}
+        transparent
+      />
     </Box>
   );
 };
 
-// Enhanced Rook component
+// Enhanced Rook component with wormhole transformations
 const Rook: React.FC<{
   id: string;
   position: [number, number, number];
@@ -237,9 +384,26 @@ const Rook: React.FC<{
   onClick,
 }) => {
   const gltf = useGLTF("chessboard/black-pieces/black-rook.glb") as GLTF;
+  const transform = getWormholeTransform(notation);
 
-  const { springPos } = useSpring({
+  // Calculate wormhole rotation
+  const wormholeRotation = getRotationTowardsOrigin(
+    position,
+    notation,
+    transform.tilt
+  );
+
+  // Combine base rotation with wormhole rotation
+  const finalRotation: [number, number, number] = [
+    rotation[0] + wormholeRotation[0],
+    rotation[1] + wormholeRotation[1],
+    rotation[2] + wormholeRotation[2],
+  ];
+
+  const { springPos, springScale, springRot } = useSpring({
     springPos: position,
+    springScale: transform.scale,
+    springRot: finalRotation,
     config: {
       mass: 1,
       tension: 200,
@@ -250,16 +414,14 @@ const Rook: React.FC<{
   return (
     <a.group
       position={springPos}
+      scale={springScale}
+      rotation={springRot as unknown as [number, number, number]}
       onClick={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
         onClick(id, notation);
       }}
     >
-      <primitive
-        object={gltf.scene.clone()}
-        rotation={rotation}
-        scale={[1, 1, 1]}
-      />
+      <primitive object={gltf.scene.clone()} scale={[1, 1, 1]} />
 
       {isSelected && (
         <Box position={[0, 0, 0]} args={[25, 25, 25]}>
@@ -273,7 +435,6 @@ const Rook: React.FC<{
 useGLTF.preload("chessboard/black-pieces/black-rook.glb");
 
 const ChessboardScene: React.FC = () => {
-  // State for piece positions
   const [piecePositions, setPiecePositions] = useState<{
     [key: string]: string;
   }>({
@@ -302,9 +463,8 @@ const ChessboardScene: React.FC = () => {
     // Regular board squares
     for (let x = 0; x <= 7; x++) {
       for (let z = 0; z <= 7; z++) {
-        // Top surface
         const topNotation = gridToChess(x, z, 25);
-        const topPos = gridToWorld(x, z, 25);
+        const topPos = chessToWorld(topNotation);
         const isPentTop = PENTAGONAL_SQUARES.includes(topNotation);
 
         squares.push({
@@ -314,9 +474,8 @@ const ChessboardScene: React.FC = () => {
           isPentagonal: isPentTop,
         });
 
-        // Bottom surface
         const bottomNotation = gridToChess(x, z, -25);
-        const bottomPos = gridToWorld(x, z, -25);
+        const bottomPos = chessToWorld(bottomNotation);
         const isPentBottom = PENTAGONAL_SQUARES.includes(
           bottomNotation.replace("'", "")
         );
@@ -330,46 +489,37 @@ const ChessboardScene: React.FC = () => {
       }
     }
 
-    // Add special wormhole squares
-    for (const file of ["x", "y"]) {
-      for (let rank = 1; rank <= 4; rank++) {
-        const notation = `${file}${rank}`;
-        const notationPrime = `${notation}'`;
+    // Add special wormhole squares (inner layer)
+    const innerSquares = ["x1", "x2", "x3", "x4", "y1", "y2", "y3", "y4"];
+    innerSquares.forEach((sq) => {
+      const topPos = chessToWorld(sq);
+      const bottomPos = chessToWorld(`${sq}'`);
 
-        const pos = getSpecialSquarePosition(notation);
-        const posPrime = getSpecialSquarePosition(notationPrime);
+      squares.push({
+        position: topPos,
+        notation: sq,
+        key: `special-${sq}`,
+        isPentagonal: false,
+      });
 
-        if (pos) {
-          squares.push({
-            position: pos,
-            notation: notation,
-            key: `special-${notation}`,
-            isPentagonal: false,
-          });
-        }
-
-        if (posPrime) {
-          squares.push({
-            position: posPrime,
-            notation: notationPrime,
-            key: `special-${notationPrime}`,
-            isPentagonal: false,
-          });
-        }
-      }
-    }
+      squares.push({
+        position: bottomPos,
+        notation: `${sq}'`,
+        key: `special-${sq}'`,
+        isPentagonal: false,
+      });
+    });
 
     return squares;
   }, []);
 
-  // Enhanced rook move calculation with wormhole mechanics
+  // Calculate rook moves with wormhole mechanics
   const calculateRookMoves = (notation: string): string[] => {
     const moves = new Set<string>();
     const visited = new Set<string>();
 
-    console.log(`Calculating moves for rook at ${notation}`);
+    console.log(`🌀 Calculating moves for rook at ${notation}`);
 
-    // Helper function for recursive pathfinding through wormholes
     const explorePath = (
       current: string,
       direction: "file" | "rank" | "wormhole",
@@ -378,23 +528,19 @@ const ChessboardScene: React.FC = () => {
       if (visited.has(`${current}-${direction}`)) return;
       visited.add(`${current}-${direction}`);
 
-      // Check for wormhole connections
       const connections = WORMHOLE_CONNECTIONS[current];
       if (connections) {
         connections.forEach((connected) => {
           if (connected !== startNotation) {
             moves.add(connected);
 
-            // Continue exploring through wormhole connections
             if (connected.includes("'") !== current.includes("'")) {
-              // This is a wormhole transition
               explorePath(connected, "wormhole", startNotation);
             }
           }
         });
       }
 
-      // For regular squares, continue in straight lines
       const isPrime = current.endsWith("'");
       const cleanCurrent = isPrime ? current.slice(0, -1) : current;
 
@@ -405,33 +551,15 @@ const ChessboardScene: React.FC = () => {
         const rankIdx = RANKS.indexOf(rank);
 
         if (direction === "file" || direction === "wormhole") {
-          // Continue along file
           for (let r = 0; r < 8; r++) {
             if (r !== rankIdx) {
               const newNotation = `${file}${RANKS[r]}${isPrime ? "'" : ""}`;
-
-              // Check for wormhole interruption
-              if (
-                (file === "d" || file === "e") &&
-                (RANKS[r] === "4" || RANKS[r] === "5")
-              ) {
-                // These squares connect through wormhole
-                const wormholeSquare = `${file}${RANKS[r]}${
-                  isPrime ? "'" : ""
-                }`;
-                if (WORMHOLE_CONNECTIONS[wormholeSquare]) {
-                  moves.add(wormholeSquare);
-                  explorePath(wormholeSquare, "wormhole", startNotation);
-                }
-              } else {
-                moves.add(newNotation);
-              }
+              moves.add(newNotation);
             }
           }
         }
 
         if (direction === "rank" || direction === "wormhole") {
-          // Continue along rank
           for (let f = 0; f < 8; f++) {
             if (f !== fileIdx) {
               const newNotation = `${FILES[f]}${rank}${isPrime ? "'" : ""}`;
@@ -442,38 +570,29 @@ const ChessboardScene: React.FC = () => {
       }
     };
 
-    // Start exploration
     explorePath(notation, "file", notation);
     explorePath(notation, "rank", notation);
 
-    // Remove the starting position
     moves.delete(notation);
 
     const moveArray = Array.from(moves);
-    console.log(
-      `Generated ${moveArray.length} possible moves:`,
-      moveArray.join(", ")
-    );
+    console.log(`Generated ${moveArray.length} possible moves`);
     return moveArray;
   };
 
-  // Handle piece selection
   const handlePieceClick = (pieceId: string, notation: string) => {
     console.log(`Piece clicked: ${pieceId} at ${notation}`);
 
     if (selectedPiece === pieceId) {
-      console.log("Deselecting piece");
       setSelectedPiece(null);
       setPossibleMoves([]);
     } else {
-      console.log(`Selecting piece at ${notation}`);
       setSelectedPiece(pieceId);
       const moves = calculateRookMoves(notation);
       setPossibleMoves(moves);
     }
   };
 
-  // Handle square click for movement
   const handleSquareClick = (
     targetPosition: [number, number, number],
     targetNotation: string
@@ -510,16 +629,13 @@ const ChessboardScene: React.FC = () => {
   };
 
   return (
-    <Canvas
-      camera={{ position: [100, 150, 200], fov: 50, near: 0.1, far: 1000 }}
-    >
+    <Canvas camera={{ position: [0, 200, 0], fov: 50, near: 0.1, far: 1000 }}>
       <ambientLight intensity={0.5} />
       <directionalLight position={[10, 10, 10]} intensity={1} />
 
       <Suspense fallback={null}>
         <ChessboardModel />
 
-        {/* Board squares for click detection */}
         {boardSquares.map((square) => (
           <BoardSquare
             key={square.key}
@@ -531,16 +647,19 @@ const ChessboardScene: React.FC = () => {
           />
         ))}
 
-        {/* Render rooks from state */}
         {Object.entries(piecePositions).map(([id, notation]) => {
           const worldPos = chessToWorld(notation);
+          const baseRotation: [number, number, number] = notation.includes("'")
+            ? [Math.PI, 0, 0]
+            : [0, 0, 0];
+
           return (
             <Rook
               key={id}
               id={id}
               position={worldPos}
               notation={notation}
-              rotation={notation.includes("'") ? [Math.PI, 0, 0] : [0, 0, 0]}
+              rotation={baseRotation}
               isSelected={selectedPiece === id}
               onClick={handlePieceClick}
             />
@@ -548,7 +667,17 @@ const ChessboardScene: React.FC = () => {
         })}
       </Suspense>
 
-      <OrbitControls />
+      <OrbitControls
+        target={[0, 0, 0]}
+        enableZoom={true}
+        enablePan={true}
+        // Lock the polar angle (vertical tilt) to keep board orientation fixed
+        minPolarAngle={Math.PI / 3} // ~60 degrees from vertical
+        maxPolarAngle={Math.PI / 3} // Lock it at this angle
+        // Optional: Limit azimuthal rotation to keep A file generally at bottom
+        minAzimuthAngle={-Math.PI / 2} // -90 degrees
+        maxAzimuthAngle={Math.PI / 2} // +90 degrees
+      />
     </Canvas>
   );
 };
