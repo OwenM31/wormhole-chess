@@ -59,8 +59,8 @@ const INNER_LAYER_SQUARES = [
 ];
 
 // Wormhole transformation settings
-const OUTER_LAYER_SCALE = 0.75;
-const INNER_LAYER_SCALE = 0.5;
+const OUTER_LAYER_SCALE = 0.9;
+const INNER_LAYER_SCALE = 0.75;
 const OUTER_LAYER_TILT = Math.PI / 4;
 const INNER_LAYER_TILT = (Math.PI * 5) / 12;
 
@@ -68,6 +68,355 @@ const INNER_LAYER_TILT = (Math.PI * 5) / 12;
 const PENTAGONAL_SQUARES = ["c3", "c6", "f3", "f6"];
 
 // ==================== WORMHOLE TOPOLOGY ====================
+
+type Directions = {
+  N?: string | null;
+  E?: string | null;
+  S?: string | null;
+  W?: string | null;
+  in?: string | null;
+  out?: string | null;
+  cw?: string | null;
+  ccw?: string | null;
+};
+
+const boardGraph: Record<string, Directions> = {
+  a1: { N: "a2", E: "b1", S: null, W: null },
+  a2: { N: "a3", E: "b2", S: "a1", W: null },
+  a3: { N: "a4", E: "b3", S: "a2", W: null },
+  a4: { N: "a5", E: "b4", S: "a3", W: null },
+  a5: { N: "a6", E: "b5", S: "a4", W: null },
+  a6: { N: "a7", E: "b6", S: "a5", W: null },
+  a7: { N: "a8", E: "b7", S: "a6", W: null },
+  a8: { N: null, E: "b8", S: "a7", W: null },
+
+  b1: { N: "b2", E: "c1", S: null, W: "a1" },
+  b2: { N: "b3", E: "c2", S: "b1", W: "a2" },
+  b3: { N: "b4", E: "c3", S: "b2", W: "a3" },
+  b4: { N: "b5", E: "c4", S: "b3", W: "a4" },
+  b5: { N: "b6", E: "c5", S: "b4", W: "a5" },
+  b6: { N: "b7", E: "c6", S: "b5", W: "a6" },
+  b7: { N: "b8", E: "c7", S: "b6", W: "a7" },
+  b8: { N: null, E: "c8", S: "b7", W: "a8" },
+
+  c1: { N: "c2", E: "d1", S: null, W: "b1" },
+  c2: { N: "c3", E: "d2", S: "c1", W: "b2" },
+  c3: { N: "c4", E: "d3", S: "c2", W: "b3", in: "x1", cw: "c4", ccw: "d3" },
+  c4: { N: "c5", E: "d4", S: "c3", W: "b4", in: "x2", cw: "c5", ccw: "c3" },
+  c5: { N: "c6", E: "d5", S: "c4", W: "b5", in: "x3", cw: "c6", ccw: "c4" },
+  c6: { N: "c7", E: "d6", S: "c5", W: "b6", in: "x4", cw: "d6", ccw: "c5" },
+  c7: { N: "c8", E: "d7", S: "c6", W: "b7" },
+  c8: { N: null, E: "d8", S: "c7", W: "b8" },
+
+  x1: { out: "c3", cw: "x2", in: "x1'", ccw: "d4" },
+  x2: { out: "c4", cw: "x3", in: "x2'", ccw: "x1" },
+  x3: { out: "c5", cw: "x4", in: "x3'", ccw: "x2" },
+  x4: { out: "c6", cw: "d5", in: "x4'", ccw: "x3" },
+
+  d1: { N: "d2", E: "e1", S: null, W: "c1" },
+  d2: { N: "d3", E: "e2", S: "d1", W: "c2" },
+  d3: {
+    N: "d4",
+    E: "e3",
+    S: "d2",
+    W: "c3",
+    in: "d4",
+    out: "d2",
+    cw: "c3",
+    ccw: "e3",
+  },
+  d4: { N: "d4'", S: "d3", in: "d4'", out: "d3", cw: "x1", ccw: "e4" },
+  d5: { N: "d6", S: "d5'", in: "d5'", out: "d6", cw: "e5", ccw: "x4" },
+  d6: {
+    N: "d7",
+    E: "e6",
+    S: "d5",
+    W: "c6",
+    in: "d5",
+    out: "d7",
+    cw: "e6",
+    ccw: "c6",
+  },
+  d7: { N: "d8", E: "e7", S: "d6", W: "c7" },
+  d8: { N: null, E: "e8", S: "d7", W: "c8" },
+
+  e1: { N: "e2", E: "f1", S: null, W: "d1" },
+  e2: { N: "e3", E: "f2", S: "e1", W: "d2" },
+  e3: {
+    N: "e4",
+    E: "f3",
+    S: "e2",
+    W: "d3",
+    in: "e4",
+    out: "e2",
+    cw: "d3",
+    ccw: "f3",
+  },
+  e4: { N: "e4'", S: "e3", in: "e4'", out: "e3", cw: "d4", ccw: "y1" },
+  e5: { N: "e6", S: "e5'", in: "e5'", out: "e6", cw: "y4", ccw: "d5" },
+  e6: {
+    N: "e7",
+    E: "f6",
+    S: "e5",
+    W: "d6",
+    in: "e5",
+    out: "e7",
+    cw: "f6",
+    ccw: "d6",
+  },
+  e7: { N: "e8", E: "f7", S: "e6", W: "d7" },
+  e8: { N: null, E: "f8", S: "e7", W: "d8" },
+
+  y1: { in: "y1'", out: "f3", cw: "e4", ccw: "y2" },
+  y2: { in: "y2'", out: "f4", cw: "y1", ccw: "y3" },
+  y3: { in: "y3'", out: "f5", cw: "y2", ccw: "y4" },
+  y4: { in: "y4'", out: "f6", cw: "y3", ccw: "e5" },
+
+  f1: { N: "f2", E: "g1", S: null, W: "e1" },
+  f2: { N: "f3", E: "g2", S: "f1", W: "e2" },
+  f3: {
+    N: "f4",
+    E: "g3",
+    S: "f2",
+    W: "e3",
+    in: "y1",
+    cw: "e3",
+    ccw: "f4",
+  },
+  f4: {
+    N: "f5",
+    S: "f3",
+    E: "g4",
+    W: "y2",
+    in: "y2",
+    out: "g4",
+    cw: "f3",
+    ccw: "f5",
+  },
+  f5: {
+    N: "f6",
+    S: "f4",
+    E: "g5",
+    W: "y3",
+    in: "y3",
+    out: "g5",
+    cw: "f4",
+    ccw: "f6",
+  },
+  f6: {
+    N: "f7",
+    E: "g6",
+    S: "f5",
+    W: "e6",
+    in: "y4",
+    cw: "f5",
+    ccw: "e6",
+  },
+  f7: { N: "f8", E: "g7", S: "f6", W: "e7" },
+  f8: { N: null, E: "g8", S: "f7", W: "e8" },
+
+  g1: { N: "g2", E: "h1", S: null, W: "f1" },
+  g2: { N: "g3", E: "h2", S: "g1", W: "f2" },
+  g3: { N: "g4", E: "h3", S: "g2", W: "f3" },
+  g4: { N: "g5", E: "h4", S: "g3", W: "f4" },
+  g5: { N: "g6", E: "h5", S: "g4", W: "f5" },
+  g6: { N: "g7", E: "h6", S: "g5", W: "f6" },
+  g7: { N: "g8", E: "h7", S: "g6", W: "f7" },
+  g8: { N: null, E: "h8", S: "g7", W: "f8" },
+
+  h1: { N: "h2", E: null, S: null, W: "g1" },
+  h2: { N: "h3", E: null, S: "h1", W: "g2" },
+  h3: { N: "h4", E: null, S: "h2", W: "g3" },
+  h4: { N: "h5", E: null, S: "h3", W: "g4" },
+  h5: { N: "h6", E: null, S: "h4", W: "g5" },
+  h6: { N: "h7", E: null, S: "h5", W: "g6" },
+  h7: { N: "h8", E: null, S: "h6", W: "g7" },
+  h8: { N: null, E: null, S: "h7", W: "g8" },
+
+  "a1'": { N: "a2'", E: "b1'", S: null, W: null },
+  "a2'": { N: "a3'", E: "b2'", S: "a1'", W: null },
+  "a3'": { N: "a4'", E: "b3'", S: "a2'", W: null },
+  "a4'": { N: "a5'", E: "b4'", S: "a3'", W: null },
+  "a5'": { N: "a6'", E: "b5'", S: "a4'", W: null },
+  "a6'": { N: "a7'", E: "b6'", S: "a5'", W: null },
+  "a7'": { N: "a8'", E: "b7'", S: "a6'", W: null },
+  "a8'": { N: null, E: "b8'", S: "a7'", W: null },
+
+  "b1'": { N: "b2'", E: "c1'", S: null, W: "a1'" },
+  "b2'": { N: "b3'", E: "c2'", S: "b1'", W: "a2'" },
+  "b3'": { N: "b4'", E: "c3'", S: "b2'", W: "a3'" },
+  "b4'": { N: "b5'", E: "c4'", S: "b3'", W: "a4'" },
+  "b5'": { N: "b6'", E: "c5'", S: "b4'", W: "a5'" },
+  "b6'": { N: "b7'", E: "c6'", S: "b5'", W: "a6'" },
+  "b7'": { N: "b8'", E: "c7'", S: "b6'", W: "a7'" },
+  "b8'": { N: null, E: "c8'", S: "b7'", W: "a8'" },
+
+  "c1'": { N: "c2'", E: "d1'", S: null, W: "b1'" },
+  "c2'": { N: "c3'", E: "d2'", S: "c1'", W: "b2'" },
+  "c3'": {
+    N: "c4'",
+    E: "d3'",
+    S: "c2'",
+    W: "b3'",
+    in: "x1'",
+    cw: "c4'",
+    ccw: "d3'",
+  },
+  "c4'": {
+    N: "c5'",
+    E: "d4'",
+    S: "c3'",
+    W: "b4'",
+    in: "x2'",
+    cw: "c5'",
+    ccw: "c3'",
+  },
+  "c5'": {
+    N: "c6'",
+    E: "d5'",
+    S: "c4'",
+    W: "b5'",
+    in: "x3'",
+    cw: "c6'",
+    ccw: "c4'",
+  },
+  "c6'": {
+    N: "c7'",
+    E: "d6'",
+    S: "c5'",
+    W: "b6'",
+    in: "x4'",
+    cw: "d6'",
+    ccw: "c5'",
+  },
+  "c7'": { N: "c8'", E: "d7'", S: "c6'", W: "b7'" },
+  "c8'": { N: null, E: "d8'", S: "c7'", W: "b8'" },
+
+  "x1'": { out: "c3'", cw: "x2'", in: "x1", ccw: "d4'" },
+  "x2'": { out: "c4'", cw: "x3'", in: "x2", ccw: "x1'" },
+  "x3'": { out: "c5'", cw: "x4'", in: "x3", ccw: "x2'" },
+  "x4'": { out: "c6'", cw: "d5'", in: "x4", ccw: "x3'" },
+
+  "d1'": { N: "d2'", E: "e1'", S: null, W: "c1'" },
+  "d2'": { N: "d3'", E: "e2'", S: "d1'", W: "c2'" },
+  "d3'": {
+    N: "d4'",
+    E: "e3'",
+    S: "d2'",
+    W: "c3'",
+    in: "d4'",
+    out: "d2'",
+    cw: "c3'",
+    ccw: "e3'",
+  },
+  "d4'": { N: "d4", S: "d3'", in: "d4", out: "d3'", cw: "x1'", ccw: "e4'" },
+  "d5'": { N: "d6'", S: "d5", in: "d5", out: "d6'", cw: "e5'", ccw: "x4'" },
+  "d6'": {
+    N: "d7'",
+    E: "e6'",
+    S: "d5'",
+    W: "c6'",
+    in: "d5'",
+    out: "d7'",
+    cw: "e6'",
+    ccw: "c6'",
+  },
+  "d7'": { N: "d8'", E: "e7'", S: "d6'", W: "c7'" },
+  "d8'": { N: null, E: "e8'", S: "d7'", W: "c8'" },
+
+  "e1'": { N: "e2'", E: "f1'", S: null, W: "d1'" },
+  "e2'": { N: "e3'", E: "f2'", S: "e1'", W: "d2'" },
+  "e3'": {
+    N: "e4'",
+    E: "f3'",
+    S: "e2'",
+    W: "d3'",
+    in: "e4'",
+    out: "e2'",
+    cw: "d3'",
+    ccw: "f3'",
+  },
+  "e4'": { N: "e4", S: "e3'", in: "e4", out: "e3'", cw: "d4'", ccw: "y1'" },
+  "e5'": { N: "e6'", S: "e5", in: "e5", out: "e6'", cw: "y4'", ccw: "d5'" },
+  "e6'": {
+    N: "e7'",
+    E: "f6'",
+    S: "e5'",
+    W: "d6'",
+    in: "e5'",
+    out: "e7'",
+    cw: "f6'",
+    ccw: "d6'",
+  },
+  "e7'": { N: "e8'", E: "f7'", S: "e6'", W: "d7'" },
+  "e8'": { N: null, E: "f8'", S: "e7'", W: "d8'" },
+
+  "y1'": { in: "y1", out: "f3'", cw: "e4'", ccw: "y2'" },
+  "y2'": { in: "y2", out: "f4'", cw: "y1'", ccw: "y3'" },
+  "y3'": { in: "y3", out: "f5'", cw: "y2'", ccw: "y4'" },
+  "y4'": { in: "y4", out: "f6'", cw: "y3'", ccw: "e5'" },
+
+  "f1'": { N: "f2'", E: "g1'", S: null, W: "e1'" },
+  "f2'": { N: "f3'", E: "g2'", S: "f1'", W: "e2'" },
+  "f3'": {
+    N: "f4'",
+    E: "g3'",
+    S: "f2'",
+    W: "e3'",
+    in: "y1'",
+    cw: "e3'",
+    ccw: "f4'",
+  },
+  "f4'": {
+    N: "f5'",
+    S: "f3'",
+    E: "g4'",
+    W: "y2'",
+    in: "y2'",
+    out: "g4'",
+    cw: "f3'",
+    ccw: "f5'",
+  },
+  "f5'": {
+    N: "f6'",
+    S: "f4'",
+    E: "g5'",
+    W: "y3'",
+    in: "y3'",
+    out: "g5'",
+    cw: "f4'",
+    ccw: "f6'",
+  },
+  "f6'": {
+    N: "f7'",
+    E: "g6'",
+    S: "f5'",
+    W: "e6'",
+    in: "y4'",
+    cw: "f5'",
+    ccw: "e6'",
+  },
+  "f7'": { N: "f8'", E: "g7'", S: "f'6", W: "e7'" },
+  "f8'": { N: null, E: "g8'", S: "f7'", W: "e8'" },
+
+  "g1'": { N: "g2'", E: "h1'", S: null, W: "f1'" },
+  "g2'": { N: "g3'", E: "h2'", S: "g1'", W: "f2'" },
+  "g3'": { N: "g4'", E: "h3'", S: "g2'", W: "f3'" },
+  "g4'": { N: "g5'", E: "h4'", S: "g3'", W: "f4'" },
+  "g5'": { N: "g6'", E: "h5'", S: "g4'", W: "f5'" },
+  "g6'": { N: "g7'", E: "h6'", S: "g5'", W: "f6'" },
+  "g7'": { N: "g8'", E: "h7'", S: "g6'", W: "f7'" },
+  "g8'": { N: null, E: "h8'", S: "g7'", W: "f8'" },
+
+  "h1'": { N: "h2'", E: null, S: null, W: "g1'" },
+  "h2'": { N: "h3'", E: null, S: "h1'", W: "g2'" },
+  "h3'": { N: "h4'", E: null, S: "h2'", W: "g3'" },
+  "h4'": { N: "h5'", E: null, S: "h3'", W: "g4'" },
+  "h5'": { N: "h6'", E: null, S: "h4'", W: "g5'" },
+  "h6'": { N: "h7'", E: null, S: "h5'", W: "g6'" },
+  "h7'": { N: "h8'", E: null, S: "h6'", W: "g7'" },
+  "h8'": { N: null, E: null, S: "h7'", W: "g8'" },
+};
 
 const WORMHOLE_CONNECTIONS: { [key: string]: string[] } = {
   // Top surface pentagonal connections
@@ -150,27 +499,96 @@ const getInnerLayerAngle = (notation: string): number => {
   ];
   const index = sequence.indexOf(cleanNotation);
   if (index === -1) return 0;
-  const startAngle = Math.PI * 1.5;
+  const startAngle = -Math.PI * 0.5 - 0.25;
   const angleStep = (Math.PI * 2) / sequence.length;
-  return startAngle + index * angleStep;
+  return startAngle - index * angleStep;
 };
 
-const getWormholePosition = (
+const getOuterLayerAngle = (notation: string): number => {
+  const cleanNotation = notation.replace("'", "");
+  const sequence = [
+    "d3",
+    "c3",
+    "c4",
+    "c5",
+    "c6",
+    "d6",
+    "e6",
+    "f6",
+    "f5",
+    "f4",
+    "f3",
+    "e3",
+  ];
+  const index = sequence.indexOf(cleanNotation);
+  if (index === -1) return 0;
+  const startAngle = -Math.PI * 0.5 - 0.25;
+  const angleStep = (Math.PI * 2) / sequence.length;
+  return startAngle - index * angleStep;
+};
+
+// ----------------- TORUS / WORMHOLE PARAMETERS -----------------
+const TORUS_MAJOR = 15; // distance from origin to center of the tube (controls where the ring sits in XY)
+const OUTER_MINOR = 35; // tube radius for outer layer (bigger => sits closer to the planes)
+const INNER_MINOR = 22.5; // tube radius for inner layer (smaller => deeper into the donut)
+const OUTER_PHI = Math.PI / 5; // minor-angle for outer layer (positive = towards top plane)
+const INNER_PHI = Math.PI / 7 - 0.1; // minor-angle for inner layer (smaller = closer to the midline)
+
+// Helper: torus param -> world coords
+// theta: angle around the donut center (0..2pi), phi: angle around the tube (-pi/2..pi/2)
+// R = TORUS_MAJOR, r = minorRadius
+const torusPoint = (
+  theta: number,
+  phi: number,
+  minorRadius: number
+): [number, number, number] => {
+  const R = TORUS_MAJOR;
+  const r = minorRadius;
+  const cosPhi = Math.cos(phi);
+  const sinPhi = Math.sin(phi);
+  const cosTheta = Math.cos(theta);
+  const sinTheta = Math.sin(theta);
+
+  const x = (R + r * cosPhi) * cosTheta;
+  const y = (R + r * cosPhi) * sinTheta;
+  const z = r * sinPhi;
+  return [x, y, z];
+};
+
+const getWormholeSquarePosition = (
   notation: string,
   baseZ: number
 ): [number, number, number] => {
   const cleanNotation = notation.replace("'", "");
   const isPrime = notation.endsWith("'");
 
-  if (cleanNotation.startsWith("x") || cleanNotation.startsWith("y")) {
-    const angle = getInnerLayerAngle(notation);
-    const radius = SPACING * 0.6;
-    const x = Math.cos(angle) * radius;
-    const y = Math.sin(angle) * radius;
-    const zOffset = Math.sin(INNER_LAYER_TILT) * radius * 0.5;
-    const z = isPrime ? baseZ - zOffset : baseZ + zOffset;
+  // Outer layer squares (the ones listed in OUTER_LAYER_SQUARES) should be placed
+  // on a slightly larger tube radius and closer to the top/bottom planes.
+  if (OUTER_LAYER_SQUARES.includes(cleanNotation)) {
+    // convert the grid world X/Y (the original top/bottom grid locations) to an angle
+    const gridCoords = chessToGrid(notation);
+    if (!gridCoords) return [0, 0, baseZ];
+    const theta = getOuterLayerAngle(notation);
+    const minor = OUTER_MINOR;
+    const phi = OUTER_PHI;
+    const [x, y, rawZ] = torusPoint(theta, phi, minor);
+    const z = isPrime ? -rawZ : rawZ;
     return [x, y, z];
   }
+
+  // Inner layer squares that are not x/y (i.e. d4, d5, e4, e5, etc.)
+  if (INNER_LAYER_SQUARES.includes(cleanNotation)) {
+    // For these we will use the same theta approach but a smaller minor radius (pulled inward)
+    const theta = getInnerLayerAngle(notation);
+    const minor = INNER_MINOR;
+    const phi = INNER_PHI;
+    const [x, y, rawZ] = torusPoint(theta, phi, minor);
+    const z = isPrime ? -rawZ : rawZ;
+    return [x, y, z];
+    // inner layer sits more central on the donut: use smaller phi magnitude
+  }
+
+  // Fallback: non-wormhole squares stay in their original grid planes
   return [0, 0, baseZ];
 };
 
@@ -199,47 +617,225 @@ const getRotationTowardsOrigin = (
   const cleanNotation = notation.replace("'", "");
   const isPrime = notation.endsWith("'");
 
-  if (INNER_LAYER_SQUARES.includes(cleanNotation)) {
-    const angle = getInnerLayerAngle(notation);
-    return [Math.cos(angle) * tilt, Math.sin(angle) * tilt, 0];
+  if (
+    !OUTER_LAYER_SQUARES.includes(cleanNotation) &&
+    !INNER_LAYER_SQUARES.includes(cleanNotation)
+  ) {
+    return [0, 0, 0];
   }
 
-  if (OUTER_LAYER_SQUARES.includes(cleanNotation)) {
-    const angleXY = Math.atan2(position[1], position[0]);
-    let tiltAmount = tilt;
+  const [x, y, z] = position;
+  const dir = new THREE.Vector3(-x, -y, -z).normalize();
 
-    if (["c3", "c6", "f3", "f6"].includes(cleanNotation)) {
-      const xTilt = Math.cos(angleXY) * tiltAmount;
-      const yTilt = Math.sin(angleXY) * tiltAmount;
-      return isPrime ? [-xTilt, -yTilt, 0] : [xTilt, yTilt, 0];
-    }
-
-    if (["c4", "c5"].includes(cleanNotation)) {
-      return isPrime ? [tiltAmount, 0, 0] : [-tiltAmount, 0, 0];
-    }
-    if (["f4", "f5"].includes(cleanNotation)) {
-      return isPrime ? [-tiltAmount, 0, 0] : [tiltAmount, 0, 0];
-    }
-    if (["d3", "e3"].includes(cleanNotation)) {
-      return isPrime ? [0, tiltAmount, 0] : [0, -tiltAmount, 0];
-    }
-    if (["d6", "e6"].includes(cleanNotation)) {
-      return isPrime ? [0, -tiltAmount, 0] : [0, tiltAmount, 0];
-    }
+  // Avoid zero-length axis
+  const normal = new THREE.Vector3(0, 0, 1);
+  let axis = new THREE.Vector3().crossVectors(normal, dir);
+  if (axis.length() < 1e-4) {
+    axis = new THREE.Vector3(1, 0, 0); // fallback axis
+  } else {
+    axis.normalize();
   }
-  return [0, 0, 0];
+
+  // Angle between normal and direction
+  const fullAngle = Math.acos(THREE.MathUtils.clamp(normal.dot(dir), -1, 1));
+
+  // Limit tilt
+  const angle = Math.min(fullAngle, tilt);
+  const effectiveAngle = isPrime ? -angle : angle;
+
+  const quat = new THREE.Quaternion().setFromAxisAngle(axis, effectiveAngle);
+
+  // Convert to Euler
+  const euler = new THREE.Euler().setFromQuaternion(quat, "ZYX"); // ZYX is usually more stable
+  return [euler.x, euler.y, euler.z];
+};
+
+const getPieceWormholeRotation = (
+  notation: string
+): [number, number, number] => {
+  let rotation: THREE.Euler;
+
+  switch (notation) {
+    // c3 -> c6
+    case "c3":
+      rotation = new THREE.Euler(-1.6, 0, -1);
+      break;
+    case "c4":
+      rotation = new THREE.Euler(-0.6, 0, -1);
+      break;
+    case "c5":
+      rotation = new THREE.Euler(0.6, 0, -1);
+      break;
+    case "c6":
+      rotation = new THREE.Euler(1.6, 0, -1);
+      break;
+
+    // d3 -> d6
+    case "d3":
+      rotation = new THREE.Euler(-1, -0.6, -0.6);
+      break;
+    case "d4":
+      rotation = new THREE.Euler(-3, 1, 1);
+      break;
+    case "d5":
+      rotation = new THREE.Euler(3, -1, 1);
+      break;
+    case "d6":
+      rotation = new THREE.Euler(1, -0.6, -0.6);
+      break;
+
+    // x1 -> x4
+    case "x1":
+      rotation = new THREE.Euler(-1.6, 2, -0.8);
+      break;
+    case "x2":
+      rotation = new THREE.Euler(-3, 3, -0.6);
+      break;
+    case "x3":
+      rotation = new THREE.Euler(3, -3, -0.6);
+      break;
+    case "x4":
+      rotation = new THREE.Euler(1.6, -2, -0.8);
+      break;
+
+    // y1 -> y4
+    case "y1":
+      rotation = new THREE.Euler(-1.6, -2, 0.8);
+      break;
+    case "y2":
+      rotation = new THREE.Euler(-3, -3, -0.6);
+      break;
+    case "y3":
+      rotation = new THREE.Euler(3, 3, 0.6);
+      break;
+    case "y4":
+      rotation = new THREE.Euler(1.6, 2, 0.8);
+      break;
+
+    // e3 -> e6
+    case "e3":
+      rotation = new THREE.Euler(-1, 0.6, 0.6);
+      break;
+    case "e4":
+      rotation = new THREE.Euler(-3, -1, -1);
+      break;
+    case "e5":
+      rotation = new THREE.Euler(3, 1, -1);
+      break;
+    case "e6":
+      rotation = new THREE.Euler(1, 0.6, 0.6);
+      break;
+
+    // f3 -> f6
+    case "f3":
+      rotation = new THREE.Euler(-1.6, 0, 1);
+      break;
+    case "f4":
+      rotation = new THREE.Euler(-0.6, 0, 1);
+      break;
+    case "f5":
+      rotation = new THREE.Euler(0.6, 0, 1);
+      break;
+    case "f6":
+      rotation = new THREE.Euler(1.6, 0, 1);
+      break;
+
+    // FLIP SIDE
+
+    // reflected c3' -> c6'
+    case "c3'":
+      rotation = new THREE.Euler(1.6, 0, 1);
+      break;
+    case "c4'":
+      rotation = new THREE.Euler(0.6, 0, 1);
+      break;
+    case "c5'":
+      rotation = new THREE.Euler(-0.6, 0, 1);
+      break;
+    case "c6'":
+      rotation = new THREE.Euler(-1.6, 0, 1);
+      break;
+
+    // reflected d3' -> d6'
+    case "d3'":
+      rotation = new THREE.Euler(1, 0.6, -0.6);
+      break;
+    case "d4'":
+      rotation = new THREE.Euler(3, 1, -1);
+      break;
+    case "d5'":
+      rotation = new THREE.Euler(-3, -1, -1);
+      break;
+    case "d6'":
+      rotation = new THREE.Euler(-1, 0.6, 0.6);
+      break;
+
+    default:
+      rotation = new THREE.Euler(0, 0, 0);
+      break;
+
+    // reflected x1' -> x4'
+    case "x1'":
+      rotation = new THREE.Euler(1.6, 2, 0.8);
+      break;
+    case "x2'":
+      rotation = new THREE.Euler(3, 3, 0.6);
+      break;
+    case "x3'":
+      rotation = new THREE.Euler(-3, -3, 0.6);
+      break;
+    case "x4'":
+      rotation = new THREE.Euler(-1.6, -2, 0.8);
+      break;
+
+    // reflected y1' -> y4'
+    case "y1'":
+      rotation = new THREE.Euler(1.6, -2, -0.8);
+      break;
+    case "y2'":
+      rotation = new THREE.Euler(3, -3, 0.6);
+      break;
+    case "y3'":
+      rotation = new THREE.Euler(-3, 3, -0.6);
+      break;
+    case "y4'":
+      rotation = new THREE.Euler(-1.6, 2, -0.8);
+      break;
+
+    // reflected e3' -> e6'
+    case "e3'":
+      rotation = new THREE.Euler(1, 0.6, -0.6);
+      break;
+    case "e4'":
+      rotation = new THREE.Euler(3, -1, 1);
+      break;
+    case "e5'":
+      rotation = new THREE.Euler(-3, 1, 1);
+      break;
+    case "e6'":
+      rotation = new THREE.Euler(-1, 0.6, -0.6);
+      break;
+
+    // reflected f3' -> f6'
+    case "f3'":
+      rotation = new THREE.Euler(1.6, 0, -1);
+      break;
+    case "f4'":
+      rotation = new THREE.Euler(0.6, 0, -1);
+      break;
+    case "f5'":
+      rotation = new THREE.Euler(-0.6, 0, -1);
+      break;
+    case "f6'":
+      rotation = new THREE.Euler(-1.6, 0, -1);
+      break;
+  }
+
+  const quat = new THREE.Quaternion().setFromEuler(rotation);
+  return [quat.x, quat.y, quat.z];
 };
 
 // ==================== COORDINATE CONVERSION FUNCTIONS ====================
-
-const worldToGrid = (x: number, y: number): [number, number] => {
-  const gridX = Math.round((x - BOARD_MIN) / SPACING);
-  const gridY = Math.round((y - BOARD_MIN) / SPACING);
-  return [
-    Math.max(0, Math.min(GRID_COUNT - 1, gridX)),
-    Math.max(0, Math.min(GRID_COUNT - 1, gridY)),
-  ];
-};
 
 const gridToWorld = (
   gridX: number,
@@ -270,7 +866,7 @@ const chessToGrid = (notation: string): [number, number, number] | null => {
   const rank = cleanNotation[1];
   const gridX = FILES.indexOf(file);
   const gridY = RANKS.indexOf(rank);
-  const z = isPrime ? -25 : 25;
+  const z = isPrime ? -27 : 25;
 
   if (gridX === -1 || gridY === -1) {
     throw new Error(`Invalid chess notation: ${notation}`);
@@ -283,8 +879,11 @@ const chessToWorld = (notation: string): [number, number, number] => {
   const cleanNotation = notation.replace("'", "");
   const baseZ = isPrime ? -25 : 25;
 
-  if (cleanNotation.startsWith("x") || cleanNotation.startsWith("y")) {
-    return getWormholePosition(notation, baseZ);
+  if (
+    INNER_LAYER_SQUARES.includes(cleanNotation) ||
+    OUTER_LAYER_SQUARES.includes(cleanNotation)
+  ) {
+    return getWormholeSquarePosition(notation, baseZ);
   }
 
   const gridCoords = chessToGrid(notation);
@@ -293,13 +892,6 @@ const chessToWorld = (notation: string): [number, number, number] => {
 
   const [gridX, gridY, z] = gridCoords;
   let [worldX, worldY, worldZ] = gridToWorld(gridX, gridY, z);
-
-  const transform = getWormholeTransform(notation);
-  if (transform.tilt > 0) {
-    const distFromCenter = Math.sqrt(worldX * worldX + worldY * worldY);
-    const zOffset = Math.sin(transform.tilt) * distFromCenter * 0.15;
-    worldZ = isPrime ? worldZ - zOffset : worldZ + zOffset;
-  }
 
   return [worldX, worldY, worldZ];
 };
@@ -343,8 +935,8 @@ const BoardSquare: React.FC<{
       }}
     >
       <meshBasicMaterial
-        color={isHighlighted ? "yellow" : isPentagonal ? "cyan" : "white"}
-        opacity={isHighlighted ? 0.3 : isPentagonal ? 0.05 : 0.01}
+        color={isHighlighted ? "yellow" : isPentagonal ? "orange" : "red"}
+        opacity={isHighlighted ? 0.75 : isPentagonal ? 0.05 : 0.05}
         transparent
       />
     </Box>
@@ -366,13 +958,9 @@ const Rook: React.FC<{
   isSelected,
   onClick,
 }) => {
-  const gltf = useGLTF("chessboard/black-pieces/black-rook.glb") as GLTF;
+  const gltf = useGLTF("chessboard/white-pieces/white-rook.glb") as GLTF;
   const transform = getWormholeTransform(notation);
-  const wormholeRotation = getRotationTowardsOrigin(
-    position,
-    notation,
-    transform.tilt
-  );
+  const wormholeRotation = getPieceWormholeRotation(notation);
 
   const baseRotation: [number, number, number] = [
     Math.PI / 2,
@@ -706,6 +1294,13 @@ const ChessboardScene: React.FC = () => {
     for (let x = 0; x <= 7; x++) {
       for (let y = 0; y <= 7; y++) {
         const topNotation = gridToChess(x, y, 25);
+        if (
+          INNER_LAYER_SQUARES.includes(topNotation) ||
+          OUTER_LAYER_SQUARES.includes(topNotation)
+        ) {
+          continue;
+        }
+
         const topPos = chessToWorld(topNotation);
         const isPentTop = PENTAGONAL_SQUARES.includes(topNotation);
 
@@ -731,8 +1326,26 @@ const ChessboardScene: React.FC = () => {
       }
     }
 
-    const innerSquares = ["x1", "x2", "x3", "x4", "y1", "y2", "y3", "y4"];
-    innerSquares.forEach((sq) => {
+    INNER_LAYER_SQUARES.forEach((sq) => {
+      const topPos = chessToWorld(sq);
+      const bottomPos = chessToWorld(`${sq}'`);
+
+      squares.push({
+        position: topPos,
+        notation: sq,
+        key: `special-${sq}`,
+        isPentagonal: false,
+      });
+
+      squares.push({
+        position: bottomPos,
+        notation: `${sq}'`,
+        key: `special-${sq}'`,
+        isPentagonal: false,
+      });
+    });
+
+    OUTER_LAYER_SQUARES.forEach((sq) => {
       const topPos = chessToWorld(sq);
       const bottomPos = chessToWorld(`${sq}'`);
 
@@ -754,7 +1367,7 @@ const ChessboardScene: React.FC = () => {
     return squares;
   }, []);
 
-  const calculateRookMoves = (notation: string): string[] => {
+  /*  const calculateRookMoves = (notation: string): string[] => {
     const moves = new Set<string>();
     const visited = new Set<string>();
 
@@ -813,6 +1426,193 @@ const ChessboardScene: React.FC = () => {
 
     return Array.from(moves);
   };
+*/
+
+  type EntryDir = keyof Directions; // "N" | "S" | "E" | "W" | "in" | "out" | "cw" | "ccw"
+
+  const pentagonOrthogonalExits: Record<
+    string,
+    Record<string, (keyof Directions)[]>
+  > = {
+    c3: {
+      N: ["N", "cw", "in"],
+      E: ["E", "ccw", "in"],
+      S: ["S", "ccw"],
+      W: ["W", "cw"],
+      cw: ["cw", "W"],
+      ccw: ["ccw", "S"],
+      out: ["S", "W"],
+    },
+    c6: {
+      N: ["N", "cw"],
+      E: ["E", "cw", "in"],
+      S: ["S", "ccw", "in"],
+      W: ["W", "ccw"],
+      cw: ["cw", "N"],
+      ccw: ["ccw", "W"],
+      out: ["N", "W"],
+    },
+    f3: {
+      N: ["N", "ccw", "in"],
+      E: ["E", "ccw"],
+      S: ["S", "ccw"],
+      W: ["W", "cw", "in"],
+      cw: ["cw", "S"],
+      ccw: ["ccw", "E"],
+      out: ["S", "E"],
+    },
+    f6: {
+      N: ["N", "ccw"],
+      E: ["E", "cw"],
+      S: ["S", "cw", "in"],
+      W: ["W", "ccw", "in"],
+      cw: ["cw", "E"],
+      ccw: ["ccw", "N"],
+      out: ["N", "E"],
+    },
+    "c3'": {
+      N: ["N", "cw", "in"],
+      E: ["E", "ccw", "in"],
+      S: ["S", "ccw"],
+      W: ["W", "cw"],
+      cw: ["cw", "W"],
+      ccw: ["ccw", "S"],
+      out: ["S", "W"],
+    },
+    "c6'": {
+      N: ["N", "cw"],
+      E: ["E", "cw", "in"],
+      S: ["S", "ccw", "in"],
+      W: ["W", "ccw"],
+      cw: ["cw", "N"],
+      ccw: ["ccw", "W"],
+      out: ["N", "W"],
+    },
+    "f3'": {
+      N: ["N", "ccw", "in"],
+      E: ["E", "ccw"],
+      S: ["S", "ccw"],
+      W: ["W", "cw", "in"],
+      cw: ["cw", "S"],
+      ccw: ["ccw", "E"],
+      out: ["S", "E"],
+    },
+    "f6'": {
+      N: ["N", "ccw"],
+      E: ["E", "cw"],
+      S: ["S", "cw", "in"],
+      W: ["W", "ccw", "in"],
+      cw: ["cw", "E"],
+      ccw: ["ccw", "N"],
+      out: ["N", "E"],
+    },
+  };
+
+  const calculateOrthogonalMoves = (start: string): string[] => {
+    const moves = new Set<string>();
+
+    // Helper to get the opposite direction
+    const oppositeDir: Record<EntryDir, EntryDir> = {
+      N: "S",
+      S: "N",
+      E: "W",
+      W: "E",
+      in: "out",
+      out: "in",
+      cw: "ccw",
+      ccw: "cw",
+    };
+
+    const outDir: Record<string, EntryDir> = {
+      c4: "W",
+      c5: "W",
+      d3: "S",
+      e3: "S",
+      d6: "N",
+      e6: "N",
+      f4: "E",
+      f5: "E",
+
+      "c4'": "W",
+      "c5'": "W",
+      "d3'": "S",
+      "e3'": "S",
+      "d6'": "N",
+      "e6'": "N",
+      "f4'": "E",
+      "f5'": "E",
+    };
+
+    // Traverse a line in a specific direction
+    const traverseLine = (
+      current: string,
+      dir: EntryDir,
+      visitedLine: Set<string>
+    ) => {
+      const node = boardGraph[current];
+      if (!node) {
+        return;
+      }
+
+      if (current in outDir && dir == "out") {
+        dir = outDir[current];
+      }
+
+      const next = node[dir];
+      if (!next) {
+        return;
+      }
+
+      // Prevent infinite loops along this line
+      const lineKey = `${current}-${dir}`;
+      if (visitedLine.has(lineKey)) {
+        return;
+      }
+      visitedLine.add(lineKey);
+
+      // Only allow prime/non-prime transitions via in/out
+      const currentPrime = current.endsWith("'");
+      const nextPrime = next.endsWith("'");
+      if (currentPrime !== nextPrime && !(dir === "in" || dir === "out"))
+        return;
+      moves.add(next);
+
+      let nextDir: EntryDir = dir;
+      if ((!currentPrime && nextPrime) || (currentPrime && !nextPrime)) {
+        nextDir = oppositeDir[dir];
+      }
+
+      // Determine next directions
+      if (pentagonOrthogonalExits[next]) {
+        // Pentagon square: branch according to entry direction
+        const branches = pentagonOrthogonalExits[next][nextDir] || [];
+        for (const branch of branches) {
+          traverseLine(next, branch, new Set(visitedLine)); // clone visited for each branch
+        }
+      } else {
+        // Normal square: continue straight in same direction
+        traverseLine(next, nextDir, visitedLine);
+      }
+    };
+
+    // Start traversal along each initial rook direction
+    const initialDirs: EntryDir[] = [
+      "N",
+      "S",
+      "E",
+      "W",
+      "in",
+      "out",
+      "cw",
+      "ccw",
+    ];
+    for (const dir of initialDirs) {
+      traverseLine(start, dir, new Set());
+    }
+
+    moves.delete(start);
+    return Array.from(moves);
+  };
 
   const handlePieceClick = (pieceId: string, notation: string) => {
     if (selectedPiece === pieceId) {
@@ -820,7 +1620,7 @@ const ChessboardScene: React.FC = () => {
       setPossibleMoves([]);
     } else {
       setSelectedPiece(pieceId);
-      const moves = calculateRookMoves(notation);
+      const moves = calculateOrthogonalMoves(notation);
       setPossibleMoves(moves);
     }
   };
