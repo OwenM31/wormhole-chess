@@ -18,6 +18,8 @@ const COLORS = {
 };
 
 // Global constants
+const PIECE_SPEED = 250; // milliseconds per square
+
 const BOARD_SIZE = 170;
 const BOARD_MIN = -85;
 const BOARD_MAX = 85;
@@ -2235,6 +2237,10 @@ const ChessboardScene: React.FC = () => {
 
   const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
+  const [possibleMovePaths, setPossibleMovePaths] = useState<
+    Record<string, string[]>
+  >({});
+  const [movePaths, setMovePaths] = useState<Record<string, string[]>>({});
   const [moveHistory, setMoveHistory] = useState<MoveLogEntry[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<"white" | "black">(
     "white"
@@ -2408,8 +2414,10 @@ const ChessboardScene: React.FC = () => {
     start: string,
     piecePositions: Record<string, string>,
     pieceColor: "white" | "black"
-  ): string[] => {
+  ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
+    const paths = new Map<string, string[]>();
+
     const occupiedByColor = Object.fromEntries(
       Object.entries(piecePositions).map(([id, notation]) => [
         notation,
@@ -2484,7 +2492,8 @@ const ChessboardScene: React.FC = () => {
     const traverseLine = (
       current: string,
       dir: EntryDir,
-      visitedLine: Set<string>
+      visitedLine: Set<string>,
+      pathsSoFar: string[]
     ) => {
       const node = boardGraph[current];
       if (!node) {
@@ -2514,14 +2523,18 @@ const ChessboardScene: React.FC = () => {
       }
       visitedLine.add(lineKey);
 
+      const newPath = [...pathsSoFar, next];
+
       if (next in occupiedByColor) {
         if (occupiedByColor[next] !== pieceColor) {
           moves.add(next); // Can capture opponent piece
+          paths.set(next, newPath);
         }
         return;
       }
 
       moves.add(next);
+      paths.set(next, newPath);
 
       // Only allow prime/non-prime transitions via in/out
       const currentPrime = current.endsWith("'");
@@ -2537,11 +2550,11 @@ const ChessboardScene: React.FC = () => {
         // Pentagon square: branch according to entry direction
         const branches = pentagonOrthogonalExits[next][nextDir] || [];
         for (const branch of branches) {
-          traverseLine(next, branch, new Set(visitedLine)); // clone visited for each branch
+          traverseLine(next, branch, new Set(visitedLine), newPath); // clone visited for each branch
         }
       } else {
         // Normal square: continue straight in same direction
-        traverseLine(next, nextDir, visitedLine);
+        traverseLine(next, nextDir, visitedLine, newPath);
       }
     };
 
@@ -2557,11 +2570,11 @@ const ChessboardScene: React.FC = () => {
       "ccw",
     ];
     for (const dir of initialDirs) {
-      traverseLine(start, dir, new Set());
+      traverseLine(start, dir, new Set(), [start]);
     }
 
     moves.delete(start);
-    return Array.from(moves);
+    return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
   };
 
   const pentagonDiagonalExits: Record<
@@ -2630,8 +2643,10 @@ const ChessboardScene: React.FC = () => {
     start: string,
     piecePositions: Record<string, string>,
     pieceColor: "white" | "black"
-  ): string[] => {
+  ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
+    const paths = new Map<string, string[]>();
+
     const occupiedByColor = Object.fromEntries(
       Object.entries(piecePositions).map(([id, notation]) => [
         notation,
@@ -2682,7 +2697,8 @@ const ChessboardScene: React.FC = () => {
     const traverseDiagonal = (
       current: string,
       dir: EntryDir,
-      visitedLine: Set<string>
+      visitedLine: Set<string>,
+      pathsSoFar: string[]
     ) => {
       const node = boardGraph[current];
       if (!node) {
@@ -2714,14 +2730,18 @@ const ChessboardScene: React.FC = () => {
       }
       visitedLine.add(lineKey);
 
+      const newPath = [...pathsSoFar, next];
+
       if (next in occupiedByColor) {
         if (occupiedByColor[next] !== pieceColor) {
           moves.add(next); // Can capture opponent piece
+          paths.set(next, newPath);
         }
         return;
       }
 
       moves.add(next);
+      paths.set(next, newPath);
 
       const currentPrime = current.endsWith("'");
       const nextPrime = next.endsWith("'");
@@ -2734,10 +2754,10 @@ const ChessboardScene: React.FC = () => {
       if (pentagonDiagonalExits[next]) {
         const branches = pentagonDiagonalExits[next][dir] || [];
         for (const branch of branches) {
-          traverseDiagonal(next, branch, new Set(visitedLine)); // clone visited for each branch
+          traverseDiagonal(next, branch, new Set(visitedLine), newPath); // clone visited for each branch
         }
       } else {
-        traverseDiagonal(next, nextDir, visitedLine);
+        traverseDiagonal(next, nextDir, visitedLine, newPath);
       }
     };
     const initialDirs: EntryDir[] = [
@@ -2751,9 +2771,9 @@ const ChessboardScene: React.FC = () => {
       "odr",
     ];
     for (const dir of initialDirs) {
-      traverseDiagonal(start, dir, new Set());
+      traverseDiagonal(start, dir, new Set(), [start]);
     }
-    return Array.from(moves);
+    return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
   };
 
   // ==================== GENERIC PIECE COMPONENT ====================
@@ -2769,7 +2789,7 @@ const ChessboardScene: React.FC = () => {
     onClick: (id: string, notation: string) => void;
   }
 
-  const ChessPiece: React.FC<ChessPieceProps> = ({
+  const ChessPiece: React.FC<ChessPieceProps & { movePath?: string[] }> = ({
     id,
     color,
     modelPath,
@@ -2778,6 +2798,7 @@ const ChessboardScene: React.FC = () => {
     rotation = [0, 0, 0],
     isSelected,
     onClick,
+    movePath = [],
   }) => {
     const gltf = useGLTF(modelPath) as GLTF;
     const transform = getWormholeTransform(notation);
@@ -2794,6 +2815,54 @@ const ChessboardScene: React.FC = () => {
       baseRotation[1] + rotation[1] + wormholeRotation[1],
       baseRotation[2] + rotation[2] + wormholeRotation[2],
     ];
+
+    const worldPath = useMemo(
+      () =>
+        movePath.map(
+          (notation) => new THREE.Vector3(...chessToWorld(notation))
+        ),
+      [movePath]
+    );
+
+    const [animatedPosition, setAnimatedPosition] = useState(
+      new THREE.Vector3(...position)
+    );
+
+    useEffect(() => {
+      if (!worldPath.length) return;
+
+      let t = 0;
+      let segment = 0;
+      let start = worldPath[0].clone();
+      let end = worldPath[1].clone();
+
+      let frame: number;
+      const speed = 1.5;
+
+      const animate = () => {
+        if (!end) return;
+
+        t += 0.02 * speed;
+
+        if (t > 1) {
+          segment++;
+          if (segment >= worldPath.length - 1) {
+            setAnimatedPosition(worldPath[worldPath.length - 1]);
+            return;
+          }
+          start = worldPath[segment];
+          end = worldPath[segment + 1];
+          t = 0;
+        }
+        const current = start.clone().lerp(end, t);
+        setAnimatedPosition(current);
+
+        frame = requestAnimationFrame(animate);
+      };
+
+      frame = requestAnimationFrame(animate);
+      return () => cancelAnimationFrame(frame);
+    }, [movePath]);
 
     const { springPos, springScale, springRot } = useSpring({
       springPos: position,
@@ -2822,10 +2891,23 @@ const ChessboardScene: React.FC = () => {
     );
   };
 
+  const [animatingPiece, setAnimatingPiece] = useState<string | null>(null);
+
+  const handleMove = (pieceId: string, path: string[]) => {
+    setMovePaths((prev) => ({ ...prev, [pieceId]: path }));
+
+    const finalSquare = path[path.length - 1];
+    setPiecePositions((prev) => ({
+      ...prev,
+      [pieceId]: finalSquare,
+    }));
+  };
+
   const handlePieceClick = (pieceId: string, notation: string) => {
     if (selectedPiece === pieceId) {
       setSelectedPiece(null);
       setPossibleMoves([]);
+      setPossibleMovePaths({});
       return;
     }
 
@@ -2834,36 +2916,70 @@ const ChessboardScene: React.FC = () => {
     const color = pieceId.startsWith("white") ? "white" : "black";
 
     let moves: string[] = [];
-    if (pieceId.includes("rook"))
-      moves = calculateOrthogonalMoves(notation, piecePositions, color);
-    else if (pieceId.includes("bishop"))
-      moves = calculateDiagonalMoves(notation, piecePositions, color);
+    let paths: Record<string, string[]> = {};
+    if (pieceId.includes("rook")) {
+      const result = calculateOrthogonalMoves(notation, piecePositions, color);
+      moves = result.moves;
+      paths = result.paths;
+    } else if (pieceId.includes("bishop")) {
+      const result = calculateDiagonalMoves(notation, piecePositions, color);
+      moves = result.moves;
+      paths = result.paths;
+    }
 
     setPossibleMoves(moves);
+    setPossibleMovePaths(paths);
+  };
+
+  const animatePieceAlongPath = async (
+    pieceId: string,
+    pathNotations: string[]
+  ) => {
+    const delay = PIECE_SPEED; // milliseconds per step
+    for (let i = 0; i < pathNotations.length; i++) {
+      const notation = pathNotations[i];
+
+      setPiecePositions((prev) => ({
+        ...prev,
+        [pieceId]: notation,
+      }));
+
+      // Add optional capture check
+      if (i === pathNotations.length - 1) {
+        // End of path → check if capturing
+        const targetPiece = Object.entries(piecePositions).find(
+          ([id, pos]) => pos === notation && id !== pieceId
+        );
+        if (targetPiece) {
+          const [capturedId] = targetPiece;
+        }
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+
+    // End animation
+    setAnimatingPiece(null);
   };
 
   const handleSquareClick = (
-    targetPosition: [number, number, number],
-    targetNotation: string
+    pos: [number, number, number],
+    notation: string
   ) => {
-    if (!selectedPiece) return;
-    if (!possibleMoves.includes(targetNotation)) return;
+    if (!selectedPiece || !possibleMoves.includes(notation)) return;
 
-    const capturingId = Object.entries(piecePositions).find(
-      ([id, notation]) => id !== selectedPiece && notation === targetNotation
-    )?.[0];
-
-    setPiecePositions((prev) => {
-      const updated = { ...prev };
-      if (capturingId) delete updated[capturingId]; // remove captured piece
-      updated[selectedPiece] = targetNotation;
-      return updated;
-    });
-
-    if (capturingId) {
-      const capturedColor = capturingId.startsWith("white") ? "White" : "Black";
-      const movingColor = selectedPiece.startsWith("white") ? "White" : "Black";
+    const pathNotations = possibleMovePaths[notation];
+    if (!pathNotations) {
+      console.warn("No animation path found for move:", notation);
+      return;
     }
+
+    // Disable interactions while animating
+    setAnimatingPiece(selectedPiece);
+    setSelectedPiece(null);
+    setPossibleMoves([]);
+
+    animatePieceAlongPath(selectedPiece, pathNotations);
 
     setMoveHistory((prev) => [
       ...prev,
@@ -2871,15 +2987,13 @@ const ChessboardScene: React.FC = () => {
         moveNumber: prev.length + 1,
         piece: selectedPiece,
         from: piecePositions[selectedPiece],
-        to: targetNotation,
+        to: pathNotations[pathNotations.length - 1],
         timestamp: new Date(),
-        isWormholeMove: targetNotation.includes("'"),
+        isWormholeMove:
+          pathNotations[0].includes("'") !==
+          pathNotations[pathNotations.length - 1].includes("'"),
       },
     ]);
-
-    setSelectedPiece(null);
-    setPossibleMoves([]);
-    setCurrentPlayer((prev) => (prev === "white" ? "black" : "white"));
   };
 
   const isHighlightedSquare = (notation: string) => {
