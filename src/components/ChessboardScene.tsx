@@ -5,11 +5,44 @@ import { GLTF } from "three-stdlib";
 import { useSpring, a } from "@react-spring/three";
 import * as THREE from "three";
 import { Directions, boardGraph } from "./WormholeTopology";
-import { COLORS, PIECE_SPEED, PENTAGONAL_SQUARES, BOARD_MAX, BOARD_MIN, BOARD_SIZE, GRID_COUNT, SPACING, FILES, RANKS, OUTER_LAYER_SCALE, 
-  OUTER_LAYER_SQUARES, OUTER_LAYER_TILT, INNER_LAYER_SCALE, INNER_LAYER_SQUARES, INNER_LAYER_TILT} from "./Constants";
-import { getInnerLayerAngle, getOuterLayerAngle, getPieceWormholeRotation, getRotationTowardsOrigin, getWormholeSquarePosition, 
-  getWormholeTransform, torusPoint, TORUS_MAJOR, OUTER_MINOR, OUTER_PHI, INNER_PHI, INNER_MINOR} from "./WormholeGeometry";
-import { gridToChess, gridToWorld, chessToGrid, chessToWorld, } from "./CoordinateConversion";
+import {
+  COLORS,
+  PIECE_SPEED,
+  PENTAGONAL_SQUARES,
+  BOARD_MAX,
+  BOARD_MIN,
+  BOARD_SIZE,
+  GRID_COUNT,
+  SPACING,
+  FILES,
+  RANKS,
+  OUTER_LAYER_SCALE,
+  OUTER_LAYER_SQUARES,
+  OUTER_LAYER_TILT,
+  INNER_LAYER_SCALE,
+  INNER_LAYER_SQUARES,
+  INNER_LAYER_TILT,
+} from "./Constants";
+import {
+  getInnerLayerAngle,
+  getOuterLayerAngle,
+  getPieceWormholeRotation,
+  getRotationTowardsOrigin,
+  getWormholeSquarePosition,
+  getWormholeTransform,
+  torusPoint,
+  TORUS_MAJOR,
+  OUTER_MINOR,
+  OUTER_PHI,
+  INNER_PHI,
+  INNER_MINOR,
+} from "./WormholeGeometry";
+import {
+  gridToChess,
+  gridToWorld,
+  chessToGrid,
+  chessToWorld,
+} from "./CoordinateConversion";
 
 // ==================== 3D COMPONENTS ====================
 
@@ -407,6 +440,13 @@ const Rook: React.FC<
   return <ChessPiece {...props} modelPath={modelPath} />;
 };
 
+const King: React.FC<
+  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+> = (props) => {
+  const modelPath = `chessboard/${props.color}-pieces/${props.color}-king.glb`;
+  return <ChessPiece {...props} modelPath={modelPath} />;
+};
+
 // preload models
 useGLTF.preload("chessboard/white-pieces/white-rook.glb");
 useGLTF.preload("chessboard/black-pieces/black-rook.glb");
@@ -414,6 +454,10 @@ useGLTF.preload("chessboard/black-pieces/black-rook.glb");
 // preload models
 useGLTF.preload("chessboard/white-pieces/white-bishop.glb");
 useGLTF.preload("chessboard/black-pieces/black-bishop.glb");
+
+// Preload king models
+useGLTF.preload("chessboard/white-pieces/white-king.glb");
+useGLTF.preload("chessboard/black-pieces/black-king.glb");
 
 // ==================== MAIN COMPONENT ====================
 
@@ -429,6 +473,8 @@ const ChessboardScene: React.FC = () => {
     "black-bishop-f8": "f8",
     "white-queen-d1": "d1",
     "black-queen-d8": "d8",
+    "white-king-e1": "e1",
+    "black-king-e8": "e8",
   });
 
   const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
@@ -972,6 +1018,331 @@ const ChessboardScene: React.FC = () => {
     return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
   };
 
+  const calculateKingMoves = (
+    start: string,
+    piecePositions: Record<string, string>,
+    pieceColor: "white" | "black"
+  ): { moves: string[]; paths: Record<string, string[]> } => {
+    const moves = new Set<string>();
+    const paths = new Map<string, string[]>();
+
+    const occupiedByColor = Object.fromEntries(
+      Object.entries(piecePositions).map(([id, notation]) => [
+        notation,
+        id.startsWith("white") ? "white" : "black",
+      ])
+    );
+
+    // King can move in all 8 directions plus wormhole directions
+    const allDirections: EntryDir[] = [
+      "N",
+      "S",
+      "E",
+      "W", // Orthogonal
+      "NE",
+      "NW",
+      "SE",
+      "SW", // Diagonal
+      "in",
+      "out",
+      "cw",
+      "ccw", // Wormhole orthogonal
+      "idl",
+      "idr",
+      "odl",
+      "odr", // Wormhole diagonal
+    ];
+
+    // Special handling for inner/outer layer squares
+    const inDir: Record<string, EntryDir> = {
+      c4: "E",
+      c5: "E",
+      d3: "N",
+      e3: "N",
+      d6: "S",
+      e6: "S",
+      f4: "W",
+      f5: "W",
+      "c4'": "E",
+      "c5'": "E",
+      "d3'": "N",
+      "e3'": "N",
+      "d6'": "S",
+      "e6'": "S",
+      "f4'": "W",
+      "f5'": "W",
+    };
+
+    const outDir: Record<string, EntryDir> = {
+      c4: "W",
+      c5: "W",
+      d3: "S",
+      e3: "S",
+      d6: "N",
+      e6: "N",
+      f4: "E",
+      f5: "E",
+      "c4'": "W",
+      "c5'": "W",
+      "d3'": "S",
+      "e3'": "S",
+      "d6'": "N",
+      "e6'": "N",
+      "f4'": "E",
+      "f5'": "E",
+    };
+
+    // Pentagon squares require special handling for king moves
+    const pentagonKingExits: Record<
+      string,
+      Partial<Record<EntryDir, EntryDir[]>>
+    > = {
+      c3: {
+        N: ["N"],
+        E: ["E"],
+        S: ["S"],
+        W: ["W"],
+        NE: ["idl", "idr"],
+        SE: ["idr", "SE"],
+        NW: ["NW", "idl"],
+        SW: ["SW"],
+        cw: ["cw"],
+        ccw: ["ccw"],
+        in: ["in"],
+        out: ["out"],
+        idl: ["idl"],
+        idr: ["idr"],
+        odl: ["odl"],
+        odr: ["odr"],
+      },
+      c6: {
+        N: ["N"],
+        E: ["E"],
+        S: ["S"],
+        W: ["W"],
+        SE: ["idl", "idr"],
+        NE: ["NE", "idl"],
+        SW: ["SW", "idr"],
+        NW: ["NW"],
+        cw: ["cw"],
+        ccw: ["ccw"],
+        in: ["in"],
+        out: ["out"],
+        idl: ["idl"],
+        idr: ["idr"],
+        odl: ["odl"],
+        odr: ["odr"],
+      },
+      f3: {
+        N: ["N"],
+        E: ["E"],
+        S: ["S"],
+        W: ["W"],
+        NW: ["idl", "idr"],
+        SW: ["idl", "SW"],
+        NE: ["NE", "idr"],
+        SE: ["SE"],
+        cw: ["cw"],
+        ccw: ["ccw"],
+        in: ["in"],
+        out: ["out"],
+        idl: ["idl"],
+        idr: ["idr"],
+        odl: ["odl"],
+        odr: ["odr"],
+      },
+      f6: {
+        N: ["N"],
+        E: ["E"],
+        S: ["S"],
+        W: ["W"],
+        SW: ["idl", "idr"],
+        NW: ["NW", "idr"],
+        SE: ["SE", "idl"],
+        NE: ["NE"],
+        cw: ["cw"],
+        ccw: ["ccw"],
+        in: ["in"],
+        out: ["out"],
+        idl: ["idl"],
+        idr: ["idr"],
+        odl: ["odl"],
+        odr: ["odr"],
+      },
+      // Add prime versions with same structure
+      "c3'": {
+        N: ["N"],
+        E: ["E"],
+        S: ["S"],
+        W: ["W"],
+        NE: ["idl", "idr"],
+        SE: ["idl", "SE"],
+        NW: ["NW", "idr"],
+        SW: ["SW"],
+        cw: ["cw"],
+        ccw: ["ccw"],
+        in: ["in"],
+        out: ["out"],
+        idl: ["idl"],
+        idr: ["idr"],
+        odl: ["odl"],
+        odr: ["odr"],
+      },
+      "c6'": {
+        N: ["N"],
+        E: ["E"],
+        S: ["S"],
+        W: ["W"],
+        SE: ["idl", "idr"],
+        NE: ["NE", "idr"],
+        SW: ["SW", "idl"],
+        NW: ["NW"],
+        cw: ["cw"],
+        ccw: ["ccw"],
+        in: ["in"],
+        out: ["out"],
+        idl: ["idl"],
+        idr: ["idr"],
+        odl: ["odl"],
+        odr: ["odr"],
+      },
+      "f3'": {
+        N: ["N"],
+        E: ["E"],
+        S: ["S"],
+        W: ["W"],
+        NW: ["idl", "idr"],
+        SW: ["idr", "SW"],
+        NE: ["NE", "idl"],
+        SE: ["SE"],
+        cw: ["cw"],
+        ccw: ["ccw"],
+        in: ["in"],
+        out: ["out"],
+        idl: ["idl"],
+        idr: ["idr"],
+        odl: ["odl"],
+        odr: ["odr"],
+      },
+      "f6'": {
+        N: ["N"],
+        E: ["E"],
+        S: ["S"],
+        W: ["W"],
+        SW: ["idl", "idr"],
+        NW: ["NW", "idl"],
+        SE: ["SE", "idr"],
+        NE: ["NE"],
+        cw: ["cw"],
+        ccw: ["ccw"],
+        in: ["in"],
+        out: ["out"],
+        idl: ["idl"],
+        idr: ["idr"],
+        odl: ["odl"],
+        odr: ["odr"],
+      },
+    };
+
+    const node = boardGraph[start];
+    if (!node) return { moves: [], paths: {} };
+
+    for (let dir of allDirections) {
+      // Handle in/out transitions for inner/outer layer squares
+      if (start in outDir && dir === "out") {
+        dir = outDir[start];
+      }
+      if (start in inDir && dir === inDir[start]) {
+        dir = "in";
+      }
+
+      // For diagonal moves on inner/outer layer squares
+      const diagInDir: Record<string, Record<string, EntryDir>> = {
+        c4: { NE: "idl", SE: "idr" },
+        c5: { NE: "idl", SE: "idr" },
+        d3: { NW: "idl", NE: "idr" },
+        d6: { SE: "idl", SW: "idr" },
+        e3: { NW: "idl", NE: "idr" },
+        e6: { SE: "idl", SW: "idr" },
+        f4: { SW: "idl", NW: "idr" },
+        f5: { SW: "idl", NW: "idr" },
+        "c4'": { NE: "idr", SE: "idl" },
+        "c5'": { NE: "idr", SE: "idl" },
+        "d3'": { NW: "idr", NE: "idl" },
+        "d6'": { SE: "idr", SW: "idl" },
+        "e3'": { NW: "idr", NE: "idl" },
+        "e6'": { SE: "idr", SW: "idl" },
+        "f4'": { SW: "idr", NW: "idl" },
+        "f5'": { SW: "idr", NW: "idl" },
+      };
+
+      const diagOutDir: Record<string, Record<string, EntryDir>> = {
+        c4: { odl: "SW", odr: "NW" },
+        c5: { odl: "SW", odr: "NW" },
+        d3: { odl: "SE", odr: "SW" },
+        d6: { odl: "NW", odr: "NE" },
+        e3: { odl: "SE", odr: "SW" },
+        e6: { odl: "NW", odr: "NE" },
+        f4: { odl: "NE", odr: "SE" },
+        f5: { odl: "NE", odr: "SE" },
+        "c4'": { odr: "SW", odl: "NW" },
+        "c5'": { odr: "SW", odl: "NW" },
+        "d3'": { odr: "SE", odl: "SW" },
+        "d6'": { odr: "NW", odl: "NE" },
+        "e3'": { odr: "SE", odl: "SW" },
+        "e6'": { odr: "NW", odl: "NE" },
+        "f4'": { odr: "NE", odl: "SE" },
+        "f5'": { odr: "NE", odl: "SE" },
+      };
+
+      if (start in diagInDir && dir in diagInDir[start]) {
+        dir = diagInDir[start][dir];
+      }
+      if (start in diagOutDir && dir in diagOutDir[start]) {
+        dir = diagOutDir[start][dir];
+      }
+
+      // Check if we're on a pentagon square
+      if (pentagonKingExits[start]) {
+        const exitDirs = pentagonKingExits[start][dir] || [dir];
+        for (const exitDir of exitDirs) {
+          const next = node[exitDir];
+          if (next) {
+            // Check if square is occupied
+            if (next in occupiedByColor) {
+              if (occupiedByColor[next] !== pieceColor) {
+                moves.add(next); // Can capture opponent piece
+                paths.set(next, [start, next]);
+              }
+              // Can't move to square occupied by own piece
+            } else {
+              moves.add(next);
+              paths.set(next, [start, next]);
+            }
+          }
+        }
+      } else {
+        // Normal square: just check the single direction
+        const next = node[dir];
+        if (next) {
+          // Check if square is occupied
+          if (next in occupiedByColor) {
+            if (occupiedByColor[next] !== pieceColor) {
+              moves.add(next); // Can capture opponent piece
+              paths.set(next, [start, next]);
+            }
+            // Can't move to square occupied by own piece
+          } else {
+            moves.add(next);
+            paths.set(next, [start, next]);
+          }
+        }
+      }
+    }
+
+    return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
+  };
+
   // ==================== GENERIC PIECE COMPONENT ====================
 
   interface ChessPieceProps {
@@ -1134,6 +1505,10 @@ const ChessboardScene: React.FC = () => {
       );
       moves = Array.from(new Set([...orthoResult.moves, ...diagResult.moves]));
       paths = { ...orthoResult.paths, ...diagResult.paths };
+    } else if (pieceId.includes("king")) {
+      const result = calculateKingMoves(notation, piecePositions, color);
+      moves = result.moves;
+      paths = result.paths;
     }
     setPossibleMoves(moves);
     setPossibleMovePaths(paths);
@@ -1326,6 +1701,18 @@ const ChessboardScene: React.FC = () => {
                 } else if (id.includes("queen")) {
                   return (
                     <Queen
+                      key={id}
+                      id={id}
+                      color={color}
+                      position={pos}
+                      notation={notation}
+                      isSelected={isSelected}
+                      onClick={handlePieceClick}
+                    />
+                  );
+                } else if (id.includes("king")) {
+                  return (
+                    <King
                       key={id}
                       id={id}
                       color={color}
