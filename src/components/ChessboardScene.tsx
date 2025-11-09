@@ -1111,6 +1111,8 @@ const ChessboardScene: React.FC = () => {
 
     const color = pieceId.startsWith("white") ? "white" : "black";
 
+    if (color !== currentPlayer) return;
+
     let moves: string[] = [];
     let paths: Record<string, string[]> = {};
     if (pieceId.includes("rook")) {
@@ -1186,6 +1188,7 @@ const ChessboardScene: React.FC = () => {
     setAnimatingPiece(selectedPiece);
     setSelectedPiece(null);
     setPossibleMoves([]);
+    setCurrentPlayer((prev) => (prev === "white" ? "black" : "white"));
 
     animatePieceAlongPath(selectedPiece, pathNotations);
 
