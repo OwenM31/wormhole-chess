@@ -4,68 +4,7 @@ import { OrbitControls, useGLTF, Box } from "@react-three/drei";
 import { GLTF } from "three-stdlib";
 import { useSpring, a } from "@react-spring/three";
 import * as THREE from "three";
-
-// Color Palette
-const COLORS = {
-  smokeyTaupe: "#8B7E74",
-  lodenGreen: "#4C5C4C",
-  warmWhite: "#FAF9F6",
-  charcoal: "#2F2F2F",
-  charcoalLight: "#3A3A3A",
-  lodenGreenDark: "#3C493F",
-  lodenGreenLight: "#5C6C5C",
-  accent: "#D4AF37", // Gold accent for highlights
-};
-
-// Global constants
-const BOARD_SIZE = 170;
-const BOARD_MIN = -85;
-const BOARD_MAX = 85;
-const GRID_COUNT = 8;
-const SPACING = BOARD_SIZE / (GRID_COUNT - 1);
-
-const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"];
-
-// Wormhole layer definitions
-const OUTER_LAYER_SQUARES = [
-  "c3",
-  "d3",
-  "e3",
-  "f3",
-  "c4",
-  "f4",
-  "c5",
-  "f5",
-  "c6",
-  "d6",
-  "e6",
-  "f6",
-];
-
-const INNER_LAYER_SQUARES = [
-  "d4",
-  "x1",
-  "x2",
-  "x3",
-  "x4",
-  "d5",
-  "e5",
-  "y4",
-  "y3",
-  "y2",
-  "y1",
-  "e4",
-];
-
-// Wormhole transformation settings
-const OUTER_LAYER_SCALE = 0.9;
-const INNER_LAYER_SCALE = 0.75;
-const OUTER_LAYER_TILT = Math.PI / 4;
-const INNER_LAYER_TILT = (Math.PI * 5) / 12;
-
-// Pentagonal squares
-const PENTAGONAL_SQUARES = ["c3", "c6", "f3", "f6"];
+import {COLORS, BOARD_MAX, BOARD_MIN, BOARD_SIZE, FILES, RANKS, OUTER_LAYER_SCALE, INNER_LAYER_SCALE, OUTER_LAYER_SQUARES, INNER_LAYER_SQUARES, OUTER_LAYER_TILT, INNER_LAYER_TILT, PENTAGONAL_SQUARES, SPACING} from "../components/Constants";
 
 // ==================== WORMHOLE TOPOLOGY ====================
 
@@ -418,66 +357,7 @@ const boardGraph: Record<string, Directions> = {
   "h8'": { N: null, E: null, S: "h7'", W: "g8'" },
 };
 
-const WORMHOLE_CONNECTIONS: { [key: string]: string[] } = {
-  // Top surface pentagonal connections
-  c3: ["b3", "c2", "d3", "c4", "x1"],
-  c6: ["b6", "c7", "d6", "c5", "x4"],
-  f3: ["g3", "f2", "e3", "f4", "y1"],
-  f6: ["g6", "f7", "e6", "f5", "y4"],
 
-  // Bottom surface pentagonal connections
-  "c3'": ["b3'", "c2'", "d3'", "c4'", "x1'"],
-  "c6'": ["b6'", "c7'", "d6'", "c5'", "x4'"],
-  "f3'": ["g3'", "f2'", "e3'", "f4'", "y1'"],
-  "f6'": ["g6'", "f7'", "e6'", "f5'", "y4'"],
-
-  // Inner layer connections (clockwise from d4)
-  d4: ["d3", "x1", "e4", "d4'"],
-  x1: ["c3", "d4", "x2"],
-  x2: ["x1", "x3"],
-  x3: ["x2", "x4"],
-  x4: ["x3", "c6", "d5"],
-  d5: ["x4", "d6", "d5'"],
-  e5: ["e6", "y4", "e5'"],
-  y4: ["f6", "e5", "y3"],
-  y3: ["y4", "y2"],
-  y2: ["y3", "y1"],
-  y1: ["y2", "f3", "e4"],
-  e4: ["e3", "y1", "d4", "e4'"],
-
-  // Prime versions
-  "d4'": ["d3'", "x1'", "e4'", "d4"],
-  "x1'": ["c3'", "d4'", "x2'"],
-  "x2'": ["x1'", "x3'"],
-  "x3'": ["x2'", "x4'"],
-  "x4'": ["x3'", "c6'", "d5'"],
-  "d5'": ["x4'", "d6'", "d5"],
-  "e5'": ["e6'", "y4'", "e5"],
-  "y4'": ["f6'", "e5'", "y3'"],
-  "y3'": ["y4'", "y2'"],
-  "y2'": ["y3'", "y1'"],
-  "y1'": ["y2'", "f3'", "e4'"],
-  "e4'": ["e3'", "y1'", "d4'", "e4"],
-
-  // Outer layer connections
-  d3: ["c3", "e3", "d4", "d2"],
-  e3: ["d3", "f3", "e4", "e2"],
-  c4: ["c3", "c5", "b4"],
-  f4: ["f3", "f5", "g4"],
-  c5: ["c4", "c6", "b5"],
-  f5: ["f4", "f6", "g5"],
-  d6: ["c6", "e6", "d5", "d7"],
-  e6: ["d6", "f6", "e5", "e7"],
-
-  "d3'": ["c3'", "e3'", "d4'", "d2'"],
-  "e3'": ["d3'", "f3'", "e4'", "e2'"],
-  "c4'": ["c3'", "c5'", "b4'"],
-  "f4'": ["f3'", "f5'", "g4'"],
-  "c5'": ["c4'", "c6'", "b5'"],
-  "f5'": ["f4'", "f6'", "g5'"],
-  "d6'": ["c6'", "e6'", "d5'", "d7'"],
-  "e6'": ["d6'", "f6'", "e5'", "e7'"],
-};
 
 // ==================== WORMHOLE GEOMETRY ====================
 
@@ -896,6 +776,7 @@ const chessToWorld = (notation: string): [number, number, number] => {
   return [worldX, worldY, worldZ];
 };
 
+
 // ==================== 3D COMPONENTS ====================
 
 const ChessboardModel: React.FC = () => {
@@ -949,6 +830,7 @@ const Rook: React.FC<{
   notation: string;
   rotation?: [number, number, number];
   isSelected: boolean;
+  color: string;
   onClick: (id: string, notation: string) => void;
 }> = ({
   id,
@@ -956,9 +838,10 @@ const Rook: React.FC<{
   notation,
   rotation = [0, 0, 0],
   isSelected,
+  color,
   onClick,
 }) => {
-  const gltf = useGLTF("chessboard/white-pieces/white-rook.glb") as GLTF;
+  const gltf = useGLTF(`chessboard/${color}-pieces/${color}-rook.glb`) as GLTF;
   const transform = getWormholeTransform(notation);
   const wormholeRotation = getPieceWormholeRotation(notation);
 
@@ -1002,6 +885,64 @@ const Rook: React.FC<{
 };
 
 useGLTF.preload("chessboard/black-pieces/black-rook.glb");
+
+const KNIGHT: React.FC<{
+  id: string;
+  position: [number, number, number];
+  notation: string;
+  rotation?: [number, number, number];
+  isSelected: boolean;
+  onClick: (id: string, notation: string) => void;
+}> = ({
+  id,
+  position,
+  notation,
+  rotation = [0, 0, 0],
+  isSelected,
+  onClick,
+}) => {
+  const gltf = useGLTF("chessboard/white-pieces/white-knight.glb") as GLTF;
+  const transform = getWormholeTransform(notation);
+  const wormholeRotation = getPieceWormholeRotation(notation);
+
+  const baseRotation: [number, number, number] = [
+    Math.PI / 2,
+    0,
+    notation.includes("'") ? Math.PI : 0,
+  ];
+
+  const finalRotation: [number, number, number] = [
+    baseRotation[0] + rotation[0] + wormholeRotation[0],
+    baseRotation[1] + rotation[1] + wormholeRotation[1],
+    baseRotation[2] + rotation[2] + wormholeRotation[2],
+  ];
+
+  const { springPos, springScale, springRot } = useSpring({
+    springPos: position,
+    springScale: transform.scale,
+    springRot: finalRotation,
+    config: { mass: 1, tension: 200, friction: 20 },
+  });
+
+  return (
+    <a.group
+      position={springPos}
+      scale={springScale}
+      rotation={springRot as unknown as [number, number, number]}
+      onClick={(e: ThreeEvent<MouseEvent>) => {
+        e.stopPropagation();
+        onClick(id, notation);
+      }}
+    >
+      <primitive object={gltf.scene.clone()} scale={[1, 1, 1]} />
+      {isSelected && (
+        <Box position={[0, 0, 0]} args={[25, 25, 25]}>
+          <meshBasicMaterial color="yellow" opacity={0.2} transparent />
+        </Box>
+      )}
+    </a.group>
+  );
+};
 
 // ==================== UI COMPONENTS ====================
 
@@ -1263,6 +1204,33 @@ const ControlsInfo: React.FC = () => {
 // ==================== MAIN COMPONENT ====================
 
 const ChessboardScene: React.FC = () => {
+  
+  type Piece = {
+    id: string;
+    type: "rook" | "bishop" | "knight" | "queen" | "king" | "pawn";
+    position: [number, number, number];
+    notation: string;
+    rotation?: [number, number, number];
+    isSelected: boolean;
+    onClick: (id: string, notation: string) => void;
+    color: string;
+    component: React.FC<any>;
+  }
+
+  const topRookPieceZ: Piece = {
+    id: "top-rook-0",
+    type: "rook",
+    position: [0, 0, 0],
+    notation: "a1",
+    rotation: [0,0,0],
+    isSelected: false,
+    onClick: (id, notation) => {},
+    color: "white",
+    component: Rook,
+  };
+
+  const pieces: Piece[] = [topRookPieceZ, ];
+  
   const [piecePositions, setPiecePositions] = useState<{
     [key: string]: string;
   }>({
@@ -1366,67 +1334,6 @@ const ChessboardScene: React.FC = () => {
 
     return squares;
   }, []);
-
-  /*  const calculateRookMoves = (notation: string): string[] => {
-    const moves = new Set<string>();
-    const visited = new Set<string>();
-
-    const explorePath = (
-      current: string,
-      direction: "file" | "rank" | "wormhole",
-      startNotation: string
-    ) => {
-      if (visited.has(`${current}-${direction}`)) return;
-      visited.add(`${current}-${direction}`);
-
-      const connections = WORMHOLE_CONNECTIONS[current];
-      if (connections) {
-        connections.forEach((connected) => {
-          if (connected !== startNotation) {
-            moves.add(connected);
-            if (connected.includes("'") !== current.includes("'")) {
-              explorePath(connected, "wormhole", startNotation);
-            }
-          }
-        });
-      }
-
-      const isPrime = current.endsWith("'");
-      const cleanCurrent = isPrime ? current.slice(0, -1) : current;
-
-      if (!cleanCurrent.startsWith("x") && !cleanCurrent.startsWith("y")) {
-        const file = cleanCurrent[0];
-        const rank = cleanCurrent[1];
-        const fileIdx = FILES.indexOf(file);
-        const rankIdx = RANKS.indexOf(rank);
-
-        if (direction === "file" || direction === "wormhole") {
-          for (let r = 0; r < 8; r++) {
-            if (r !== rankIdx) {
-              const newNotation = `${file}${RANKS[r]}${isPrime ? "'" : ""}`;
-              moves.add(newNotation);
-            }
-          }
-        }
-
-        if (direction === "rank" || direction === "wormhole") {
-          for (let f = 0; f < 8; f++) {
-            if (f !== fileIdx) {
-              const newNotation = `${FILES[f]}${rank}${isPrime ? "'" : ""}`;
-              moves.add(newNotation);
-            }
-          }
-        }
-      }
-    };
-
-    explorePath(notation, "file", notation);
-    explorePath(notation, "rank", notation);
-    moves.delete(notation);
-
-    return Array.from(moves);
-  };
-*/
 
   type EntryDir = keyof Directions; // "N" | "S" | "E" | "W" | "in" | "out" | "cw" | "ccw"
 
@@ -1615,6 +1522,13 @@ const ChessboardScene: React.FC = () => {
   };
 
   const handlePieceClick = (pieceId: string, notation: string) => {
+    const piece = pieces.find((p) => p.id === pieceId);
+    if (!piece) return;
+
+    if(piece.color !== currentPlayer) return;
+
+    console.log(pieceId + " Piece ID")
+    
     if (selectedPiece === pieceId) {
       setSelectedPiece(null);
       setPossibleMoves([]);
@@ -1749,7 +1663,7 @@ const ChessboardScene: React.FC = () => {
             <directionalLight position={[10, 10, 10]} intensity={1} />
 
             <Suspense fallback={null}>
-              <ChessboardModel />
+              <ChessboardModel />    
 
               {boardSquares.map((square) => (
                 <BoardSquare
@@ -1762,6 +1676,22 @@ const ChessboardScene: React.FC = () => {
                 />
               ))}
 
+              // Puts the pieces onto the page
+
+              {pieces.map((p) => {
+                const PieceComponent = p.component;
+                return (
+                  <PieceComponent
+                    key={p.id}
+                    id={p.id}
+                    position={p.position}
+                    notation={p.notation}
+                    isSelected={selectedPiece === p.id}
+                    color={p.color}
+                    onClick={handlePieceClick}
+                  />
+                )
+              })}
               {Object.entries(piecePositions).map(([id, notation]) => {
                 const worldPos = chessToWorld(notation);
                 return (
@@ -1771,6 +1701,7 @@ const ChessboardScene: React.FC = () => {
                     position={worldPos}
                     notation={notation}
                     isSelected={selectedPiece === id}
+                    color={"white"}
                     onClick={handlePieceClick}
                   />
                 );
