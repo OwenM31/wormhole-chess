@@ -694,7 +694,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h1",
     W: "g2",
     NE: null,
-    SE: "h1",
+    SE: null,
     NW: "g3",
     SW: "g1",
   },
@@ -704,7 +704,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h2",
     W: "g3",
     NE: null,
-    SE: "h2",
+    SE: null,
     NW: "g4",
     SW: "g2",
   },
@@ -714,7 +714,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h3",
     W: "g4",
     NE: null,
-    SE: "h3",
+    SE: null,
     NW: "g5",
     SW: "g3",
   },
@@ -724,7 +724,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h4",
     W: "g5",
     NE: null,
-    SE: "h4",
+    SE: null,
     NW: "g6",
     SW: "g4",
   },
@@ -734,7 +734,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h5",
     W: "g6",
     NE: null,
-    SE: "h5",
+    SE: null,
     NW: "g7",
     SW: "g5",
   },
@@ -744,7 +744,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h6",
     W: "g7",
     NE: null,
-    SE: "h6",
+    SE: null,
     NW: "g8",
     SW: "g6",
   },
@@ -1348,7 +1348,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h1'",
     W: "g2'",
     NE: null,
-    SE: "h1'",
+    SE: null,
     NW: "g3'",
     SW: "g1'",
   },
@@ -1358,7 +1358,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h2'",
     W: "g3'",
     NE: null,
-    SE: "h2'",
+    SE: null,
     NW: "g4'",
     SW: "g2'",
   },
@@ -1368,7 +1368,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h3'",
     W: "g4'",
     NE: null,
-    SE: "h3'",
+    SE: null,
     NW: "g5'",
     SW: "g3'",
   },
@@ -1378,7 +1378,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h4'",
     W: "g5'",
     NE: null,
-    SE: "h4'",
+    SE: null,
     NW: "g6'",
     SW: "g4'",
   },
@@ -1388,7 +1388,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h5'",
     W: "g6'",
     NE: null,
-    SE: "h5'",
+    SE: null,
     NW: "g7'",
     SW: "g5'",
   },
@@ -1398,7 +1398,7 @@ const boardGraph: Record<string, Directions> = {
     S: "h6'",
     W: "g7'",
     NE: null,
-    SE: "h6'",
+    SE: null,
     NW: "g8'",
     SW: "g6'",
   },
@@ -1869,63 +1869,8 @@ const BoardSquare: React.FC<{
   );
 };
 
-const Rook: React.FC<{
-  id: string;
-  position: [number, number, number];
-  notation: string;
-  rotation?: [number, number, number];
-  isSelected: boolean;
-  onClick: (id: string, notation: string) => void;
-}> = ({
-  id,
-  position,
-  notation,
-  rotation = [0, 0, 0],
-  isSelected,
-  onClick,
-}) => {
-  const gltf = useGLTF("chessboard/white-pieces/white-rook.glb") as GLTF;
-  const transform = getWormholeTransform(notation);
-  const wormholeRotation = getPieceWormholeRotation(notation);
-
-  const baseRotation: [number, number, number] = [
-    Math.PI / 2,
-    0,
-    notation.includes("'") ? Math.PI : 0,
-  ];
-
-  const finalRotation: [number, number, number] = [
-    baseRotation[0] + rotation[0] + wormholeRotation[0],
-    baseRotation[1] + rotation[1] + wormholeRotation[1],
-    baseRotation[2] + rotation[2] + wormholeRotation[2],
-  ];
-
-  const { springPos, springScale, springRot } = useSpring({
-    springPos: position,
-    springScale: transform.scale,
-    springRot: finalRotation,
-    config: { mass: 1, tension: 200, friction: 20 },
-  });
-
-  return (
-    <a.group
-      position={springPos}
-      scale={springScale}
-      rotation={springRot as unknown as [number, number, number]}
-      onClick={(e: ThreeEvent<MouseEvent>) => {
-        e.stopPropagation();
-        onClick(id, notation);
-      }}
-    >
-      <primitive object={gltf.scene.clone()} scale={[1, 1, 1]} />
-      {isSelected && (
-        <Box position={[0, 0, 0]} args={[25, 25, 25]}>
-          <meshBasicMaterial color="yellow" opacity={0.2} transparent />
-        </Box>
-      )}
-    </a.group>
-  );
-};
+// Preload piece models
+useGLTF.preload("chessboard/white-pieces/white-rook.glb");
 
 useGLTF.preload("chessboard/black-pieces/black-rook.glb");
 
@@ -2186,20 +2131,106 @@ const ControlsInfo: React.FC = () => {
   );
 };
 
+// ==================== GENERIC PIECE COMPONENT ====================
+
+interface ChessPieceProps {
+  id: string;
+  color: "white" | "black";
+  modelPath: string; // e.g. "chessboard/white-pieces/white-rook.glb"
+  position: [number, number, number];
+  notation: string;
+  rotation?: [number, number, number];
+  isSelected: boolean;
+  onClick: (id: string, notation: string) => void;
+}
+
+const ChessPiece: React.FC<ChessPieceProps> = ({
+  id,
+  color,
+  modelPath,
+  position,
+  notation,
+  rotation = [0, 0, 0],
+  isSelected,
+  onClick,
+}) => {
+  const gltf = useGLTF(modelPath) as GLTF;
+  const transform = getWormholeTransform(notation);
+  const wormholeRotation = getPieceWormholeRotation(notation);
+
+  const baseRotation: [number, number, number] = [
+    Math.PI / 2,
+    0,
+    notation.includes("'") ? Math.PI : 0,
+  ];
+
+  const finalRotation: [number, number, number] = [
+    baseRotation[0] + rotation[0] + wormholeRotation[0],
+    baseRotation[1] + rotation[1] + wormholeRotation[1],
+    baseRotation[2] + rotation[2] + wormholeRotation[2],
+  ];
+
+  const { springPos, springScale, springRot } = useSpring({
+    springPos: position,
+    springScale: transform.scale,
+    springRot: finalRotation,
+    config: { mass: 1, tension: 200, friction: 20 },
+  });
+
+  return (
+    <a.group
+      position={springPos}
+      scale={springScale}
+      rotation={springRot as unknown as [number, number, number]}
+      onClick={(e: ThreeEvent<MouseEvent>) => {
+        e.stopPropagation();
+        onClick(id, notation);
+      }}
+    >
+      <primitive object={gltf.scene.clone()} scale={[1, 1, 1]} />
+      {isSelected && (
+        <Box position={[0, 0, 0]} args={[25, 25, 25]}>
+          <meshBasicMaterial color="yellow" opacity={0.2} transparent />
+        </Box>
+      )}
+    </a.group>
+  );
+};
+
+const Bishop: React.FC<
+  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+> = (props) => {
+  const modelPath = `chessboard/${props.color}-pieces/${props.color}-bishop.glb`;
+  return <ChessPiece {...props} modelPath={modelPath} />;
+};
+
+const Rook: React.FC<
+  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+> = (props) => {
+  const modelPath = `chessboard/${props.color}-pieces/${props.color}-rook.glb`;
+  return <ChessPiece {...props} modelPath={modelPath} />;
+};
+
+// preload models
+useGLTF.preload("chessboard/white-pieces/white-rook.glb");
+useGLTF.preload("chessboard/black-pieces/black-rook.glb");
+
+// preload models
+useGLTF.preload("chessboard/white-pieces/white-bishop.glb");
+useGLTF.preload("chessboard/black-pieces/black-bishop.glb");
+
 // ==================== MAIN COMPONENT ====================
 
 const ChessboardScene: React.FC = () => {
-  const [piecePositions, setPiecePositions] = useState<{
-    [key: string]: string;
-  }>({
-    "top-rook-0": "a1",
-    "top-rook-1": "a8",
-    "top-rook-2": "h1",
-    "top-rook-3": "h8",
-    "bottom-rook-0": "a1'",
-    "bottom-rook-1": "a8'",
-    "bottom-rook-2": "h1'",
-    "bottom-rook-3": "h8'",
+  const [piecePositions, setPiecePositions] = useState<Record<string, string>>({
+    "white-rook-a1": "a1",
+    "white-rook-h1": "h1",
+    "black-rook-a8": "a8",
+    "black-rook-h8": "h8",
+    "white-bishop-c1": "c1",
+    "white-bishop-f1": "f1",
+    "black-bishop-c8": "c8",
+    "black-bishop-f8": "f8",
   });
 
   const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
@@ -2373,8 +2404,18 @@ const ChessboardScene: React.FC = () => {
     },
   };
 
-  const calculateOrthogonalMoves = (start: string): string[] => {
+  const calculateOrthogonalMoves = (
+    start: string,
+    piecePositions: Record<string, string>,
+    pieceColor: "white" | "black"
+  ): string[] => {
     const moves = new Set<string>();
+    const occupiedByColor = Object.fromEntries(
+      Object.entries(piecePositions).map(([id, notation]) => [
+        notation,
+        id.startsWith("white") ? "white" : "black",
+      ])
+    );
 
     // Helper to get the opposite direction
     const oppositeDir: Record<EntryDir, EntryDir> = {
@@ -2472,6 +2513,13 @@ const ChessboardScene: React.FC = () => {
         return;
       }
       visitedLine.add(lineKey);
+
+      if (next in occupiedByColor) {
+        if (occupiedByColor[next] !== pieceColor) {
+          moves.add(next); // Can capture opponent piece
+        }
+        return;
+      }
 
       moves.add(next);
 
@@ -2578,8 +2626,18 @@ const ChessboardScene: React.FC = () => {
     },
   };
 
-  const calculateDiagonalMoves = (start: string): string[] => {
+  const calculateDiagonalMoves = (
+    start: string,
+    piecePositions: Record<string, string>,
+    pieceColor: "white" | "black"
+  ): string[] => {
     const moves = new Set<string>();
+    const occupiedByColor = Object.fromEntries(
+      Object.entries(piecePositions).map(([id, notation]) => [
+        notation,
+        id.startsWith("white") ? "white" : "black",
+      ])
+    );
 
     const inDir: Record<string, Record<string, EntryDir>> = {
       c4: { NE: "idl", SE: "idr" },
@@ -2656,6 +2714,13 @@ const ChessboardScene: React.FC = () => {
       }
       visitedLine.add(lineKey);
 
+      if (next in occupiedByColor) {
+        if (occupiedByColor[next] !== pieceColor) {
+          moves.add(next); // Can capture opponent piece
+        }
+        return;
+      }
+
       moves.add(next);
 
       const currentPrime = current.endsWith("'");
@@ -2691,15 +2756,90 @@ const ChessboardScene: React.FC = () => {
     return Array.from(moves);
   };
 
+  // ==================== GENERIC PIECE COMPONENT ====================
+
+  interface ChessPieceProps {
+    id: string;
+    color: "white" | "black";
+    modelPath: string; // e.g. "chessboard/white-pieces/white-rook.glb"
+    position: [number, number, number];
+    notation: string;
+    rotation?: [number, number, number];
+    isSelected: boolean;
+    onClick: (id: string, notation: string) => void;
+  }
+
+  const ChessPiece: React.FC<ChessPieceProps> = ({
+    id,
+    color,
+    modelPath,
+    position,
+    notation,
+    rotation = [0, 0, 0],
+    isSelected,
+    onClick,
+  }) => {
+    const gltf = useGLTF(modelPath) as GLTF;
+    const transform = getWormholeTransform(notation);
+    const wormholeRotation = getPieceWormholeRotation(notation);
+
+    const baseRotation: [number, number, number] = [
+      Math.PI / 2,
+      0,
+      notation.includes("'") ? Math.PI : 0,
+    ];
+
+    const finalRotation: [number, number, number] = [
+      baseRotation[0] + rotation[0] + wormholeRotation[0],
+      baseRotation[1] + rotation[1] + wormholeRotation[1],
+      baseRotation[2] + rotation[2] + wormholeRotation[2],
+    ];
+
+    const { springPos, springScale, springRot } = useSpring({
+      springPos: position,
+      springScale: transform.scale,
+      springRot: finalRotation,
+      config: { mass: 1, tension: 200, friction: 20 },
+    });
+
+    return (
+      <a.group
+        position={springPos}
+        scale={springScale}
+        rotation={springRot as unknown as [number, number, number]}
+        onClick={(e: ThreeEvent<MouseEvent>) => {
+          e.stopPropagation();
+          onClick(id, notation);
+        }}
+      >
+        <primitive object={gltf.scene.clone()} scale={[1, 1, 1]} />
+        {isSelected && (
+          <Box position={[0, 0, 0]} args={[25, 25, 25]}>
+            <meshBasicMaterial color="yellow" opacity={0.2} transparent />
+          </Box>
+        )}
+      </a.group>
+    );
+  };
+
   const handlePieceClick = (pieceId: string, notation: string) => {
     if (selectedPiece === pieceId) {
       setSelectedPiece(null);
       setPossibleMoves([]);
-    } else {
-      setSelectedPiece(pieceId);
-      const moves = calculateOrthogonalMoves(notation);
-      setPossibleMoves(moves);
+      return;
     }
+
+    setSelectedPiece(pieceId);
+
+    const color = pieceId.startsWith("white") ? "white" : "black";
+
+    let moves: string[] = [];
+    if (pieceId.includes("rook"))
+      moves = calculateOrthogonalMoves(notation, piecePositions, color);
+    else if (pieceId.includes("bishop"))
+      moves = calculateDiagonalMoves(notation, piecePositions, color);
+
+    setPossibleMoves(moves);
   };
 
   const handleSquareClick = (
@@ -2707,46 +2847,39 @@ const ChessboardScene: React.FC = () => {
     targetNotation: string
   ) => {
     if (!selectedPiece) return;
+    if (!possibleMoves.includes(targetNotation)) return;
 
-    const isValidMove = possibleMoves.includes(targetNotation);
-    if (isValidMove) {
-      const isOccupied = Object.entries(piecePositions).some(
-        ([id, notation]) => id !== selectedPiece && notation === targetNotation
-      );
+    const capturingId = Object.entries(piecePositions).find(
+      ([id, notation]) => id !== selectedPiece && notation === targetNotation
+    )?.[0];
 
-      if (!isOccupied) {
-        const previousNotation = piecePositions[selectedPiece];
+    setPiecePositions((prev) => {
+      const updated = { ...prev };
+      if (capturingId) delete updated[capturingId]; // remove captured piece
+      updated[selectedPiece] = targetNotation;
+      return updated;
+    });
 
-        // Check if it's a wormhole move
-        const isWormholeMove =
-          previousNotation.includes("'") !== targetNotation.includes("'") ||
-          targetNotation.includes("x") ||
-          targetNotation.includes("y") ||
-          previousNotation.includes("x") ||
-          previousNotation.includes("y");
-
-        setPiecePositions((prev) => ({
-          ...prev,
-          [selectedPiece]: targetNotation,
-        }));
-
-        setMoveHistory((prev) => [
-          ...prev,
-          {
-            moveNumber: prev.length + 1,
-            piece: selectedPiece,
-            from: previousNotation,
-            to: targetNotation,
-            timestamp: new Date(),
-            isWormholeMove,
-          },
-        ]);
-
-        setCurrentPlayer((prev) => (prev === "white" ? "black" : "white"));
-        setSelectedPiece(null);
-        setPossibleMoves([]);
-      }
+    if (capturingId) {
+      const capturedColor = capturingId.startsWith("white") ? "White" : "Black";
+      const movingColor = selectedPiece.startsWith("white") ? "White" : "Black";
     }
+
+    setMoveHistory((prev) => [
+      ...prev,
+      {
+        moveNumber: prev.length + 1,
+        piece: selectedPiece,
+        from: piecePositions[selectedPiece],
+        to: targetNotation,
+        timestamp: new Date(),
+        isWormholeMove: targetNotation.includes("'"),
+      },
+    ]);
+
+    setSelectedPiece(null);
+    setPossibleMoves([]);
+    setCurrentPlayer((prev) => (prev === "white" ? "black" : "white"));
   };
 
   const isHighlightedSquare = (notation: string) => {
@@ -2840,17 +2973,35 @@ const ChessboardScene: React.FC = () => {
               ))}
 
               {Object.entries(piecePositions).map(([id, notation]) => {
-                const worldPos = chessToWorld(notation);
-                return (
-                  <Rook
-                    key={id}
-                    id={id}
-                    position={worldPos}
-                    notation={notation}
-                    isSelected={selectedPiece === id}
-                    onClick={handlePieceClick}
-                  />
-                );
+                const color = id.startsWith("white") ? "white" : "black";
+                const pos = chessToWorld(notation);
+                const isSelected = selectedPiece === id;
+
+                if (id.includes("rook")) {
+                  return (
+                    <Rook
+                      key={id}
+                      id={id}
+                      color={color}
+                      position={pos}
+                      notation={notation}
+                      isSelected={isSelected}
+                      onClick={handlePieceClick}
+                    />
+                  );
+                } else if (id.includes("bishop")) {
+                  return (
+                    <Bishop
+                      key={id}
+                      id={id}
+                      color={color}
+                      position={pos}
+                      notation={notation}
+                      isSelected={isSelected}
+                      onClick={handlePieceClick}
+                    />
+                  );
+                }
               })}
             </Suspense>
 
