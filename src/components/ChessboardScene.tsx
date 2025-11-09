@@ -70,6 +70,7 @@ const PENTAGONAL_SQUARES = ["c3", "c6", "f3", "f6"];
 // ==================== WORMHOLE TOPOLOGY ====================
 
 type Directions = {
+  // Orthogonal directions
   N?: string | null;
   E?: string | null;
   S?: string | null;
@@ -78,43 +79,246 @@ type Directions = {
   out?: string | null;
   cw?: string | null;
   ccw?: string | null;
+
+  // Diagonal directions
+  NE?: string | null;
+  SE?: string | null;
+  SW?: string | null;
+  NW?: string | null;
+
+  // for diagonals on wormhole layers (from the piece's perspective)
+  idl?: string | null; // inner diagonal left
+  idr?: string | null; // inner diagonal right
+  od?: string | null; // outer diagonal
+  odl?: string | null; // outer diagonal left
+  odr?: string | null; // outer diagonal right
 };
 
 const boardGraph: Record<string, Directions> = {
-  a1: { N: "a2", E: "b1", S: null, W: null },
-  a2: { N: "a3", E: "b2", S: "a1", W: null },
-  a3: { N: "a4", E: "b3", S: "a2", W: null },
-  a4: { N: "a5", E: "b4", S: "a3", W: null },
-  a5: { N: "a6", E: "b5", S: "a4", W: null },
-  a6: { N: "a7", E: "b6", S: "a5", W: null },
-  a7: { N: "a8", E: "b7", S: "a6", W: null },
-  a8: { N: null, E: "b8", S: "a7", W: null },
+  a1: { N: "a2", E: "b1", S: null, W: null, NE: "b2" },
+  a2: { N: "a3", E: "b2", S: "a1", W: null, NE: "b3", SE: "b1" },
+  a3: { N: "a4", E: "b3", S: "a2", W: null, NE: "b4", SE: "b2" },
+  a4: { N: "a5", E: "b4", S: "a3", W: null, NE: "b5", SE: "b3" },
+  a5: { N: "a6", E: "b5", S: "a4", W: null, NE: "b6", SE: "b4" },
+  a6: { N: "a7", E: "b6", S: "a5", W: null, NE: "b7", SE: "b5" },
+  a7: { N: "a8", E: "b7", S: "a6", W: null, NE: "b8", SE: "b6" },
+  a8: { N: null, E: "b8", S: "a7", W: null, SE: "b7" },
 
-  b1: { N: "b2", E: "c1", S: null, W: "a1" },
-  b2: { N: "b3", E: "c2", S: "b1", W: "a2" },
-  b3: { N: "b4", E: "c3", S: "b2", W: "a3" },
-  b4: { N: "b5", E: "c4", S: "b3", W: "a4" },
-  b5: { N: "b6", E: "c5", S: "b4", W: "a5" },
-  b6: { N: "b7", E: "c6", S: "b5", W: "a6" },
-  b7: { N: "b8", E: "c7", S: "b6", W: "a7" },
-  b8: { N: null, E: "c8", S: "b7", W: "a8" },
+  b1: { N: "b2", E: "c1", S: null, W: "a1", NE: "c2", NW: "a2" },
+  b2: {
+    N: "b3",
+    E: "c2",
+    S: "b1",
+    W: "a2",
+    NE: "c3",
+    SE: "c1",
+    NW: "a3",
+    SW: "a1",
+  },
+  b3: {
+    N: "b4",
+    E: "c3",
+    S: "b2",
+    W: "a3",
+    NE: "c4",
+    SE: "c2",
+    NW: "a4",
+    SW: "a2",
+  },
+  b4: {
+    N: "b5",
+    E: "c4",
+    S: "b3",
+    W: "a4",
+    NE: "c5",
+    SE: "c3",
+    NW: "a5",
+    SW: "a3",
+  },
+  b5: {
+    N: "b6",
+    E: "c5",
+    S: "b4",
+    W: "a5",
+    NE: "c6",
+    SE: "c4",
+    NW: "a6",
+    SW: "a4",
+  },
+  b6: {
+    N: "b7",
+    E: "c6",
+    S: "b5",
+    W: "a6",
+    NE: "c7",
+    SE: "c5",
+    NW: "a7",
+    SW: "a5",
+  },
+  b7: {
+    N: "b8",
+    E: "c7",
+    S: "b6",
+    W: "a7",
+    NE: "c8",
+    SE: "c6",
+    NW: "a8",
+    SW: "a6",
+  },
+  b8: {
+    N: null,
+    E: "c8",
+    S: "b7",
+    W: "a8",
+    NE: null,
+    SE: "c7",
+    NW: null,
+    SW: "a7",
+  },
 
-  c1: { N: "c2", E: "d1", S: null, W: "b1" },
-  c2: { N: "c3", E: "d2", S: "c1", W: "b2" },
-  c3: { N: "c4", E: "d3", S: "c2", W: "b3", in: "x1", cw: "c4", ccw: "d3" },
-  c4: { N: "c5", E: "d4", S: "c3", W: "b4", in: "x2", cw: "c5", ccw: "c3" },
-  c5: { N: "c6", E: "d5", S: "c4", W: "b5", in: "x3", cw: "c6", ccw: "c4" },
-  c6: { N: "c7", E: "d6", S: "c5", W: "b6", in: "x4", cw: "d6", ccw: "c5" },
-  c7: { N: "c8", E: "d7", S: "c6", W: "b7" },
-  c8: { N: null, E: "d8", S: "c7", W: "b8" },
+  c1: { N: "c2", E: "d1", S: null, W: "b1", NE: "d2", NW: "b2" },
+  c2: {
+    N: "c3",
+    E: "d2",
+    S: "c1",
+    W: "b2",
+    NE: "d3",
+    SE: "d1",
+    NW: "b3",
+    SW: "b1",
+  },
+  c3: {
+    N: "c4",
+    E: "d3",
+    S: "c2",
+    W: "b3",
+    in: "x1",
+    cw: "c4",
+    ccw: "d3",
+    SW: "b2",
+    NW: "b4",
+    SE: "d2",
+    idl: "x2",
+    idr: "d4",
+    odl: "d2",
+    od: "b2",
+    odr: "b4",
+  },
+  c4: {
+    N: "c5",
+    E: "x2",
+    S: "c3",
+    W: "b4",
+    in: "x2",
+    cw: "c5",
+    ccw: "c3",
+    SW: "b3",
+    NW: "b5",
+    NE: "x3",
+    SE: "x1",
+    idl: "x3",
+    idr: "x1",
+    odl: "b3",
+    odr: "b5",
+  },
+  c5: {
+    N: "c6",
+    E: "x3",
+    S: "c4",
+    W: "b5",
+    in: "x3",
+    cw: "c6",
+    ccw: "c4",
+    SW: "b4",
+    NW: "b6",
+    NE: "x4",
+    SE: "x2",
+    idl: "x4",
+    idr: "x2",
+    odl: "b4",
+    odr: "b6",
+  },
+  c6: {
+    N: "c7",
+    E: "d6",
+    S: "c5",
+    W: "b6",
+    in: "x4",
+    cw: "d6",
+    ccw: "c5",
+    SW: "b5",
+    NW: "b7",
+    NE: "d7",
+    idl: "d5",
+    idr: "x3",
+    odl: "b5",
+    od: "b7",
+    odr: "d7",
+  },
+  c7: {
+    N: "c8",
+    E: "d7",
+    S: "c6",
+    W: "b7",
+    NW: "b8",
+    SW: "b6",
+    NE: "d8",
+    SE: "d6",
+  },
+  c8: { N: null, E: "d8", S: "c7", W: "b8", SW: "b7", SE: "d7" },
 
-  x1: { out: "c3", cw: "x2", in: "x1'", ccw: "d4" },
-  x2: { out: "c4", cw: "x3", in: "x2'", ccw: "x1" },
-  x3: { out: "c5", cw: "x4", in: "x3'", ccw: "x2" },
-  x4: { out: "c6", cw: "d5", in: "x4'", ccw: "x3" },
+  x1: {
+    out: "c3",
+    cw: "x2",
+    in: "x1'",
+    ccw: "d4",
+    idl: "x2'",
+    idr: "d4'",
+    odl: "d3",
+    odr: "c4",
+  },
+  x2: {
+    out: "c4",
+    cw: "x3",
+    in: "x2'",
+    ccw: "x1",
+    idl: "x3'",
+    idr: "x1'",
+    odl: "c3",
+    odr: "c5",
+  },
+  x3: {
+    out: "c5",
+    cw: "x4",
+    in: "x3'",
+    ccw: "x2",
+    idl: "x4'",
+    idr: "x2'",
+    odl: "c4",
+    odr: "c6",
+  },
+  x4: {
+    out: "c6",
+    cw: "d5",
+    in: "x4'",
+    ccw: "x3",
+    idl: "d5'",
+    idr: "x3'",
+    odl: "c5",
+    odr: "d6",
+  },
 
-  d1: { N: "d2", E: "e1", S: null, W: "c1" },
-  d2: { N: "d3", E: "e2", S: "d1", W: "c2" },
+  d1: { N: "d2", E: "e1", S: null, W: "c1", NE: "e2", NW: "c2" },
+  d2: {
+    N: "d3",
+    E: "e2",
+    S: "d1",
+    W: "c2",
+    NE: "e3",
+    SE: "e1",
+    NW: "c3",
+    SW: "c1",
+  },
   d3: {
     N: "d4",
     E: "e3",
@@ -124,9 +328,47 @@ const boardGraph: Record<string, Directions> = {
     out: "d2",
     cw: "c3",
     ccw: "e3",
+    NE: "e4",
+    SE: "e2",
+    NW: "x1",
+    SW: "c2",
+    idl: "x1",
+    idr: "e4",
+    odl: "e2",
+    odr: "c2",
   },
-  d4: { N: "d4'", S: "d3", in: "d4'", out: "d3", cw: "x1", ccw: "e4" },
-  d5: { N: "d6", S: "d5'", in: "d5'", out: "d6", cw: "e5", ccw: "x4" },
+  d4: {
+    N: "d4'",
+    S: "d3",
+    in: "d4'",
+    out: "d3",
+    cw: "x1",
+    ccw: "e4",
+    NE: "e4'",
+    SE: "e3",
+    NW: "x1'",
+    SW: "c3",
+    idl: "x1'",
+    idr: "e4'",
+    odl: "e3",
+    odr: "c3",
+  },
+  d5: {
+    N: "d6",
+    S: "d5'",
+    in: "d5'",
+    out: "d6",
+    cw: "e5",
+    ccw: "x4",
+    NE: "e6",
+    SE: "e5'",
+    NW: "c6",
+    SW: "x4'",
+    idl: "e5'",
+    idr: "x4'",
+    odl: "c6",
+    odr: "e6",
+  },
   d6: {
     N: "d7",
     E: "e6",
@@ -136,12 +378,38 @@ const boardGraph: Record<string, Directions> = {
     out: "d7",
     cw: "e6",
     ccw: "c6",
+    NE: "e7",
+    SE: "e5",
+    NW: "c7",
+    SW: "x4",
+    idl: "e5",
+    idr: "x4",
+    odl: "c7",
+    odr: "e7",
   },
-  d7: { N: "d8", E: "e7", S: "d6", W: "c7" },
-  d8: { N: null, E: "e8", S: "d7", W: "c8" },
+  d7: {
+    N: "d8",
+    E: "e7",
+    S: "d6",
+    W: "c7",
+    NE: "e8",
+    SE: "e6",
+    NW: "c8",
+    SW: "c6",
+  },
+  d8: { N: null, E: "e8", S: "d7", W: "c8", SW: "c7", SE: "e7" },
 
-  e1: { N: "e2", E: "f1", S: null, W: "d1" },
-  e2: { N: "e3", E: "f2", S: "e1", W: "d2" },
+  e1: { N: "e2", E: "f1", S: null, W: "d1", NE: "f2", NW: "d2" },
+  e2: {
+    N: "e3",
+    E: "f2",
+    S: "e1",
+    W: "d2",
+    NE: "f3",
+    SE: "f1",
+    NW: "d3",
+    SW: "d1",
+  },
   e3: {
     N: "e4",
     E: "f3",
@@ -151,9 +419,47 @@ const boardGraph: Record<string, Directions> = {
     out: "e2",
     cw: "d3",
     ccw: "f3",
+    NW: "d4",
+    NE: "y1",
+    SE: "f2",
+    SW: "d2",
+    idl: "d4",
+    idr: "y1",
+    odl: "f2",
+    odr: "d2",
   },
-  e4: { N: "e4'", S: "e3", in: "e4'", out: "e3", cw: "d4", ccw: "y1" },
-  e5: { N: "e6", S: "e5'", in: "e5'", out: "e6", cw: "y4", ccw: "d5" },
+  e4: {
+    N: "e4'",
+    S: "e3",
+    in: "e4'",
+    out: "e3",
+    cw: "d4",
+    ccw: "y1",
+    NE: "y1'",
+    NW: "d4'",
+    SE: "f3",
+    SW: "d3",
+    idl: "d4'",
+    idr: "y1'",
+    odl: "f3",
+    odr: "d3",
+  },
+  e5: {
+    N: "e6",
+    S: "e5'",
+    in: "e5'",
+    out: "e6",
+    cw: "y4",
+    ccw: "d5",
+    NE: "f6",
+    SE: "y4'",
+    NW: "d6",
+    SW: "d5'",
+    idl: "y4'",
+    idr: "d5'",
+    odl: "d6",
+    odr: "f6",
+  },
   e6: {
     N: "e7",
     E: "f6",
@@ -163,17 +469,79 @@ const boardGraph: Record<string, Directions> = {
     out: "e7",
     cw: "f6",
     ccw: "d6",
+    NE: "f7",
+    SE: "y4",
+    NW: "d7",
+    SW: "d5",
+    idl: "y4",
+    idr: "d5",
+    odl: "d7",
+    odr: "f7",
   },
-  e7: { N: "e8", E: "f7", S: "e6", W: "d7" },
-  e8: { N: null, E: "f8", S: "e7", W: "d8" },
+  e7: {
+    N: "e8",
+    E: "f7",
+    S: "e6",
+    W: "d7",
+    NE: "f8",
+    SE: "f6",
+    NW: "d8",
+    SW: "d6",
+  },
+  e8: { N: null, E: "f8", S: "e7", W: "d8", SW: "d7", SE: "f7" },
 
-  y1: { in: "y1'", out: "f3", cw: "e4", ccw: "y2" },
-  y2: { in: "y2'", out: "f4", cw: "y1", ccw: "y3" },
-  y3: { in: "y3'", out: "f5", cw: "y2", ccw: "y4" },
-  y4: { in: "y4'", out: "f6", cw: "y3", ccw: "e5" },
+  y1: {
+    in: "y1'",
+    out: "f3",
+    cw: "e4",
+    ccw: "y2",
+    idl: "e4'",
+    idr: "y2'",
+    odl: "f4",
+    odr: "e3",
+  },
+  y2: {
+    in: "y2'",
+    out: "f4",
+    cw: "y1",
+    ccw: "y3",
+    idl: "y1'",
+    idr: "y3'",
+    odl: "f5",
+    odr: "f3",
+  },
+  y3: {
+    in: "y3'",
+    out: "f5",
+    cw: "y2",
+    ccw: "y4",
+    idl: "y2'",
+    idr: "y4'",
+    odl: "f6",
+    odr: "f4",
+  },
+  y4: {
+    in: "y4'",
+    out: "f6",
+    cw: "y3",
+    ccw: "e5",
+    idl: "y3'",
+    idr: "e5'",
+    odl: "e6",
+    odr: "f5",
+  },
 
-  f1: { N: "f2", E: "g1", S: null, W: "e1" },
-  f2: { N: "f3", E: "g2", S: "f1", W: "e2" },
+  f1: { N: "f2", E: "g1", S: null, W: "e1", NE: "g2", NW: "e2" },
+  f2: {
+    N: "f3",
+    E: "g2",
+    S: "f1",
+    W: "e2",
+    NE: "g3",
+    SE: "g1",
+    NW: "e3",
+    SW: "e1",
+  },
   f3: {
     N: "f4",
     E: "g3",
@@ -182,6 +550,14 @@ const boardGraph: Record<string, Directions> = {
     in: "y1",
     cw: "e3",
     ccw: "f4",
+    NE: "g4",
+    SE: "g2",
+    SW: "e2",
+    idl: "e4",
+    idr: "y2",
+    odl: "g4",
+    od: "g2",
+    odr: "e2",
   },
   f4: {
     N: "f5",
@@ -192,6 +568,14 @@ const boardGraph: Record<string, Directions> = {
     out: "g4",
     cw: "f3",
     ccw: "f5",
+    NE: "g5",
+    SE: "g3",
+    SW: "y1",
+    NW: "y3",
+    idl: "y1",
+    idr: "y3",
+    odl: "g5",
+    odr: "g3",
   },
   f5: {
     N: "f6",
@@ -202,6 +586,14 @@ const boardGraph: Record<string, Directions> = {
     out: "g5",
     cw: "f4",
     ccw: "f6",
+    NE: "g6",
+    SE: "g4",
+    SW: "y2",
+    NW: "y4",
+    idl: "y2",
+    idr: "y4",
+    odl: "g6",
+    odr: "g4",
   },
   f6: {
     N: "f7",
@@ -211,48 +603,244 @@ const boardGraph: Record<string, Directions> = {
     in: "y4",
     cw: "f5",
     ccw: "e6",
+    NE: "g7",
+    SE: "g5",
+    SW: "y3",
+    idl: "y3",
+    idr: "e5",
+    odl: "e7",
+    od: "g7",
+    odr: "g5",
   },
-  f7: { N: "f8", E: "g7", S: "f6", W: "e7" },
-  f8: { N: null, E: "g8", S: "f7", W: "e8" },
+  f7: {
+    N: "f8",
+    E: "g7",
+    S: "f6",
+    W: "e7",
+    NE: "g8",
+    SE: "g6",
+    NW: "e8",
+    SW: "e6",
+  },
+  f8: { N: null, E: "g8", S: "f7", W: "e8", SW: "e7", SE: "g7" },
 
-  g1: { N: "g2", E: "h1", S: null, W: "f1" },
-  g2: { N: "g3", E: "h2", S: "g1", W: "f2" },
-  g3: { N: "g4", E: "h3", S: "g2", W: "f3" },
-  g4: { N: "g5", E: "h4", S: "g3", W: "f4" },
-  g5: { N: "g6", E: "h5", S: "g4", W: "f5" },
-  g6: { N: "g7", E: "h6", S: "g5", W: "f6" },
-  g7: { N: "g8", E: "h7", S: "g6", W: "f7" },
-  g8: { N: null, E: "h8", S: "g7", W: "f8" },
+  g1: { N: "g2", E: "h1", S: null, W: "f1", NE: "h2", NW: "f2" },
+  g2: {
+    N: "g3",
+    E: "h2",
+    S: "g1",
+    W: "f2",
+    NE: "h3",
+    SE: "h1",
+    NW: "f3",
+    SW: "f1",
+  },
+  g3: {
+    N: "g4",
+    E: "h3",
+    S: "g2",
+    W: "f3",
+    NE: "h4",
+    SE: "h2",
+    NW: "f4",
+    SW: "f2",
+  },
+  g4: {
+    N: "g5",
+    E: "h4",
+    S: "g3",
+    W: "f4",
+    NE: "h5",
+    SE: "h3",
+    NW: "f5",
+    SW: "f3",
+  },
+  g5: {
+    N: "g6",
+    E: "h5",
+    S: "g4",
+    W: "f5",
+    NE: "h6",
+    SE: "h4",
+    NW: "f6",
+    SW: "f4",
+  },
+  g6: {
+    N: "g7",
+    E: "h6",
+    S: "g5",
+    W: "f6",
+    NE: "h7",
+    SE: "h5",
+    NW: "f7",
+    SW: "f5",
+  },
+  g7: {
+    N: "g8",
+    E: "h7",
+    S: "g6",
+    W: "f7",
+    NE: "h8",
+    SE: "h6",
+    NW: "f8",
+    SW: "f6",
+  },
+  g8: { N: null, E: "h8", S: "g7", W: "f8", SW: "f7", SE: "h7" },
 
-  h1: { N: "h2", E: null, S: null, W: "g1" },
-  h2: { N: "h3", E: null, S: "h1", W: "g2" },
-  h3: { N: "h4", E: null, S: "h2", W: "g3" },
-  h4: { N: "h5", E: null, S: "h3", W: "g4" },
-  h5: { N: "h6", E: null, S: "h4", W: "g5" },
-  h6: { N: "h7", E: null, S: "h5", W: "g6" },
-  h7: { N: "h8", E: null, S: "h6", W: "g7" },
-  h8: { N: null, E: null, S: "h7", W: "g8" },
+  h1: { N: "h2", E: null, S: null, W: "g1", NE: null, NW: "g2" },
+  h2: {
+    N: "h3",
+    E: null,
+    S: "h1",
+    W: "g2",
+    NE: null,
+    SE: "h1",
+    NW: "g3",
+    SW: "g1",
+  },
+  h3: {
+    N: "h4",
+    E: null,
+    S: "h2",
+    W: "g3",
+    NE: null,
+    SE: "h2",
+    NW: "g4",
+    SW: "g2",
+  },
+  h4: {
+    N: "h5",
+    E: null,
+    S: "h3",
+    W: "g4",
+    NE: null,
+    SE: "h3",
+    NW: "g5",
+    SW: "g3",
+  },
+  h5: {
+    N: "h6",
+    E: null,
+    S: "h4",
+    W: "g5",
+    NE: null,
+    SE: "h4",
+    NW: "g6",
+    SW: "g4",
+  },
+  h6: {
+    N: "h7",
+    E: null,
+    S: "h5",
+    W: "g6",
+    NE: null,
+    SE: "h5",
+    NW: "g7",
+    SW: "g5",
+  },
+  h7: {
+    N: "h8",
+    E: null,
+    S: "h6",
+    W: "g7",
+    NE: null,
+    SE: "h6",
+    NW: "g8",
+    SW: "g6",
+  },
+  h8: { N: null, E: null, S: "h7", W: "g8", SW: "g7", SE: null },
 
-  "a1'": { N: "a2'", E: "b1'", S: null, W: null },
-  "a2'": { N: "a3'", E: "b2'", S: "a1'", W: null },
-  "a3'": { N: "a4'", E: "b3'", S: "a2'", W: null },
-  "a4'": { N: "a5'", E: "b4'", S: "a3'", W: null },
-  "a5'": { N: "a6'", E: "b5'", S: "a4'", W: null },
-  "a6'": { N: "a7'", E: "b6'", S: "a5'", W: null },
-  "a7'": { N: "a8'", E: "b7'", S: "a6'", W: null },
-  "a8'": { N: null, E: "b8'", S: "a7'", W: null },
+  "a1'": { N: "a2'", E: "b1'", S: null, W: null, NE: "b2'" },
+  "a2'": { N: "a3'", E: "b2'", S: "a1'", W: null, NE: "b3'", SE: "b1'" },
+  "a3'": { N: "a4'", E: "b3'", S: "a2'", W: null, NE: "b4'", SE: "b2'" },
+  "a4'": { N: "a5'", E: "b4'", S: "a3'", W: null, NE: "b5'", SE: "b3'" },
+  "a5'": { N: "a6'", E: "b5'", S: "a4'", W: null, NE: "b6'", SE: "b4'" },
+  "a6'": { N: "a7'", E: "b6'", S: "a5'", W: null, NE: "b7'", SE: "b5'" },
+  "a7'": { N: "a8'", E: "b7'", S: "a6'", W: null, NE: "b8'", SE: "b6'" },
+  "a8'": { N: null, E: "b8'", S: "a7'", W: null, SE: "b7'" },
 
-  "b1'": { N: "b2'", E: "c1'", S: null, W: "a1'" },
-  "b2'": { N: "b3'", E: "c2'", S: "b1'", W: "a2'" },
-  "b3'": { N: "b4'", E: "c3'", S: "b2'", W: "a3'" },
-  "b4'": { N: "b5'", E: "c4'", S: "b3'", W: "a4'" },
-  "b5'": { N: "b6'", E: "c5'", S: "b4'", W: "a5'" },
-  "b6'": { N: "b7'", E: "c6'", S: "b5'", W: "a6'" },
-  "b7'": { N: "b8'", E: "c7'", S: "b6'", W: "a7'" },
-  "b8'": { N: null, E: "c8'", S: "b7'", W: "a8'" },
+  "b1'": { N: "b2'", E: "c1'", S: null, W: "a1'", NE: "c2'", NW: "a2'" },
+  "b2'": {
+    N: "b3'",
+    E: "c2'",
+    S: "b1'",
+    W: "a2'",
+    NE: "c3'",
+    SE: "c1'",
+    NW: "a3'",
+    SW: "a1'",
+  },
+  "b3'": {
+    N: "b4'",
+    E: "c3'",
+    S: "b2'",
+    W: "a3'",
+    NE: "c4'",
+    SE: "c2'",
+    NW: "a4'",
+    SW: "a2'",
+  },
+  "b4'": {
+    N: "b5'",
+    E: "c4'",
+    S: "b3'",
+    W: "a4'",
+    NE: "c5'",
+    SE: "c3'",
+    NW: "a5'",
+    SW: "a3'",
+  },
+  "b5'": {
+    N: "b6'",
+    E: "c5'",
+    S: "b4'",
+    W: "a5'",
+    NE: "c6'",
+    SE: "c4'",
+    NW: "a6'",
+    SW: "a4'",
+  },
+  "b6'": {
+    N: "b7'",
+    E: "c6'",
+    S: "b5'",
+    W: "a6'",
+    NE: "c7'",
+    SE: "c5'",
+    NW: "a7'",
+    SW: "a5'",
+  },
+  "b7'": {
+    N: "b8'",
+    E: "c7'",
+    S: "b6'",
+    W: "a7'",
+    NE: "c8'",
+    SE: "c6'",
+    NW: "a8'",
+    SW: "a6'",
+  },
+  "b8'": {
+    N: null,
+    E: "c8'",
+    S: "b7'",
+    W: "a8'",
+    SE: "c7'",
+    NW: null,
+    SW: "a7'",
+  },
 
-  "c1'": { N: "c2'", E: "d1'", S: null, W: "b1'" },
-  "c2'": { N: "c3'", E: "d2'", S: "c1'", W: "b2'" },
+  "c1'": { N: "c2'", E: "d1'", S: null, W: "b1'", NE: "d2'", NW: "b2'" },
+  "c2'": {
+    N: "c3'",
+    E: "d2'",
+    S: "c1'",
+    W: "b2'",
+    NE: "d3'",
+    SE: "d1'",
+    NW: "b3'",
+    SW: "b1'",
+  },
   "c3'": {
     N: "c4'",
     E: "d3'",
@@ -261,24 +849,48 @@ const boardGraph: Record<string, Directions> = {
     in: "x1'",
     cw: "c4'",
     ccw: "d3'",
+    NW: "b4'",
+    SW: "b2'",
+    SE: "d2'",
+    idl: "d4'",
+    idr: "x2'",
+    odl: "b4'",
+    od: "b2'",
+    odr: "d2'",
   },
   "c4'": {
     N: "c5'",
-    E: "d4'",
+    E: "x2'",
     S: "c3'",
     W: "b4'",
     in: "x2'",
     cw: "c5'",
     ccw: "c3'",
+    NW: "b5'",
+    SW: "b3'",
+    NE: "x3'",
+    SE: "x1'",
+    idl: "x1'",
+    idr: "x3'",
+    odl: "b5'",
+    odr: "b3'",
   },
   "c5'": {
     N: "c6'",
-    E: "d5'",
+    E: "x3'",
     S: "c4'",
     W: "b5'",
     in: "x3'",
     cw: "c6'",
     ccw: "c4'",
+    NW: "b6'",
+    SW: "b4'",
+    NE: "x4'",
+    SE: "x2'",
+    idl: "x2'",
+    idr: "x4'",
+    odl: "b6'",
+    odr: "b4'",
   },
   "c6'": {
     N: "c7'",
@@ -288,17 +900,79 @@ const boardGraph: Record<string, Directions> = {
     in: "x4'",
     cw: "d6'",
     ccw: "c5'",
+    NE: "d7'",
+    SW: "b5'",
+    NW: "b7'",
+    idl: "x3'",
+    idr: "d5'",
+    odl: "d7'",
+    od: "b7'",
+    odr: "b5'",
   },
-  "c7'": { N: "c8'", E: "d7'", S: "c6'", W: "b7'" },
-  "c8'": { N: null, E: "d8'", S: "c7'", W: "b8'" },
+  "c7'": {
+    N: "c8'",
+    E: "d7'",
+    S: "c6'",
+    W: "b7'",
+    NE: "d8'",
+    NW: "b8'",
+    SW: "b6'",
+    SE: "d6'",
+  },
+  "c8'": { N: null, E: "d8'", S: "c7'", W: "b8'", SW: "b7'", SE: "d7'" },
 
-  "x1'": { out: "c3'", cw: "x2'", in: "x1", ccw: "d4'" },
-  "x2'": { out: "c4'", cw: "x3'", in: "x2", ccw: "x1'" },
-  "x3'": { out: "c5'", cw: "x4'", in: "x3", ccw: "x2'" },
-  "x4'": { out: "c6'", cw: "d5'", in: "x4", ccw: "x3'" },
+  "x1'": {
+    out: "c3'",
+    cw: "x2'",
+    in: "x1",
+    ccw: "d4'",
+    idl: "d4",
+    idr: "x2",
+    odl: "c4'",
+    odr: "d3'",
+  },
+  "x2'": {
+    out: "c4'",
+    cw: "x3'",
+    in: "x2",
+    ccw: "x1'",
+    idl: "x1",
+    idr: "x3",
+    odl: "c5'",
+    odr: "c3'",
+  },
+  "x3'": {
+    out: "c5'",
+    cw: "x4'",
+    in: "x3",
+    ccw: "x2'",
+    idl: "x2",
+    idr: "x4",
+    odl: "c6'",
+    odr: "c4'",
+  },
+  "x4'": {
+    out: "c6'",
+    cw: "d5'",
+    in: "x4",
+    ccw: "x3'",
+    idl: "x3",
+    idr: "d5",
+    odl: "d5'",
+    odr: "c5'",
+  },
 
-  "d1'": { N: "d2'", E: "e1'", S: null, W: "c1'" },
-  "d2'": { N: "d3'", E: "e2'", S: "d1'", W: "c2'" },
+  "d1'": { N: "d2'", E: "e1'", S: null, W: "c1'", NE: "e2'", NW: "c2'" },
+  "d2'": {
+    N: "d3'",
+    E: "e2'",
+    S: "d1'",
+    W: "c2'",
+    NE: "e3'",
+    SE: "e1'",
+    NW: "c3'",
+    SW: "c1'",
+  },
   "d3'": {
     N: "d4'",
     E: "e3'",
@@ -308,9 +982,47 @@ const boardGraph: Record<string, Directions> = {
     out: "d2'",
     cw: "c3'",
     ccw: "e3'",
+    NE: "e4'",
+    SE: "e2'",
+    NW: "x1'",
+    SW: "c2'",
+    idl: "e4'",
+    idr: "x1'",
+    odl: "c2'",
+    odr: "e2'",
   },
-  "d4'": { N: "d4", S: "d3'", in: "d4", out: "d3'", cw: "x1'", ccw: "e4'" },
-  "d5'": { N: "d6'", S: "d5", in: "d5", out: "d6'", cw: "e5'", ccw: "x4'" },
+  "d4'": {
+    N: "d4",
+    S: "d3'",
+    in: "d4",
+    out: "d3'",
+    cw: "x1'",
+    ccw: "e4'",
+    NE: "e5",
+    SE: "e3",
+    NW: "x1",
+    SW: "c3'",
+    idl: "e5",
+    idr: "x1",
+    odl: "c3'",
+    odr: "e3'",
+  },
+  "d5'": {
+    N: "d6'",
+    S: "d5",
+    in: "d5",
+    out: "d6'",
+    cw: "e5'",
+    ccw: "x4'",
+    NE: "e6'",
+    SE: "e5",
+    NW: "c6'",
+    SW: "x4",
+    idl: "x4",
+    idr: "e5",
+    odl: "e6'",
+    odr: "c6'",
+  },
   "d6'": {
     N: "d7'",
     E: "e6'",
@@ -320,12 +1032,38 @@ const boardGraph: Record<string, Directions> = {
     out: "d7'",
     cw: "e6'",
     ccw: "c6'",
+    NE: "e7'",
+    SE: "e5'",
+    NW: "c7'",
+    SW: "x4'",
+    idl: "x4'",
+    idr: "e5'",
+    odl: "e7'",
+    odr: "c7'",
   },
-  "d7'": { N: "d8'", E: "e7'", S: "d6'", W: "c7'" },
-  "d8'": { N: null, E: "e8'", S: "d7'", W: "c8'" },
+  "d7'": {
+    N: "d8'",
+    E: "e7'",
+    S: "d6'",
+    W: "c7'",
+    NE: "e8'",
+    SE: "e6'",
+    NW: "c8'",
+    SW: "c6'",
+  },
+  "d8'": { N: null, E: "e8'", S: "d7'", W: "c8'", SW: "c7'", SE: "e7'" },
 
-  "e1'": { N: "e2'", E: "f1'", S: null, W: "d1'" },
-  "e2'": { N: "e3'", E: "f2'", S: "e1'", W: "d2'" },
+  "e1'": { N: "e2'", E: "f1'", S: null, W: "d1'", NE: "f2'", NW: "d2'" },
+  "e2'": {
+    N: "e3'",
+    E: "f2'",
+    S: "e1'",
+    W: "d2'",
+    NE: "f3'",
+    SE: "f1'",
+    NW: "d3'",
+    SW: "d1'",
+  },
   "e3'": {
     N: "e4'",
     E: "f3'",
@@ -335,9 +1073,47 @@ const boardGraph: Record<string, Directions> = {
     out: "e2'",
     cw: "d3'",
     ccw: "f3'",
+    NE: "y1'",
+    SE: "f2'",
+    NW: "d4'",
+    SW: "d2'",
+    idl: "y1'",
+    idr: "d4'",
+    odl: "d2'",
+    odr: "f2'",
   },
-  "e4'": { N: "e4", S: "e3'", in: "e4", out: "e3'", cw: "d4'", ccw: "y1'" },
-  "e5'": { N: "e6'", S: "e5", in: "e5", out: "e6'", cw: "y4'", ccw: "d5'" },
+  "e4'": {
+    N: "e4",
+    S: "e3'",
+    in: "e4",
+    out: "e3'",
+    cw: "d4'",
+    ccw: "y1'",
+    NE: "y1",
+    NW: "d4",
+    SE: "f3'",
+    SW: "d3'",
+    idl: "y1",
+    idr: "d4",
+    odl: "d3'",
+    odr: "f3'",
+  },
+  "e5'": {
+    N: "e6'",
+    S: "e5",
+    in: "e5",
+    out: "e6'",
+    cw: "y4'",
+    ccw: "d5'",
+    NE: "f6'",
+    SE: "y4",
+    NW: "d6'",
+    SW: "d5",
+    idl: "d5",
+    idr: "y4",
+    odl: "f6'",
+    odr: "d6'",
+  },
   "e6'": {
     N: "e7'",
     E: "f6'",
@@ -347,17 +1123,79 @@ const boardGraph: Record<string, Directions> = {
     out: "e7'",
     cw: "f6'",
     ccw: "d6'",
+    NE: "f7'",
+    SE: "y4'",
+    NW: "d7'",
+    SW: "d5'",
+    idl: "d5'",
+    idr: "y4'",
+    odl: "f7'",
+    odr: "d7'",
   },
-  "e7'": { N: "e8'", E: "f7'", S: "e6'", W: "d7'" },
-  "e8'": { N: null, E: "f8'", S: "e7'", W: "d8'" },
+  "e7'": {
+    N: "e8'",
+    E: "f7'",
+    S: "e6'",
+    W: "d7'",
+    NE: "f8'",
+    SE: "f6'",
+    NW: "d8'",
+    SW: "d6'",
+  },
+  "e8'": { N: null, E: "f8'", S: "e7'", W: "d8'", SW: "d7'", SE: "f7'" },
 
-  "y1'": { in: "y1", out: "f3'", cw: "e4'", ccw: "y2'" },
-  "y2'": { in: "y2", out: "f4'", cw: "y1'", ccw: "y3'" },
-  "y3'": { in: "y3", out: "f5'", cw: "y2'", ccw: "y4'" },
-  "y4'": { in: "y4", out: "f6'", cw: "y3'", ccw: "e5'" },
+  "y1'": {
+    in: "y1",
+    out: "f3'",
+    cw: "e4'",
+    ccw: "y2'",
+    idl: "y2",
+    idr: "e4",
+    odl: "e3'",
+    odr: "f4'",
+  },
+  "y2'": {
+    in: "y2",
+    out: "f4'",
+    cw: "y1'",
+    ccw: "y3'",
+    idl: "y3",
+    idr: "y1",
+    odl: "f3'",
+    odr: "f5'",
+  },
+  "y3'": {
+    in: "y3",
+    out: "f5'",
+    cw: "y2'",
+    ccw: "y4'",
+    idl: "y4",
+    idr: "y2",
+    odl: "f4'",
+    odr: "f6'",
+  },
+  "y4'": {
+    in: "y4",
+    out: "f6'",
+    cw: "y3'",
+    ccw: "e5'",
+    idl: "e5",
+    idr: "y3",
+    odl: "f5'",
+    odr: "e6'",
+  },
 
-  "f1'": { N: "f2'", E: "g1'", S: null, W: "e1'" },
-  "f2'": { N: "f3'", E: "g2'", S: "f1'", W: "e2'" },
+  "f1'": { N: "f2'", E: "g1'", S: null, W: "e1'", NE: "g2'", NW: "e2'" },
+  "f2'": {
+    N: "f3'",
+    E: "g2'",
+    S: "f1'",
+    W: "e2'",
+    NE: "g3'",
+    SE: "g1'",
+    NW: "e3'",
+    SW: "e1'",
+  },
   "f3'": {
     N: "f4'",
     E: "g3'",
@@ -366,6 +1204,14 @@ const boardGraph: Record<string, Directions> = {
     in: "y1'",
     cw: "e3'",
     ccw: "f4'",
+    NE: "g4'",
+    SE: "g2'",
+    SW: "e2'",
+    idl: "y2'",
+    idr: "e4'",
+    odl: "e2'",
+    od: "g2'",
+    odr: "g4'",
   },
   "f4'": {
     N: "f5'",
@@ -376,6 +1222,14 @@ const boardGraph: Record<string, Directions> = {
     out: "g4'",
     cw: "f3'",
     ccw: "f5'",
+    NE: "g5'",
+    SE: "g3'",
+    SW: "y1'",
+    NW: "y3'",
+    idl: "y3'",
+    idr: "y1'",
+    odl: "g3'",
+    odr: "g5'",
   },
   "f5'": {
     N: "f6'",
@@ -386,6 +1240,14 @@ const boardGraph: Record<string, Directions> = {
     out: "g5'",
     cw: "f4'",
     ccw: "f6'",
+    NE: "g6'",
+    SE: "g4'",
+    SW: "y2'",
+    NW: "y4'",
+    idl: "y4'",
+    idr: "y2'",
+    odl: "g4'",
+    odr: "g6'",
   },
   "f6'": {
     N: "f7'",
@@ -395,88 +1257,152 @@ const boardGraph: Record<string, Directions> = {
     in: "y4'",
     cw: "f5'",
     ccw: "e6'",
+    NE: "g7'",
+    SE: "g5'",
+    NW: "e7'",
+    idl: "e5'",
+    idr: "y3'",
+    odl: "g5'",
+    od: "g7'",
+    odr: "e7'",
   },
-  "f7'": { N: "f8'", E: "g7'", S: "f'6", W: "e7'" },
-  "f8'": { N: null, E: "g8'", S: "f7'", W: "e8'" },
+  "f7'": {
+    N: "f8'",
+    E: "g7'",
+    S: "f'6",
+    W: "e7'",
+    NE: "g8'",
+    SE: "g6'",
+    NW: "e8'",
+    SW: "e6'",
+  },
+  "f8'": { N: null, E: "g8'", S: "f7'", W: "e8'", SW: "e7'", SE: "g7'" },
 
-  "g1'": { N: "g2'", E: "h1'", S: null, W: "f1'" },
-  "g2'": { N: "g3'", E: "h2'", S: "g1'", W: "f2'" },
-  "g3'": { N: "g4'", E: "h3'", S: "g2'", W: "f3'" },
-  "g4'": { N: "g5'", E: "h4'", S: "g3'", W: "f4'" },
-  "g5'": { N: "g6'", E: "h5'", S: "g4'", W: "f5'" },
-  "g6'": { N: "g7'", E: "h6'", S: "g5'", W: "f6'" },
-  "g7'": { N: "g8'", E: "h7'", S: "g6'", W: "f7'" },
-  "g8'": { N: null, E: "h8'", S: "g7'", W: "f8'" },
+  "g1'": { N: "g2'", E: "h1'", S: null, W: "f1'", NE: "h2'", NW: "f2'" },
+  "g2'": {
+    N: "g3'",
+    E: "h2'",
+    S: "g1'",
+    W: "f2'",
+    NE: "h3'",
+    SE: "h1'",
+    NW: "f3'",
+    SW: "f1'",
+  },
+  "g3'": {
+    N: "g4'",
+    E: "h3'",
+    S: "g2'",
+    W: "f3'",
+    NE: "h4'",
+    SE: "h2'",
+    NW: "f4'",
+    SW: "f2'",
+  },
+  "g4'": {
+    N: "g5'",
+    E: "h4'",
+    S: "g3'",
+    W: "f4'",
+    NE: "h5'",
+    SE: "h3'",
+    NW: "f5'",
+    SW: "f3'",
+  },
+  "g5'": {
+    N: "g6'",
+    E: "h5'",
+    S: "g4'",
+    W: "f5'",
+    NE: "h6'",
+    SE: "h4'",
+    NW: "f6'",
+    SW: "f4'",
+  },
+  "g6'": {
+    N: "g7'",
+    E: "h6'",
+    S: "g5'",
+    W: "f6'",
+    NE: "h7'",
+    SE: "h5'",
+    NW: "f7'",
+    SW: "f5'",
+  },
+  "g7'": {
+    N: "g8'",
+    E: "h7'",
+    S: "g6'",
+    W: "f7'",
+    NE: "h8'",
+    SE: "h6'",
+    NW: "f8'",
+    SW: "f6'",
+  },
+  "g8'": { N: null, E: "h8'", S: "g7'", W: "f8'", SW: "f7'", SE: "h7'" },
 
-  "h1'": { N: "h2'", E: null, S: null, W: "g1'" },
-  "h2'": { N: "h3'", E: null, S: "h1'", W: "g2'" },
-  "h3'": { N: "h4'", E: null, S: "h2'", W: "g3'" },
-  "h4'": { N: "h5'", E: null, S: "h3'", W: "g4'" },
-  "h5'": { N: "h6'", E: null, S: "h4'", W: "g5'" },
-  "h6'": { N: "h7'", E: null, S: "h5'", W: "g6'" },
-  "h7'": { N: "h8'", E: null, S: "h6'", W: "g7'" },
-  "h8'": { N: null, E: null, S: "h7'", W: "g8'" },
-};
-
-const WORMHOLE_CONNECTIONS: { [key: string]: string[] } = {
-  // Top surface pentagonal connections
-  c3: ["b3", "c2", "d3", "c4", "x1"],
-  c6: ["b6", "c7", "d6", "c5", "x4"],
-  f3: ["g3", "f2", "e3", "f4", "y1"],
-  f6: ["g6", "f7", "e6", "f5", "y4"],
-
-  // Bottom surface pentagonal connections
-  "c3'": ["b3'", "c2'", "d3'", "c4'", "x1'"],
-  "c6'": ["b6'", "c7'", "d6'", "c5'", "x4'"],
-  "f3'": ["g3'", "f2'", "e3'", "f4'", "y1'"],
-  "f6'": ["g6'", "f7'", "e6'", "f5'", "y4'"],
-
-  // Inner layer connections (clockwise from d4)
-  d4: ["d3", "x1", "e4", "d4'"],
-  x1: ["c3", "d4", "x2"],
-  x2: ["x1", "x3"],
-  x3: ["x2", "x4"],
-  x4: ["x3", "c6", "d5"],
-  d5: ["x4", "d6", "d5'"],
-  e5: ["e6", "y4", "e5'"],
-  y4: ["f6", "e5", "y3"],
-  y3: ["y4", "y2"],
-  y2: ["y3", "y1"],
-  y1: ["y2", "f3", "e4"],
-  e4: ["e3", "y1", "d4", "e4'"],
-
-  // Prime versions
-  "d4'": ["d3'", "x1'", "e4'", "d4"],
-  "x1'": ["c3'", "d4'", "x2'"],
-  "x2'": ["x1'", "x3'"],
-  "x3'": ["x2'", "x4'"],
-  "x4'": ["x3'", "c6'", "d5'"],
-  "d5'": ["x4'", "d6'", "d5"],
-  "e5'": ["e6'", "y4'", "e5"],
-  "y4'": ["f6'", "e5'", "y3'"],
-  "y3'": ["y4'", "y2'"],
-  "y2'": ["y3'", "y1'"],
-  "y1'": ["y2'", "f3'", "e4'"],
-  "e4'": ["e3'", "y1'", "d4'", "e4"],
-
-  // Outer layer connections
-  d3: ["c3", "e3", "d4", "d2"],
-  e3: ["d3", "f3", "e4", "e2"],
-  c4: ["c3", "c5", "b4"],
-  f4: ["f3", "f5", "g4"],
-  c5: ["c4", "c6", "b5"],
-  f5: ["f4", "f6", "g5"],
-  d6: ["c6", "e6", "d5", "d7"],
-  e6: ["d6", "f6", "e5", "e7"],
-
-  "d3'": ["c3'", "e3'", "d4'", "d2'"],
-  "e3'": ["d3'", "f3'", "e4'", "e2'"],
-  "c4'": ["c3'", "c5'", "b4'"],
-  "f4'": ["f3'", "f5'", "g4'"],
-  "c5'": ["c4'", "c6'", "b5'"],
-  "f5'": ["f4'", "f6'", "g5'"],
-  "d6'": ["c6'", "e6'", "d5'", "d7'"],
-  "e6'": ["d6'", "f6'", "e5'", "e7'"],
+  "h1'": { N: "h2'", E: null, S: null, W: "g1'", NE: null, NW: "g2'" },
+  "h2'": {
+    N: "h3'",
+    E: null,
+    S: "h1'",
+    W: "g2'",
+    NE: null,
+    SE: "h1'",
+    NW: "g3'",
+    SW: "g1'",
+  },
+  "h3'": {
+    N: "h4'",
+    E: null,
+    S: "h2'",
+    W: "g3'",
+    NE: null,
+    SE: "h2'",
+    NW: "g4'",
+    SW: "g2'",
+  },
+  "h4'": {
+    N: "h5'",
+    E: null,
+    S: "h3'",
+    W: "g4'",
+    NE: null,
+    SE: "h3'",
+    NW: "g5'",
+    SW: "g3'",
+  },
+  "h5'": {
+    N: "h6'",
+    E: null,
+    S: "h4'",
+    W: "g5'",
+    NE: null,
+    SE: "h4'",
+    NW: "g6'",
+    SW: "g4'",
+  },
+  "h6'": {
+    N: "h7'",
+    E: null,
+    S: "h5'",
+    W: "g6'",
+    NE: null,
+    SE: "h5'",
+    NW: "g7'",
+    SW: "g5'",
+  },
+  "h7'": {
+    N: "h8'",
+    E: null,
+    S: "h6'",
+    W: "g7'",
+    NE: null,
+    SE: "h6'",
+    NW: "g8'",
+    SW: "g6'",
+  },
+  "h8'": { N: null, E: null, S: "h7'", W: "g8'", SW: "g7'", SE: null },
 };
 
 // ==================== WORMHOLE GEOMETRY ====================
@@ -1367,68 +2293,7 @@ const ChessboardScene: React.FC = () => {
     return squares;
   }, []);
 
-  /*  const calculateRookMoves = (notation: string): string[] => {
-    const moves = new Set<string>();
-    const visited = new Set<string>();
-
-    const explorePath = (
-      current: string,
-      direction: "file" | "rank" | "wormhole",
-      startNotation: string
-    ) => {
-      if (visited.has(`${current}-${direction}`)) return;
-      visited.add(`${current}-${direction}`);
-
-      const connections = WORMHOLE_CONNECTIONS[current];
-      if (connections) {
-        connections.forEach((connected) => {
-          if (connected !== startNotation) {
-            moves.add(connected);
-            if (connected.includes("'") !== current.includes("'")) {
-              explorePath(connected, "wormhole", startNotation);
-            }
-          }
-        });
-      }
-
-      const isPrime = current.endsWith("'");
-      const cleanCurrent = isPrime ? current.slice(0, -1) : current;
-
-      if (!cleanCurrent.startsWith("x") && !cleanCurrent.startsWith("y")) {
-        const file = cleanCurrent[0];
-        const rank = cleanCurrent[1];
-        const fileIdx = FILES.indexOf(file);
-        const rankIdx = RANKS.indexOf(rank);
-
-        if (direction === "file" || direction === "wormhole") {
-          for (let r = 0; r < 8; r++) {
-            if (r !== rankIdx) {
-              const newNotation = `${file}${RANKS[r]}${isPrime ? "'" : ""}`;
-              moves.add(newNotation);
-            }
-          }
-        }
-
-        if (direction === "rank" || direction === "wormhole") {
-          for (let f = 0; f < 8; f++) {
-            if (f !== fileIdx) {
-              const newNotation = `${FILES[f]}${rank}${isPrime ? "'" : ""}`;
-              moves.add(newNotation);
-            }
-          }
-        }
-      }
-    };
-
-    explorePath(notation, "file", notation);
-    explorePath(notation, "rank", notation);
-    moves.delete(notation);
-
-    return Array.from(moves);
-  };
-*/
-
-  type EntryDir = keyof Directions; // "N" | "S" | "E" | "W" | "in" | "out" | "cw" | "ccw"
+  type EntryDir = keyof Directions; // "N" | "S" | "E" | "W" | "in" | "out" | "cw" | "ccw" | "NW" | "NE" | "SW" | "SE"
 
   const pentagonOrthogonalExits: Record<
     string,
@@ -1521,6 +2386,17 @@ const ChessboardScene: React.FC = () => {
       out: "in",
       cw: "ccw",
       ccw: "cw",
+
+      // Diagonal directions are not used for rook movement but included for completeness
+      NW: "SE",
+      NE: "SW",
+      SW: "NE",
+      SE: "NW",
+      idl: "odr",
+      idr: "odl",
+      odl: "idr",
+      odr: "idl",
+      od: "od",
     };
 
     const outDir: Record<string, EntryDir> = {
@@ -1543,6 +2419,26 @@ const ChessboardScene: React.FC = () => {
       "f5'": "E",
     };
 
+    const inDir: Record<string, EntryDir> = {
+      c4: "E",
+      c5: "E",
+      d3: "N",
+      e3: "N",
+      d6: "S",
+      e6: "S",
+      f4: "W",
+      f5: "W",
+
+      "c4'": "E",
+      "c5'": "E",
+      "d3'": "N",
+      "e3'": "N",
+      "d6'": "S",
+      "e6'": "S",
+      "f4'": "W",
+      "f5'": "W",
+    };
+
     // Traverse a line in a specific direction
     const traverseLine = (
       current: string,
@@ -1554,9 +2450,16 @@ const ChessboardScene: React.FC = () => {
         return;
       }
 
+      // \/\/\/ handle in/out transitions \/\/\/
+
       if (current in outDir && dir == "out") {
         dir = outDir[current];
       }
+
+      if (current in inDir && dir == inDir[current]) {
+        dir = "in";
+      }
+      // /\/\/\
 
       const next = node[dir];
       if (!next) {
@@ -1570,12 +2473,11 @@ const ChessboardScene: React.FC = () => {
       }
       visitedLine.add(lineKey);
 
+      moves.add(next);
+
       // Only allow prime/non-prime transitions via in/out
       const currentPrime = current.endsWith("'");
       const nextPrime = next.endsWith("'");
-      if (currentPrime !== nextPrime && !(dir === "in" || dir === "out"))
-        return;
-      moves.add(next);
 
       let nextDir: EntryDir = dir;
       if ((!currentPrime && nextPrime) || (currentPrime && !nextPrime)) {
@@ -1611,6 +2513,181 @@ const ChessboardScene: React.FC = () => {
     }
 
     moves.delete(start);
+    return Array.from(moves);
+  };
+
+  const pentagonDiagonalExits: Record<
+    string,
+    Record<string, (keyof Directions)[]>
+  > = {
+    c3: {
+      NE: ["idl", "idr"],
+      SE: ["idr", "SE"],
+      NW: ["NW", "idl"],
+      odl: ["SE", "SW"],
+      odr: ["NW", "SW"],
+    },
+    c6: {
+      SE: ["idl", "idr"],
+      NE: ["NE", "idl"],
+      SW: ["SW", "idr"],
+      odl: ["NW", "SW"],
+      odr: ["NE", "NW"],
+    },
+    f3: {
+      NW: ["idl", "idr"],
+      SW: ["idl", "SW"],
+      NE: ["NE", "idr"],
+      odl: ["NE", "SE"],
+      odr: ["SW", "SE"],
+    },
+    f6: {
+      SW: ["idl", "idr"],
+      NW: ["NW", "idr"],
+      SE: ["SE", "idl"],
+      odl: ["NE", "NW"],
+      odr: ["SE", "NE"],
+    },
+    "c3'": {
+      NE: ["idl", "idr"],
+      SE: ["idl", "SE"],
+      NW: ["NW", "idr"],
+      odl: ["NW", "SW"],
+      odr: ["SE", "SW"],
+    },
+    "c6'": {
+      SE: ["idl", "idr"],
+      NE: ["NE", "idr"],
+      SW: ["SW", "idl"],
+      odl: ["NW", "NE"],
+      odr: ["SW", "NW"],
+    },
+    "f3'": {
+      NW: ["idl", "idr"],
+      SW: ["idr", "SW"],
+      NE: ["NE", "idl"],
+      odl: ["SW", "SE"],
+      odr: ["NE", "SE"],
+    },
+    "f6'": {
+      SW: ["idl", "idr"],
+      NW: ["NW", "idl"],
+      SE: ["SE", "idr"],
+      odl: ["NE", "SE"],
+      odr: ["NW", "NE"],
+    },
+  };
+
+  const calculateDiagonalMoves = (start: string): string[] => {
+    const moves = new Set<string>();
+
+    const inDir: Record<string, Record<string, EntryDir>> = {
+      c4: { NE: "idl", SE: "idr" },
+      c5: { NE: "idl", SE: "idr" },
+      d3: { NW: "idl", NE: "idr" },
+      d6: { SE: "idl", SW: "idr" },
+      e3: { NW: "idl", NE: "idr" },
+      e6: { SE: "idl", SW: "idr" },
+      f4: { SW: "idl", NW: "idr" },
+      f5: { SW: "idl", NW: "idr" },
+
+      "c4'": { NE: "idr", SE: "idl" },
+      "c5'": { NE: "idr", SE: "idl" },
+      "d3'": { NW: "idr", NE: "idl" },
+      "d6'": { SE: "idr", SW: "idl" },
+      "e3'": { NW: "idr", NE: "idl" },
+      "e6'": { SE: "idr", SW: "idl" },
+      "f4'": { SW: "idr", NW: "idl" },
+      "f5'": { SW: "idr", NW: "idl" },
+    };
+
+    const outDir: Record<string, Record<string, EntryDir>> = {
+      c4: { odl: "SW", odr: "NW" },
+      c5: { odl: "SW", odr: "NW" },
+      d3: { odl: "SE", odr: "SW" },
+      d6: { odl: "NW", odr: "NE" },
+      e3: { odl: "SE", odr: "SW" },
+      e6: { odl: "NW", odr: "NE" },
+      f4: { odl: "NE", odr: "SE" },
+      f5: { odl: "NE", odr: "SE" },
+
+      "c4'": { odr: "SW", odl: "NW" },
+      "c5'": { odr: "SW", odl: "NW" },
+      "d3'": { odr: "SE", odl: "SW" },
+      "d6'": { odr: "NW", odl: "NE" },
+      "e3'": { odr: "SE", odl: "SW" },
+      "e6'": { odr: "NW", odl: "NE" },
+      "f4'": { odr: "NE", odl: "SE" },
+      "f5'": { odr: "NE", odl: "SE" },
+    };
+
+    const traverseDiagonal = (
+      current: string,
+      dir: EntryDir,
+      visitedLine: Set<string>
+    ) => {
+      const node = boardGraph[current];
+      if (!node) {
+        return;
+      }
+
+      // \/\/\/ handle in/out transitions for diagonal moves \/\/\/
+      if (current in inDir) {
+        if (dir in inDir[current]) {
+          dir = inDir[current][dir];
+        }
+      }
+      if (current in outDir) {
+        if (dir in outDir[current]) {
+          dir = outDir[current][dir];
+        }
+      }
+      // /\/\/\
+
+      const next = node[dir];
+      if (!next) {
+        return;
+      }
+
+      // Prevent infinite loops along this line
+      const lineKey = `${current}-${dir}`;
+      if (visitedLine.has(lineKey)) {
+        return;
+      }
+      visitedLine.add(lineKey);
+
+      moves.add(next);
+
+      const currentPrime = current.endsWith("'");
+      const nextPrime = next.endsWith("'");
+      let nextDir: EntryDir = dir;
+      if (currentPrime !== nextPrime) {
+        if (dir === "idl") nextDir = "odl";
+        else if (dir === "idr") nextDir = "odr";
+      }
+
+      if (pentagonDiagonalExits[next]) {
+        const branches = pentagonDiagonalExits[next][dir] || [];
+        for (const branch of branches) {
+          traverseDiagonal(next, branch, new Set(visitedLine)); // clone visited for each branch
+        }
+      } else {
+        traverseDiagonal(next, nextDir, visitedLine);
+      }
+    };
+    const initialDirs: EntryDir[] = [
+      "NE",
+      "NW",
+      "SE",
+      "SW",
+      "idl",
+      "idr",
+      "odl",
+      "odr",
+    ];
+    for (const dir of initialDirs) {
+      traverseDiagonal(start, dir, new Set());
+    }
     return Array.from(moves);
   };
 
