@@ -2199,6 +2199,13 @@ const ChessPiece: React.FC<ChessPieceProps> = ({
   );
 };
 
+const Queen: React.FC<
+  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+> = (props) => {
+  const modelPath = `chessboard/${props.color}-pieces/${props.color}-queen.glb`;
+  return <ChessPiece {...props} modelPath={modelPath} />;
+};
+
 const Bishop: React.FC<
   Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
 > = (props) => {
@@ -2233,6 +2240,8 @@ const ChessboardScene: React.FC = () => {
     "white-bishop-f1": "f1",
     "black-bishop-c8": "c8",
     "black-bishop-f8": "f8",
+    "white-queen-d1": "d1",
+    "black-queen-d8": "d8",
   });
 
   const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
@@ -2925,8 +2934,20 @@ const ChessboardScene: React.FC = () => {
       const result = calculateDiagonalMoves(notation, piecePositions, color);
       moves = result.moves;
       paths = result.paths;
+    } else if (pieceId.includes("queen")) {
+      const orthoResult = calculateOrthogonalMoves(
+        notation,
+        piecePositions,
+        color
+      );
+      const diagResult = calculateDiagonalMoves(
+        notation,
+        piecePositions,
+        color
+      );
+      moves = Array.from(new Set([...orthoResult.moves, ...diagResult.moves]));
+      paths = { ...orthoResult.paths, ...diagResult.paths };
     }
-
     setPossibleMoves(moves);
     setPossibleMovePaths(paths);
   };
@@ -3106,6 +3127,18 @@ const ChessboardScene: React.FC = () => {
                 } else if (id.includes("bishop")) {
                   return (
                     <Bishop
+                      key={id}
+                      id={id}
+                      color={color}
+                      position={pos}
+                      notation={notation}
+                      isSelected={isSelected}
+                      onClick={handlePieceClick}
+                    />
+                  );
+                } else if (id.includes("queen")) {
+                  return (
+                    <Queen
                       key={id}
                       id={id}
                       color={color}
