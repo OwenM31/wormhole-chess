@@ -1372,7 +1372,7 @@ const ChessboardScene: React.FC = () => {
           for (let i = 0; i < squares; i++) {
             const node = boardGraph[current];
             if (!node || !node[direction]) return [];
-            current = node[direction];
+            current = String(node[direction]);
             path.push(current);
           }
 
