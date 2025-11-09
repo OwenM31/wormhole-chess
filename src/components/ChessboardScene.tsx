@@ -1021,7 +1021,8 @@ const ChessboardScene: React.FC = () => {
   const calculateKingMoves = (
     start: string,
     piecePositions: Record<string, string>,
-    pieceColor: "white" | "black"
+    pieceColor: "white" | "black",
+    hasMoved: Record<string, boolean> = {} // Track which pieces have moved
   ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
     const paths = new Map<string, string[]>();
@@ -1247,6 +1248,7 @@ const ChessboardScene: React.FC = () => {
     const node = boardGraph[start];
     if (!node) return { moves: [], paths: {} };
 
+    // Regular king moves (one square in any direction)
     for (let dir of allDirections) {
       // Handle in/out transitions for inner/outer layer squares
       if (start in outDir && dir === "out") {
@@ -1335,6 +1337,113 @@ const ChessboardScene: React.FC = () => {
           } else {
             moves.add(next);
             paths.set(next, [start, next]);
+          }
+        }
+      }
+    }
+
+    // ==================== CASTLING LOGIC ====================
+
+    // Find the king ID
+    const kingId = Object.entries(piecePositions).find(
+      ([id, pos]) =>
+        pos === start && id.includes("king") && id.startsWith(pieceColor)
+    )?.[0];
+
+    // Check if king hasn't moved and is on starting square
+    if (kingId && !hasMoved[kingId]) {
+      const startingSquare = pieceColor === "white" ? "e1" : "e8";
+      const startingSquarePrime = pieceColor === "white" ? "e1'" : "e8'";
+
+      if (start === startingSquare || start === startingSquarePrime) {
+        // Helper function to check if path is clear
+        const isPathClear = (pathSquares: string[]): boolean => {
+          return pathSquares.every((sq) => !(sq in occupiedByColor));
+        };
+
+        // Helper to get castling path using boardGraph
+        const getCastlingPath = (
+          direction: "W" | "E",
+          squares: number
+        ): string[] => {
+          const path: string[] = [];
+          let current = start;
+
+          for (let i = 0; i < squares; i++) {
+            const node = boardGraph[current];
+            if (!node || !node[direction]) return [];
+            current = node[direction];
+            path.push(current);
+          }
+
+          return path;
+        };
+
+        // Kingside castling (towards h-file)
+        const kingsideRookSquare =
+          pieceColor === "white"
+            ? start.includes("'")
+              ? "h1'"
+              : "h1"
+            : start.includes("'")
+            ? "h8'"
+            : "h8";
+
+        const kingsideRookId = Object.entries(piecePositions).find(
+          ([id, pos]) =>
+            pos === kingsideRookSquare &&
+            id.includes("rook") &&
+            id.startsWith(pieceColor)
+        )?.[0];
+
+        if (kingsideRookId && !hasMoved[kingsideRookId]) {
+          // King moves 2 squares towards h-file (east)
+          const kingsidePath = getCastlingPath("E", 2);
+
+          if (kingsidePath.length === 2) {
+            const [f_square, g_square] = kingsidePath;
+
+            // Check if f and g squares are clear
+            if (isPathClear([f_square, g_square])) {
+              const castleSquare = g_square;
+              moves.add(castleSquare);
+              // Path includes intermediate square for animation
+              paths.set(castleSquare, [start, f_square, castleSquare]);
+            }
+          }
+        }
+
+        // Queenside castling (towards a-file)
+        const queensideRookSquare =
+          pieceColor === "white"
+            ? start.includes("'")
+              ? "a1'"
+              : "a1"
+            : start.includes("'")
+            ? "a8'"
+            : "a8";
+
+        const queensideRookId = Object.entries(piecePositions).find(
+          ([id, pos]) =>
+            pos === queensideRookSquare &&
+            id.includes("rook") &&
+            id.startsWith(pieceColor)
+        )?.[0];
+
+        if (queensideRookId && !hasMoved[queensideRookId]) {
+          // King moves 2 squares towards a-file (west)
+          const queensidePath = getCastlingPath("W", 3); // Need to check 3 squares for queenside
+
+          if (queensidePath.length === 3) {
+            const [d_square, c_square, b_square] = queensidePath;
+
+            // Check if b, c, d squares are clear
+            if (isPathClear([d_square, c_square, b_square])) {
+              const castleSquare = c_square;
+              moves.add(castleSquare);
+              // Path includes intermediate square for animation
+              paths.set(castleSquare, [start, d_square, castleSquare]);
+            }
           }
         }
       }
@@ -1470,6 +1579,13 @@ const ChessboardScene: React.FC = () => {
     }));
   };
 
+  // Add state to track which pieces have moved
+  const [hasMoved, setHasMoved] = useState<Record<string, boolean>>({});
+
+  // Add state to track castling moves
+  const [isCastlingMove, setIsCastlingMove] = useState<string | null>(null);
+
+  // Update handlePieceClick to pass hasMoved
   const handlePieceClick = (pieceId: string, notation: string) => {
     if (selectedPiece === pieceId) {
       setSelectedPiece(null);
@@ -1506,12 +1622,262 @@ const ChessboardScene: React.FC = () => {
       moves = Array.from(new Set([...orthoResult.moves, ...diagResult.moves]));
       paths = { ...orthoResult.paths, ...diagResult.paths };
     } else if (pieceId.includes("king")) {
-      const result = calculateKingMoves(notation, piecePositions, color);
+      const result = calculateKingMoves(
+        notation,
+        piecePositions,
+        color,
+        hasMoved
+      );
       moves = result.moves;
       paths = result.paths;
     }
     setPossibleMoves(moves);
     setPossibleMovePaths(paths);
+  };
+
+  // Update handleSquareClick to handle castling
+  const handleSquareClick = (
+    pos: [number, number, number],
+    notation: string
+  ) => {
+    if (!selectedPiece || !possibleMoves.includes(notation)) return;
+
+    const pathNotations = possibleMovePaths[notation];
+    if (!pathNotations) {
+      console.warn("No animation path found for move:", notation);
+      return;
+    }
+
+    const color = selectedPiece.startsWith("white") ? "white" : "black";
+    const fromSquare = piecePositions[selectedPiece];
+
+    // Check if this is a castling move
+    let castlingRookId: string | null = null;
+    let castlingRookPath: string[] = [];
+
+    if (
+      selectedPiece.includes("king") &&
+      Math.abs(fromSquare.charCodeAt(0) - notation.charCodeAt(0)) === 2
+    ) {
+      // This is a castling move
+      const isPrime = notation.includes("'");
+      const rank = color === "white" ? "1" : "8";
+      const rankSuffix = isPrime ? "'" : "";
+
+      if (notation.startsWith("g")) {
+        // Kingside castling
+        const rookSquare = `h${rank}${rankSuffix}`;
+        const rookDestination = `f${rank}${rankSuffix}`;
+
+        castlingRookId =
+          Object.entries(piecePositions).find(
+            ([id, pos]) => pos === rookSquare && id.includes("rook")
+          )?.[0] || null;
+
+        if (castlingRookId) {
+          castlingRookPath = [rookSquare, rookDestination];
+        }
+      } else if (notation.startsWith("c")) {
+        // Queenside castling
+        const rookSquare = `a${rank}${rankSuffix}`;
+        const rookDestination = `d${rank}${rankSuffix}`;
+
+        castlingRookId =
+          Object.entries(piecePositions).find(
+            ([id, pos]) => pos === rookSquare && id.includes("rook")
+          )?.[0] || null;
+
+        if (castlingRookId) {
+          castlingRookPath = [rookSquare, rookDestination];
+        }
+      }
+    }
+
+    // Disable interactions while animating
+    setAnimatingPiece(selectedPiece);
+    setSelectedPiece(null);
+    setPossibleMoves([]);
+
+    // Animate king
+    animatePieceAlongPath(selectedPiece, pathNotations).then(() => {
+      // If castling, animate rook after king
+      if (castlingRookId && castlingRookPath.length > 0) {
+        return animatePieceAlongPath(castlingRookId, castlingRookPath);
+      }
+    });
+
+    // Mark pieces as having moved
+    setHasMoved((prev) => ({
+      ...prev,
+      [selectedPiece]: true,
+      ...(castlingRookId ? { [castlingRookId]: true } : {}),
+    }));
+
+    setMoveHistory((prev) => [
+      ...prev,
+      {
+        moveNumber: prev.length + 1,
+        piece: selectedPiece,
+        from: fromSquare,
+        to: pathNotations[pathNotations.length - 1],
+        timestamp: new Date(),
+        isWormholeMove:
+          pathNotations[0].includes("'") !==
+          pathNotations[pathNotations.length - 1].includes("'"),
+        isCastling: castlingRookId !== null,
+      },
+    ]);
+  };
+
+  // Update MoveLogEntry interface
+  interface MoveLogEntry {
+    moveNumber: number;
+    piece: string;
+    from: string;
+    to: string;
+    timestamp: Date;
+    isWormholeMove?: boolean;
+    isCastling?: boolean;
+  }
+
+  // Update MoveLog component to show castling indicator
+  const MoveLog: React.FC<{ moves: MoveLogEntry[] }> = ({ moves }) => {
+    const moveLogRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+      if (moveLogRef.current) {
+        moveLogRef.current.scrollTop = moveLogRef.current.scrollHeight;
+      }
+    }, [moves]);
+
+    return (
+      <div
+        style={{
+          backgroundColor: COLORS.charcoal,
+          borderRadius: "12px",
+          padding: "20px",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
+        }}
+      >
+        <h2
+          style={{
+            color: COLORS.warmWhite,
+            fontSize: "1.5rem",
+            fontWeight: "600",
+            marginBottom: "20px",
+            borderBottom: `2px solid ${COLORS.lodenGreen}`,
+            paddingBottom: "10px",
+          }}
+        >
+          Move History
+        </h2>
+
+        <div
+          ref={moveLogRef}
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            paddingRight: "10px",
+          }}
+        >
+          {moves.length === 0 ? (
+            <div
+              style={{
+                color: COLORS.smokeyTaupe,
+                fontStyle: "italic",
+                textAlign: "center",
+                marginTop: "20px",
+              }}
+            >
+              No moves yet
+            </div>
+          ) : (
+            moves.map((move, index) => (
+              <div
+                key={index}
+                style={{
+                  backgroundColor:
+                    index % 2 === 0 ? COLORS.charcoalLight : "transparent",
+                  padding: "10px",
+                  borderRadius: "6px",
+                  marginBottom: "8px",
+                  transition: "all 0.3s ease",
+                  border: `1px solid ${
+                    move.isWormholeMove || move.isCastling
+                      ? COLORS.accent
+                      : "transparent"
+                  }`,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      color: COLORS.lodenGreenLight,
+                      fontWeight: "600",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {move.moveNumber}.
+                  </span>
+                  <span
+                    style={{
+                      color: COLORS.warmWhite,
+                      fontFamily: "monospace",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    {move.isCastling
+                      ? move.to.startsWith("g")
+                        ? "O-O"
+                        : "O-O-O"
+                      : `${move.from} → ${move.to}`}
+                  </span>
+                </div>
+                {move.isWormholeMove && (
+                  <div
+                    style={{
+                      color: COLORS.accent,
+                      fontSize: "0.75rem",
+                      marginTop: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <span>🌀</span>
+                    <span>Wormhole traversal</span>
+                  </div>
+                )}
+                {move.isCastling && (
+                  <div
+                    style={{
+                      color: COLORS.accent,
+                      fontSize: "0.75rem",
+                      marginTop: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <span>🏰</span>
+                    <span>Castling</span>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
   };
 
   const animatePieceAlongPath = async (
@@ -1543,40 +1909,6 @@ const ChessboardScene: React.FC = () => {
 
     // End animation
     setAnimatingPiece(null);
-  };
-
-  const handleSquareClick = (
-    pos: [number, number, number],
-    notation: string
-  ) => {
-    if (!selectedPiece || !possibleMoves.includes(notation)) return;
-
-    const pathNotations = possibleMovePaths[notation];
-    if (!pathNotations) {
-      console.warn("No animation path found for move:", notation);
-      return;
-    }
-
-    // Disable interactions while animating
-    setAnimatingPiece(selectedPiece);
-    setSelectedPiece(null);
-    setPossibleMoves([]);
-
-    animatePieceAlongPath(selectedPiece, pathNotations);
-
-    setMoveHistory((prev) => [
-      ...prev,
-      {
-        moveNumber: prev.length + 1,
-        piece: selectedPiece,
-        from: piecePositions[selectedPiece],
-        to: pathNotations[pathNotations.length - 1],
-        timestamp: new Date(),
-        isWormholeMove:
-          pathNotations[0].includes("'") !==
-          pathNotations[pathNotations.length - 1].includes("'"),
-      },
-    ]);
   };
 
   const isHighlightedSquare = (notation: string) => {
