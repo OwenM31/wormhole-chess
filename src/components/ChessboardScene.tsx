@@ -1119,18 +1119,19 @@ const ChessboardScene: React.FC = () => {
   };
 
   useEffect(() => {
-    if (capturedPiece) {
-      const timeout = setTimeout(() => {
-        setPiecePositions((prev) => {
-          const newPositions = { ...prev };
-          delete newPositions[capturedPiece]; // remove the captured one
-          return newPositions;
-        });
-        setCapturedPiece(null); // clear capture state
-      }, 600); // wait for shrink animation to finish
-      return () => clearTimeout(timeout);
-    }
-  }, [capturedPiece]);
+  if (capturedPiece) {
+    const timeout = setTimeout(() => {
+      setPiecePositions(prev => {
+        const newPositions = { ...prev };
+        delete newPositions[capturedPiece];
+        return newPositions;
+      });
+      setCapturedPiece(null);
+    }, 1000); // wait ~1s for shrink animation
+    return () => clearTimeout(timeout);
+  }
+}, [capturedPiece]);
+
 
   const handlePieceClick = (pieceId: string, notation: string) => {
     if (selectedPiece === pieceId) {
@@ -1211,7 +1212,6 @@ const ChessboardScene: React.FC = () => {
       });
 
       await new Promise(resolve => setTimeout(resolve, delay));
-
     }
     
     // end animation
