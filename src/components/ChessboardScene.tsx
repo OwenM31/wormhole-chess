@@ -5,15 +5,47 @@ import { GLTF } from "three-stdlib";
 import { useSpring, a } from "@react-spring/three";
 import * as THREE from "three";
 import { Directions, boardGraph } from "./WormholeTopology";
-import { COLORS, PIECE_SPEED, PENTAGONAL_SQUARES, BOARD_MAX, BOARD_MIN, BOARD_SIZE, GRID_COUNT, SPACING, FILES, RANKS, OUTER_LAYER_SCALE, 
-  OUTER_LAYER_SQUARES, OUTER_LAYER_TILT, INNER_LAYER_SCALE, INNER_LAYER_SQUARES, INNER_LAYER_TILT} from "./Constants";
-import { getInnerLayerAngle, getOuterLayerAngle, getPieceWormholeRotation, getRotationTowardsOrigin, getWormholeSquarePosition, 
-  getWormholeTransform, torusPoint, TORUS_MAJOR, OUTER_MINOR, OUTER_PHI, INNER_PHI, INNER_MINOR} from "./WormholeGeometry";
-import { gridToChess, gridToWorld, chessToGrid, chessToWorld, } from "./CoordinateConversion";
+import {
+  COLORS,
+  PIECE_SPEED,
+  PENTAGONAL_SQUARES,
+  BOARD_MAX,
+  BOARD_MIN,
+  BOARD_SIZE,
+  GRID_COUNT,
+  SPACING,
+  FILES,
+  RANKS,
+  OUTER_LAYER_SCALE,
+  OUTER_LAYER_SQUARES,
+  OUTER_LAYER_TILT,
+  INNER_LAYER_SCALE,
+  INNER_LAYER_SQUARES,
+  INNER_LAYER_TILT,
+} from "./Constants";
+import {
+  getInnerLayerAngle,
+  getOuterLayerAngle,
+  getPieceWormholeRotation,
+  getRotationTowardsOrigin,
+  getWormholeSquarePosition,
+  getWormholeTransform,
+  torusPoint,
+  TORUS_MAJOR,
+  OUTER_MINOR,
+  OUTER_PHI,
+  INNER_PHI,
+  INNER_MINOR,
+} from "./WormholeGeometry";
+import {
+  gridToChess,
+  gridToWorld,
+  chessToGrid,
+  chessToWorld,
+} from "./CoordinateConversion";
 import Piece from "./PieceAnimation";
 
 // ===================  3D ANIMATION  ====================
-
 
 // ==================== 3D COMPONENTS ====================
 
@@ -370,7 +402,6 @@ const ChessPiece: React.FC<ChessPieceProps> = ({
     springScale: transform.scale,
     springRot: finalRotation,
     config: { mass: 1, tension: 200, friction: 20 },
-    
   });
 
   return (
@@ -414,6 +445,20 @@ const Rook: React.FC<
   return <ChessPiece {...props} modelPath={modelPath} />;
 };
 
+const King: React.FC<
+  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+> = (props) => {
+  const modelPath = `chessboard/${props.color}-pieces/${props.color}-king.glb`;
+  return <ChessPiece {...props} modelPath={modelPath} />;
+};
+
+const Pawn: React.FC<
+  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+> = (props) => {
+  const modelPath = `chessboard/${props.color}-pieces/${props.color}-pawn.glb`;
+  return <ChessPiece {...props} modelPath={modelPath} />;
+};
+
 // preload models
 useGLTF.preload("chessboard/white-pieces/white-rook.glb");
 useGLTF.preload("chessboard/black-pieces/black-rook.glb");
@@ -421,6 +466,18 @@ useGLTF.preload("chessboard/black-pieces/black-rook.glb");
 // preload models
 useGLTF.preload("chessboard/white-pieces/white-bishop.glb");
 useGLTF.preload("chessboard/black-pieces/black-bishop.glb");
+
+// Preload king models
+useGLTF.preload("chessboard/white-pieces/white-king.glb");
+useGLTF.preload("chessboard/black-pieces/black-king.glb");
+
+// Preload queen models
+useGLTF.preload("chessboard/white-pieces/white-queen.glb");
+useGLTF.preload("chessboard/black-pieces/black-queen.glb");
+
+// Preload pawn models
+useGLTF.preload("chessboard/white-pieces/white-pawn.glb");
+useGLTF.preload("chessboard/black-pieces/black-pawn.glb");
 
 // ==================== MAIN COMPONENT ====================
 
@@ -447,8 +504,14 @@ const ChessboardScene: React.FC = () => {
     "black-bishop-f8'": "f8'",
     "white-queen-d1'": "d1'",
     "black-queen-d8'": "d8'",
+
+    "white-king-e1": "e1",
+    "black-king-e8": "e8",
+    "white-king-e1'": "e1'",
+    "black-king-e8'": "e8'",
   });
 
+  const [enPassantSquare, setEnPassantSquare] = useState<string | null>(null);
   const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
   const [possibleMovePaths, setPossibleMovePaths] = useState<
@@ -991,6 +1054,501 @@ const ChessboardScene: React.FC = () => {
     return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
   };
 
+  const calculateKingMoves = (
+    start: string,
+    piecePositions: Record<string, string>,
+    pieceColor: "white" | "black",
+    hasMoved: Record<string, boolean> = {} // Track which pieces have moved
+  ): { moves: string[]; paths: Record<string, string[]> } => {
+    const moves = new Set<string>();
+    const paths = new Map<string, string[]>();
+
+    const occupiedByColor = Object.fromEntries(
+      Object.entries(piecePositions).map(([id, notation]) => [
+        notation,
+        id.startsWith("white") ? "white" : "black",
+      ])
+    );
+
+    // King can move in all 8 directions plus wormhole directions
+    const allDirections: EntryDir[] = [
+      "N",
+      "S",
+      "E",
+      "W", // Orthogonal
+      "NE",
+      "NW",
+      "SE",
+      "SW", // Diagonal
+      "in",
+      "out",
+      "cw",
+      "ccw", // Wormhole orthogonal
+      "idl",
+      "idr",
+      "odl",
+      "odr", // Wormhole diagonal
+    ];
+
+    const node = boardGraph[start];
+    if (!node) return { moves: [], paths: {} };
+
+    // Regular king moves (one square in any direction)
+    for (let dir of allDirections) {
+      const next = node[dir];
+      if (next) {
+        // Check if square is occupied
+        if (next in occupiedByColor) {
+          if (occupiedByColor[next] !== pieceColor) {
+            moves.add(next); // Can capture opponent piece
+            paths.set(next, [start, next]);
+          }
+          // Can't move to square occupied by own piece
+        } else {
+          moves.add(next);
+          paths.set(next, [start, next]);
+        }
+      }
+    }
+
+    // ==================== CASTLING LOGIC ====================
+
+    // Find the king ID
+    const kingId = Object.entries(piecePositions).find(
+      ([id, pos]) =>
+        pos === start && id.includes("king") && id.startsWith(pieceColor)
+    )?.[0];
+
+    // Check if king hasn't moved and is on starting square
+    if (kingId && !hasMoved[kingId]) {
+      const startingSquare = pieceColor === "white" ? "e1" : "e8";
+      const startingSquarePrime = pieceColor === "white" ? "e1'" : "e8'";
+
+      if (start === startingSquare || start === startingSquarePrime) {
+        // Helper function to check if path is clear
+        const isPathClear = (pathSquares: string[]): boolean => {
+          return pathSquares.every((sq) => !(sq in occupiedByColor));
+        };
+
+        // Helper to get castling path using boardGraph
+        const getCastlingPath = (
+          direction: "W" | "E",
+          squares: number
+        ): string[] => {
+          const path: string[] = [];
+          let current = start;
+
+          for (let i = 0; i < squares; i++) {
+            const node = boardGraph[current];
+            if (!node || !node[direction]) return [];
+            current = String(node[direction]);
+            path.push(current);
+          }
+
+          return path;
+        };
+
+        // Kingside castling (towards h-file)
+        const kingsideRookSquare =
+          pieceColor === "white"
+            ? start.includes("'")
+              ? "h1'"
+              : "h1"
+            : start.includes("'")
+            ? "h8'"
+            : "h8";
+
+        const kingsideRookId = Object.entries(piecePositions).find(
+          ([id, pos]) =>
+            pos === kingsideRookSquare &&
+            id.includes("rook") &&
+            id.startsWith(pieceColor)
+        )?.[0];
+
+        if (kingsideRookId && !hasMoved[kingsideRookId]) {
+          // King moves 2 squares towards h-file (east)
+          const kingsidePath = getCastlingPath("E", 2);
+
+          if (kingsidePath.length === 2) {
+            const [f_square, g_square] = kingsidePath;
+
+            // Check if f and g squares are clear
+            if (isPathClear([f_square, g_square])) {
+              const castleSquare = g_square;
+              moves.add(castleSquare);
+              // Path includes intermediate square for animation
+              paths.set(castleSquare, [start, f_square, castleSquare]);
+            }
+          }
+        }
+
+        // Queenside castling (towards a-file)
+        const queensideRookSquare =
+          pieceColor === "white"
+            ? start.includes("'")
+              ? "a1'"
+              : "a1"
+            : start.includes("'")
+            ? "a8'"
+            : "a8";
+
+        const queensideRookId = Object.entries(piecePositions).find(
+          ([id, pos]) =>
+            pos === queensideRookSquare &&
+            id.includes("rook") &&
+            id.startsWith(pieceColor)
+        )?.[0];
+
+        if (queensideRookId && !hasMoved[queensideRookId]) {
+          // King moves 2 squares towards a-file (west)
+          const queensidePath = getCastlingPath("W", 3); // Need to check 3 squares for queenside
+
+          if (queensidePath.length === 3) {
+            const [d_square, c_square, b_square] = queensidePath;
+
+            // Check if b, c, d squares are clear
+            if (isPathClear([d_square, c_square, b_square])) {
+              const castleSquare = c_square;
+              moves.add(castleSquare);
+              // Path includes intermediate square for animation
+              paths.set(castleSquare, [start, d_square, castleSquare]);
+            }
+          }
+        }
+      }
+    }
+
+    return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
+  };
+
+  const calculatePawnMoves = (
+    start: string,
+    piecePositions: Record<string, string>,
+    pieceColor: "white" | "black",
+    enPassantSquare: string | null = null // Optional: for en passant captures
+  ): { moves: string[]; paths: Record<string, string[]> } => {
+    const moves = new Set<string>();
+    const paths = new Map<string, string[]>();
+
+    const occupiedByColor = Object.fromEntries(
+      Object.entries(piecePositions).map(([id, notation]) => [
+        notation,
+        id.startsWith("white") ? "white" : "black",
+      ])
+    );
+
+    const node = boardGraph[start];
+    if (!node) return { moves: [], paths: {} };
+
+    // Determine forward direction based on color
+    // White pawns move "north" (towards rank 8), black pawns move "south" (towards rank 1)
+    const forwardDir: EntryDir = pieceColor === "white" ? "N" : "S";
+    const leftCaptureDir: EntryDir = pieceColor === "white" ? "NW" : "SE";
+    const rightCaptureDir: EntryDir = pieceColor === "white" ? "NE" : "SW";
+
+    // Determine starting rank for double-move eligibility
+    const isStartingRank = (square: string): boolean => {
+      if (pieceColor === "white") {
+        return square.match(/^[a-h]2$/) !== null && !square.includes("'");
+      } else {
+        return square.match(/^[a-h]7$/) !== null && !square.includes("'");
+      }
+    };
+
+    // Special handling for wormhole transitions
+    const handleWormholeTransition = (
+      current: string,
+      dir: EntryDir
+    ): EntryDir => {
+      // Inner/outer layer forward transitions
+      const inDir: Record<string, Record<string, EntryDir>> = {
+        c4: { N: "in", S: "in" },
+        c5: { N: "in", S: "in" },
+        d3: { N: "in", S: "in" },
+        e3: { N: "in", S: "in" },
+        d6: { N: "in", S: "in" },
+        e6: { N: "in", S: "in" },
+        f4: { N: "in", S: "in" },
+        f5: { N: "in", S: "in" },
+        "c4'": { N: "in", S: "in" },
+        "c5'": { N: "in", S: "in" },
+        "d3'": { N: "in", S: "in" },
+        "e3'": { N: "in", S: "in" },
+        "d6'": { N: "in", S: "in" },
+        "e6'": { N: "in", S: "in" },
+        "f4'": { N: "in", S: "in" },
+        "f5'": { N: "in", S: "in" },
+      };
+
+      const outDir: Record<string, Record<string, EntryDir>> = {
+        c4: { out: "W" },
+        c5: { out: "W" },
+        d3: { out: "S" },
+        e3: { out: "S" },
+        d6: { out: "N" },
+        e6: { out: "N" },
+        f4: { out: "E" },
+        f5: { out: "E" },
+        "c4'": { out: "W" },
+        "c5'": { out: "W" },
+        "d3'": { out: "S" },
+        "e3'": { out: "S" },
+        "d6'": { out: "N" },
+        "e6'": { out: "N" },
+        "f4'": { out: "E" },
+        "f5'": { out: "E" },
+      };
+
+      // Diagonal capture transitions through wormhole
+      const diagInDir: Record<string, Record<string, EntryDir>> = {
+        c4: { NE: "idl", SE: "idr", NW: "idl", SW: "idr" },
+        c5: { NE: "idl", SE: "idr", NW: "idl", SW: "idr" },
+        d3: { NW: "idl", NE: "idr", SW: "idl", SE: "idr" },
+        d6: { SE: "idl", SW: "idr", NE: "idl", NW: "idr" },
+        e3: { NW: "idl", NE: "idr", SW: "idl", SE: "idr" },
+        e6: { SE: "idl", SW: "idr", NE: "idl", NW: "idr" },
+        f4: { SW: "idl", NW: "idr", SE: "idl", NE: "idr" },
+        f5: { SW: "idl", NW: "idr", SE: "idl", NE: "idr" },
+        "c4'": { NE: "idr", SE: "idl", NW: "idr", SW: "idl" },
+        "c5'": { NE: "idr", SE: "idl", NW: "idr", SW: "idl" },
+        "d3'": { NW: "idr", NE: "idl", SW: "idr", SE: "idl" },
+        "d6'": { SE: "idr", SW: "idl", NE: "idr", NW: "idl" },
+        "e3'": { NW: "idr", NE: "idl", SW: "idr", SE: "idl" },
+        "e6'": { SE: "idr", SW: "idl", NE: "idr", NW: "idl" },
+        "f4'": { SW: "idr", NW: "idl", SE: "idr", NE: "idl" },
+        "f5'": { SW: "idr", NW: "idl", SE: "idr", NE: "idl" },
+      };
+
+      if (current in inDir && dir in inDir[current]) {
+        return inDir[current][dir];
+      }
+      if (current in outDir && dir in outDir[current]) {
+        return outDir[current][dir];
+      }
+      if (current in diagInDir && dir in diagInDir[current]) {
+        return diagInDir[current][dir];
+      }
+
+      return dir;
+    };
+
+    // Pentagon pawn move handling
+    const pentagonPawnExits: Record<
+      string,
+      Record<
+        string,
+        {
+          forward?: EntryDir[];
+          leftCapture?: EntryDir[];
+          rightCapture?: EntryDir[];
+        }
+      >
+    > = {
+      c3: {
+        white: {
+          forward: ["N"],
+          leftCapture: ["NW", "idl"],
+          rightCapture: ["idl", "idr"],
+        },
+        black: {
+          forward: ["S"],
+          leftCapture: ["idr", "SE"],
+          rightCapture: ["SW"],
+        },
+      },
+      c6: {
+        white: {
+          forward: ["N"],
+          leftCapture: ["SW", "idr"],
+          rightCapture: ["NE", "idl"],
+        },
+        black: {
+          forward: ["S"],
+          leftCapture: ["idl", "idr"],
+          rightCapture: ["SW", "idr"],
+        },
+      },
+      f3: {
+        white: {
+          forward: ["N"],
+          leftCapture: ["idl", "idr"],
+          rightCapture: ["NE", "idr"],
+        },
+        black: {
+          forward: ["S"],
+          leftCapture: ["SW"],
+          rightCapture: ["idl", "SW"],
+        },
+      },
+      f6: {
+        white: {
+          forward: ["N"],
+          leftCapture: ["idl", "idr"],
+          rightCapture: ["NE"],
+        },
+        black: {
+          forward: ["S"],
+          leftCapture: ["SE", "idl"],
+          rightCapture: ["NW", "idr"],
+        },
+      },
+      "c3'": {
+        white: {
+          forward: ["N"],
+          leftCapture: ["NW", "idr"],
+          rightCapture: ["idl", "idr"],
+        },
+        black: {
+          forward: ["S"],
+          leftCapture: ["idl", "SE"],
+          rightCapture: ["SW"],
+        },
+      },
+      "c6'": {
+        white: {
+          forward: ["N"],
+          leftCapture: ["SW", "idl"],
+          rightCapture: ["NE", "idr"],
+        },
+        black: {
+          forward: ["S"],
+          leftCapture: ["idl", "idr"],
+          rightCapture: ["SW", "idl"],
+        },
+      },
+      "f3'": {
+        white: {
+          forward: ["N"],
+          leftCapture: ["idl", "idr"],
+          rightCapture: ["NE", "idl"],
+        },
+        black: {
+          forward: ["S"],
+          leftCapture: ["SW"],
+          rightCapture: ["idr", "SW"],
+        },
+      },
+      "f6'": {
+        white: {
+          forward: ["N"],
+          leftCapture: ["idl", "idr"],
+          rightCapture: ["NE"],
+        },
+        black: {
+          forward: ["S"],
+          leftCapture: ["SE", "idr"],
+          rightCapture: ["NW", "idl"],
+        },
+      },
+    };
+
+    // Helper function to try a move in a direction
+    const tryMove = (dir: EntryDir, isCapture: boolean): void => {
+      let currentDir = handleWormholeTransition(start, dir);
+
+      // Handle pentagon squares
+      if (pentagonPawnExits[start]) {
+        const exits = pentagonPawnExits[start][pieceColor];
+        let possibleDirs: EntryDir[] = [];
+
+        if (!isCapture && exits.forward) {
+          possibleDirs = exits.forward;
+        } else if (isCapture) {
+          if (dir === leftCaptureDir && exits.leftCapture) {
+            possibleDirs = exits.leftCapture;
+          } else if (dir === rightCaptureDir && exits.rightCapture) {
+            possibleDirs = exits.rightCapture;
+          }
+        }
+
+        for (const exitDir of possibleDirs) {
+          const next = node[exitDir];
+          if (!next) continue;
+
+          if (isCapture) {
+            // Can only capture if enemy piece is present (or en passant)
+            if (
+              next in occupiedByColor &&
+              occupiedByColor[next] !== pieceColor
+            ) {
+              moves.add(next);
+              paths.set(next, [start, next]);
+            } else if (next === enPassantSquare) {
+              moves.add(next);
+              paths.set(next, [start, next]);
+            }
+          } else {
+            // Forward move: square must be empty
+            if (!(next in occupiedByColor)) {
+              moves.add(next);
+              paths.set(next, [start, next]);
+            }
+          }
+        }
+      } else {
+        // Normal square
+        const next = node[currentDir];
+        if (!next) return;
+
+        if (isCapture) {
+          // Can only capture if enemy piece is present (or en passant)
+          if (next in occupiedByColor && occupiedByColor[next] !== pieceColor) {
+            moves.add(next);
+            paths.set(next, [start, next]);
+          } else if (next === enPassantSquare) {
+            moves.add(next);
+            paths.set(next, [start, next]);
+          }
+        } else {
+          // Forward move: square must be empty
+          if (!(next in occupiedByColor)) {
+            moves.add(next);
+            paths.set(next, [start, next]);
+          }
+        }
+      }
+    };
+
+    // 1. Try single forward move
+    tryMove(forwardDir, false);
+
+    // 2. Try double forward move (only from starting position)
+    if (isStartingRank(start)) {
+      let firstDir = handleWormholeTransition(start, forwardDir);
+      const firstSquare = node[firstDir];
+
+      if (firstSquare && !(firstSquare in occupiedByColor)) {
+        // First square is empty, check second square
+        const firstNode = boardGraph[firstSquare];
+        if (firstNode) {
+          // Handle potential wormhole transition on second move
+          const currentPrime = start.includes("'");
+          const firstPrime = firstSquare.includes("'");
+          let secondDir = forwardDir;
+
+          if (currentPrime !== firstPrime) {
+            // We've transitioned through wormhole, need to adjust direction
+            secondDir = handleWormholeTransition(firstSquare, forwardDir);
+          } else {
+            secondDir = handleWormholeTransition(firstSquare, forwardDir);
+          }
+
+          const secondSquare = firstNode[secondDir];
+          if (secondSquare && !(secondSquare in occupiedByColor)) {
+            moves.add(secondSquare);
+            paths.set(secondSquare, [start, firstSquare, secondSquare]);
+          }
+        }
+      }
+    }
+
+    // 3. Try diagonal captures (left and right)
+    tryMove(leftCaptureDir, true);
+    tryMove(rightCaptureDir, true);
+
+    return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
+  };
+
   // ==================== GENERIC PIECE COMPONENT ====================
 
   interface ChessPieceProps {
@@ -1132,6 +1690,13 @@ const ChessboardScene: React.FC = () => {
     }
   }, [capturedPiece]);
 
+  // Add state to track which pieces have moved
+  const [hasMoved, setHasMoved] = useState<Record<string, boolean>>({});
+
+  // Add state to track castling moves
+  const [isCastlingMove, setIsCastlingMove] = useState<string | null>(null);
+
+  // Update handlePieceClick to pass hasMoved
   const handlePieceClick = (pieceId: string, notation: string) => {
     if (selectedPiece === pieceId) {
       setSelectedPiece(null);
@@ -1169,9 +1734,178 @@ const ChessboardScene: React.FC = () => {
       );
       moves = Array.from(new Set([...orthoResult.moves, ...diagResult.moves]));
       paths = { ...orthoResult.paths, ...diagResult.paths };
+    } else if (pieceId.includes("king")) {
+      const result = calculateKingMoves(
+        notation,
+        piecePositions,
+        color,
+        hasMoved
+      );
+      moves = result.moves;
+      paths = result.paths;
+    } else if (pieceId.includes("p")) {
+      const result = calculatePawnMoves(
+        notation,
+        piecePositions,
+        color,
+        enPassantSquare
+      );
+      moves = result.moves;
+      paths = result.paths;
     }
     setPossibleMoves(moves);
     setPossibleMovePaths(paths);
+  };
+
+  // Update MoveLogEntry interface
+  interface MoveLogEntry {
+    moveNumber: number;
+    piece: string;
+    from: string;
+    to: string;
+    timestamp: Date;
+    isWormholeMove?: boolean;
+    isCastling?: boolean;
+  }
+
+  // Update MoveLog component to show castling indicator
+  const MoveLog: React.FC<{ moves: MoveLogEntry[] }> = ({ moves }) => {
+    const moveLogRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+      if (moveLogRef.current) {
+        moveLogRef.current.scrollTop = moveLogRef.current.scrollHeight;
+      }
+    }, [moves]);
+
+    return (
+      <div
+        style={{
+          backgroundColor: COLORS.charcoal,
+          borderRadius: "12px",
+          padding: "20px",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
+        }}
+      >
+        <h2
+          style={{
+            color: COLORS.warmWhite,
+            fontSize: "1.5rem",
+            fontWeight: "600",
+            marginBottom: "20px",
+            borderBottom: `2px solid ${COLORS.lodenGreen}`,
+            paddingBottom: "10px",
+          }}
+        >
+          Move History
+        </h2>
+
+        <div
+          ref={moveLogRef}
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            paddingRight: "10px",
+          }}
+        >
+          {moves.length === 0 ? (
+            <div
+              style={{
+                color: COLORS.smokeyTaupe,
+                fontStyle: "italic",
+                textAlign: "center",
+                marginTop: "20px",
+              }}
+            >
+              No moves yet
+            </div>
+          ) : (
+            moves.map((move, index) => (
+              <div
+                key={index}
+                style={{
+                  backgroundColor:
+                    index % 2 === 0 ? COLORS.charcoalLight : "transparent",
+                  padding: "10px",
+                  borderRadius: "6px",
+                  marginBottom: "8px",
+                  transition: "all 0.3s ease",
+                  border: `1px solid ${
+                    move.isWormholeMove || move.isCastling
+                      ? COLORS.accent
+                      : "transparent"
+                  }`,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      color: COLORS.lodenGreenLight,
+                      fontWeight: "600",
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {move.moveNumber}.
+                  </span>
+                  <span
+                    style={{
+                      color: COLORS.warmWhite,
+                      fontFamily: "monospace",
+                      fontSize: "1rem",
+                    }}
+                  >
+                    {move.isCastling
+                      ? move.to.startsWith("g")
+                        ? "O-O"
+                        : "O-O-O"
+                      : `${move.from} → ${move.to}`}
+                  </span>
+                </div>
+                {move.isWormholeMove && (
+                  <div
+                    style={{
+                      color: COLORS.accent,
+                      fontSize: "0.75rem",
+                      marginTop: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <span>🌀</span>
+                    <span>Wormhole traversal</span>
+                  </div>
+                )}
+                {move.isCastling && (
+                  <div
+                    style={{
+                      color: COLORS.accent,
+                      fontSize: "0.75rem",
+                      marginTop: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <span>🏰</span>
+                    <span>Castling</span>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
   };
 
   const animatePieceAlongPath = async (
@@ -1185,7 +1919,8 @@ const ChessboardScene: React.FC = () => {
       setPiecePositions((prev) => {
         // This checks to see if another piece is in the spot we are going to (might be a better way to do this in the square click method)
         const targetEntry = Object.entries(prev).find(
-          ([id, pos]) => pos === notation && id !== pieceId);
+          ([id, pos]) => pos === notation && id !== pieceId
+        );
 
         // If we are at the final destination and an enemy piece is there >> Capture it!
         if (i === pathNotations.length - 1 && targetEntry) {
@@ -1210,15 +1945,12 @@ const ChessboardScene: React.FC = () => {
         };
       });
 
-      await new Promise(resolve => setTimeout(resolve, delay));
-
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
-    
+
     // end animation
     setAnimatingPiece(null);
   };
-
-
 
   const handleSquareClick = (
     pos: [number, number, number],
@@ -1232,6 +1964,96 @@ const ChessboardScene: React.FC = () => {
       return;
     }
 
+    // Check for pawn double move to set en passant square
+    if (selectedPiece.includes("pawn")) {
+      const startNotation = piecePositions[selectedPiece];
+      const startRank = startNotation[1];
+      const endRank = notation[1];
+
+      // Check if it's a double move
+      if (Math.abs(parseInt(endRank) - parseInt(startRank)) === 2) {
+        // Set en passant square (the square the pawn "jumped over")
+        const epRank = selectedPiece.startsWith("white") ? "3" : "6";
+        const epSquare = `${notation[0]}${epRank}${
+          notation.includes("'") ? "'" : ""
+        }`;
+        setEnPassantSquare(epSquare);
+      } else {
+        setEnPassantSquare(null);
+      }
+
+      // Check for pawn promotion (reaching rank 8 for white, rank 1 for black)
+      const isPromotion =
+        (selectedPiece.startsWith("white") && endRank === "8") ||
+        (selectedPiece.startsWith("black") && endRank === "1");
+
+      if (isPromotion) {
+        // TODO: Show promotion UI to select piece (Queen, Rook, Bishop, Knight)
+        // For now, auto-promote to queen
+        const color = selectedPiece.startsWith("white") ? "white" : "black";
+        const newId = `${color}-queen-promoted-${Date.now()}`;
+
+        setPiecePositions((prev) => {
+          const newPos = { ...prev };
+          delete newPos[selectedPiece];
+          newPos[newId] = notation;
+          return newPos;
+        });
+
+        setSelectedPiece(null);
+        setPossibleMoves([]);
+        return;
+      }
+    } else {
+      // Non-pawn move resets en passant
+      setEnPassantSquare(null);
+    }
+
+    const color = selectedPiece.startsWith("white") ? "white" : "black";
+    const fromSquare = piecePositions[selectedPiece];
+
+    // Check if this is a castling move
+    let castlingRookId: string | null = null;
+    let castlingRookPath: string[] = [];
+
+    if (
+      selectedPiece.includes("king") &&
+      Math.abs(fromSquare.charCodeAt(0) - notation.charCodeAt(0)) === 2
+    ) {
+      // This is a castling move
+      const isPrime = notation.includes("'");
+      const rank = color === "white" ? "1" : "8";
+      const rankSuffix = isPrime ? "'" : "";
+
+      if (notation.startsWith("g")) {
+        // Kingside castling
+        const rookSquare = `h${rank}${rankSuffix}`;
+        const rookDestination = `f${rank}${rankSuffix}`;
+
+        castlingRookId =
+          Object.entries(piecePositions).find(
+            ([id, pos]) => pos === rookSquare && id.includes("rook")
+          )?.[0] || null;
+
+        if (castlingRookId) {
+          castlingRookPath = [rookSquare, rookDestination];
+        }
+      } else if (notation.startsWith("c")) {
+        // Queenside castling
+        const rookSquare = `a${rank}${rankSuffix}`;
+        const rookDestination = `d${rank}${rankSuffix}`;
+
+        castlingRookId =
+          Object.entries(piecePositions).find(
+            ([id, pos]) => pos === rookSquare && id.includes("rook")
+          )?.[0] || null;
+
+        if (castlingRookId) {
+          castlingRookPath = [rookSquare, rookDestination];
+        }
+      }
+    }
+
     // Disable interactions while animating
     setAnimatingPiece(selectedPiece);
     setSelectedPiece(null);
@@ -1239,6 +2061,13 @@ const ChessboardScene: React.FC = () => {
     setCurrentPlayer((prev) => (prev === "white" ? "black" : "white"));
 
     animatePieceAlongPath(selectedPiece, pathNotations);
+    // Animate king
+    animatePieceAlongPath(selectedPiece, pathNotations).then(() => {
+      // If castling, animate rook after king
+      if (castlingRookId && castlingRookPath.length > 0) {
+        return animatePieceAlongPath(castlingRookId, castlingRookPath);
+      }
+    });
 
     setMoveHistory((prev) => [
       ...prev,
@@ -1252,6 +2081,7 @@ const ChessboardScene: React.FC = () => {
         isWormholeMove:
           pathNotations[0].includes("'") !==
           pathNotations[pathNotations.length - 1].includes("'"),
+        isCastling: castlingRookId !== null,
       },
     ]);
   };
@@ -1380,6 +2210,19 @@ const ChessboardScene: React.FC = () => {
                 } else if (id.includes("queen")) {
                   return (
                     <Queen
+                      key={id}
+                      id={id}
+                      color={color}
+                      position={pos}
+                      notation={notation}
+                      isSelected={isSelected}
+                      capturedPiece={capturedPiece}
+                      onClick={handlePieceClick}
+                    />
+                  );
+                } else if (id.includes("king")) {
+                  return (
+                    <King
                       key={id}
                       id={id}
                       color={color}
