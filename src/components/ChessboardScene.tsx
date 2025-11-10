@@ -471,9 +471,9 @@ const ChessboardScene: React.FC = () => {
     "team1-knight-b1": "b1",
     "team1-knight-g1": "g1",
     "team1-queen-d1": "d1",
+    "team1-king-e1": "e1",
 
     /*
-    "team1-king-e1": "e1",
     "team1-pawn-a2": "a2",
     "team1-pawn-b2": "b2",
     "team1-pawn-c2": "c2",

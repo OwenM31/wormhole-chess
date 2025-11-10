@@ -1,3 +1,39 @@
+
+# How to update EC2 instance
+## Broad steps:
+1. Build static version of the project with `npm start build`
+   - This is so that we don't have to do a `npm start` server to keep the page running
+   - `npm run build` creates a `\build\` folder that contains the minimum that our page needs to run
+2. `scp` the build folder to the EC2 instance
+   - `scp` is "secure copy". it's how we can move files from our machine to another (the EC2 instance)
+   - we just need to navigate to where our secret key is and run `scp -i <YOUR_SECRET_KEY> <PATH/TO>\build\ <YOUR_USER>@<EC2_PUBLIC_IP>:/home/shared/projects/wormhole-chess/`
+     - ^ this command should give you a visual update that files were copied
+3. `ssh` into the EC2 instance
+   - navigate to where your secret key is (same as above)
+   - run `ssh -i <YOUR_SECRET_KEY> <YOUR_USER>@<EC2_PUBLIC_IP>`
+     - this should give you a visual that you are in the EC2 terminal
+   - we need to go in and move the contents of the `\build\` folder to where they will be served from 
+   - We specify where the files will be served from in an `nginx` config (topic for another time)
+   - right now, our config says it will look for files at `/var/www/wormhole-chess` (from the absolute root directory)
+4. `cp` the build folder to the place where it is served from 
+   - run `sudo cp <PATH_TO>/build/* var/www/wormhole=chess/`
+And the webpage should automatically update when new files are in that folder. (might need to empty browser cache on your browser)
+
+## Just the commands
+   Navigate to this folder (same as this `README.md`)
+0. Make sure your updated (`git pull` and such)
+1. `npm run build`
+   Navigate to EC2-PRIVATE-KEY folder
+2. `scp -i <YOUR_SECRET_KEY> <PATH/TO>\build\ <YOUR_USER>@<EC2_PUBLIC_IP>:/home/shared/projects/wormhole-chess/`
+3. `ssh -i <YOUR_SECRET_KEY> <YOUR_USER>@<EC2_PUBLIC_IP>`
+4. (In the EC2 Shell) `sudo cp -r /home/shared/projects/wormhole-chess/build/* /var/www/wormhole-chess/`
+   
+
+
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
