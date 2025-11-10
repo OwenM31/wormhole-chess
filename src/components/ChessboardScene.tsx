@@ -1,5 +1,5 @@
-import React, { Suspense, useState, useMemo, useEffect } from "react";
-import { Canvas, ThreeEvent } from "@react-three/fiber";
+import React, { Suspense, useState, useMemo, useEffect, useRef } from "react";
+import { Canvas, ThreeEvent, useFrame } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Box } from "@react-three/drei";
 import { GLTF } from "three-stdlib";
 import { useSpring, a } from "@react-spring/three";
@@ -10,6 +10,10 @@ import { COLORS, PIECE_SPEED, PENTAGONAL_SQUARES, BOARD_MAX, BOARD_MIN, BOARD_SI
 import { getInnerLayerAngle, getOuterLayerAngle, getPieceWormholeRotation, getRotationTowardsOrigin, getWormholeSquarePosition, 
   getWormholeTransform, torusPoint, TORUS_MAJOR, OUTER_MINOR, OUTER_PHI, INNER_PHI, INNER_MINOR} from "./WormholeGeometry";
 import { gridToChess, gridToWorld, chessToGrid, chessToWorld, } from "./CoordinateConversion";
+import Piece from "./PieceAnimation";
+
+// ===================  3D ANIMATION  ====================
+
 
 // ==================== 3D COMPONENTS ====================
 
@@ -330,6 +334,7 @@ interface ChessPieceProps {
   notation: string;
   rotation?: [number, number, number];
   isSelected: boolean;
+  capturedPiece: string | null;
   onClick: (id: string, notation: string) => void;
 }
 
@@ -341,6 +346,7 @@ const ChessPiece: React.FC<ChessPieceProps> = ({
   notation,
   rotation = [0, 0, 0],
   isSelected,
+  capturedPiece,
   onClick,
 }) => {
   const gltf = useGLTF(modelPath) as GLTF;
@@ -364,6 +370,7 @@ const ChessPiece: React.FC<ChessPieceProps> = ({
     springScale: transform.scale,
     springRot: finalRotation,
     config: { mass: 1, tension: 200, friction: 20 },
+    
   });
 
   return (
@@ -429,6 +436,17 @@ const ChessboardScene: React.FC = () => {
     "black-bishop-f8": "f8",
     "white-queen-d1": "d1",
     "black-queen-d8": "d8",
+
+    "white-rook-a1'": "a1'",
+    "white-rook-h1'": "h1'",
+    "black-rook-a8'": "a8'",
+    "black-rook-h8'": "h8'",
+    "white-bishop-c1'": "c1'",
+    "white-bishop-f1'": "f1'",
+    "black-bishop-c8'": "c8'",
+    "black-bishop-f8'": "f8'",
+    "white-queen-d1'": "d1'",
+    "black-queen-d8'": "d8'",
   });
 
   const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
@@ -441,6 +459,7 @@ const ChessboardScene: React.FC = () => {
   const [currentPlayer, setCurrentPlayer] = useState<"white" | "black">(
     "white"
   );
+  const [capturedPiece, setCapturedPiece] = useState<string | null>(null);
 
   const boardSquares = useMemo(() => {
     const squares: {
@@ -1099,6 +1118,20 @@ const ChessboardScene: React.FC = () => {
     }));
   };
 
+  useEffect(() => {
+    if (capturedPiece) {
+      const timeout = setTimeout(() => {
+        setPiecePositions((prev) => {
+          const newPositions = { ...prev };
+          delete newPositions[capturedPiece]; // remove the captured one
+          return newPositions;
+        });
+        setCapturedPiece(null); // clear capture state
+      }, 600); // wait for shrink animation to finish
+      return () => clearTimeout(timeout);
+    }
+  }, [capturedPiece]);
+
   const handlePieceClick = (pieceId: string, notation: string) => {
     if (selectedPiece === pieceId) {
       setSelectedPiece(null);
@@ -1149,28 +1182,43 @@ const ChessboardScene: React.FC = () => {
     for (let i = 0; i < pathNotations.length; i++) {
       const notation = pathNotations[i];
 
-      setPiecePositions((prev) => ({
-        ...prev,
-        [pieceId]: notation,
-      }));
+      setPiecePositions((prev) => {
+        // This checks to see if another piece is in the spot we are going to (might be a better way to do this in the square click method)
+        const targetEntry = Object.entries(prev).find(
+          ([id, pos]) => pos === notation && id !== pieceId);
 
-      // Add optional capture check
-      if (i === pathNotations.length - 1) {
-        // End of path → check if capturing
-        const targetPiece = Object.entries(piecePositions).find(
-          ([id, pos]) => pos === notation && id !== pieceId
-        );
-        if (targetPiece) {
-          const [capturedId] = targetPiece;
+        // If we are at the final destination and an enemy piece is there >> Capture it!
+        if (i === pathNotations.length - 1 && targetEntry) {
+          const [capturedId] = targetEntry;
+
+          setCapturedPiece(capturedId);
+
+          // Remove the captured piece
+          const newPositions = { ...prev };
+          delete newPositions[capturedId];
+
+          // Move our piece to the new square
+          newPositions[pieceId] = notation;
+          return newPositions;
         }
-      }
 
-      await new Promise((resolve) => setTimeout(resolve, delay));
+        // Otherwise, just move step by step
+
+        return {
+          ...prev,
+          [pieceId]: notation,
+        };
+      });
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+
     }
-
-    // End animation
+    
+    // end animation
     setAnimatingPiece(null);
   };
+
+
 
   const handleSquareClick = (
     pos: [number, number, number],
@@ -1199,6 +1247,7 @@ const ChessboardScene: React.FC = () => {
         piece: selectedPiece,
         from: piecePositions[selectedPiece],
         to: pathNotations[pathNotations.length - 1],
+        captured: capturedPiece || null,
         timestamp: new Date(),
         isWormholeMove:
           pathNotations[0].includes("'") !==
@@ -1311,6 +1360,7 @@ const ChessboardScene: React.FC = () => {
                       position={pos}
                       notation={notation}
                       isSelected={isSelected}
+                      capturedPiece={capturedPiece}
                       onClick={handlePieceClick}
                     />
                   );
@@ -1323,6 +1373,7 @@ const ChessboardScene: React.FC = () => {
                       position={pos}
                       notation={notation}
                       isSelected={isSelected}
+                      capturedPiece={capturedPiece}
                       onClick={handlePieceClick}
                     />
                   );
@@ -1335,6 +1386,7 @@ const ChessboardScene: React.FC = () => {
                       position={pos}
                       notation={notation}
                       isSelected={isSelected}
+                      capturedPiece={capturedPiece}
                       onClick={handlePieceClick}
                     />
                   );
