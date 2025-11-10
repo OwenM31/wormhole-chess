@@ -498,6 +498,10 @@ const ChessboardScene: React.FC = () => {
     "white-bishop-f1": "f1",
     "black-bishop-c8": "c8",
     "black-bishop-f8": "f8",
+    "white-knight-b1": "b1",
+    "white-knight-g1": "g1",
+    "black-knight-b8": "b8",
+    "black-knight-g8": "g8",
     "white-queen-d1": "d1",
     "black-queen-d8": "d8",
 
@@ -1219,6 +1223,197 @@ const ChessboardScene: React.FC = () => {
               moves.add(castleSquare);
               // Path includes intermediate square for animation
               paths.set(castleSquare, [start, d_square, castleSquare]);
+            }
+          }
+        }
+      }
+    }
+
+    return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
+  };
+
+  const calculateKnightMoves = (
+    start: string,
+    piecePositions: Record<string, string>,
+    pieceColor: "white" | "black"
+  ): { moves: string[]; paths: Record<string, string[]> } => {
+    const moves = new Set<string>();
+    const paths = new Map<string, string[]>();
+
+    const occupiedByColor = Object.fromEntries(
+      Object.entries(piecePositions).map(([id, notation]) => [
+        notation,
+        id.startsWith("white") ? "white" : "black",
+      ])
+    );
+
+    // Define perpendicular relationships for knight moves
+    const perpendicularDirs: Record<EntryDir, EntryDir[]> = {
+      N: ["E", "W", "cw", "ccw"],
+      S: ["E", "W", "cw", "ccw"],
+      E: ["N", "S", "in", "out"],
+      W: ["N", "S", "in", "out"],
+      cw: ["N", "S", "in", "out"],
+      ccw: ["N", "S", "in", "out"],
+      in: ["E", "W", "cw", "ccw"],
+      out: ["E", "W", "cw", "ccw"],
+      NE: [],
+      NW: [],
+      SE: [],
+      SW: [],
+      idl: [],
+      idr: [],
+      odl: [],
+      odr: [],
+      od: [],
+    };
+
+    const oppositeDir: Record<EntryDir, EntryDir> = {
+      N: "S",
+      S: "N",
+      E: "W",
+      W: "E",
+      in: "out",
+      out: "in",
+      cw: "ccw",
+      ccw: "cw",
+      NW: "SE",
+      NE: "SW",
+      SW: "NE",
+      SE: "NW",
+      idl: "odr",
+      idr: "odl",
+      odl: "idr",
+      odr: "idl",
+      od: "od",
+    };
+
+    const outDir: Record<string, EntryDir> = {
+      c4: "W",
+      c5: "W",
+      d3: "S",
+      e3: "S",
+      d6: "N",
+      e6: "N",
+      f4: "E",
+      f5: "E",
+      "c4'": "W",
+      "c5'": "W",
+      "d3'": "S",
+      "e3'": "S",
+      "d6'": "N",
+      "e6'": "N",
+      "f4'": "E",
+      "f5'": "E",
+    };
+
+    const inDir: Record<string, EntryDir> = {
+      c4: "E",
+      c5: "E",
+      d3: "N",
+      e3: "N",
+      d6: "S",
+      e6: "S",
+      f4: "W",
+      f5: "W",
+      "c4'": "E",
+      "c5'": "E",
+      "d3'": "N",
+      "e3'": "N",
+      "d6'": "S",
+      "e6'": "S",
+      "f4'": "W",
+      "f5'": "W",
+    };
+
+    // Helper to move one square in a direction, handling transitions and pentagon branches
+    const moveOneSquare = (
+      current: string,
+      dir: EntryDir
+    ): Array<{ square: string; nextDir: EntryDir }> => {
+      const node = boardGraph[current];
+      if (!node) return [];
+
+      // Handle in/out transitions
+      let actualDir = dir;
+      if (current in outDir && dir === "out") {
+        actualDir = outDir[current];
+      }
+      if (current in inDir && dir === inDir[current]) {
+        actualDir = "in";
+      }
+
+      const next = node[actualDir];
+      if (!next) return [];
+
+      // Determine direction for next step based on prime/non-prime transitions
+      const currentPrime = current.endsWith("'");
+      const nextPrime = next.endsWith("'");
+      let nextDir = actualDir;
+
+      if ((!currentPrime && nextPrime) || (currentPrime && !nextPrime)) {
+        nextDir = oppositeDir[actualDir];
+      }
+
+      // Handle pentagon squares - they can branch into multiple paths
+      if (pentagonOrthogonalExits[next]) {
+        const exits = pentagonOrthogonalExits[next][nextDir];
+        if (exits && exits.length > 0) {
+          return exits.map((exitDir) => ({ square: next, nextDir: exitDir }));
+        }
+      }
+
+      return [{ square: next, nextDir }];
+    };
+
+    // Try all knight move patterns: 2 squares in primary direction, then 1 perpendicular
+    const primaryDirs: EntryDir[] = [
+      "N",
+      "S",
+      "E",
+      "W",
+      "in",
+      "out",
+      "cw",
+      "ccw",
+    ];
+
+    for (const primaryDir of primaryDirs) {
+      // First step in primary direction
+      const firstSteps = moveOneSquare(start, primaryDir);
+
+      for (const step1 of firstSteps) {
+        // Second step in primary direction
+        const secondSteps = moveOneSquare(step1.square, step1.nextDir);
+
+        for (const step2 of secondSteps) {
+          const intermediatePath = [start, step1.square, step2.square];
+
+          // Third step: 1 square perpendicular
+          const perpDirs = perpendicularDirs[primaryDir];
+          for (const perpDir of perpDirs) {
+            const thirdSteps = moveOneSquare(step2.square, perpDir);
+
+            for (const step3 of thirdSteps) {
+              const destination = step3.square;
+              const fullPath = [...intermediatePath, destination];
+
+              // Check if destination is valid
+              if (destination in occupiedByColor) {
+                if (occupiedByColor[destination] !== pieceColor) {
+                  // Can capture opponent piece
+                  moves.add(destination);
+                  if (!paths.has(destination)) {
+                    paths.set(destination, fullPath);
+                  }
+                }
+              } else {
+                // Empty square
+                moves.add(destination);
+                if (!paths.has(destination)) {
+                  paths.set(destination, fullPath);
+                }
+              }
             }
           }
         }
