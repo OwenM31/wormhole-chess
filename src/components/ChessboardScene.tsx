@@ -1416,8 +1416,8 @@ const ChessboardScene: React.FC = () => {
   const calculatePawnMoves = (
     start: string,
     piecePositions: Record<string, string>,
-    team: 1 | 2 | 3 | 4,
-    enPassantSquare: string | null
+    pieceTeam: 1 | 2 | 3 | 4,
+    enPassantSquare: string | null = null
   ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
     const paths = new Map<string, string[]>();
@@ -1432,54 +1432,84 @@ const ChessboardScene: React.FC = () => {
     const node = boardGraph[start];
     if (!node) return { moves: [], paths: {} };
 
-    // Determine forward direction based on team
-    let forwardDir: EntryDir;
-    let diagonalDirs: EntryDir[] = [];
-    let startingRank: string;
-    let promotionRank: string;
+    const isPrime = start.includes("'");
 
-    switch (team) {
-      case 1: // White - moves north
+    // Determine pawn direction based on team AND current layer
+    let forwardDir: EntryDir;
+    let startingRanks: string[]; // Can have multiple starting ranks due to layer changes
+
+    switch (pieceTeam) {
+      case 1: // White team
+        // Moves North on non-prime, South on prime
+        forwardDir = isPrime ? "S" : "N";
+        startingRanks = ["2", "7'"]; // Can start from rank 2 (non-prime) or rank 7' (prime)
+        break;
+
+      case 2: // Black team
+        // Moves South on non-prime, North on prime
+        forwardDir = isPrime ? "N" : "S";
+        startingRanks = ["7", "2'"]; // Can start from rank 7 (non-prime) or rank 2' (prime)
+        break;
+
+      case 3: // Brown team
+        // Moves North on prime, South on non-prime
+        forwardDir = isPrime ? "N" : "S";
+        startingRanks = ["2'", "7"]; // Can start from rank 2' (prime) or rank 7 (non-prime)
+        break;
+
+      case 4: // Green team
+        // Moves South on prime, North on non-prime
+        forwardDir = isPrime ? "S" : "N";
+        startingRanks = ["7'", "2"]; // Can start from rank 7' (prime) or rank 2 (non-prime)
+        break;
+
+      default:
         forwardDir = "N";
-        diagonalDirs = ["NE", "NW"];
-        startingRank = "2";
-        promotionRank = "8";
-        break;
-      case 2: // Black - moves south
-        forwardDir = "S";
-        diagonalDirs = ["SE", "SW"];
-        startingRank = "7";
-        promotionRank = "1";
-        break;
-      case 3: // Brown - moves east
-        forwardDir = "E";
-        diagonalDirs = ["NE", "SE"];
-        startingRank = "b";
-        promotionRank = "g";
-        break;
-      case 4: // Green - moves west
-        forwardDir = "W";
-        diagonalDirs = ["NW", "SW"];
-        startingRank = "g";
-        promotionRank = "b";
-        break;
+        startingRanks = ["2"];
     }
 
-    // Forward move (1 square)
+    // Helper to check if current position is a starting rank for this pawn
+    const isStartingRank = (notation: string): boolean => {
+      const rank = notation[1];
+      const layer = notation.includes("'") ? "'" : "";
+      const currentRankWithLayer = rank + layer;
+      return startingRanks.includes(currentRankWithLayer);
+    };
+
+    // Single move forward
     const oneForward = node[forwardDir];
     if (oneForward && !(oneForward in occupiedByTeam)) {
       moves.add(oneForward);
       paths.set(oneForward, [start, oneForward]);
 
       // Double move from starting position
-      const isStartingPosition =
-        (team <= 2 && start[1] === startingRank) ||
-        (team > 2 && start[0] === startingRank);
-
-      if (isStartingPosition) {
+      if (isStartingRank(start)) {
         const twoForwardNode = boardGraph[oneForward];
         if (twoForwardNode) {
-          const twoForward = twoForwardNode[forwardDir];
+          // Need to check if direction changes when crossing layers
+          const oneForwardIsPrime = oneForward.includes("'");
+          let secondForwardDir = forwardDir;
+
+          // Check if we need to reverse direction after crossing layers
+          if (isPrime !== oneForwardIsPrime) {
+            // Layer changed, need to recalculate direction
+            switch (pieceTeam) {
+              case 1: // White: N->S or S->N
+                secondForwardDir = oneForwardIsPrime ? "S" : "N";
+                break;
+              case 2: // Black: S->N or N->S
+                secondForwardDir = oneForwardIsPrime ? "N" : "S";
+                break;
+              case 3: // Brown: N->S or S->N
+                secondForwardDir = oneForwardIsPrime ? "N" : "S";
+                break;
+              case 4: // Green: S->N or N->S
+                secondForwardDir = oneForwardIsPrime ? "S" : "N";
+                break;
+            }
+          }
+
+          const twoForward = twoForwardNode[secondForwardDir];
           if (twoForward && !(twoForward in occupiedByTeam)) {
             moves.add(twoForward);
             paths.set(twoForward, [start, oneForward, twoForward]);
@@ -1488,23 +1518,91 @@ const ChessboardScene: React.FC = () => {
       }
     }
 
-    // Diagonal captures
-    for (const diagDir of diagonalDirs) {
-      const diagonal = node[diagDir];
-      if (diagonal) {
+    // Diagonal captures - these also depend on forward direction
+    const captureDirections: EntryDir[] =
+      forwardDir === "N"
+        ? ["NE", "NW"]
+        : forwardDir === "S"
+        ? ["SE", "SW"]
+        : []; // Should not happen, but safety check
+
+    for (const captureDir of captureDirections) {
+      const captureSquare = node[captureDir];
+      if (captureSquare) {
         // Regular capture
-        if (diagonal in occupiedByTeam && occupiedByTeam[diagonal] !== team) {
-          moves.add(diagonal);
-          paths.set(diagonal, [start, diagonal]);
+        if (
+          captureSquare in occupiedByTeam &&
+          occupiedByTeam[captureSquare] !== pieceTeam
+        ) {
+          moves.add(captureSquare);
+          paths.set(captureSquare, [start, captureSquare]);
         }
 
         // En passant capture
-        if (diagonal === enPassantSquare) {
-          moves.add(diagonal);
-          paths.set(diagonal, [start, diagonal]);
+        if (enPassantSquare && captureSquare === enPassantSquare) {
+          // Verify there's an enemy pawn to capture via en passant
+          // The actual pawn would be on the same rank as our pawn
+          const enPassantTargetFile = enPassantSquare[0];
+          const currentRank = start[1];
+          const enPassantTargetSquare =
+            enPassantTargetFile + currentRank + (isPrime ? "'" : "");
+
+          if (
+            enPassantTargetSquare in occupiedByTeam &&
+            occupiedByTeam[enPassantTargetSquare] !== pieceTeam
+          ) {
+            moves.add(captureSquare);
+            paths.set(captureSquare, [start, captureSquare]);
+          }
         }
       }
     }
+
+    // Handle wormhole captures (diagonal wormhole moves)
+    // Check for diagonal wormhole directions based on current forward direction
+    const wormholeCaptureDirections: EntryDir[] = [];
+
+    // If we're near a wormhole square, we might be able to capture through it
+    if (
+      INNER_LAYER_SQUARES.includes(start.replace("'", "")) ||
+      OUTER_LAYER_SQUARES.includes(start.replace("'", ""))
+    ) {
+      // Add appropriate diagonal wormhole directions
+      if (forwardDir === "N" || forwardDir === "S") {
+        wormholeCaptureDirections.push("idl", "idr", "odl", "odr");
+      }
+    }
+
+    for (const wormholeDir of wormholeCaptureDirections) {
+      const wormholeCapture = node[wormholeDir];
+      if (
+        wormholeCapture &&
+        wormholeCapture in occupiedByTeam &&
+        occupiedByTeam[wormholeCapture] !== pieceTeam
+      ) {
+        moves.add(wormholeCapture);
+        paths.set(wormholeCapture, [start, wormholeCapture]);
+      }
+    }
+
+    // Special case: Check for promotion squares
+    // Teams 1&3 promote on rank 8 (either layer)
+    // Teams 2&4 promote on rank 1 (either layer)
+    const promotionRanks: string[] =
+      pieceTeam === 1 || pieceTeam === 3
+        ? ["8", "8'"]
+        : pieceTeam === 2 || pieceTeam === 4
+        ? ["1", "1'"]
+        : [];
+
+    // Filter moves to mark promotion squares (this would be handled in the move execution)
+    moves.forEach((move) => {
+      const moveRank = move[1] + (move.includes("'") ? "'" : "");
+      if (promotionRanks.includes(moveRank)) {
+        // Could add a flag or special handling for promotion moves
+        // For now, the move is valid and promotion will be handled when executed
+      }
+    });
 
     return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
   };
