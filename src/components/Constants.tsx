@@ -10,6 +10,14 @@ export const COLORS = {
   accent: "#D4AF37", // Gold accent for highlights
 };
 
+// Team color mapping
+export const TEAM_COLORS = {
+  1: "white",
+  2: "black",
+  3: "white",
+  4: "black",
+};
+
 // Global constants
 export const PIECE_SPEED = 250; // milliseconds per square
 
