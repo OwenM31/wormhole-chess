@@ -431,6 +431,13 @@ const Queen: React.FC<
   return <ChessPiece {...props} modelPath={modelPath} />;
 };
 
+const Knight: React.FC<
+  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+> = (props) => {
+  const modelPath = `chessboard/${props.color}-pieces/${props.color}-knight.glb`;
+  return <ChessPiece {...props} modelPath={modelPath} />;
+};
+
 const Bishop: React.FC<
   Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
 > = (props) => {
@@ -1752,6 +1759,10 @@ const ChessboardScene: React.FC = () => {
       );
       moves = result.moves;
       paths = result.paths;
+    } else if (pieceId.includes("knight")) {
+      const result = calculateKnightMoves(notation, piecePositions, color);
+      moves = result.moves;
+      paths = result.paths;
     }
     setPossibleMoves(moves);
     setPossibleMovePaths(paths);
@@ -2197,6 +2208,19 @@ const ChessboardScene: React.FC = () => {
                 } else if (id.includes("bishop")) {
                   return (
                     <Bishop
+                      key={id}
+                      id={id}
+                      color={color}
+                      position={pos}
+                      notation={notation}
+                      isSelected={isSelected}
+                      capturedPiece={capturedPiece}
+                      onClick={handlePieceClick}
+                    />
+                  );
+                } else if (id.includes("knight")) {
+                  return (
+                    <Knight
                       key={id}
                       id={id}
                       color={color}
