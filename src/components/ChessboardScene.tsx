@@ -1681,11 +1681,11 @@ const ChessboardScene: React.FC = () => {
       const timeout = setTimeout(() => {
         setPiecePositions((prev) => {
           const newPositions = { ...prev };
-          delete newPositions[capturedPiece]; // remove the captured one
+          delete newPositions[capturedPiece];
           return newPositions;
         });
-        setCapturedPiece(null); // clear capture state
-      }, 600); // wait for shrink animation to finish
+        setCapturedPiece(null);
+      }, 1000); // wait ~1s for shrink animation
       return () => clearTimeout(timeout);
     }
   }, [capturedPiece]);

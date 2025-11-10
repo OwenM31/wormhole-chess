@@ -2,45 +2,36 @@ import * as THREE from "three";
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 
-type PieceProps = {
+interface PieceProps {
   id: string;
   position: [number, number, number];
-  color: string;
+  color: "white" | "black";
   capturedPiece: string | null;
   onClick: () => void;
-};
+}
 
-export default function Piece({ 
-    id,
-    position,
-    color, 
-    capturedPiece, 
-    onClick,
-}: PieceProps ) {
-  const meshRef = useRef<THREE.Group>(null);
+export default function Piece({ id, position, color, capturedPiece, onClick }: PieceProps) {
+  const ref = useRef<THREE.Mesh>(null!);
   const isCaptured = capturedPiece === id;
-  const shrinkSpeed = 1.0; // Adjust for speed
 
-  useFrame((_, delta) => {
-    
-    if (meshRef.current) {
-      if (isCaptured && meshRef.current.scale.x > 0) {
-        // shrink smoothly
-        meshRef.current.scale.multiplyScalar(1 - delta * shrinkSpeed);
-        if (meshRef.current.scale.x < 0.01) {
-          meshRef.current.scale.set(0, 0, 0);
-        }
+  // shrink animation handled per-frame
+  useFrame(() => {
+    if (isCaptured && ref.current) {
+      const scale = ref.current.scale.x;
+      if (scale > 0.01) {
+        const newScale = scale * 0.9; // shrink 10% each frame
+        ref.current.scale.set(newScale, newScale, newScale);
       }
+    } else if (ref.current && ref.current.scale.x < 1) {
+      // ensure it resets to normal size when not captured
+      ref.current.scale.set(1, 1, 1);
     }
   });
 
   return (
-    <group ref={meshRef} position={position} onClick={onClick}>
-      {/* your piece geometry here */}
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color={color} />
-      </mesh>
-    </group>
+    <mesh ref={ref} position={position} onClick={onClick}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={color} />
+    </mesh>
   );
 }
