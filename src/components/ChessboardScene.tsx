@@ -1247,25 +1247,72 @@ const ChessboardScene: React.FC = () => {
       ])
     );
 
-    // Define perpendicular relationships for knight moves
-    const perpendicularDirs: Record<EntryDir, EntryDir[]> = {
-      N: ["E", "W", "cw", "ccw"],
-      S: ["E", "W", "cw", "ccw"],
-      E: ["N", "S", "in", "out"],
-      W: ["N", "S", "in", "out"],
-      cw: ["N", "S", "in", "out"],
-      ccw: ["N", "S", "in", "out"],
-      in: ["E", "W", "cw", "ccw"],
-      out: ["E", "W", "cw", "ccw"],
-      NE: [],
-      NW: [],
-      SE: [],
-      SW: [],
-      idl: [],
-      idr: [],
-      odl: [],
-      odr: [],
-      od: [],
+    // Ring squares where directional relationships differ
+    const ringSquares = new Set([
+      "d4",
+      "e4",
+      "d5",
+      "e5",
+      "x1",
+      "x2",
+      "x3",
+      "x4",
+      "y1",
+      "y2",
+      "y3",
+      "y4",
+      "d4'",
+      "e4'",
+      "d5'",
+      "e5'",
+      "x1'",
+      "x2'",
+      "x3'",
+      "x4'",
+      "y1'",
+      "y2'",
+      "y3'",
+      "y4'",
+    ]);
+
+    // Get perpendicular directions based on current square and primary direction
+    const getPerpendicularDirs = (
+      square: string,
+      primaryDir: EntryDir
+    ): EntryDir[] => {
+      const isRingSquare = ringSquares.has(square);
+
+      if (isRingSquare) {
+        // On ring squares, cw/ccw is always perpendicular to in/out
+        if (primaryDir === "in" || primaryDir === "out") {
+          return ["cw", "ccw"];
+        } else if (primaryDir === "cw" || primaryDir === "ccw") {
+          return ["in", "out"];
+        }
+      }
+
+      // Non-ring squares use standard cardinal perpendicular relationships
+      const basePerpendicular: Record<EntryDir, EntryDir[]> = {
+        N: ["E", "W"],
+        S: ["E", "W"],
+        E: ["N", "S"],
+        W: ["N", "S"],
+        cw: ["in", "out"],
+        ccw: ["in", "out"],
+        in: ["cw", "ccw"],
+        out: ["cw", "ccw"],
+        NE: [],
+        NW: [],
+        SE: [],
+        SW: [],
+        idl: [],
+        idr: [],
+        odl: [],
+        odr: [],
+        od: [],
+      };
+
+      return basePerpendicular[primaryDir] || [];
     };
 
     const oppositeDir: Record<EntryDir, EntryDir> = {
@@ -1389,8 +1436,9 @@ const ChessboardScene: React.FC = () => {
         for (const step2 of secondSteps) {
           const intermediatePath = [start, step1.square, step2.square];
 
-          // Third step: 1 square perpendicular
-          const perpDirs = perpendicularDirs[primaryDir];
+          // Third step: 1 square perpendicular - context-aware based on current square
+          const perpDirs = getPerpendicularDirs(step2.square, step2.nextDir);
+
           for (const perpDir of perpDirs) {
             const thirdSteps = moveOneSquare(step2.square, perpDir);
 
