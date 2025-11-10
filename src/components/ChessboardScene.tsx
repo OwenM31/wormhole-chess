@@ -1,5 +1,5 @@
 import React, { Suspense, useState, useMemo, useEffect, useRef } from "react";
-import { Canvas, ThreeEvent, useFrame } from "@react-three/fiber";
+import { Canvas, ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Box } from "@react-three/drei";
 import { GLTF } from "three-stdlib";
 import { useSpring, a } from "@react-spring/three";
@@ -9,40 +9,16 @@ import {
   COLORS,
   PIECE_SPEED,
   PENTAGONAL_SQUARES,
-  BOARD_MAX,
-  BOARD_MIN,
-  BOARD_SIZE,
-  GRID_COUNT,
-  SPACING,
-  FILES,
-  RANKS,
-  OUTER_LAYER_SCALE,
   OUTER_LAYER_SQUARES,
-  OUTER_LAYER_TILT,
-  INNER_LAYER_SCALE,
   INNER_LAYER_SQUARES,
-  INNER_LAYER_TILT,
+  TEAM_COLORS,
 } from "./Constants";
 import {
-  getInnerLayerAngle,
-  getOuterLayerAngle,
   getPieceWormholeRotation,
   getRotationTowardsOrigin,
-  getWormholeSquarePosition,
   getWormholeTransform,
-  torusPoint,
-  TORUS_MAJOR,
-  OUTER_MINOR,
-  OUTER_PHI,
-  INNER_PHI,
-  INNER_MINOR,
 } from "./WormholeGeometry";
-import {
-  gridToChess,
-  gridToWorld,
-  chessToGrid,
-  chessToWorld,
-} from "./CoordinateConversion";
+import { gridToChess, chessToWorld } from "./CoordinateConversion";
 import Piece from "./PieceAnimation";
 
 // ===================  3D ANIMATION  ====================
@@ -93,11 +69,6 @@ const BoardSquare: React.FC<{
     </Box>
   );
 };
-
-// Preload piece models
-useGLTF.preload("chessboard/white-pieces/white-rook.glb");
-
-useGLTF.preload("chessboard/black-pieces/black-rook.glb");
 
 // ==================== UI COMPONENTS ====================
 
@@ -230,8 +201,8 @@ const MoveLog: React.FC<{ moves: MoveLogEntry[] }> = ({ moves }) => {
 
 const GameInfo: React.FC<{
   selectedPiece: string | null;
-  currentPlayer: "white" | "black";
-}> = ({ selectedPiece, currentPlayer }) => {
+  currentTeam: 1 | 2 | 3 | 4;
+}> = ({ selectedPiece, currentTeam }) => {
   return (
     <div
       style={{
@@ -268,7 +239,7 @@ const GameInfo: React.FC<{
               textTransform: "capitalize",
             }}
           >
-            {currentPlayer}
+            Team {currentTeam} ({TEAM_COLORS[currentTeam]})
           </div>
         </div>
         <div
@@ -276,10 +247,7 @@ const GameInfo: React.FC<{
             width: "40px",
             height: "40px",
             borderRadius: "50%",
-            backgroundColor:
-              currentPlayer === "white"
-                ? COLORS.warmWhite
-                : COLORS.charcoalLight,
+            backgroundColor: COLORS.lodenGreenDark,
             border: `3px solid ${COLORS.lodenGreen}`,
           }}
         />
@@ -360,7 +328,6 @@ const ControlsInfo: React.FC = () => {
 
 interface ChessPieceProps {
   id: string;
-  color: "white" | "black";
   modelPath: string; // e.g. "chessboard/white-pieces/white-rook.glb"
   position: [number, number, number];
   notation: string;
@@ -372,7 +339,6 @@ interface ChessPieceProps {
 
 const ChessPiece: React.FC<ChessPieceProps> = ({
   id,
-  color,
   modelPath,
   position,
   notation,
@@ -424,38 +390,52 @@ const ChessPiece: React.FC<ChessPieceProps> = ({
   );
 };
 
+// Updated piece components
 const Queen: React.FC<
-  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+  Omit<ChessPieceProps, "modelPath" | "team"> & { team: 1 | 2 | 3 | 4 }
 > = (props) => {
-  const modelPath = `chessboard/${props.color}-pieces/${props.color}-queen.glb`;
+  const color = TEAM_COLORS[props.team];
+  const modelPath = `chessboard/${color}-pieces/${color}-queen.glb`;
+  return <ChessPiece {...props} modelPath={modelPath} />;
+};
+
+const Knight: React.FC<
+  Omit<ChessPieceProps, "modelPath" | "team"> & { team: 1 | 2 | 3 | 4 }
+> = (props) => {
+  const color = TEAM_COLORS[props.team];
+  const modelPath = `chessboard/${color}-pieces/${color}-knight.glb`;
   return <ChessPiece {...props} modelPath={modelPath} />;
 };
 
 const Bishop: React.FC<
-  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+  Omit<ChessPieceProps, "modelPath" | "team"> & { team: 1 | 2 | 3 | 4 }
 > = (props) => {
-  const modelPath = `chessboard/${props.color}-pieces/${props.color}-bishop.glb`;
+  const color = TEAM_COLORS[props.team];
+  const modelPath = `chessboard/${color}-pieces/${color}-bishop.glb`;
   return <ChessPiece {...props} modelPath={modelPath} />;
 };
 
 const Rook: React.FC<
-  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+  Omit<ChessPieceProps, "modelPath" | "team"> & { team: 1 | 2 | 3 | 4 }
 > = (props) => {
-  const modelPath = `chessboard/${props.color}-pieces/${props.color}-rook.glb`;
+  const color = TEAM_COLORS[props.team];
+  const modelPath = `chessboard/${color}-pieces/${color}-rook.glb`;
   return <ChessPiece {...props} modelPath={modelPath} />;
 };
 
 const King: React.FC<
-  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+  Omit<ChessPieceProps, "modelPath" | "team"> & { team: 1 | 2 | 3 | 4 }
 > = (props) => {
-  const modelPath = `chessboard/${props.color}-pieces/${props.color}-king.glb`;
+  const color = TEAM_COLORS[props.team];
+  const modelPath = `chessboard/${color}-pieces/${color}-king.glb`;
   return <ChessPiece {...props} modelPath={modelPath} />;
 };
 
 const Pawn: React.FC<
-  Omit<ChessPieceProps, "modelPath" | "color"> & { color: "white" | "black" }
+  Omit<ChessPieceProps, "modelPath" | "team"> & { team: 1 | 2 | 3 | 4 }
 > = (props) => {
-  const modelPath = `chessboard/${props.color}-pieces/${props.color}-pawn.glb`;
+  const color = TEAM_COLORS[props.team];
+  const modelPath = `chessboard/${color}-pieces/${color}-pawn.glb`;
   return <ChessPiece {...props} modelPath={modelPath} />;
 };
 
@@ -483,32 +463,49 @@ useGLTF.preload("chessboard/black-pieces/black-pawn.glb");
 
 const ChessboardScene: React.FC = () => {
   const [piecePositions, setPiecePositions] = useState<Record<string, string>>({
-    "white-rook-a1": "a1",
-    "white-rook-h1": "h1",
-    "black-rook-a8": "a8",
-    "black-rook-h8": "h8",
-    "white-bishop-c1": "c1",
-    "white-bishop-f1": "f1",
-    "black-bishop-c8": "c8",
-    "black-bishop-f8": "f8",
-    "white-queen-d1": "d1",
-    "black-queen-d8": "d8",
+    // Team 1 (white)
+    "team1-rook-a1": "a1",
+    "team1-rook-h1": "h1",
+    "team1-bishop-c1": "c1",
+    "team1-bishop-f1": "f1",
+    "team1-knight-b1": "b1",
+    "team1-knight-g1": "g1",
+    "team1-queen-d1": "d1",
+    "team1-king-e1": "e1",
+    "team1-pawn-a2": "a2",
+    "team1-pawn-b2": "b2",
+    "team1-pawn-c2": "c2",
+    "team1-pawn-d2": "d2",
+    "team1-pawn-e2": "e2",
+    "team1-pawn-f2": "f2",
+    "team1-pawn-g2": "g2",
+    "team1-pawn-h2": "h2",
 
-    "white-rook-a1'": "a1'",
-    "white-rook-h1'": "h1'",
-    "black-rook-a8'": "a8'",
-    "black-rook-h8'": "h8'",
-    "white-bishop-c1'": "c1'",
-    "white-bishop-f1'": "f1'",
-    "black-bishop-c8'": "c8'",
-    "black-bishop-f8'": "f8'",
-    "white-queen-d1'": "d1'",
-    "black-queen-d8'": "d8'",
+    // Team 2 (black)
+    "team2-rook-a8": "a8",
+    "team2-rook-h8": "h8",
+    "team2-bishop-c8": "c8",
+    "team2-bishop-f8": "f8",
+    "team2-knight-b8": "b8",
+    "team2-knight-g8": "g8",
+    "team2-queen-d8": "d8",
+    "team2-king-e8": "e8",
 
-    "white-king-e1": "e1",
-    "black-king-e8": "e8",
-    "white-king-e1'": "e1'",
-    "black-king-e8'": "e8'",
+    // Team 3 (brown) - on bottom layer
+    "team3-rook-a1'": "a1'",
+    "team3-rook-h1'": "h1'",
+    "team3-bishop-c1'": "c1'",
+    "team3-bishop-f1'": "f1'",
+    "team3-queen-d1'": "d1'",
+    "team3-king-e1'": "e1'",
+
+    // Team 4 (green) - on bottom layer
+    "team4-rook-a8'": "a8'",
+    "team4-rook-h8'": "h8'",
+    "team4-bishop-c8'": "c8'",
+    "team4-bishop-f8'": "f8'",
+    "team4-queen-d8'": "d8'",
+    "team4-king-e8'": "e8'",
   });
 
   const [enPassantSquare, setEnPassantSquare] = useState<string | null>(null);
@@ -519,9 +516,7 @@ const ChessboardScene: React.FC = () => {
   >({});
   const [movePaths, setMovePaths] = useState<Record<string, string[]>>({});
   const [moveHistory, setMoveHistory] = useState<MoveLogEntry[]>([]);
-  const [currentPlayer, setCurrentPlayer] = useState<"white" | "black">(
-    "white"
-  );
+  const [currentTeam, setCurrentTeam] = useState<1 | 2 | 3 | 4>(1);
   const [capturedPiece, setCapturedPiece] = useState<string | null>(null);
 
   const boardSquares = useMemo(() => {
@@ -691,15 +686,15 @@ const ChessboardScene: React.FC = () => {
   const calculateOrthogonalMoves = (
     start: string,
     piecePositions: Record<string, string>,
-    pieceColor: "white" | "black"
+    team: 1 | 2 | 3 | 4
   ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
     const paths = new Map<string, string[]>();
 
-    const occupiedByColor = Object.fromEntries(
+    const occupiedByTeam = Object.fromEntries(
       Object.entries(piecePositions).map(([id, notation]) => [
         notation,
-        id.startsWith("white") ? "white" : "black",
+        getTeamFromId(id),
       ])
     );
 
@@ -803,8 +798,8 @@ const ChessboardScene: React.FC = () => {
 
       const newPath = [...pathsSoFar, next];
 
-      if (next in occupiedByColor) {
-        if (occupiedByColor[next] !== pieceColor) {
+      if (next in occupiedByTeam) {
+        if (occupiedByTeam[next] !== team) {
           moves.add(next); // Can capture opponent piece
           paths.set(next, newPath);
         }
@@ -920,18 +915,19 @@ const ChessboardScene: React.FC = () => {
   const calculateDiagonalMoves = (
     start: string,
     piecePositions: Record<string, string>,
-    pieceColor: "white" | "black"
+    team: 1 | 2 | 3 | 4
   ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
     const paths = new Map<string, string[]>();
 
-    const occupiedByColor = Object.fromEntries(
+    const occupiedByTeam = Object.fromEntries(
       Object.entries(piecePositions).map(([id, notation]) => [
         notation,
-        id.startsWith("white") ? "white" : "black",
+        getTeamFromId(id),
       ])
     );
 
+    // [Keep all the same diagonal logic but with team checks]
     const inDir: Record<string, Record<string, EntryDir>> = {
       c4: { NE: "idl", SE: "idr" },
       c5: { NE: "idl", SE: "idr" },
@@ -941,7 +937,6 @@ const ChessboardScene: React.FC = () => {
       e6: { SE: "idl", SW: "idr" },
       f4: { SW: "idl", NW: "idr" },
       f5: { SW: "idl", NW: "idr" },
-
       "c4'": { NE: "idr", SE: "idl" },
       "c5'": { NE: "idr", SE: "idl" },
       "d3'": { NW: "idr", NE: "idl" },
@@ -961,7 +956,6 @@ const ChessboardScene: React.FC = () => {
       e6: { odl: "NW", odr: "NE" },
       f4: { odl: "NE", odr: "SE" },
       f5: { odl: "NE", odr: "SE" },
-
       "c4'": { odr: "SW", odl: "NW" },
       "c5'": { odr: "SW", odl: "NW" },
       "d3'": { odr: "SE", odl: "SW" },
@@ -979,11 +973,8 @@ const ChessboardScene: React.FC = () => {
       pathsSoFar: string[]
     ) => {
       const node = boardGraph[current];
-      if (!node) {
-        return;
-      }
+      if (!node) return;
 
-      // \/\/\/ handle in/out transitions for diagonal moves \/\/\/
       if (current in inDir) {
         if (dir in inDir[current]) {
           dir = inDir[current][dir];
@@ -994,25 +985,19 @@ const ChessboardScene: React.FC = () => {
           dir = outDir[current][dir];
         }
       }
-      // /\/\/\
 
       const next = node[dir];
-      if (!next) {
-        return;
-      }
+      if (!next) return;
 
-      // Prevent infinite loops along this line
       const lineKey = `${current}-${dir}`;
-      if (visitedLine.has(lineKey)) {
-        return;
-      }
+      if (visitedLine.has(lineKey)) return;
       visitedLine.add(lineKey);
 
       const newPath = [...pathsSoFar, next];
 
-      if (next in occupiedByColor) {
-        if (occupiedByColor[next] !== pieceColor) {
-          moves.add(next); // Can capture opponent piece
+      if (next in occupiedByTeam) {
+        if (occupiedByTeam[next] !== team) {
+          moves.add(next);
           paths.set(next, newPath);
         }
         return;
@@ -1032,12 +1017,13 @@ const ChessboardScene: React.FC = () => {
       if (pentagonDiagonalExits[next]) {
         const branches = pentagonDiagonalExits[next][dir] || [];
         for (const branch of branches) {
-          traverseDiagonal(next, branch, new Set(visitedLine), newPath); // clone visited for each branch
+          traverseDiagonal(next, branch, new Set(visitedLine), newPath);
         }
       } else {
         traverseDiagonal(next, nextDir, visitedLine, newPath);
       }
     };
+
     const initialDirs: EntryDir[] = [
       "NE",
       "NW",
@@ -1051,59 +1037,56 @@ const ChessboardScene: React.FC = () => {
     for (const dir of initialDirs) {
       traverseDiagonal(start, dir, new Set(), [start]);
     }
+
     return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
   };
 
   const calculateKingMoves = (
     start: string,
     piecePositions: Record<string, string>,
-    pieceColor: "white" | "black",
-    hasMoved: Record<string, boolean> = {} // Track which pieces have moved
+    team: 1 | 2 | 3 | 4,
+    hasMoved: Record<string, boolean> = {}
   ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
     const paths = new Map<string, string[]>();
 
-    const occupiedByColor = Object.fromEntries(
+    const occupiedByTeam = Object.fromEntries(
       Object.entries(piecePositions).map(([id, notation]) => [
         notation,
-        id.startsWith("white") ? "white" : "black",
+        getTeamFromId(id),
       ])
     );
 
-    // King can move in all 8 directions plus wormhole directions
     const allDirections: EntryDir[] = [
       "N",
       "S",
       "E",
-      "W", // Orthogonal
+      "W",
       "NE",
       "NW",
       "SE",
-      "SW", // Diagonal
+      "SW",
       "in",
       "out",
       "cw",
-      "ccw", // Wormhole orthogonal
+      "ccw",
       "idl",
       "idr",
       "odl",
-      "odr", // Wormhole diagonal
+      "odr",
     ];
 
     const node = boardGraph[start];
     if (!node) return { moves: [], paths: {} };
 
-    // Regular king moves (one square in any direction)
     for (let dir of allDirections) {
       const next = node[dir];
       if (next) {
-        // Check if square is occupied
-        if (next in occupiedByColor) {
-          if (occupiedByColor[next] !== pieceColor) {
-            moves.add(next); // Can capture opponent piece
+        if (next in occupiedByTeam) {
+          if (occupiedByTeam[next] !== team) {
+            moves.add(next);
             paths.set(next, [start, next]);
           }
-          // Can't move to square occupied by own piece
         } else {
           moves.add(next);
           paths.set(next, [start, next]);
@@ -1111,26 +1094,21 @@ const ChessboardScene: React.FC = () => {
       }
     }
 
-    // ==================== CASTLING LOGIC ====================
-
-    // Find the king ID
+    // Castling logic (teams 1 and 2 only for now)
     const kingId = Object.entries(piecePositions).find(
       ([id, pos]) =>
-        pos === start && id.includes("king") && id.startsWith(pieceColor)
+        pos === start && id.includes("king") && getTeamFromId(id) === team
     )?.[0];
 
-    // Check if king hasn't moved and is on starting square
-    if (kingId && !hasMoved[kingId]) {
-      const startingSquare = pieceColor === "white" ? "e1" : "e8";
-      const startingSquarePrime = pieceColor === "white" ? "e1'" : "e8'";
+    if (kingId && !hasMoved[kingId] && team <= 2) {
+      const startingSquare = team === 1 ? "e1" : "e8";
+      const startingSquarePrime = team === 1 ? "e1'" : "e8'";
 
       if (start === startingSquare || start === startingSquarePrime) {
-        // Helper function to check if path is clear
         const isPathClear = (pathSquares: string[]): boolean => {
-          return pathSquares.every((sq) => !(sq in occupiedByColor));
+          return pathSquares.every((sq) => !(sq in occupiedByTeam));
         };
 
-        // Helper to get castling path using boardGraph
         const getCastlingPath = (
           direction: "W" | "E",
           squares: number
@@ -1148,9 +1126,9 @@ const ChessboardScene: React.FC = () => {
           return path;
         };
 
-        // Kingside castling (towards h-file)
+        // Kingside castling
         const kingsideRookSquare =
-          pieceColor === "white"
+          team === 1
             ? start.includes("'")
               ? "h1'"
               : "h1"
@@ -1162,29 +1140,24 @@ const ChessboardScene: React.FC = () => {
           ([id, pos]) =>
             pos === kingsideRookSquare &&
             id.includes("rook") &&
-            id.startsWith(pieceColor)
+            getTeamFromId(id) === team
         )?.[0];
 
         if (kingsideRookId && !hasMoved[kingsideRookId]) {
-          // King moves 2 squares towards h-file (east)
           const kingsidePath = getCastlingPath("E", 2);
-
           if (kingsidePath.length === 2) {
             const [f_square, g_square] = kingsidePath;
-
-            // Check if f and g squares are clear
             if (isPathClear([f_square, g_square])) {
               const castleSquare = g_square;
               moves.add(castleSquare);
-              // Path includes intermediate square for animation
               paths.set(castleSquare, [start, f_square, castleSquare]);
             }
           }
         }
 
-        // Queenside castling (towards a-file)
+        // Queenside castling
         const queensideRookSquare =
-          pieceColor === "white"
+          team === 1
             ? start.includes("'")
               ? "a1'"
               : "a1"
@@ -1196,22 +1169,241 @@ const ChessboardScene: React.FC = () => {
           ([id, pos]) =>
             pos === queensideRookSquare &&
             id.includes("rook") &&
-            id.startsWith(pieceColor)
+            getTeamFromId(id) === team
         )?.[0];
 
         if (queensideRookId && !hasMoved[queensideRookId]) {
-          // King moves 2 squares towards a-file (west)
-          const queensidePath = getCastlingPath("W", 3); // Need to check 3 squares for queenside
-
+          const queensidePath = getCastlingPath("W", 3);
           if (queensidePath.length === 3) {
             const [d_square, c_square, b_square] = queensidePath;
-
-            // Check if b, c, d squares are clear
             if (isPathClear([d_square, c_square, b_square])) {
               const castleSquare = c_square;
               moves.add(castleSquare);
-              // Path includes intermediate square for animation
               paths.set(castleSquare, [start, d_square, castleSquare]);
+            }
+          }
+        }
+      }
+    }
+
+    return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
+  };
+
+  const calculateKnightMoves = (
+    start: string,
+    piecePositions: Record<string, string>,
+    team: 1 | 2 | 3 | 4
+  ): { moves: string[]; paths: Record<string, string[]> } => {
+    const moves = new Set<string>();
+    const paths = new Map<string, string[]>();
+
+    const occupiedByTeam = Object.fromEntries(
+      Object.entries(piecePositions).map(([id, notation]) => [
+        notation,
+        getTeamFromId(id),
+      ])
+    );
+
+    // [Keep all the same knight logic but with team checks]
+    const ringSquares = new Set([
+      "d4",
+      "e4",
+      "d5",
+      "e5",
+      "x1",
+      "x2",
+      "x3",
+      "x4",
+      "y1",
+      "y2",
+      "y3",
+      "y4",
+      "d4'",
+      "e4'",
+      "d5'",
+      "e5'",
+      "x1'",
+      "x2'",
+      "x3'",
+      "x4'",
+      "y1'",
+      "y2'",
+      "y3'",
+      "y4'",
+    ]);
+
+    const getPerpendicularDirs = (
+      square: string,
+      primaryDir: EntryDir
+    ): EntryDir[] => {
+      const isRingSquare = ringSquares.has(square);
+
+      if (isRingSquare) {
+        if (primaryDir === "in" || primaryDir === "out") {
+          return ["cw", "ccw"];
+        } else if (primaryDir === "cw" || primaryDir === "ccw") {
+          return ["in", "out"];
+        }
+      }
+
+      const basePerpendicular: Record<EntryDir, EntryDir[]> = {
+        N: ["E", "W"],
+        S: ["E", "W"],
+        E: ["N", "S"],
+        W: ["N", "S"],
+        cw: ["in", "out"],
+        ccw: ["in", "out"],
+        in: ["cw", "ccw"],
+        out: ["cw", "ccw"],
+        NE: [],
+        NW: [],
+        SE: [],
+        SW: [],
+        idl: [],
+        idr: [],
+        odl: [],
+        odr: [],
+        od: [],
+      };
+
+      return basePerpendicular[primaryDir] || [];
+    };
+
+    const oppositeDir: Record<EntryDir, EntryDir> = {
+      N: "S",
+      S: "N",
+      E: "W",
+      W: "E",
+      in: "out",
+      out: "in",
+      cw: "ccw",
+      ccw: "cw",
+      NW: "SE",
+      NE: "SW",
+      SW: "NE",
+      SE: "NW",
+      idl: "odr",
+      idr: "odl",
+      odl: "idr",
+      odr: "idl",
+      od: "od",
+    };
+
+    const outDir: Record<string, EntryDir> = {
+      c4: "W",
+      c5: "W",
+      d3: "S",
+      e3: "S",
+      d6: "N",
+      e6: "N",
+      f4: "E",
+      f5: "E",
+      "c4'": "W",
+      "c5'": "W",
+      "d3'": "S",
+      "e3'": "S",
+      "d6'": "N",
+      "e6'": "N",
+      "f4'": "E",
+      "f5'": "E",
+    };
+
+    const inDir: Record<string, EntryDir> = {
+      c4: "E",
+      c5: "E",
+      d3: "N",
+      e3: "N",
+      d6: "S",
+      e6: "S",
+      f4: "W",
+      f5: "W",
+      "c4'": "E",
+      "c5'": "E",
+      "d3'": "N",
+      "e3'": "N",
+      "d6'": "S",
+      "e6'": "S",
+      "f4'": "W",
+      "f5'": "W",
+    };
+
+    const moveOneSquare = (
+      current: string,
+      dir: EntryDir
+    ): Array<{ square: string; nextDir: EntryDir }> => {
+      const node = boardGraph[current];
+      if (!node) return [];
+
+      let actualDir = dir;
+      if (current in outDir && dir === "out") {
+        actualDir = outDir[current];
+      }
+      if (current in inDir && dir === inDir[current]) {
+        actualDir = "in";
+      }
+
+      const next = node[actualDir];
+      if (!next) return [];
+
+      const currentPrime = current.endsWith("'");
+      const nextPrime = next.endsWith("'");
+      let nextDir = actualDir;
+
+      if ((!currentPrime && nextPrime) || (currentPrime && !nextPrime)) {
+        nextDir = oppositeDir[actualDir];
+      }
+
+      if (pentagonOrthogonalExits[next]) {
+        const exits = pentagonOrthogonalExits[next][nextDir];
+        if (exits && exits.length > 0) {
+          return exits.map((exitDir) => ({ square: next, nextDir: exitDir }));
+        }
+      }
+
+      return [{ square: next, nextDir }];
+    };
+
+    const primaryDirs: EntryDir[] = [
+      "N",
+      "S",
+      "E",
+      "W",
+      "in",
+      "out",
+      "cw",
+      "ccw",
+    ];
+
+    for (const primaryDir of primaryDirs) {
+      const firstSteps = moveOneSquare(start, primaryDir);
+
+      for (const step1 of firstSteps) {
+        const secondSteps = moveOneSquare(step1.square, step1.nextDir);
+
+        for (const step2 of secondSteps) {
+          const intermediatePath = [start, step1.square, step2.square];
+          const perpDirs = getPerpendicularDirs(step2.square, step2.nextDir);
+
+          for (const perpDir of perpDirs) {
+            const thirdSteps = moveOneSquare(step2.square, perpDir);
+
+            for (const step3 of thirdSteps) {
+              const destination = step3.square;
+              const fullPath = [...intermediatePath, destination];
+
+              if (destination in occupiedByTeam) {
+                if (occupiedByTeam[destination] !== team) {
+                  moves.add(destination);
+                  if (!paths.has(destination)) {
+                    paths.set(destination, fullPath);
+                  }
+                }
+              } else {
+                moves.add(destination);
+                if (!paths.has(destination)) {
+                  paths.set(destination, fullPath);
+                }
+              }
             }
           }
         }
@@ -1224,327 +1416,193 @@ const ChessboardScene: React.FC = () => {
   const calculatePawnMoves = (
     start: string,
     piecePositions: Record<string, string>,
-    pieceColor: "white" | "black",
-    enPassantSquare: string | null = null // Optional: for en passant captures
+    pieceTeam: 1 | 2 | 3 | 4,
+    enPassantSquare: string | null = null
   ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
     const paths = new Map<string, string[]>();
 
-    const occupiedByColor = Object.fromEntries(
+    const occupiedByTeam = Object.fromEntries(
       Object.entries(piecePositions).map(([id, notation]) => [
         notation,
-        id.startsWith("white") ? "white" : "black",
+        getTeamFromId(id),
       ])
     );
 
     const node = boardGraph[start];
     if (!node) return { moves: [], paths: {} };
 
-    // Determine forward direction based on color
-    // White pawns move "north" (towards rank 8), black pawns move "south" (towards rank 1)
-    const forwardDir: EntryDir = pieceColor === "white" ? "N" : "S";
-    const leftCaptureDir: EntryDir = pieceColor === "white" ? "NW" : "SE";
-    const rightCaptureDir: EntryDir = pieceColor === "white" ? "NE" : "SW";
+    const isPrime = start.includes("'");
 
-    // Determine starting rank for double-move eligibility
-    const isStartingRank = (square: string): boolean => {
-      if (pieceColor === "white") {
-        return square.match(/^[a-h]2$/) !== null && !square.includes("'");
-      } else {
-        return square.match(/^[a-h]7$/) !== null && !square.includes("'");
-      }
+    // Determine pawn direction based on team AND current layer
+    let forwardDir: EntryDir;
+    let startingRanks: string[]; // Can have multiple starting ranks due to layer changes
+
+    switch (pieceTeam) {
+      case 1: // White team
+        // Moves North on non-prime, South on prime
+        forwardDir = isPrime ? "S" : "N";
+        startingRanks = ["2", "7'"]; // Can start from rank 2 (non-prime) or rank 7' (prime)
+        break;
+
+      case 2: // Black team
+        // Moves South on non-prime, North on prime
+        forwardDir = isPrime ? "N" : "S";
+        startingRanks = ["7", "2'"]; // Can start from rank 7 (non-prime) or rank 2' (prime)
+        break;
+
+      case 3: // Brown team
+        // Moves North on prime, South on non-prime
+        forwardDir = isPrime ? "N" : "S";
+        startingRanks = ["2'", "7"]; // Can start from rank 2' (prime) or rank 7 (non-prime)
+        break;
+
+      case 4: // Green team
+        // Moves South on prime, North on non-prime
+        forwardDir = isPrime ? "S" : "N";
+        startingRanks = ["7'", "2"]; // Can start from rank 7' (prime) or rank 2 (non-prime)
+        break;
+
+      default:
+        forwardDir = "N";
+        startingRanks = ["2"];
+    }
+
+    // Helper to check if current position is a starting rank for this pawn
+    const isStartingRank = (notation: string): boolean => {
+      const rank = notation[1];
+      const layer = notation.includes("'") ? "'" : "";
+      const currentRankWithLayer = rank + layer;
+      return startingRanks.includes(currentRankWithLayer);
     };
 
-    // Special handling for wormhole transitions
-    const handleWormholeTransition = (
-      current: string,
-      dir: EntryDir
-    ): EntryDir => {
-      // Inner/outer layer forward transitions
-      const inDir: Record<string, Record<string, EntryDir>> = {
-        c4: { N: "in", S: "in" },
-        c5: { N: "in", S: "in" },
-        d3: { N: "in", S: "in" },
-        e3: { N: "in", S: "in" },
-        d6: { N: "in", S: "in" },
-        e6: { N: "in", S: "in" },
-        f4: { N: "in", S: "in" },
-        f5: { N: "in", S: "in" },
-        "c4'": { N: "in", S: "in" },
-        "c5'": { N: "in", S: "in" },
-        "d3'": { N: "in", S: "in" },
-        "e3'": { N: "in", S: "in" },
-        "d6'": { N: "in", S: "in" },
-        "e6'": { N: "in", S: "in" },
-        "f4'": { N: "in", S: "in" },
-        "f5'": { N: "in", S: "in" },
-      };
+    // Single move forward
+    const oneForward = node[forwardDir];
+    if (oneForward && !(oneForward in occupiedByTeam)) {
+      moves.add(oneForward);
+      paths.set(oneForward, [start, oneForward]);
 
-      const outDir: Record<string, Record<string, EntryDir>> = {
-        c4: { out: "W" },
-        c5: { out: "W" },
-        d3: { out: "S" },
-        e3: { out: "S" },
-        d6: { out: "N" },
-        e6: { out: "N" },
-        f4: { out: "E" },
-        f5: { out: "E" },
-        "c4'": { out: "W" },
-        "c5'": { out: "W" },
-        "d3'": { out: "S" },
-        "e3'": { out: "S" },
-        "d6'": { out: "N" },
-        "e6'": { out: "N" },
-        "f4'": { out: "E" },
-        "f5'": { out: "E" },
-      };
+      // Double move from starting position
+      if (isStartingRank(start)) {
+        const twoForwardNode = boardGraph[oneForward];
+        if (twoForwardNode) {
+          // Need to check if direction changes when crossing layers
+          const oneForwardIsPrime = oneForward.includes("'");
+          let secondForwardDir = forwardDir;
 
-      // Diagonal capture transitions through wormhole
-      const diagInDir: Record<string, Record<string, EntryDir>> = {
-        c4: { NE: "idl", SE: "idr", NW: "idl", SW: "idr" },
-        c5: { NE: "idl", SE: "idr", NW: "idl", SW: "idr" },
-        d3: { NW: "idl", NE: "idr", SW: "idl", SE: "idr" },
-        d6: { SE: "idl", SW: "idr", NE: "idl", NW: "idr" },
-        e3: { NW: "idl", NE: "idr", SW: "idl", SE: "idr" },
-        e6: { SE: "idl", SW: "idr", NE: "idl", NW: "idr" },
-        f4: { SW: "idl", NW: "idr", SE: "idl", NE: "idr" },
-        f5: { SW: "idl", NW: "idr", SE: "idl", NE: "idr" },
-        "c4'": { NE: "idr", SE: "idl", NW: "idr", SW: "idl" },
-        "c5'": { NE: "idr", SE: "idl", NW: "idr", SW: "idl" },
-        "d3'": { NW: "idr", NE: "idl", SW: "idr", SE: "idl" },
-        "d6'": { SE: "idr", SW: "idl", NE: "idr", NW: "idl" },
-        "e3'": { NW: "idr", NE: "idl", SW: "idr", SE: "idl" },
-        "e6'": { SE: "idr", SW: "idl", NE: "idr", NW: "idl" },
-        "f4'": { SW: "idr", NW: "idl", SE: "idr", NE: "idl" },
-        "f5'": { SW: "idr", NW: "idl", SE: "idr", NE: "idl" },
-      };
-
-      if (current in inDir && dir in inDir[current]) {
-        return inDir[current][dir];
-      }
-      if (current in outDir && dir in outDir[current]) {
-        return outDir[current][dir];
-      }
-      if (current in diagInDir && dir in diagInDir[current]) {
-        return diagInDir[current][dir];
-      }
-
-      return dir;
-    };
-
-    // Pentagon pawn move handling
-    const pentagonPawnExits: Record<
-      string,
-      Record<
-        string,
-        {
-          forward?: EntryDir[];
-          leftCapture?: EntryDir[];
-          rightCapture?: EntryDir[];
-        }
-      >
-    > = {
-      c3: {
-        white: {
-          forward: ["N"],
-          leftCapture: ["NW", "idl"],
-          rightCapture: ["idl", "idr"],
-        },
-        black: {
-          forward: ["S"],
-          leftCapture: ["idr", "SE"],
-          rightCapture: ["SW"],
-        },
-      },
-      c6: {
-        white: {
-          forward: ["N"],
-          leftCapture: ["SW", "idr"],
-          rightCapture: ["NE", "idl"],
-        },
-        black: {
-          forward: ["S"],
-          leftCapture: ["idl", "idr"],
-          rightCapture: ["SW", "idr"],
-        },
-      },
-      f3: {
-        white: {
-          forward: ["N"],
-          leftCapture: ["idl", "idr"],
-          rightCapture: ["NE", "idr"],
-        },
-        black: {
-          forward: ["S"],
-          leftCapture: ["SW"],
-          rightCapture: ["idl", "SW"],
-        },
-      },
-      f6: {
-        white: {
-          forward: ["N"],
-          leftCapture: ["idl", "idr"],
-          rightCapture: ["NE"],
-        },
-        black: {
-          forward: ["S"],
-          leftCapture: ["SE", "idl"],
-          rightCapture: ["NW", "idr"],
-        },
-      },
-      "c3'": {
-        white: {
-          forward: ["N"],
-          leftCapture: ["NW", "idr"],
-          rightCapture: ["idl", "idr"],
-        },
-        black: {
-          forward: ["S"],
-          leftCapture: ["idl", "SE"],
-          rightCapture: ["SW"],
-        },
-      },
-      "c6'": {
-        white: {
-          forward: ["N"],
-          leftCapture: ["SW", "idl"],
-          rightCapture: ["NE", "idr"],
-        },
-        black: {
-          forward: ["S"],
-          leftCapture: ["idl", "idr"],
-          rightCapture: ["SW", "idl"],
-        },
-      },
-      "f3'": {
-        white: {
-          forward: ["N"],
-          leftCapture: ["idl", "idr"],
-          rightCapture: ["NE", "idl"],
-        },
-        black: {
-          forward: ["S"],
-          leftCapture: ["SW"],
-          rightCapture: ["idr", "SW"],
-        },
-      },
-      "f6'": {
-        white: {
-          forward: ["N"],
-          leftCapture: ["idl", "idr"],
-          rightCapture: ["NE"],
-        },
-        black: {
-          forward: ["S"],
-          leftCapture: ["SE", "idr"],
-          rightCapture: ["NW", "idl"],
-        },
-      },
-    };
-
-    // Helper function to try a move in a direction
-    const tryMove = (dir: EntryDir, isCapture: boolean): void => {
-      let currentDir = handleWormholeTransition(start, dir);
-
-      // Handle pentagon squares
-      if (pentagonPawnExits[start]) {
-        const exits = pentagonPawnExits[start][pieceColor];
-        let possibleDirs: EntryDir[] = [];
-
-        if (!isCapture && exits.forward) {
-          possibleDirs = exits.forward;
-        } else if (isCapture) {
-          if (dir === leftCaptureDir && exits.leftCapture) {
-            possibleDirs = exits.leftCapture;
-          } else if (dir === rightCaptureDir && exits.rightCapture) {
-            possibleDirs = exits.rightCapture;
-          }
-        }
-
-        for (const exitDir of possibleDirs) {
-          const next = node[exitDir];
-          if (!next) continue;
-
-          if (isCapture) {
-            // Can only capture if enemy piece is present (or en passant)
-            if (
-              next in occupiedByColor &&
-              occupiedByColor[next] !== pieceColor
-            ) {
-              moves.add(next);
-              paths.set(next, [start, next]);
-            } else if (next === enPassantSquare) {
-              moves.add(next);
-              paths.set(next, [start, next]);
-            }
-          } else {
-            // Forward move: square must be empty
-            if (!(next in occupiedByColor)) {
-              moves.add(next);
-              paths.set(next, [start, next]);
+          // Check if we need to reverse direction after crossing layers
+          if (isPrime !== oneForwardIsPrime) {
+            // Layer changed, need to recalculate direction
+            switch (pieceTeam) {
+              case 1: // White: N->S or S->N
+                secondForwardDir = oneForwardIsPrime ? "S" : "N";
+                break;
+              case 2: // Black: S->N or N->S
+                secondForwardDir = oneForwardIsPrime ? "N" : "S";
+                break;
+              case 3: // Brown: N->S or S->N
+                secondForwardDir = oneForwardIsPrime ? "N" : "S";
+                break;
+              case 4: // Green: S->N or N->S
+                secondForwardDir = oneForwardIsPrime ? "S" : "N";
+                break;
             }
           }
-        }
-      } else {
-        // Normal square
-        const next = node[currentDir];
-        if (!next) return;
 
-        if (isCapture) {
-          // Can only capture if enemy piece is present (or en passant)
-          if (next in occupiedByColor && occupiedByColor[next] !== pieceColor) {
-            moves.add(next);
-            paths.set(next, [start, next]);
-          } else if (next === enPassantSquare) {
-            moves.add(next);
-            paths.set(next, [start, next]);
-          }
-        } else {
-          // Forward move: square must be empty
-          if (!(next in occupiedByColor)) {
-            moves.add(next);
-            paths.set(next, [start, next]);
-          }
-        }
-      }
-    };
-
-    // 1. Try single forward move
-    tryMove(forwardDir, false);
-
-    // 2. Try double forward move (only from starting position)
-    if (isStartingRank(start)) {
-      let firstDir = handleWormholeTransition(start, forwardDir);
-      const firstSquare = node[firstDir];
-
-      if (firstSquare && !(firstSquare in occupiedByColor)) {
-        // First square is empty, check second square
-        const firstNode = boardGraph[firstSquare];
-        if (firstNode) {
-          // Handle potential wormhole transition on second move
-          const currentPrime = start.includes("'");
-          const firstPrime = firstSquare.includes("'");
-          let secondDir = forwardDir;
-
-          if (currentPrime !== firstPrime) {
-            // We've transitioned through wormhole, need to adjust direction
-            secondDir = handleWormholeTransition(firstSquare, forwardDir);
-          } else {
-            secondDir = handleWormholeTransition(firstSquare, forwardDir);
-          }
-
-          const secondSquare = firstNode[secondDir];
-          if (secondSquare && !(secondSquare in occupiedByColor)) {
-            moves.add(secondSquare);
-            paths.set(secondSquare, [start, firstSquare, secondSquare]);
+          const twoForward = twoForwardNode[secondForwardDir];
+          if (twoForward && !(twoForward in occupiedByTeam)) {
+            moves.add(twoForward);
+            paths.set(twoForward, [start, oneForward, twoForward]);
           }
         }
       }
     }
 
-    // 3. Try diagonal captures (left and right)
-    tryMove(leftCaptureDir, true);
-    tryMove(rightCaptureDir, true);
+    // Diagonal captures - these also depend on forward direction
+    const captureDirections: EntryDir[] =
+      forwardDir === "N"
+        ? ["NE", "NW"]
+        : forwardDir === "S"
+        ? ["SE", "SW"]
+        : []; // Should not happen, but safety check
+
+    for (const captureDir of captureDirections) {
+      const captureSquare = node[captureDir];
+      if (captureSquare) {
+        // Regular capture
+        if (
+          captureSquare in occupiedByTeam &&
+          occupiedByTeam[captureSquare] !== pieceTeam
+        ) {
+          moves.add(captureSquare);
+          paths.set(captureSquare, [start, captureSquare]);
+        }
+
+        // En passant capture
+        if (enPassantSquare && captureSquare === enPassantSquare) {
+          // Verify there's an enemy pawn to capture via en passant
+          // The actual pawn would be on the same rank as our pawn
+          const enPassantTargetFile = enPassantSquare[0];
+          const currentRank = start[1];
+          const enPassantTargetSquare =
+            enPassantTargetFile + currentRank + (isPrime ? "'" : "");
+
+          if (
+            enPassantTargetSquare in occupiedByTeam &&
+            occupiedByTeam[enPassantTargetSquare] !== pieceTeam
+          ) {
+            moves.add(captureSquare);
+            paths.set(captureSquare, [start, captureSquare]);
+          }
+        }
+      }
+    }
+
+    // Handle wormhole captures (diagonal wormhole moves)
+    // Check for diagonal wormhole directions based on current forward direction
+    const wormholeCaptureDirections: EntryDir[] = [];
+
+    // If we're near a wormhole square, we might be able to capture through it
+    if (
+      INNER_LAYER_SQUARES.includes(start.replace("'", "")) ||
+      OUTER_LAYER_SQUARES.includes(start.replace("'", ""))
+    ) {
+      // Add appropriate diagonal wormhole directions
+      if (forwardDir === "N" || forwardDir === "S") {
+        wormholeCaptureDirections.push("idl", "idr", "odl", "odr");
+      }
+    }
+
+    for (const wormholeDir of wormholeCaptureDirections) {
+      const wormholeCapture = node[wormholeDir];
+      if (
+        wormholeCapture &&
+        wormholeCapture in occupiedByTeam &&
+        occupiedByTeam[wormholeCapture] !== pieceTeam
+      ) {
+        moves.add(wormholeCapture);
+        paths.set(wormholeCapture, [start, wormholeCapture]);
+      }
+    }
+
+    // Special case: Check for promotion squares
+    // Teams 1&3 promote on rank 8 (either layer)
+    // Teams 2&4 promote on rank 1 (either layer)
+    const promotionRanks: string[] =
+      pieceTeam === 1 || pieceTeam === 3
+        ? ["8", "8'"]
+        : pieceTeam === 2 || pieceTeam === 4
+        ? ["1", "1'"]
+        : [];
+
+    // Filter moves to mark promotion squares (this would be handled in the move execution)
+    moves.forEach((move) => {
+      const moveRank = move[1] + (move.includes("'") ? "'" : "");
+      if (promotionRanks.includes(moveRank)) {
+        // Could add a flag or special handling for promotion moves
+        // For now, the move is valid and promotion will be handled when executed
+      }
+    });
 
     return { moves: Array.from(moves), paths: Object.fromEntries(paths) };
   };
@@ -1553,25 +1611,26 @@ const ChessboardScene: React.FC = () => {
 
   interface ChessPieceProps {
     id: string;
-    color: "white" | "black";
-    modelPath: string; // e.g. "chessboard/white-pieces/white-rook.glb"
+    team: 1 | 2 | 3 | 4;
+    modelPath: string;
     position: [number, number, number];
     notation: string;
     rotation?: [number, number, number];
     isSelected: boolean;
+    capturedPiece: string | null;
     onClick: (id: string, notation: string) => void;
   }
 
-  const ChessPiece: React.FC<ChessPieceProps & { movePath?: string[] }> = ({
+  const ChessPiece: React.FC<ChessPieceProps> = ({
     id,
-    color,
+    team,
     modelPath,
     position,
     notation,
     rotation = [0, 0, 0],
     isSelected,
+    capturedPiece,
     onClick,
-    movePath = [],
   }) => {
     const gltf = useGLTF(modelPath) as GLTF;
     const transform = getWormholeTransform(notation);
@@ -1588,54 +1647,6 @@ const ChessboardScene: React.FC = () => {
       baseRotation[1] + rotation[1] + wormholeRotation[1],
       baseRotation[2] + rotation[2] + wormholeRotation[2],
     ];
-
-    const worldPath = useMemo(
-      () =>
-        movePath.map(
-          (notation) => new THREE.Vector3(...chessToWorld(notation))
-        ),
-      [movePath]
-    );
-
-    const [animatedPosition, setAnimatedPosition] = useState(
-      new THREE.Vector3(...position)
-    );
-
-    useEffect(() => {
-      if (!worldPath.length) return;
-
-      let t = 0;
-      let segment = 0;
-      let start = worldPath[0].clone();
-      let end = worldPath[1].clone();
-
-      let frame: number;
-      const speed = 1.5;
-
-      const animate = () => {
-        if (!end) return;
-
-        t += 0.02 * speed;
-
-        if (t > 1) {
-          segment++;
-          if (segment >= worldPath.length - 1) {
-            setAnimatedPosition(worldPath[worldPath.length - 1]);
-            return;
-          }
-          start = worldPath[segment];
-          end = worldPath[segment + 1];
-          t = 0;
-        }
-        const current = start.clone().lerp(end, t);
-        setAnimatedPosition(current);
-
-        frame = requestAnimationFrame(animate);
-      };
-
-      frame = requestAnimationFrame(animate);
-      return () => cancelAnimationFrame(frame);
-    }, [movePath]);
 
     const { springPos, springScale, springRot } = useSpring({
       springPos: position,
@@ -1662,6 +1673,18 @@ const ChessboardScene: React.FC = () => {
         )}
       </a.group>
     );
+  };
+
+  // Helper function to get team from piece ID
+  const getTeamFromId = (id: string): 1 | 2 | 3 | 4 => {
+    if (id.startsWith("team1")) return 1;
+    if (id.startsWith("team2")) return 2;
+    if (id.startsWith("team3")) return 3;
+    if (id.startsWith("team4")) return 4;
+    // Legacy support for old naming
+    if (id.startsWith("white")) return 1;
+    if (id.startsWith("black")) return 2;
+    return 1;
   };
 
   const [animatingPiece, setAnimatingPiece] = useState<string | null>(null);
@@ -1707,54 +1730,71 @@ const ChessboardScene: React.FC = () => {
 
     setSelectedPiece(pieceId);
 
-    const color = pieceId.startsWith("white") ? "white" : "black";
+    const team = getTeamFromId(pieceId);
 
-    if (color !== currentPlayer) return;
+    if (team !== currentTeam) return;
 
     let moves: string[] = [];
     let paths: Record<string, string[]> = {};
+
     if (pieceId.includes("rook")) {
-      const result = calculateOrthogonalMoves(notation, piecePositions, color);
+      const result = calculateOrthogonalMoves(notation, piecePositions, team);
       moves = result.moves;
       paths = result.paths;
     } else if (pieceId.includes("bishop")) {
-      const result = calculateDiagonalMoves(notation, piecePositions, color);
+      const result = calculateDiagonalMoves(notation, piecePositions, team);
       moves = result.moves;
       paths = result.paths;
     } else if (pieceId.includes("queen")) {
       const orthoResult = calculateOrthogonalMoves(
         notation,
         piecePositions,
-        color
+        team
       );
-      const diagResult = calculateDiagonalMoves(
-        notation,
-        piecePositions,
-        color
-      );
+      const diagResult = calculateDiagonalMoves(notation, piecePositions, team);
       moves = Array.from(new Set([...orthoResult.moves, ...diagResult.moves]));
       paths = { ...orthoResult.paths, ...diagResult.paths };
     } else if (pieceId.includes("king")) {
       const result = calculateKingMoves(
         notation,
         piecePositions,
-        color,
+        team,
         hasMoved
       );
       moves = result.moves;
       paths = result.paths;
-    } else if (pieceId.includes("p")) {
+    } else if (pieceId.includes("pawn")) {
       const result = calculatePawnMoves(
         notation,
         piecePositions,
-        color,
+        team,
         enPassantSquare
       );
       moves = result.moves;
       paths = result.paths;
+    } else if (pieceId.includes("knight")) {
+      const result = calculateKnightMoves(notation, piecePositions, team);
+      moves = result.moves;
+      paths = result.paths;
     }
+
     setPossibleMoves(moves);
     setPossibleMovePaths(paths);
+  };
+
+  const getNextTeam = (currentTeam: 1 | 2 | 3 | 4): 1 | 2 | 3 | 4 => {
+    switch (currentTeam) {
+      case 1:
+        return 2;
+      case 2:
+        return 3;
+      case 3:
+        return 4;
+      case 4:
+        return 1;
+      default:
+        return 1;
+    }
   };
 
   // Update MoveLogEntry interface
@@ -1964,34 +2004,33 @@ const ChessboardScene: React.FC = () => {
       return;
     }
 
+    const team = getTeamFromId(selectedPiece);
+
     // Check for pawn double move to set en passant square
     if (selectedPiece.includes("pawn")) {
       const startNotation = piecePositions[selectedPiece];
       const startRank = startNotation[1];
       const endRank = notation[1];
 
-      // Check if it's a double move
       if (Math.abs(parseInt(endRank) - parseInt(startRank)) === 2) {
-        // Set en passant square (the square the pawn "jumped over")
-        const epRank = selectedPiece.startsWith("white") ? "3" : "6";
-        const epSquare = `${notation[0]}${epRank}${
-          notation.includes("'") ? "'" : ""
-        }`;
+        const epRank = team === 1 ? "3" : team === 2 ? "6" : "";
+        const epSquare = epRank
+          ? `${notation[0]}${epRank}${notation.includes("'") ? "'" : ""}`
+          : null;
         setEnPassantSquare(epSquare);
       } else {
         setEnPassantSquare(null);
       }
 
-      // Check for pawn promotion (reaching rank 8 for white, rank 1 for black)
+      // Check for pawn promotion
       const isPromotion =
-        (selectedPiece.startsWith("white") && endRank === "8") ||
-        (selectedPiece.startsWith("black") && endRank === "1");
+        (team === 1 && endRank === "8") ||
+        (team === 2 && endRank === "1") ||
+        (team === 3 && notation[0] === "g") ||
+        (team === 4 && notation[0] === "b");
 
       if (isPromotion) {
-        // TODO: Show promotion UI to select piece (Queen, Rook, Bishop, Knight)
-        // For now, auto-promote to queen
-        const color = selectedPiece.startsWith("white") ? "white" : "black";
-        const newId = `${color}-queen-promoted-${Date.now()}`;
+        const newId = `team${team}-queen-promoted-${Date.now()}`;
 
         setPiecePositions((prev) => {
           const newPos = { ...prev };
@@ -2005,11 +2044,9 @@ const ChessboardScene: React.FC = () => {
         return;
       }
     } else {
-      // Non-pawn move resets en passant
       setEnPassantSquare(null);
     }
 
-    const color = selectedPiece.startsWith("white") ? "white" : "black";
     const fromSquare = piecePositions[selectedPiece];
 
     // Check if this is a castling move
@@ -2020,32 +2057,35 @@ const ChessboardScene: React.FC = () => {
       selectedPiece.includes("king") &&
       Math.abs(fromSquare.charCodeAt(0) - notation.charCodeAt(0)) === 2
     ) {
-      // This is a castling move
       const isPrime = notation.includes("'");
-      const rank = color === "white" ? "1" : "8";
+      const rank = team === 1 ? "1" : team === 2 ? "8" : "";
       const rankSuffix = isPrime ? "'" : "";
 
       if (notation.startsWith("g")) {
-        // Kingside castling
         const rookSquare = `h${rank}${rankSuffix}`;
         const rookDestination = `f${rank}${rankSuffix}`;
 
         castlingRookId =
           Object.entries(piecePositions).find(
-            ([id, pos]) => pos === rookSquare && id.includes("rook")
+            ([id, pos]) =>
+              pos === rookSquare &&
+              id.includes("rook") &&
+              getTeamFromId(id) === team
           )?.[0] || null;
 
         if (castlingRookId) {
           castlingRookPath = [rookSquare, rookDestination];
         }
       } else if (notation.startsWith("c")) {
-        // Queenside castling
         const rookSquare = `a${rank}${rankSuffix}`;
         const rookDestination = `d${rank}${rankSuffix}`;
 
         castlingRookId =
           Object.entries(piecePositions).find(
-            ([id, pos]) => pos === rookSquare && id.includes("rook")
+            ([id, pos]) =>
+              pos === rookSquare &&
+              id.includes("rook") &&
+              getTeamFromId(id) === team
           )?.[0] || null;
 
         if (castlingRookId) {
@@ -2054,16 +2094,12 @@ const ChessboardScene: React.FC = () => {
       }
     }
 
-    // Disable interactions while animating
     setAnimatingPiece(selectedPiece);
     setSelectedPiece(null);
     setPossibleMoves([]);
-    setCurrentPlayer((prev) => (prev === "white" ? "black" : "white"));
+    setCurrentTeam(getNextTeam(currentTeam));
 
-    animatePieceAlongPath(selectedPiece, pathNotations);
-    // Animate king
     animatePieceAlongPath(selectedPiece, pathNotations).then(() => {
-      // If castling, animate rook after king
       if (castlingRookId && castlingRookPath.length > 0) {
         return animatePieceAlongPath(castlingRookId, castlingRookPath);
       }
@@ -2177,7 +2213,7 @@ const ChessboardScene: React.FC = () => {
               ))}
 
               {Object.entries(piecePositions).map(([id, notation]) => {
-                const color = id.startsWith("white") ? "white" : "black";
+                const team = getTeamFromId(id);
                 const pos = chessToWorld(notation);
                 const isSelected = selectedPiece === id;
 
@@ -2186,7 +2222,7 @@ const ChessboardScene: React.FC = () => {
                     <Rook
                       key={id}
                       id={id}
-                      color={color}
+                      team={team}
                       position={pos}
                       notation={notation}
                       isSelected={isSelected}
@@ -2199,7 +2235,20 @@ const ChessboardScene: React.FC = () => {
                     <Bishop
                       key={id}
                       id={id}
-                      color={color}
+                      team={team}
+                      position={pos}
+                      notation={notation}
+                      isSelected={isSelected}
+                      capturedPiece={capturedPiece}
+                      onClick={handlePieceClick}
+                    />
+                  );
+                } else if (id.includes("knight")) {
+                  return (
+                    <Knight
+                      key={id}
+                      id={id}
+                      team={team}
                       position={pos}
                       notation={notation}
                       isSelected={isSelected}
@@ -2212,7 +2261,7 @@ const ChessboardScene: React.FC = () => {
                     <Queen
                       key={id}
                       id={id}
-                      color={color}
+                      team={team}
                       position={pos}
                       notation={notation}
                       isSelected={isSelected}
@@ -2225,7 +2274,20 @@ const ChessboardScene: React.FC = () => {
                     <King
                       key={id}
                       id={id}
-                      color={color}
+                      team={team}
+                      position={pos}
+                      notation={notation}
+                      isSelected={isSelected}
+                      capturedPiece={capturedPiece}
+                      onClick={handlePieceClick}
+                    />
+                  );
+                } else if (id.includes("pawn")) {
+                  return (
+                    <Pawn
+                      key={id}
+                      id={id}
+                      team={team}
                       position={pos}
                       notation={notation}
                       isSelected={isSelected}
@@ -2260,10 +2322,7 @@ const ChessboardScene: React.FC = () => {
             overflowY: "auto",
           }}
         >
-          <GameInfo
-            selectedPiece={selectedPiece}
-            currentPlayer={currentPlayer}
-          />
+          <GameInfo selectedPiece={selectedPiece} currentTeam={currentTeam} />
 
           <div style={{ flex: 1, minHeight: 0 }}>
             <MoveLog moves={moveHistory} />
