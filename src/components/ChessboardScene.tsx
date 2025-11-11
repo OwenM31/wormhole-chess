@@ -2463,7 +2463,7 @@ const ChessboardScene: React.FC = () => {
                         // add default color for that slot
                         setPlayerColors((prev) => ({
                           ...prev,
-                          [slotNumber]: DEFAULT_PLAYER_COLORS[slotNumber - 1],
+                          [slotNumber]: DEFAULT_PLAYER_COLORS[slotNumber],
                         }));
 
                         // restore pieces for the new player
