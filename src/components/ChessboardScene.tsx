@@ -2185,6 +2185,7 @@ const ChessboardScene: React.FC = () => {
     | "studio"
     | "sunset"
     | "warehouse";
+
   const OPTIONS = [
     "Studio 🎬",
     "Sunset 🌅",
@@ -2218,35 +2219,6 @@ const ChessboardScene: React.FC = () => {
   const [boardViewMode, setBoardViewMode] = useState(0);
 
   // ========== HOTKEYS ==========
-  const handleBoardView = () => {
-    const nextMode = (boardViewMode + 1) % 5; // Cycles 0 -> 1 -> 2 -> 3 -> 4 -> 0
-    setBoardViewMode(nextMode);
-
-    if (nextMode === 0) {
-      // Unlock - restore free movement
-      return;
-    }
-
-    const presets: Record<number, Record<string, number>> = {
-      1: { polar: -Math.PI / 4, azimuth: 0 },
-      2: { polar: Math.PI / 2, azimuth: 0 },
-      3: { polar: -Math.PI / 4, azimuth: Math.PI },
-      4: { polar: Math.PI / 2, azimuth: Math.PI },
-    };
-
-    const preset = presets[nextMode];
-
-    if (controlsRef.current) {
-      // Set the camera position based on polar and azimuth angles
-      const radius = 300; // Default zoom distance
-      const x = radius * Math.sin(preset.polar) * Math.sin(preset.azimuth);
-      const y = radius * Math.cos(preset.polar);
-      const z = radius * Math.sin(preset.polar) * Math.cos(preset.azimuth);
-
-      controlsRef.current.object.position.set(x, y, z);
-      controlsRef.current.update();
-    }
-  };
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       // Ignore if user is typing in an input field
@@ -2264,9 +2236,6 @@ const ChessboardScene: React.FC = () => {
         case "l":
           handlePolarLock();
           break;
-        case "b":
-          handleBoardView();
-          break;
         default:
           break;
       }
@@ -2279,7 +2248,7 @@ const ChessboardScene: React.FC = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
     };
-  }, [handleFlip180, handlePolarLock, handleBoardView]); // Dependencies - remake listener if these functions change
+  }, [handleFlip180, handlePolarLock]); // Dependencies - remake listener if these functions change
 
   return (
     <div
@@ -2694,7 +2663,7 @@ const ChessboardScene: React.FC = () => {
                         style={{
                           position: "absolute",
                           top: "30px",
-                          left: "50%",
+                          left: "100%",
                           transform: "translateX(-50%)",
                           zIndex: 1000,
                           backgroundColor: COLORS.charcoal,
@@ -2737,27 +2706,10 @@ const ChessboardScene: React.FC = () => {
                 color: "white",
               }}
             >
-              {polarLocked ? "Horizontal Lock 🔒" : "Free Orbit 🔓"}
+              {polarLocked ? "Horizontal Lock 🔒" : "Free Orbit 🔓"} (L)
             </button>
           </div>
-          {/* Add this near your other buttons in the canvas container */}(
-          <div
-            style={{
-              position: "absolute",
-              bottom: "20px",
-              left: "20px",
-              zIndex: 10,
-              backgroundColor: COLORS.charcoal,
-              color: COLORS.warmWhite,
-              padding: "8px 12px",
-              borderRadius: "8px",
-              fontSize: "0.9rem",
-              opacity: 0.9,
-            }}
-          >
-            Board View {boardViewMode}/4 (B)
-          </div>
-          ){/* Bottom-Right 180 Flip */}
+          {/* Bottom-Right 180 Flip */}
           <div
             style={{
               position: "absolute",
@@ -2766,7 +2718,7 @@ const ChessboardScene: React.FC = () => {
               zIndex: 10,
             }}
           >
-            <button onClick={handleFlip180}>180° 🔄</button>
+            <button onClick={handleFlip180}>180° 🔄 (F)</button>
           </div>
           <Canvas
             camera={{ position: [0, 0, 300], fov: 50, near: 0.1, far: 1000 }}
