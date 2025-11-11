@@ -2448,180 +2448,201 @@ const ChessboardScene: React.FC = () => {
                 </button>
               </div>
 
-              {/* Player rows */}
-              {players.map((player, index) => (
-                <div
-                  key={player.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <span style={{ color: COLORS.warmWhite, fontWeight: 600 }}>
-                    Player {index + 1}
-                  </span>
+              {/* Player slots (always show 4 slots) */}
+              {[1, 2, 3, 4].map((slotNumber) => {
+                const player = players.find((p) => p.id === slotNumber);
 
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    {/* Color box */}
+                if (!player) {
+                  // Empty slot - show add button
+                  return (
                     <div
-                      onClick={() =>
-                        setActiveColorPicker(
-                          activeColorPicker === player.id ? null : player.id
-                        )
-                      }
-                      style={{
-                        width: "24px",
-                        height: "24px",
-                        backgroundColor: playerColors[player.id],
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                        cursor: "pointer",
-                      }}
-                    />
-
-                    {/* Reset color button */}
-                    <button
+                      key={`slot-${slotNumber}`}
                       onClick={() => {
-                        // convert object values to an array
-                        const colorsArray = Object.values(
-                          DEFAULT_PLAYER_COLORS
-                        );
+                        setPlayers((prev) => [...prev, { id: slotNumber }]);
 
-                        // get current color
-                        const currentColor =
-                          playerColors[player.id] ?? colorsArray[0];
-
-                        // find index in the array
-                        const currentColorIndex =
-                          colorsArray.indexOf(currentColor);
-                        const nextColor =
-                          DEFAULT_PLAYER_COLORS[
-                            (currentColorIndex + 1) % colorsArray.length
-                          ];
+                        // add default color for that slot
                         setPlayerColors((prev) => ({
                           ...prev,
-                          [player.id]: nextColor,
+                          [slotNumber]: DEFAULT_PLAYER_COLORS[slotNumber - 1],
+                        }));
+
+                        // restore pieces for the new player
+                        setPiecePositions((prev) => ({
+                          ...prev,
+                          ...getDefaultPiecePositionsForPlayer(slotNumber),
+                        }));
+                        setPawnPositions((prev) => ({
+                          ...prev,
+                          ...getDefaultPawnPositionsForPlayer(slotNumber),
                         }));
                       }}
                       style={{
-                        background: "transparent",
-                        border: "none",
-                        cursor: "pointer",
-                        color: COLORS.lodenGreenLight,
-                      }}
-                    >
-                      🔄
-                    </button>
-
-                    {/* Remove player button */}
-                    <button
-                      onClick={() => {
-                        // Remove player and move others up
-                        setPlayers((prev) =>
-                          prev.filter((p) => p.id !== player.id)
-                        );
-
-                        // Remove their pieces
-                        setPiecePositions((prev) =>
-                          Object.fromEntries(
-                            Object.entries(prev).filter(
-                              ([id]) => getPlayerFromPieceId(id) !== player.id
-                            )
-                          )
-                        );
-                        setPawnPositions((prev) => {
-                          const filtered: typeof prev = {};
-                          Object.entries(prev).forEach(([id, info]) => {
-                            if (getPlayerFromPieceId(id) !== player.id)
-                              filtered[id] = info;
-                          });
-                          return filtered;
-                        });
-                      }}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        cursor: "pointer",
-                        color: COLORS.red,
-                      }}
-                    >
-                      ❌
-                    </button>
-                  </div>
-
-                  {/* Color picker */}
-                  {activeColorPicker === player.id && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "30px",
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        zIndex: 1000,
-                        backgroundColor: COLORS.charcoal,
-                        padding: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "12px",
+                        border: `2px dashed ${COLORS.lodenGreenLight}`,
                         borderRadius: "8px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        backgroundColor: "transparent",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          COLORS.charcoalLight;
+                        e.currentTarget.style.borderColor = COLORS.lodenGreen;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.borderColor =
+                          COLORS.lodenGreenLight;
                       }}
                     >
-                      <PlayerColorPicker
-                        color={playerColors[player.id]}
-                        onChange={(color) =>
-                          setPlayerColors((prev) => ({
-                            ...prev,
-                            [player.id]: color,
-                          }))
-                        }
-                      />
+                      <span
+                        style={{
+                          color: COLORS.lodenGreenLight,
+                          fontSize: "1.5rem",
+                          fontWeight: "300",
+                        }}
+                      >
+                        +
+                      </span>
                     </div>
-                  )}
-                </div>
-              ))}
+                  );
+                }
 
-              {/* Add player button */}
-              {players.length < 4 && (
-                <div style={{ display: "flex", justifyContent: "center" }}>
-                  <button
-                    onClick={() => {
-                      const newId = Math.max(...players.map((p) => p.id)) + 1;
-                      setPlayers((prev) => [...prev, { id: newId }]);
-
-                      // add default color for that slot
-                      setPlayerColors((prev) => ({
-                        ...prev,
-                        [newId]: DEFAULT_PLAYER_COLORS[players.length],
-                      }));
-
-                      // restore pieces for the new player
-                      setPiecePositions((prev) => ({
-                        ...prev,
-                        ...getDefaultPiecePositionsForPlayer(newId),
-                      }));
-                      setPawnPositions((prev) => ({
-                        ...prev,
-                        ...getDefaultPawnPositionsForPlayer(newId),
-                      }));
-                    }}
+                // Occupied slot - show player controls
+                return (
+                  <div
+                    key={player.id}
                     style={{
-                      background: COLORS.lodenGreen,
-                      color: COLORS.warmWhite,
-                      padding: "6px 12px",
-                      borderRadius: "6px",
-                      border: "none",
-                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
                     }}
                   >
-                    ➕
-                  </button>
-                </div>
-              )}
+                    <span style={{ color: COLORS.warmWhite, fontWeight: 600 }}>
+                      Player {slotNumber}
+                    </span>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      {/* Color box */}
+                      <div
+                        onClick={() =>
+                          setActiveColorPicker(
+                            activeColorPicker === player.id ? null : player.id
+                          )
+                        }
+                        style={{
+                          width: "24px",
+                          height: "24px",
+                          backgroundColor: playerColors[player.id],
+                          borderRadius: "4px",
+                          border: "1px solid #ccc",
+                          cursor: "pointer",
+                        }}
+                      />
+
+                      {/* Cycle color button */}
+                      <button
+                        onClick={() => {
+                          const colorsArray = Object.values(
+                            DEFAULT_PLAYER_COLORS
+                          );
+                          const currentColor =
+                            playerColors[player.id] ?? colorsArray[0];
+                          const currentColorIndex =
+                            colorsArray.indexOf(currentColor);
+                          const nextColor =
+                            colorsArray[
+                              (currentColorIndex + 1) % colorsArray.length
+                            ];
+                          setPlayerColors((prev) => ({
+                            ...prev,
+                            [player.id]: nextColor,
+                          }));
+                        }}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          color: COLORS.lodenGreenLight,
+                        }}
+                      >
+                        🔄
+                      </button>
+
+                      {/* Remove player button */}
+                      <button
+                        onClick={() => {
+                          // Remove player but keep their slot
+                          setPlayers((prev) =>
+                            prev.filter((p) => p.id !== player.id)
+                          );
+
+                          // Remove their pieces
+                          setPiecePositions((prev) =>
+                            Object.fromEntries(
+                              Object.entries(prev).filter(
+                                ([id]) => getPlayerFromPieceId(id) !== player.id
+                              )
+                            )
+                          );
+                          setPawnPositions((prev) => {
+                            const filtered: typeof prev = {};
+                            Object.entries(prev).forEach(([id, info]) => {
+                              if (getPlayerFromPieceId(id) !== player.id)
+                                filtered[id] = info;
+                            });
+                            return filtered;
+                          });
+                        }}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          color: COLORS.red,
+                        }}
+                      >
+                        ❌
+                      </button>
+                    </div>
+
+                    {/* Color picker */}
+                    {activeColorPicker === player.id && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "30px",
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          zIndex: 1000,
+                          backgroundColor: COLORS.charcoal,
+                          padding: "8px",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                        }}
+                      >
+                        <PlayerColorPicker
+                          color={playerColors[player.id]}
+                          onChange={(color) =>
+                            setPlayerColors((prev) => ({
+                              ...prev,
+                              [player.id]: color,
+                            }))
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
