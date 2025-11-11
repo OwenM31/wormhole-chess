@@ -10,12 +10,21 @@ export const COLORS = {
   accent: "#D4AF37", // Gold accent for highlights
 };
 
+export const SANDBOX_MODE = true;
+
 // Team color mapping
-export const TEAM_COLORS = {
+export const TEAM_COLORS: Record<number, string> = {
   1: "white",
   2: "black",
-  3: "white",
-  4: "black",
+  3: "green",
+  4: "brown",
+};
+
+export const PIECE_COLORS: Record<string, number> = {
+  white: 0xffffff,
+  black: 0x000000,
+  green: 0x006400,
+  brown: 0xc19a6b,
 };
 
 // Global constants

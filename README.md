@@ -3,6 +3,7 @@
 ## Broad steps:
 1. Build static version of the project with `npm start build`
    - This is so that we don't have to do a `npm start` server to keep the page running
+     - and also we don't need to have `nodejs` or `npm` installed on the ec2 instance (i tried to do that before, and it was extrememly slow and didn't end up working; but that might've just been me)
    - `npm run build` creates a `\build\` folder that contains the minimum that our page needs to run
 2. `scp` the build folder to the EC2 instance
    - `scp` is "secure copy". it's how we can move files from our machine to another (the EC2 instance)
