@@ -1,6 +1,9 @@
 import React, { Suspense, useState, useMemo, useEffect, useRef } from "react";
-import { Canvas, ThreeEvent } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Box } from "@react-three/drei";
+import { Canvas, ThreeEvent, useFrame } from "@react-three/fiber";
+import { OrbitControls, useGLTF, Box, Environment } from "@react-three/drei";
+
+import { HexColorPicker } from "react-colorful";
+
 import { GLTF } from "three-stdlib";
 import { useSpring, a } from "@react-spring/three";
 import * as THREE from "three";
@@ -11,9 +14,11 @@ import {
   PENTAGONAL_SQUARES,
   OUTER_LAYER_SQUARES,
   INNER_LAYER_SQUARES,
-  TEAM_COLORS,
+  PLAYER_COLORS,
   PIECE_COLORS,
-  SANDBOX_MODE,
+  DEFAULT_PLAYER_COLORS,
+  DEFAULT_PAWN_POSITIONS,
+  DEFAULT_PIECE_POSITIONS,
 } from "./Constants";
 import {
   getPieceWormholeRotation,
@@ -21,7 +26,6 @@ import {
   getWormholeTransform,
 } from "./WormholeGeometry";
 import { gridToChess, chessToWorld } from "./CoordinateConversion";
-import Piece from "./PieceAnimation";
 
 // ===================  3D ANIMATION  ====================
 
@@ -73,6 +77,48 @@ const BoardSquare: React.FC<{
 };
 
 // ==================== UI COMPONENTS ====================
+
+const PlayerColorPicker: React.FC<{
+  color: string;
+  onChange: (color: string) => void;
+}> = ({ color, onChange }) => {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "8px",
+      }}
+    >
+      {/* Picker */}
+      <HexColorPicker
+        color={color}
+        onChange={onChange}
+        style={{ width: "120px", height: "80px", borderRadius: "8px" }}
+      />
+
+      {/* Hex Input */}
+      <input
+        type="text"
+        value={color}
+        onChange={(e) => {
+          const val = e.target.value;
+          // Allow only valid hex colors
+          if (/^#([0-9A-Fa-f]{0,6})$/.test(val)) onChange(val);
+        }}
+        style={{
+          width: "70px",
+          padding: "4px 6px",
+          borderRadius: "6px",
+          border: "1px solid #ccc",
+          fontFamily: "monospace",
+          textTransform: "uppercase",
+        }}
+      />
+    </div>
+  );
+};
 
 interface MoveLogEntry {
   moveNumber: number;
@@ -204,7 +250,8 @@ const MoveLog: React.FC<{ moves: MoveLogEntry[] }> = ({ moves }) => {
 const GameInfo: React.FC<{
   selectedPiece: string | null;
   currentPlayer: 1 | 2 | 3 | 4;
-}> = ({ selectedPiece, currentPlayer }) => {
+  sandboxMode: boolean;
+}> = ({ selectedPiece, currentPlayer, sandboxMode }) => {
   return (
     <div
       style={{
@@ -224,15 +271,17 @@ const GameInfo: React.FC<{
         }}
       >
         <div>
-          <div
-            style={{
-              color: COLORS.smokeyTaupe,
-              fontSize: "0.875rem",
-              marginBottom: "4px",
-            }}
-          >
-            Current Turn
-          </div>
+          {!sandboxMode && (
+            <div
+              style={{
+                color: COLORS.smokeyTaupe,
+                fontSize: "0.875rem",
+                marginBottom: "4px",
+              }}
+            >
+              Current Turn
+            </div>
+          )}
           <div
             style={{
               color: COLORS.warmWhite,
@@ -241,7 +290,7 @@ const GameInfo: React.FC<{
               textTransform: "capitalize",
             }}
           >
-            Team {currentPlayer} ({TEAM_COLORS[currentPlayer]})
+            Player {currentPlayer} ({PLAYER_COLORS[currentPlayer]})
           </div>
         </div>
         <div
@@ -249,7 +298,7 @@ const GameInfo: React.FC<{
             width: "40px",
             height: "40px",
             borderRadius: "50%",
-            backgroundColor: COLORS.lodenGreenDark,
+            backgroundColor: PIECE_COLORS[PLAYER_COLORS[currentPlayer]],
             border: `3px solid ${COLORS.lodenGreen}`,
           }}
         />
@@ -362,7 +411,7 @@ const ChessPiece: React.FC<ChessPieceProps> = ({
     if (child.isMesh) {
       child.material = new THREE.MeshStandardMaterial({
         color: PIECE_COLORS[color],
-        metalness: 0.6,
+        metalness: 0.5,
         roughness: 0.3,
       });
     }
@@ -458,60 +507,15 @@ useGLTF.preload("/chessboard/pieces.glb");
 // ==================== MAIN COMPONENT ====================
 
 const ChessboardScene: React.FC = () => {
-  const [piecePositions, setPiecePositions] = useState<Record<string, string>>({
-    // Team 1 (white)
-    "team1-rook-a1": "a1",
-    "team1-rook-h1": "h1",
-    "team1-bishop-c1": "c1",
-    "team1-bishop-f1": "f1",
-    "team1-knight-b1": "b1",
-    "team1-knight-g1": "g1",
-    "team1-queen-d1": "d1",
-    "team1-king-e1": "e1",
+  const [sandboxMode, setSandboxMode] = useState(false);
 
-    // Team 2 (black)
-    "team2-rook-a8": "a8",
-    "team2-rook-h8": "h8",
-    "team2-bishop-c8": "c8",
-    "team2-bishop-f8": "f8",
-    "team2-knight-b8": "b8",
-    "team2-knight-g8": "g8",
-    "team2-queen-d8": "d8",
-    "team2-king-e8": "e8",
-
-    // Team 3 (brown) - on bottom layer
-    "team3-rook-a1'": "a1'",
-    "team3-rook-h1'": "h1'",
-    "team3-knight-b1'": "b1'",
-    "team3-knight-g1'": "g1'",
-    "team3-bishop-c1'": "c1'",
-    "team3-bishop-f1'": "f1'",
-    "team3-queen-d1'": "d1'",
-    "team3-king-e1'": "e1'",
-
-    // Team 4 (green) - on bottom layer
-    "team4-rook-a8'": "a8'",
-    "team4-rook-h8'": "h8'",
-    "team4-knight-b8'": "b8'",
-    "team4-knight-g8'": "g8'",
-    "team4-bishop-c8'": "c8'",
-    "team4-bishop-f8'": "f8'",
-    "team4-queen-d8'": "d8'",
-    "team4-king-e8'": "e8'",
-  });
+  const [piecePositions, setPiecePositions] = useState<Record<string, string>>(
+    DEFAULT_PIECE_POSITIONS
+  );
 
   const [pawnPositions, setPawnPositions] = useState<
     Record<string, Record<string, string>>
-  >({
-    "team1-pawn-a2": { position: "a2", direction: "N" },
-    "team1-pawn-b2": { position: "b2", direction: "N" },
-    "team1-pawn-c2": { position: "c2", direction: "N" },
-    "team1-pawn-d2": { position: "d2", direction: "N" },
-    "team1-pawn-e2": { position: "e2", direction: "N" },
-    "team1-pawn-f2": { position: "f2", direction: "N" },
-    "team1-pawn-g2": { position: "g2", direction: "N" },
-    "team1-pawn-h2": { position: "h2", direction: "N" },
-  });
+  >(DEFAULT_PAWN_POSITIONS);
 
   const [pawnDirs, setPawnDirs] = useState<Record<string, Direction>>();
 
@@ -523,7 +527,7 @@ const ChessboardScene: React.FC = () => {
   >({});
   const [movePaths, setMovePaths] = useState<Record<string, string[]>>({});
   const [moveHistory, setMoveHistory] = useState<MoveLogEntry[]>([]);
-  const [currentPlayer, setCurrentTeam] = useState<1 | 2 | 3 | 4>(1);
+  const [currentPlayer, setCurrentPlayer] = useState<1 | 2 | 3 | 4>(1);
   const [capturedPiece, setCapturedPiece] = useState<string | null>(null);
 
   const boardSquares = useMemo(() => {
@@ -692,7 +696,7 @@ const ChessboardScene: React.FC = () => {
 
   const calculateOrthogonalMoves = (
     start: string,
-    team: 1 | 2 | 3 | 4
+    player: 1 | 2 | 3 | 4
   ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
     const paths = new Map<string, string[]>();
@@ -809,7 +813,7 @@ const ChessboardScene: React.FC = () => {
       const newPath = [...pathsSoFar, next];
 
       if (next in occupiedSquares) {
-        if (occupiedSquares[next] !== team) {
+        if (occupiedSquares[next] !== player) {
           moves.add(next); // Can capture opponent piece
           paths.set(next, newPath);
         }
@@ -924,7 +928,7 @@ const ChessboardScene: React.FC = () => {
 
   const calculateDiagonalMoves = (
     start: string,
-    team: 1 | 2 | 3 | 4
+    player: 1 | 2 | 3 | 4
   ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
     const paths = new Map<string, string[]>();
@@ -940,7 +944,7 @@ const ChessboardScene: React.FC = () => {
       ]),
     ]);
 
-    // [Keep all the same diagonal logic but with team checks]
+    // [Keep all the same diagonal logic but with player checks]
     const inDir: Record<string, Record<string, Direction>> = {
       c4: { NE: "idl", SE: "idr" },
       c5: { NE: "idl", SE: "idr" },
@@ -1009,7 +1013,7 @@ const ChessboardScene: React.FC = () => {
       const newPath = [...pathsSoFar, next];
 
       if (next in occupiedSquares) {
-        if (occupiedSquares[next] !== team) {
+        if (occupiedSquares[next] !== player) {
           moves.add(next);
           paths.set(next, newPath);
         }
@@ -1056,7 +1060,7 @@ const ChessboardScene: React.FC = () => {
 
   const calculateKingMoves = (
     start: string,
-    team: 1 | 2 | 3 | 4,
+    player: 1 | 2 | 3 | 4,
     hasMoved: Record<string, boolean> = {}
   ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
@@ -1099,7 +1103,7 @@ const ChessboardScene: React.FC = () => {
       const next = node[dir];
       if (next) {
         if (next in occupiedSquares) {
-          if (occupiedSquares[next] !== team) {
+          if (occupiedSquares[next] !== player) {
             moves.add(next);
             paths.set(next, [start, next]);
           }
@@ -1110,17 +1114,17 @@ const ChessboardScene: React.FC = () => {
       }
     }
 
-    // Castling logic (teams 1 and 2 only for now)
+    // Castling logic (players 1 and 2 only for now)
     const kingId = Object.entries(piecePositions).find(
       ([id, pos]) =>
         pos === start &&
         id.includes("king") &&
-        getPlayerFromPieceId(id) === team
+        getPlayerFromPieceId(id) === player
     )?.[0];
 
-    if (kingId && !hasMoved[kingId] && team <= 2) {
-      const startingSquare = team === 1 ? "e1" : "e8";
-      const startingSquarePrime = team === 1 ? "e1'" : "e8'";
+    if (kingId && !hasMoved[kingId] && player <= 2) {
+      const startingSquare = player === 1 ? "e1" : "e8";
+      const startingSquarePrime = player === 1 ? "e1'" : "e8'";
 
       if (start === startingSquare || start === startingSquarePrime) {
         const isPathClear = (pathSquares: string[]): boolean => {
@@ -1146,7 +1150,7 @@ const ChessboardScene: React.FC = () => {
 
         // Kingside castling
         const kingsideRookSquare =
-          team === 1
+          player === 1
             ? start.includes("'")
               ? "h1'"
               : "h1"
@@ -1158,7 +1162,7 @@ const ChessboardScene: React.FC = () => {
           ([id, pos]) =>
             pos === kingsideRookSquare &&
             id.includes("rook") &&
-            getPlayerFromPieceId(id) === team
+            getPlayerFromPieceId(id) === player
         )?.[0];
 
         if (kingsideRookId && !hasMoved[kingsideRookId]) {
@@ -1175,7 +1179,7 @@ const ChessboardScene: React.FC = () => {
 
         // Queenside castling
         const queensideRookSquare =
-          team === 1
+          player === 1
             ? start.includes("'")
               ? "a1'"
               : "a1"
@@ -1187,7 +1191,7 @@ const ChessboardScene: React.FC = () => {
           ([id, pos]) =>
             pos === queensideRookSquare &&
             id.includes("rook") &&
-            getPlayerFromPieceId(id) === team
+            getPlayerFromPieceId(id) === player
         )?.[0];
 
         if (queensideRookId && !hasMoved[queensideRookId]) {
@@ -1209,7 +1213,7 @@ const ChessboardScene: React.FC = () => {
 
   const calculateKnightMoves = (
     start: string,
-    team: 1 | 2 | 3 | 4
+    player: 1 | 2 | 3 | 4
   ): { moves: string[]; paths: Record<string, string[]> } => {
     const moves = new Set<string>();
     const paths = new Map<string, string[]>();
@@ -1225,7 +1229,7 @@ const ChessboardScene: React.FC = () => {
       ]),
     ]);
 
-    // [Keep all the same knight logic but with team checks]
+    // [Keep all the same knight logic but with player checks]
     const ringSquares = new Set([
       "d4",
       "e4",
@@ -1413,7 +1417,7 @@ const ChessboardScene: React.FC = () => {
               const fullPath = [...intermediatePath, destination];
 
               if (destination in occupiedSquares) {
-                if (occupiedSquares[destination] !== team) {
+                if (occupiedSquares[destination] !== player) {
                   moves.add(destination);
                   if (!paths.has(destination)) {
                     paths.set(destination, fullPath);
@@ -1605,12 +1609,12 @@ const ChessboardScene: React.FC = () => {
     };
   };
 
-  // Helper function to get team from piece ID
+  // Helper function to get player from piece ID
   const getPlayerFromPieceId = (id: string): 1 | 2 | 3 | 4 => {
-    if (id.startsWith("team1")) return 1;
-    if (id.startsWith("team2")) return 2;
-    if (id.startsWith("team3")) return 3;
-    if (id.startsWith("team4")) return 4;
+    if (id.startsWith("player1")) return 1;
+    if (id.startsWith("player2")) return 2;
+    if (id.startsWith("player3")) return 3;
+    if (id.startsWith("player4")) return 4;
     // Legacy support for old naming
     if (id.startsWith("white")) return 1;
     if (id.startsWith("black")) return 2;
@@ -1666,7 +1670,8 @@ const ChessboardScene: React.FC = () => {
 
     const player = getPlayerFromPieceId(pieceId);
 
-    if (player !== currentPlayer && !SANDBOX_MODE) return;
+    if (player !== currentPlayer && !sandboxMode) return;
+    if (sandboxMode) setCurrentPlayer(player);
 
     let moves: string[] = [];
     let paths: Record<string, string[]> = {};
@@ -1721,7 +1726,7 @@ const ChessboardScene: React.FC = () => {
     setPossibleMovePaths(paths);
   };
 
-  const getNextTeam = (currentPlayer: 1 | 2 | 3 | 4): 1 | 2 | 3 | 4 => {
+  const getNextPlayer = (currentPlayer: 1 | 2 | 3 | 4): 1 | 2 | 3 | 4 => {
     switch (currentPlayer) {
       case 1:
         return 2;
@@ -1953,7 +1958,7 @@ const ChessboardScene: React.FC = () => {
       return;
     }
 
-    const team = getPlayerFromPieceId(selectedPiece);
+    const player = getPlayerFromPieceId(selectedPiece);
 
     // Check for pawn double move to set en passant square
 
@@ -1970,7 +1975,7 @@ const ChessboardScene: React.FC = () => {
       Math.abs(fromSquare.charCodeAt(0) - notation.charCodeAt(0)) === 2
     ) {
       const isPrime = notation.includes("'");
-      const rank = team === 1 ? "1" : team === 2 ? "8" : "";
+      const rank = player === 1 ? "1" : player === 2 ? "8" : "";
       const rankSuffix = isPrime ? "'" : "";
 
       if (notation.startsWith("g")) {
@@ -1982,7 +1987,7 @@ const ChessboardScene: React.FC = () => {
             ([id, pos]) =>
               pos === rookSquare &&
               id.includes("rook") &&
-              getPlayerFromPieceId(id) === team
+              getPlayerFromPieceId(id) === player
           )?.[0] || null;
 
         if (castlingRookId) {
@@ -1997,7 +2002,7 @@ const ChessboardScene: React.FC = () => {
             ([id, pos]) =>
               pos === rookSquare &&
               id.includes("rook") &&
-              getPlayerFromPieceId(id) === team
+              getPlayerFromPieceId(id) === player
           )?.[0] || null;
 
         if (castlingRookId) {
@@ -2009,7 +2014,7 @@ const ChessboardScene: React.FC = () => {
     setAnimatingPiece(selectedPiece);
     setSelectedPiece(null);
     setPossibleMoves([]);
-    setCurrentTeam(getNextTeam(currentPlayer));
+    if (!sandboxMode) setCurrentPlayer(getNextPlayer(currentPlayer));
 
     animatePieceAlongPath(selectedPiece, pathNotations).then(() => {
       if (castlingRookId && castlingRookPath.length > 0) {
@@ -2038,6 +2043,120 @@ const ChessboardScene: React.FC = () => {
     return possibleMoves.includes(notation);
   };
 
+  const handleResetGame = () => {
+    setPiecePositions(DEFAULT_PIECE_POSITIONS);
+    setPawnPositions(DEFAULT_PAWN_POSITIONS);
+    setSelectedPiece(null); // optional: deselect any piece
+    setMoveHistory([]); // optional: clear move log
+  };
+
+  const controlsRef = useRef<any>(null);
+  const [polarLocked, setPolarLocked] = useState(true);
+
+  const animateTo = (
+    target: { azimuth?: number; polar?: number },
+    duration = 0.2,
+    onComplete?: () => void
+  ) => {
+    if (!controlsRef.current) return;
+    const controls = controlsRef.current;
+
+    // Read current angles at the very start
+    const startPolar = controls.getPolarAngle();
+    const startAzimuth = controls.getAzimuthalAngle();
+    const endPolar = target.polar ?? startPolar;
+    const endAzimuth = target.azimuth ?? startAzimuth;
+    let startTime: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = (timestamp - startTime) / 1000;
+      const t = Math.min(elapsed / duration, 1);
+
+      controls.setPolarAngle(THREE.MathUtils.lerp(startPolar, endPolar, t));
+      controls.setAzimuthalAngle(
+        THREE.MathUtils.lerp(startAzimuth, endAzimuth, t)
+      );
+      controls.update();
+
+      if (t < 1) requestAnimationFrame(animate);
+      else if (onComplete) onComplete();
+    };
+
+    requestAnimationFrame(animate);
+  };
+
+  const handlePolarLock = () => {
+    if (!controlsRef.current) return;
+
+    if (!polarLocked) {
+      // Snap smoothly to horizontal (π/2)
+      animateTo(
+        { polar: Math.PI / 2 },
+        0.5,
+        () => setPolarLocked(true) // lock after animation
+      );
+    } else {
+      // Unlock
+      setPolarLocked(false);
+    }
+  };
+
+  const handleFlip180 = () => {
+    if (!controlsRef.current) return;
+    const currentAzimuth = controlsRef.current.getAzimuthalAngle();
+
+    // Normalize to [0, 2π)
+    let az = ((currentAzimuth % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+    // Round to nearest multiple of π (0 or π)
+    let target = Math.round(az / Math.PI) * Math.PI;
+
+    // If already exactly at 0 or π, flip to the other
+    if (Math.abs(az - target) < 0.6) {
+      target = target === 0 ? Math.PI : 0;
+    }
+
+    animateTo({ azimuth: target });
+  };
+
+  const [themePopupOpen, setThemePopupOpen] = useState(false);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  type Env =
+    | "apartment"
+    | "city"
+    | "dawn"
+    | "forest"
+    | "lobby"
+    | "night"
+    | "park"
+    | "studio"
+    | "sunset"
+    | "warehouse";
+  const OPTIONS = [
+    "Studio 🎬",
+    "Sunset 🌅",
+    "Dawn 🌄",
+    "Night ⭐",
+    "Forest 🌳",
+    "Warehouse 🚚",
+    "Park 🦆",
+    "Lobby 🏢",
+    "Apartment 🏠",
+    "City 🚖",
+  ];
+
+  const [playersMenuOpen, setPlayersMenuOpen] = useState(false);
+  const [playerColors, setPlayerColors] = useState<Record<number, string>>({
+    1: "#ffffff",
+    2: "#000000",
+    3: "#006400",
+    4: "#c19a6b",
+  });
+  const [activeColorPicker, setActiveColorPicker] = useState<number | null>(
+    null
+  );
+
   return (
     <div
       style={{
@@ -2062,6 +2181,7 @@ const ChessboardScene: React.FC = () => {
           padding: "0 40px",
           boxShadow: "0 2px 10px rgba(0, 0, 0, 0.5)",
           zIndex: 10,
+          justifyContent: "space-between",
         }}
       >
         <h1
@@ -2080,10 +2200,112 @@ const ChessboardScene: React.FC = () => {
               marginLeft: "15px",
               fontWeight: "400",
             }}
-          >
-            3D Variant
-          </span>
+          ></span>
         </h1>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          {/* Mode Switch */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              backgroundColor: COLORS.charcoal,
+              borderRadius: "12px",
+              padding: "12px 18px",
+              color: COLORS.warmWhite,
+              fontWeight: "600",
+              boxShadow: "inset 0 1px 3px rgba(0,0,0,0.4)",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                width: "150px", // enough for both labels
+                textAlign: "left",
+              }}
+            >
+              {sandboxMode ? "Sandbox Mode" : "Competitive Mode"}
+            </span>
+            <label
+              style={{
+                position: "relative",
+                display: "inline-block",
+                width: "50px",
+                height: "26px",
+                margin: "12px",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={sandboxMode}
+                onChange={(e) => setSandboxMode(e.target.checked)}
+                style={{ display: "none" }}
+              />
+              <span
+                style={{
+                  position: "absolute",
+                  cursor: "pointer",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: sandboxMode
+                    ? COLORS.lodenGreenLight
+                    : COLORS.charcoalLight,
+                  borderRadius: "26px",
+                  transition: "0.3s",
+                }}
+              />
+              <span
+                style={{
+                  position: "absolute",
+                  top: "3px",
+                  left: sandboxMode ? "26px" : "3px",
+                  width: "20px",
+                  height: "20px",
+                  borderRadius: "50%",
+                  backgroundColor: COLORS.warmWhite,
+                  transition: "0.3s",
+                }}
+              />
+            </label>
+          </div>
+          {/* Reset Game */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+            }}
+          >
+            {/* Reset Game Button */}
+            <button
+              onClick={handleResetGame}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                backgroundColor: COLORS.lodenGreen,
+                color: COLORS.warmWhite,
+                fontWeight: 600,
+                border: "none",
+                cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                transition: "0.2s",
+              }}
+              onMouseEnter={(e) => {
+                (e.target as HTMLButtonElement).style.backgroundColor =
+                  COLORS.lodenGreenLight;
+              }}
+              onMouseLeave={(e) => {
+                (e.target as HTMLButtonElement).style.backgroundColor =
+                  COLORS.lodenGreen;
+              }}
+            >
+              RESET GAME
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Main Content Area */}
@@ -2103,10 +2325,192 @@ const ChessboardScene: React.FC = () => {
             borderRight: `1px solid ${COLORS.lodenGreenDark}`,
           }}
         >
+          {/* Left-Side Players Menu Toggle */}
+          <div
+            style={{
+              position: "absolute",
+              top: "20px",
+              left: "20px",
+              zIndex: 10,
+            }}
+          >
+            <button
+              onClick={() => setPlayersMenuOpen((prev) => !prev)}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "0 8px 8px 0",
+                backgroundColor: COLORS.lodenGreen,
+                color: COLORS.warmWhite,
+                cursor: "pointer",
+                border: "none",
+              }}
+            >
+              Players ⚡
+            </button>
+          </div>
+          {playersMenuOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "60px", // below toggle
+                left: "20px",
+                backgroundColor: COLORS.charcoal,
+                borderRadius: "12px",
+                boxShadow: "2px 2px 12px rgba(0,0,0,0.4)",
+                padding: "20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "15px",
+                zIndex: 999,
+                minWidth: "220px",
+              }}
+            >
+              {/* Header with Reset */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <h3
+                  style={{
+                    color: COLORS.warmWhite,
+                    margin: 0,
+                    fontSize: "1.2rem",
+                  }}
+                >
+                  Players
+                </h3>
+                <button
+                  onClick={() => setPlayerColors(DEFAULT_PLAYER_COLORS)}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    backgroundColor: COLORS.lodenGreen,
+                    color: COLORS.warmWhite,
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  Reset
+                </button>
+              </div>
+
+              {/* Player list */}
+              {[1, 2, 3, 4].map((playerId) => (
+                <div
+                  key={playerId}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span style={{ color: COLORS.warmWhite, fontWeight: 600 }}>
+                    Player {playerId}
+                  </span>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      onClick={() =>
+                        setActiveColorPicker(
+                          activeColorPicker === playerId ? null : playerId
+                        )
+                      }
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        backgroundColor: playerColors[playerId],
+                        borderRadius: "4px",
+                        border: "1px solid #ccc",
+                        cursor: "pointer",
+                      }}
+                    />
+
+                    {activeColorPicker === playerId && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "30px", // below the color box
+                          left: "30%",
+                          zIndex: 1000,
+                          backgroundColor: COLORS.charcoal,
+                          padding: "8px",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                        }}
+                      >
+                        <PlayerColorPicker
+                          color={playerColors[playerId]}
+                          onChange={(color) =>
+                            setPlayerColors((prev) => ({
+                              ...prev,
+                              [playerId]: color,
+                            }))
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Top-Right Lock */}
+          <div
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: "20px",
+              zIndex: 10,
+            }}
+          >
+            <button
+              onClick={handlePolarLock}
+              style={{
+                padding: "8px 12px",
+                borderRadius: "8px",
+                backgroundColor: polarLocked ? "green" : "gray",
+                color: "white",
+              }}
+            >
+              {polarLocked ? "Horizontal Lock 🔒" : "Free Orbit 🔓"}
+            </button>
+          </div>
+
+          {/* Bottom-Right 180 Flip */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: "20px",
+              right: "20px",
+              zIndex: 10,
+            }}
+          >
+            <button onClick={handleFlip180}>180° 🔄</button>
+          </div>
+
           <Canvas
             camera={{ position: [0, 0, 300], fov: 50, near: 0.1, far: 1000 }}
             style={{ width: "100%", height: "100%" }}
           >
+            {selectedOption !== null && (
+              <Environment
+                preset={
+                  OPTIONS[selectedOption].split(" ")[0].toLowerCase() as Env
+                }
+              />
+            )}
+
             <ambientLight intensity={0.5} />
             <directionalLight position={[10, 10, 10]} intensity={1} />
 
@@ -2126,7 +2530,7 @@ const ChessboardScene: React.FC = () => {
 
               {Object.entries(piecePositions).map(([id, notation]) => {
                 const player = getPlayerFromPieceId(id);
-                const color = TEAM_COLORS[player];
+                const color = PLAYER_COLORS[player];
                 const pos = chessToWorld(notation);
                 let piece = getPieceFromId(id);
                 const isSelected = selectedPiece === id;
@@ -2161,13 +2565,13 @@ const ChessboardScene: React.FC = () => {
 
               {Object.entries(pawnPositions).map(([id, info]) => {
                 const player = getPlayerFromPieceId(id);
-                const color = TEAM_COLORS[player];
+                const color = PLAYER_COLORS[player];
                 const modelPath = `chessboard/${color}-pieces/${color}-pawn.glb`;
                 const isSelected = selectedPiece === id;
                 const props = {
                   id: id,
                   player: getPlayerFromPieceId(id),
-                  color: TEAM_COLORS[player],
+                  color: PLAYER_COLORS[player],
                   type: "pawn",
                   position: chessToWorld(info.position),
                   notation: info.position,
@@ -2181,14 +2585,92 @@ const ChessboardScene: React.FC = () => {
             </Suspense>
 
             <OrbitControls
+              ref={controlsRef}
               target={[0, 0, 0]}
               enableZoom={true}
               enablePan={true}
               enableRotate={true}
-              minPolarAngle={Math.PI / 2}
-              maxPolarAngle={Math.PI / 2}
+              minPolarAngle={polarLocked ? Math.PI / 2 : 0}
+              maxPolarAngle={polarLocked ? Math.PI / 2 : 2 * Math.PI}
             />
           </Canvas>
+          {themePopupOpen && (
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                backgroundColor: COLORS.charcoal,
+                borderRadius: "12px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+                padding: "20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+                zIndex: 999, // ensures it's on top of Canvas
+              }}
+            >
+              <h3
+                style={{
+                  color: COLORS.warmWhite,
+                  fontSize: "1.2rem",
+                  marginBottom: "8px",
+                  textAlign: "center",
+                }}
+              >
+                Choose Theme
+              </h3>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)", // 2 columns
+                  gap: "10px 12px", // row gap, column gap
+                }}
+              >
+                {OPTIONS.map((option, i) => (
+                  <button
+                    key={i}
+                    onClick={
+                      () => setSelectedOption((prev) => (prev === i ? null : i)) // toggle
+                    }
+                    style={{
+                      padding: "10px 14px",
+                      borderRadius: "8px",
+                      border: "none",
+                      cursor: "pointer",
+                      backgroundColor:
+                        i === selectedOption
+                          ? COLORS.lodenGreenLight
+                          : COLORS.charcoalLight,
+                      color: COLORS.warmWhite,
+                      fontWeight: i === selectedOption ? "700" : "500",
+                      transition: "background 0.2s",
+                    }}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  setThemePopupOpen(!themePopupOpen);
+                }}
+                style={{
+                  marginTop: "10px",
+                  padding: "8px",
+                  borderRadius: "8px",
+                  border: "none",
+                  backgroundColor: COLORS.lodenGreenDark,
+                  color: COLORS.warmWhite,
+                  cursor: "pointer",
+                }}
+              >
+                Close
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right Sidebar */}
@@ -2203,9 +2685,24 @@ const ChessboardScene: React.FC = () => {
             overflowY: "auto",
           }}
         >
+          <button
+            onClick={() => setThemePopupOpen(!themePopupOpen)}
+            style={{
+              backgroundColor: COLORS.lodenGreen,
+              color: COLORS.warmWhite,
+              border: "none",
+              borderRadius: "8px",
+              padding: "10px",
+              cursor: "pointer",
+              fontWeight: "600",
+            }}
+          >
+            Open Themes
+          </button>
           <GameInfo
             selectedPiece={selectedPiece}
             currentPlayer={currentPlayer}
+            sandboxMode={sandboxMode}
           />
 
           <div style={{ flex: 1, minHeight: 0 }}>
