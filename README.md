@@ -7,7 +7,7 @@
    - `npm run build` creates a `\build\` folder that contains the minimum that our page needs to run
 2. `scp` the build folder to the EC2 instance
    - `scp` is "secure copy". it's how we can move files from our machine to another (the EC2 instance)
-   - we just need to navigate to where our secret key is and run `scp -i <YOUR_SECRET_KEY> <PATH/TO>\build\ <YOUR_USER>@<EC2_PUBLIC_IP>:/home/shared/projects/wormhole-chess/`
+   - we just need to navigate to where our secret key is and run `scp -i <YOUR_SECRET_KEY> -r <PATH/TO>\build\ <YOUR_USER>@<EC2_PUBLIC_IP>:/home/shared/projects/wormhole-chess/`
      - ^ this command should give you a visual update that files were copied
 3. `ssh` into the EC2 instance
    - navigate to where your secret key is (same as above)

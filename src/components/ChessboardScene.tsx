@@ -425,28 +425,43 @@ const ChessPiece: React.FC<ChessPieceProps> = ({
     notation.includes("'") ? Math.PI : 0,
   ];
 
-  let knightRotation: [number, number, number] = [0, 0, 0];
+  let extraRotation: [number, number, number] = [0, 0, 0];
   if (type === "knight") {
     switch (player) {
       case 1:
-        knightRotation = [0, Math.PI / 2, 0];
+        extraRotation = [0, Math.PI / 2, 0];
         break;
       case 2:
-        knightRotation = [0, -Math.PI / 2, 0];
+        extraRotation = [0, -Math.PI / 2, 0];
         break;
       case 3:
-        knightRotation = [0, -Math.PI / 2, 0];
+        extraRotation = [0, -Math.PI / 2, 0];
         break;
       case 4:
-        knightRotation = [0, Math.PI / 2, 0];
+        extraRotation = [0, Math.PI / 2, 0];
+        break;
+    }
+  } else if (type === "bishop") {
+    switch (player) {
+      case 1:
+        extraRotation = [0, Math.PI, 0];
+        break;
+      case 2:
+        extraRotation = [0, 0, 0];
+        break;
+      case 3:
+        extraRotation = [0, -Math.PI, 0];
+        break;
+      case 4:
+        extraRotation = [0, 0, 0];
         break;
     }
   }
 
   const finalRotation: [number, number, number] = [
-    baseRotation[0] + rotation[0] + wormholeRotation[0] + knightRotation[0],
-    baseRotation[1] + rotation[1] + wormholeRotation[1] + knightRotation[1],
-    baseRotation[2] + rotation[2] + wormholeRotation[2] + knightRotation[2],
+    baseRotation[0] + rotation[0] + wormholeRotation[0] + extraRotation[0],
+    baseRotation[1] + rotation[1] + wormholeRotation[1] + extraRotation[1],
+    baseRotation[2] + rotation[2] + wormholeRotation[2] + extraRotation[2],
   ];
 
   const { springPos, springScale, springRot } = useSpring({
