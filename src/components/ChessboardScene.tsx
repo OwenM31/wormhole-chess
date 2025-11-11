@@ -2078,19 +2078,27 @@ const ChessboardScene: React.FC = () => {
   };
 
   const handleResetGame = () => {
-    setPiecePositions({
-      ...getDefaultPiecePositionsForPlayer(1),
-      ...getDefaultPiecePositionsForPlayer(2),
-      ...getDefaultPiecePositionsForPlayer(3),
-      ...getDefaultPiecePositionsForPlayer(4),
+    const activePlayerIds = players.map((p) => p.id);
+    const newPiecePositions = {};
+    const newPawnPositions = {};
+
+    activePlayerIds.forEach((playerId) => {
+      Object.assign(
+        newPiecePositions,
+        getDefaultPiecePositionsForPlayer(playerId)
+      );
+      Object.assign(
+        newPawnPositions,
+        getDefaultPawnPositionsForPlayer(playerId)
+      );
     });
-    setPawnPositions({
-      ...getDefaultPawnPositionsForPlayer(1),
-      ...getDefaultPawnPositionsForPlayer(2),
-      ...getDefaultPawnPositionsForPlayer(3),
-      ...getDefaultPawnPositionsForPlayer(4),
-    });
+    setPiecePositions(newPiecePositions);
+    setPawnPositions(newPawnPositions);
+
     setSelectedPiece(null); // optional: deselect any piece
+    setPossibleMovePaths({});
+    setPossibleMoves([]);
+    setMovePaths({});
     setMoveHistory([]); // optional: clear move log
   };
 
