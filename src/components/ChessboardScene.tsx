@@ -410,7 +410,7 @@ const ChessPiece: React.FC<ChessPieceProps> = ({
   cloned.traverse((child: any) => {
     if (child.isMesh) {
       child.material = new THREE.MeshStandardMaterial({
-        color: PIECE_COLORS[color],
+        color: new THREE.Color(color),
         metalness: 0.5,
         roughness: 0.3,
       });
@@ -509,13 +509,33 @@ useGLTF.preload("/chessboard/pieces.glb");
 const ChessboardScene: React.FC = () => {
   const [sandboxMode, setSandboxMode] = useState(false);
 
-  const [piecePositions, setPiecePositions] = useState<Record<string, string>>(
-    DEFAULT_PIECE_POSITIONS
-  );
+  const getDefaultPawnPositionsForPlayer = (
+    n: number
+  ): Record<string, Record<string, string>> => {
+    return DEFAULT_PAWN_POSITIONS[n];
+  };
+
+  const getDefaultPiecePositionsForPlayer = (
+    n: number
+  ): Record<string, string> => {
+    return DEFAULT_PIECE_POSITIONS[n];
+  };
+
+  const [piecePositions, setPiecePositions] = useState<Record<string, string>>({
+    ...getDefaultPiecePositionsForPlayer(1),
+    ...getDefaultPiecePositionsForPlayer(2),
+    ...getDefaultPiecePositionsForPlayer(3),
+    ...getDefaultPiecePositionsForPlayer(4),
+  });
 
   const [pawnPositions, setPawnPositions] = useState<
     Record<string, Record<string, string>>
-  >(DEFAULT_PAWN_POSITIONS);
+  >({
+    ...getDefaultPawnPositionsForPlayer,
+    ...getDefaultPawnPositionsForPlayer(2),
+    ...getDefaultPawnPositionsForPlayer(3),
+    ...getDefaultPawnPositionsForPlayer(4),
+  });
 
   const [pawnDirs, setPawnDirs] = useState<Record<string, Direction>>();
 
@@ -1616,8 +1636,7 @@ const ChessboardScene: React.FC = () => {
     if (id.startsWith("player3")) return 3;
     if (id.startsWith("player4")) return 4;
     // Legacy support for old naming
-    if (id.startsWith("white")) return 1;
-    if (id.startsWith("black")) return 2;
+
     return 1;
   };
 
@@ -2044,8 +2063,18 @@ const ChessboardScene: React.FC = () => {
   };
 
   const handleResetGame = () => {
-    setPiecePositions(DEFAULT_PIECE_POSITIONS);
-    setPawnPositions(DEFAULT_PAWN_POSITIONS);
+    setPiecePositions({
+      ...getDefaultPiecePositionsForPlayer(1),
+      ...getDefaultPiecePositionsForPlayer(2),
+      ...getDefaultPiecePositionsForPlayer(3),
+      ...getDefaultPiecePositionsForPlayer(4),
+    });
+    setPawnPositions({
+      ...getDefaultPawnPositionsForPlayer(1),
+      ...getDefaultPawnPositionsForPlayer(2),
+      ...getDefaultPawnPositionsForPlayer(3),
+      ...getDefaultPawnPositionsForPlayer(4),
+    });
     setSelectedPiece(null); // optional: deselect any piece
     setMoveHistory([]); // optional: clear move log
   };
@@ -2147,6 +2176,12 @@ const ChessboardScene: React.FC = () => {
   ];
 
   const [playersMenuOpen, setPlayersMenuOpen] = useState(false);
+  const [players, setPlayers] = useState<{ id: number }[]>([
+    { id: 1 },
+    { id: 2 },
+    { id: 3 },
+    { id: 4 },
+  ]);
   const [playerColors, setPlayerColors] = useState<Record<number, string>>({
     1: "#ffffff",
     2: "#000000",
@@ -2398,10 +2433,10 @@ const ChessboardScene: React.FC = () => {
                 </button>
               </div>
 
-              {/* Player list */}
-              {[1, 2, 3, 4].map((playerId) => (
+              {/* Player rows */}
+              {players.map((player, index) => (
                 <div
-                  key={playerId}
+                  key={player.id}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -2409,59 +2444,169 @@ const ChessboardScene: React.FC = () => {
                   }}
                 >
                   <span style={{ color: COLORS.warmWhite, fontWeight: 600 }}>
-                    Player {playerId}
+                    Player {index + 1}
                   </span>
 
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "8px",
+                      gap: "6px",
                     }}
                   >
+                    {/* Color box */}
                     <div
                       onClick={() =>
                         setActiveColorPicker(
-                          activeColorPicker === playerId ? null : playerId
+                          activeColorPicker === player.id ? null : player.id
                         )
                       }
                       style={{
                         width: "24px",
                         height: "24px",
-                        backgroundColor: playerColors[playerId],
+                        backgroundColor: playerColors[player.id],
                         borderRadius: "4px",
                         border: "1px solid #ccc",
                         cursor: "pointer",
                       }}
                     />
 
-                    {activeColorPicker === playerId && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "30px", // below the color box
-                          left: "30%",
-                          zIndex: 1000,
-                          backgroundColor: COLORS.charcoal,
-                          padding: "8px",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                        }}
-                      >
-                        <PlayerColorPicker
-                          color={playerColors[playerId]}
-                          onChange={(color) =>
-                            setPlayerColors((prev) => ({
-                              ...prev,
-                              [playerId]: color,
-                            }))
-                          }
-                        />
-                      </div>
-                    )}
+                    {/* Reset color button */}
+                    <button
+                      onClick={() => {
+                        // convert object values to an array
+                        const colorsArray = Object.values(
+                          DEFAULT_PLAYER_COLORS
+                        );
+
+                        // get current color
+                        const currentColor =
+                          playerColors[player.id] ?? colorsArray[0];
+
+                        // find index in the array
+                        const currentColorIndex =
+                          colorsArray.indexOf(currentColor);
+                        const nextColor =
+                          DEFAULT_PLAYER_COLORS[
+                            (currentColorIndex + 1) % colorsArray.length
+                          ];
+                        setPlayerColors((prev) => ({
+                          ...prev,
+                          [player.id]: nextColor,
+                        }));
+                      }}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        color: COLORS.lodenGreenLight,
+                      }}
+                    >
+                      🔄
+                    </button>
+
+                    {/* Remove player button */}
+                    <button
+                      onClick={() => {
+                        // Remove player and move others up
+                        setPlayers((prev) =>
+                          prev.filter((p) => p.id !== player.id)
+                        );
+
+                        // Remove their pieces
+                        setPiecePositions((prev) =>
+                          Object.fromEntries(
+                            Object.entries(prev).filter(
+                              ([id]) => getPlayerFromPieceId(id) !== player.id
+                            )
+                          )
+                        );
+                        setPawnPositions((prev) => {
+                          const filtered: typeof prev = {};
+                          Object.entries(prev).forEach(([id, info]) => {
+                            if (getPlayerFromPieceId(id) !== player.id)
+                              filtered[id] = info;
+                          });
+                          return filtered;
+                        });
+                      }}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        cursor: "pointer",
+                        color: COLORS.red,
+                      }}
+                    >
+                      ❌
+                    </button>
                   </div>
+
+                  {/* Color picker */}
+                  {activeColorPicker === player.id && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "30px",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        zIndex: 1000,
+                        backgroundColor: COLORS.charcoal,
+                        padding: "8px",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                      }}
+                    >
+                      <PlayerColorPicker
+                        color={playerColors[player.id]}
+                        onChange={(color) =>
+                          setPlayerColors((prev) => ({
+                            ...prev,
+                            [player.id]: color,
+                          }))
+                        }
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
+
+              {/* Add player button */}
+              {players.length < 4 && (
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <button
+                    onClick={() => {
+                      const newId = Math.max(...players.map((p) => p.id)) + 1;
+                      setPlayers((prev) => [...prev, { id: newId }]);
+
+                      // add default color for that slot
+                      setPlayerColors((prev) => ({
+                        ...prev,
+                        [newId]: DEFAULT_PLAYER_COLORS[players.length],
+                      }));
+
+                      // restore pieces for the new player
+                      setPiecePositions((prev) => ({
+                        ...prev,
+                        ...getDefaultPiecePositionsForPlayer(newId),
+                      }));
+                      setPawnPositions((prev) => ({
+                        ...prev,
+                        ...getDefaultPawnPositionsForPlayer(newId),
+                      }));
+                    }}
+                    style={{
+                      background: COLORS.lodenGreen,
+                      color: COLORS.warmWhite,
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      border: "none",
+                      cursor: "pointer",
+                    }}
+                  >
+                    ➕
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -2530,10 +2675,12 @@ const ChessboardScene: React.FC = () => {
 
               {Object.entries(piecePositions).map(([id, notation]) => {
                 const player = getPlayerFromPieceId(id);
-                const color = PLAYER_COLORS[player];
+                const color = playerColors[player];
                 const pos = chessToWorld(notation);
                 let piece = getPieceFromId(id);
                 const isSelected = selectedPiece === id;
+
+                console.log("player " + player + ": " + color + " " + piece);
 
                 const props = {
                   id,
@@ -2565,20 +2712,18 @@ const ChessboardScene: React.FC = () => {
 
               {Object.entries(pawnPositions).map(([id, info]) => {
                 const player = getPlayerFromPieceId(id);
-                const color = PLAYER_COLORS[player];
-                const modelPath = `chessboard/${color}-pieces/${color}-pawn.glb`;
+                const color = playerColors[player];
                 const isSelected = selectedPiece === id;
                 const props = {
                   id: id,
                   player: getPlayerFromPieceId(id),
-                  color: PLAYER_COLORS[player],
+                  color,
                   type: "pawn",
                   position: chessToWorld(info.position),
                   notation: info.position,
                   isSelected,
                   capturedPiece,
                   onClick: handlePieceClick,
-                  modelPath,
                 };
                 return <Pawn key={id} {...props} />;
               })}

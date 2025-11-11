@@ -8,6 +8,7 @@ export const COLORS = {
   lodenGreenDark: "#3C493F",
   lodenGreenLight: "#5C6C5C",
   accent: "#D4AF37", // Gold accent for highlights
+  red: "#AA4A44",
 };
 
 // Team color mapping
@@ -84,82 +85,95 @@ export const INNER_LAYER_TILT = (Math.PI * 5) / 12;
 // Pentagonal squares
 export const PENTAGONAL_SQUARES = ["c3", "c6", "f3", "f6"];
 
-export const DEFAULT_PIECE_POSITIONS: Record<string, string> = {
+export const DEFAULT_PIECE_POSITIONS: Record<number, Record<string, string>> = {
   // Player 1 (white)
-  "player1-rook-a1": "a1",
-  "player1-rook-h1": "h1",
-  "player1-bishop-c1": "c1",
-  "player1-bishop-f1": "f1",
-  "player1-knight-b1": "b1",
-  "player1-knight-g1": "g1",
-  "player1-queen-d1": "d1",
-  "player1-king-e1": "e1",
-
+  1: {
+    "player1-rook-a1": "a1",
+    "player1-rook-h1": "h1",
+    "player1-bishop-c1": "c1",
+    "player1-bishop-f1": "f1",
+    "player1-knight-b1": "b1",
+    "player1-knight-g1": "g1",
+    "player1-queen-d1": "d1",
+    "player1-king-e1": "e1",
+  },
   // Player 2 (black)
-  "player2-rook-a8": "a8",
-  "player2-rook-h8": "h8",
-  "player2-bishop-c8": "c8",
-  "player2-bishop-f8": "f8",
-  "player2-knight-b8": "b8",
-  "player2-knight-g8": "g8",
-  "player2-queen-d8": "d8",
-  "player2-king-e8": "e8",
-
+  2: {
+    "player2-rook-a8": "a8",
+    "player2-rook-h8": "h8",
+    "player2-bishop-c8": "c8",
+    "player2-bishop-f8": "f8",
+    "player2-knight-b8": "b8",
+    "player2-knight-g8": "g8",
+    "player2-queen-d8": "d8",
+    "player2-king-e8": "e8",
+  },
   // Player 3 (brown) - on bottom layer
-  "player3-rook-a1'": "a1'",
-  "player3-rook-h1'": "h1'",
-  "player3-knight-b1'": "b1'",
-  "player3-knight-g1'": "g1'",
-  "player3-bishop-c1'": "c1'",
-  "player3-bishop-f1'": "f1'",
-  "player3-queen-d1'": "d1'",
-  "player3-king-e1'": "e1'",
-
+  3: {
+    "player3-rook-a1'": "a1'",
+    "player3-rook-h1'": "h1'",
+    "player3-knight-b1'": "b1'",
+    "player3-knight-g1'": "g1'",
+    "player3-bishop-c1'": "c1'",
+    "player3-bishop-f1'": "f1'",
+    "player3-queen-d1'": "d1'",
+    "player3-king-e1'": "e1'",
+  },
   // Player 4 (green) - on bottom layer
-  "player4-rook-a8'": "a8'",
-  "player4-rook-h8'": "h8'",
-  "player4-knight-b8'": "b8'",
-  "player4-knight-g8'": "g8'",
-  "player4-bishop-c8'": "c8'",
-  "player4-bishop-f8'": "f8'",
-  "player4-queen-d8'": "d8'",
-  "player4-king-e8'": "e8'",
+  4: {
+    "player4-rook-a8'": "a8'",
+    "player4-rook-h8'": "h8'",
+    "player4-knight-b8'": "b8'",
+    "player4-knight-g8'": "g8'",
+    "player4-bishop-c8'": "c8'",
+    "player4-bishop-f8'": "f8'",
+    "player4-queen-d8'": "d8'",
+    "player4-king-e8'": "e8'",
+  },
 };
 
-export const DEFAULT_PAWN_POSITIONS: Record<string, Record<string, string>> = {
-  "player1-pawn-a2": { position: "a2", direction: "N" },
-  "player1-pawn-b2": { position: "b2", direction: "N" },
-  "player1-pawn-c2": { position: "c2", direction: "N" },
-  "player1-pawn-d2": { position: "d2", direction: "N" },
-  "player1-pawn-e2": { position: "e2", direction: "N" },
-  "player1-pawn-f2": { position: "f2", direction: "N" },
-  "player1-pawn-g2": { position: "g2", direction: "N" },
-  "player1-pawn-h2": { position: "h2", direction: "N" },
-
-  "player2-pawn-a7": { position: "a7", direction: "S" },
-  "player2-pawn-b7": { position: "b7", direction: "S" },
-  "player2-pawn-c7": { position: "c7", direction: "S" },
-  "player2-pawn-d7": { position: "d7", direction: "S" },
-  "player2-pawn-e7": { position: "e7", direction: "S" },
-  "player2-pawn-f7": { position: "f7", direction: "S" },
-  "player2-pawn-g7": { position: "g7", direction: "S" },
-  "player2-pawn-h7": { position: "h7", direction: "S" },
-
-  "player3-pawn-a2'": { position: "a2'", direction: "N" },
-  "player3-pawn-b2'": { position: "b2'", direction: "N" },
-  "player3-pawn-c2'": { position: "c2'", direction: "N" },
-  "player3-pawn-d2'": { position: "d2'", direction: "N" },
-  "player3-pawn-e2'": { position: "e2'", direction: "N" },
-  "player3-pawn-f2'": { position: "f2'", direction: "N" },
-  "player3-pawn-g2'": { position: "g2'", direction: "N" },
-  "player3-pawn-h2'": { position: "h2'", direction: "N" },
-
-  "player4-pawn-a7'": { position: "a7'", direction: "S" },
-  "player4-pawn-b7'": { position: "b7'", direction: "S" },
-  "player4-pawn-c7'": { position: "c7'", direction: "S" },
-  "player4-pawn-d7'": { position: "d7'", direction: "S" },
-  "player4-pawn-e7'": { position: "e7'", direction: "S" },
-  "player4-pawn-f7'": { position: "f7'", direction: "S" },
-  "player4-pawn-g7'": { position: "g7'", direction: "S" },
-  "player4-pawn-h7'": { position: "h7'", direction: "S" },
+export const DEFAULT_PAWN_POSITIONS: Record<
+  number,
+  Record<string, Record<string, string>>
+> = {
+  1: {
+    "player1-pawn-a2": { position: "a2", direction: "N" },
+    "player1-pawn-b2": { position: "b2", direction: "N" },
+    "player1-pawn-c2": { position: "c2", direction: "N" },
+    "player1-pawn-d2": { position: "d2", direction: "N" },
+    "player1-pawn-e2": { position: "e2", direction: "N" },
+    "player1-pawn-f2": { position: "f2", direction: "N" },
+    "player1-pawn-g2": { position: "g2", direction: "N" },
+    "player1-pawn-h2": { position: "h2", direction: "N" },
+  },
+  2: {
+    "player2-pawn-a7": { position: "a7", direction: "S" },
+    "player2-pawn-b7": { position: "b7", direction: "S" },
+    "player2-pawn-c7": { position: "c7", direction: "S" },
+    "player2-pawn-d7": { position: "d7", direction: "S" },
+    "player2-pawn-e7": { position: "e7", direction: "S" },
+    "player2-pawn-f7": { position: "f7", direction: "S" },
+    "player2-pawn-g7": { position: "g7", direction: "S" },
+    "player2-pawn-h7": { position: "h7", direction: "S" },
+  },
+  3: {
+    "player3-pawn-a2'": { position: "a2'", direction: "N" },
+    "player3-pawn-b2'": { position: "b2'", direction: "N" },
+    "player3-pawn-c2'": { position: "c2'", direction: "N" },
+    "player3-pawn-d2'": { position: "d2'", direction: "N" },
+    "player3-pawn-e2'": { position: "e2'", direction: "N" },
+    "player3-pawn-f2'": { position: "f2'", direction: "N" },
+    "player3-pawn-g2'": { position: "g2'", direction: "N" },
+    "player3-pawn-h2'": { position: "h2'", direction: "N" },
+  },
+  4: {
+    "player4-pawn-a7'": { position: "a7'", direction: "S" },
+    "player4-pawn-b7'": { position: "b7'", direction: "S" },
+    "player4-pawn-c7'": { position: "c7'", direction: "S" },
+    "player4-pawn-d7'": { position: "d7'", direction: "S" },
+    "player4-pawn-e7'": { position: "e7'", direction: "S" },
+    "player4-pawn-f7'": { position: "f7'", direction: "S" },
+    "player4-pawn-g7'": { position: "g7'", direction: "S" },
+    "player4-pawn-h7'": { position: "h7'", direction: "S" },
+  },
 };
