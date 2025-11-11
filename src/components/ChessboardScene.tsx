@@ -2172,6 +2172,59 @@ const ChessboardScene: React.FC = () => {
     animateTo({ azimuth: target });
   };
 
+  const boardRef = useRef<THREE.Group>(null);
+
+  const rotateBoard90 = () => {
+    if (!boardRef.current) return;
+
+    const axis = new THREE.Vector3(0, 0, 1); // board normal
+    const startQuaternion = boardRef.current.quaternion.clone();
+    const rot = new THREE.Quaternion().setFromAxisAngle(axis, Math.PI / 2);
+    const endQuaternion = startQuaternion.clone().multiply(rot);
+
+    const duration = 0.5; // seconds
+    let startTime: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = (timestamp - startTime) / 1000;
+      const t = Math.min(elapsed / duration, 1);
+
+      const current = startQuaternion.clone();
+      current.slerp(endQuaternion, t);
+      boardRef.current!.quaternion.copy(current);
+
+      if (t < 1) requestAnimationFrame(animate);
+    };
+
+    requestAnimationFrame(animate);
+  };
+
+  const ORIGINAL_ORIENTATION = new THREE.Quaternion(); // identity quaternion
+
+  const resetBoardOrientation = () => {
+    if (!boardRef.current) return;
+
+    const startQuaternion = boardRef.current.quaternion.clone();
+    const endQuaternion = ORIGINAL_ORIENTATION.clone();
+    const duration = 0.5; // seconds
+    let startTime: number | null = null;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = (timestamp - startTime) / 1000;
+      const t = Math.min(elapsed / duration, 1);
+
+      const current = startQuaternion.clone();
+      current.slerp(endQuaternion, t);
+      boardRef.current!.quaternion.copy(current);
+
+      if (t < 1) requestAnimationFrame(animate);
+    };
+
+    requestAnimationFrame(animate);
+  };
+
   const [themePopupOpen, setThemePopupOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   type Env =
@@ -2236,6 +2289,12 @@ const ChessboardScene: React.FC = () => {
         case "l":
           handlePolarLock();
           break;
+        case "r": // new hotkey
+          rotateBoard90();
+          break;
+        case "o": // new hotkey to reset orientation
+          resetBoardOrientation();
+          break;
         default:
           break;
       }
@@ -2248,7 +2307,7 @@ const ChessboardScene: React.FC = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
     };
-  }, [handleFlip180, handlePolarLock]); // Dependencies - remake listener if these functions change
+  }, [handleFlip180, handlePolarLock, rotateBoard90]); // Dependencies - remake listener if these functions change
 
   return (
     <div
@@ -2718,7 +2777,53 @@ const ChessboardScene: React.FC = () => {
               zIndex: 10,
             }}
           >
-            <button onClick={handleFlip180}>180° 🔄 (F)</button>
+            <div
+              style={{
+                position: "absolute",
+                bottom: "20px",
+                right: "20px",
+                zIndex: 10,
+                whiteSpace: "nowrap", // prevent button text from wrapping
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+              }}
+            >
+              <button
+                onClick={handleFlip180}
+                style={{
+                  display: "inline-block",
+                  width: "fit-content",
+                  textAlign: "right",
+                  marginBottom: "8px",
+                }}
+              >
+                180° 🔄 (F)
+              </button>
+              <button
+                onClick={rotateBoard90}
+                style={{
+                  display: "inline-block",
+                  marginBottom: "8px",
+                  width: "auto",
+                  textAlign: "right",
+                }}
+              >
+                Rotate 90° ⟳ (R)
+              </button>
+
+              <button
+                onClick={resetBoardOrientation}
+                style={{
+                  display: "inline-block",
+                  marginBottom: "8px",
+                  width: "auto",
+                  textAlign: "right",
+                }}
+              >
+                Reset Orientation ⬜ (X)
+              </button>
+            </div>
           </div>
           <Canvas
             camera={{ position: [0, 0, 300], fov: 50, near: 0.1, far: 1000 }}
@@ -2736,73 +2841,75 @@ const ChessboardScene: React.FC = () => {
             <directionalLight position={[10, 10, 10]} intensity={1} />
 
             <Suspense fallback={null}>
-              <ChessboardModel />
+              <group ref={boardRef}>
+                <ChessboardModel />
 
-              {boardSquares.map((square) => (
-                <BoardSquare
-                  key={square.key}
-                  position={square.position}
-                  notation={square.notation}
-                  onSquareClick={handleSquareClick}
-                  isHighlighted={isHighlightedSquare(square.notation)}
-                  isPentagonal={square.isPentagonal}
-                />
-              ))}
+                {boardSquares.map((square) => (
+                  <BoardSquare
+                    key={square.key}
+                    position={square.position}
+                    notation={square.notation}
+                    onSquareClick={handleSquareClick}
+                    isHighlighted={isHighlightedSquare(square.notation)}
+                    isPentagonal={square.isPentagonal}
+                  />
+                ))}
 
-              {Object.entries(piecePositions).map(([id, notation]) => {
-                const player = getPlayerFromPieceId(id);
-                const color = playerColors[player];
-                const pos = chessToWorld(notation);
-                let piece = getPieceFromId(id);
-                const isSelected = selectedPiece === id;
+                {Object.entries(piecePositions).map(([id, notation]) => {
+                  const player = getPlayerFromPieceId(id);
+                  const color = playerColors[player];
+                  const pos = chessToWorld(notation);
+                  let piece = getPieceFromId(id);
+                  const isSelected = selectedPiece === id;
 
-                console.log("player " + player + ": " + color + " " + piece);
+                  console.log("player " + player + ": " + color + " " + piece);
 
-                const props = {
-                  id,
-                  player,
-                  color,
-                  type: piece,
-                  position: pos,
-                  notation,
-                  isSelected,
-                  capturedPiece,
-                  onClick: handlePieceClick,
-                };
+                  const props = {
+                    id,
+                    player,
+                    color,
+                    type: piece,
+                    position: pos,
+                    notation,
+                    isSelected,
+                    capturedPiece,
+                    onClick: handlePieceClick,
+                  };
 
-                switch (piece) {
-                  case "pawn":
-                    return <Pawn key={id} {...props} />;
-                  case "knight":
-                    return <Knight key={id} {...props} />;
-                  case "bishop":
-                    return <Bishop key={id} {...props} />;
-                  case "rook":
-                    return <Rook key={id} {...props} />;
-                  case "queen":
-                    return <Queen key={id} {...props} />;
-                  case "king":
-                    return <King key={id} {...props} />;
-                }
-              })}
+                  switch (piece) {
+                    case "pawn":
+                      return <Pawn key={id} {...props} />;
+                    case "knight":
+                      return <Knight key={id} {...props} />;
+                    case "bishop":
+                      return <Bishop key={id} {...props} />;
+                    case "rook":
+                      return <Rook key={id} {...props} />;
+                    case "queen":
+                      return <Queen key={id} {...props} />;
+                    case "king":
+                      return <King key={id} {...props} />;
+                  }
+                })}
 
-              {Object.entries(pawnPositions).map(([id, info]) => {
-                const player = getPlayerFromPieceId(id);
-                const color = playerColors[player];
-                const isSelected = selectedPiece === id;
-                const props = {
-                  id: id,
-                  player: getPlayerFromPieceId(id),
-                  color,
-                  type: "pawn",
-                  position: chessToWorld(info.position),
-                  notation: info.position,
-                  isSelected,
-                  capturedPiece,
-                  onClick: handlePieceClick,
-                };
-                return <Pawn key={id} {...props} />;
-              })}
+                {Object.entries(pawnPositions).map(([id, info]) => {
+                  const player = getPlayerFromPieceId(id);
+                  const color = playerColors[player];
+                  const isSelected = selectedPiece === id;
+                  const props = {
+                    id: id,
+                    player: getPlayerFromPieceId(id),
+                    color,
+                    type: "pawn",
+                    position: chessToWorld(info.position),
+                    notation: info.position,
+                    isSelected,
+                    capturedPiece,
+                    onClick: handlePieceClick,
+                  };
+                  return <Pawn key={id} {...props} />;
+                })}
+              </group>
             </Suspense>
 
             <OrbitControls
