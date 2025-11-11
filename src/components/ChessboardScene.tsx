@@ -546,7 +546,7 @@ const ChessboardScene: React.FC = () => {
   const [pawnPositions, setPawnPositions] = useState<
     Record<string, Record<string, string>>
   >({
-    ...getDefaultPawnPositionsForPlayer,
+    ...getDefaultPawnPositionsForPlayer(1),
     ...getDefaultPawnPositionsForPlayer(2),
     ...getDefaultPawnPositionsForPlayer(3),
     ...getDefaultPawnPositionsForPlayer(4),
