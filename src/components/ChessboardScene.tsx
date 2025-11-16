@@ -2830,7 +2830,7 @@ const ChessboardScene: React.FC = () => {
                   fontFamily: "Segoe UI",
                   fontWeight: "300",
                   color: (quarterRotation % 4 == 0) ? "black" : (quarterRotation % 2 == 0) ? "white" : "black",
-                  backgroundColor: (quarterRotation % 4 == 0) ? "white" : (quarterRotation % 2 == 0) ? "black" : "gray",
+                  backgroundColor: (toggle180) ? ((quarterRotation % 4 == 0) ? "green" : (quarterRotation % 2 == 0) ? COLORS.gold : COLORS.lodenGreenLight) : ((quarterRotation % 4 == 0) ? "white" : (quarterRotation % 2 == 0) ? "black" : "gray"),
                 }}
               >
                 Rotate 90° ⟳ (R)
