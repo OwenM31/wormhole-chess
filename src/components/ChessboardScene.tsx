@@ -522,6 +522,12 @@ useGLTF.preload("/chessboard/pieces.glb");
 // ==================== MAIN COMPONENT ====================
 
 const ChessboardScene: React.FC = () => {
+  // Handles the colors for the UI buttons in scene
+  const [toggle180, setToggle180] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
+  const [quarterRotation, setQuarterRotationCount] = useState(0);
+
+
   const [sandboxMode, setSandboxMode] = useState(false);
 
   const getDefaultPawnPositionsForPlayer = (
@@ -2156,6 +2162,8 @@ const ChessboardScene: React.FC = () => {
 
   const handleFlip180 = () => {
     if (!controlsRef.current) return;
+    setToggle180(prev => !prev);
+    console.log("180: " + toggle180)
     const currentAzimuth = controlsRef.current.getAzimuthalAngle();
 
     // Normalize to [0, 2π)
@@ -2176,6 +2184,10 @@ const ChessboardScene: React.FC = () => {
 
   const rotateBoard90 = () => {
     if (!boardRef.current) return;
+    if (isRotating) return;
+    setIsRotating(true);
+
+    setQuarterRotationCount((prev) => (prev + 1) % 4);
 
     const axis = new THREE.Vector3(0, 0, 1); // board normal
     const startQuaternion = boardRef.current.quaternion.clone();
@@ -2195,9 +2207,10 @@ const ChessboardScene: React.FC = () => {
       boardRef.current!.quaternion.copy(current);
 
       if (t < 1) requestAnimationFrame(animate);
+      else setIsRotating(false); // If it is mod 4 == 0, it is a full rotation (white color), mod 2 == 0 is a half rotation (black color) and mod 2 == 1 is a quarter rotation (gray color)
     };
 
-    requestAnimationFrame(animate);
+    requestAnimationFrame(animate); 
   };
 
   const ORIGINAL_ORIENTATION = new THREE.Quaternion(); // identity quaternion
@@ -2495,6 +2508,8 @@ const ChessboardScene: React.FC = () => {
                 color: COLORS.warmWhite,
                 cursor: "pointer",
                 border: "none",
+                fontFamily: "Segoe UI",
+                fontWeight: "300",
               }}
             >
               Players ⚡
@@ -2763,6 +2778,8 @@ const ChessboardScene: React.FC = () => {
                 borderRadius: "8px",
                 backgroundColor: polarLocked ? "green" : "gray",
                 color: "white",
+                fontFamily: "Segoe UI",
+                fontWeight: "300",
               }}
             >
               {polarLocked ? "Horizontal Lock 🔒" : "Free Orbit 🔓"} (L)
@@ -2796,6 +2813,9 @@ const ChessboardScene: React.FC = () => {
                   width: "fit-content",
                   textAlign: "right",
                   marginBottom: "8px",
+                  fontFamily: "Segoe UI",
+                  fontWeight: "300",
+                  backgroundColor: toggle180 ? COLORS.gold : "gray",
                 }}
               >
                 180° 🔄 (F)
@@ -2807,6 +2827,10 @@ const ChessboardScene: React.FC = () => {
                   marginBottom: "8px",
                   width: "auto",
                   textAlign: "right",
+                  fontFamily: "Segoe UI",
+                  fontWeight: "300",
+                  color: (quarterRotation % 4 == 0) ? "black" : (quarterRotation % 2 == 0) ? "white" : "black",
+                  backgroundColor: (quarterRotation % 4 == 0) ? "white" : (quarterRotation % 2 == 0) ? "black" : "gray",
                 }}
               >
                 Rotate 90° ⟳ (R)
@@ -2819,6 +2843,9 @@ const ChessboardScene: React.FC = () => {
                   marginBottom: "8px",
                   width: "auto",
                   textAlign: "right",
+                  fontFamily: "Segoe UI",
+                  fontWeight: "300",
+                  backgroundColor: "gray",
                 }}
               >
                 Reset Orientation ⬜ (X)

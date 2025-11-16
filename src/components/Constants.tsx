@@ -9,6 +9,7 @@ export const COLORS = {
   lodenGreenLight: "#5C6C5C",
   accent: "#D4AF37", // Gold accent for highlights
   red: "#AA4A44",
+  gold: "#bf9b30",
 };
 
 // Team color mapping
