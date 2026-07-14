@@ -1,5 +1,5 @@
-import React, { Suspense, useState, useMemo, useEffect, useRef } from "react";
-import { Canvas, ThreeEvent, useFrame } from "@react-three/fiber";
+import React, { Suspense, useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { Canvas, ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Box, Environment } from "@react-three/drei";
 
 import { HexColorPicker } from "react-colorful";
@@ -127,6 +127,7 @@ interface MoveLogEntry {
   to: string;
   timestamp: Date;
   isWormholeMove?: boolean;
+  isCastling?: boolean;
 }
 
 const MoveLog: React.FC<{ moves: MoveLogEntry[] }> = ({ moves }) => {
@@ -194,7 +195,9 @@ const MoveLog: React.FC<{ moves: MoveLogEntry[] }> = ({ moves }) => {
                 marginBottom: "8px",
                 transition: "all 0.3s ease",
                 border: `1px solid ${
-                  move.isWormholeMove ? COLORS.accent : "transparent"
+                  move.isWormholeMove || move.isCastling
+                    ? COLORS.accent
+                    : "transparent"
                 }`,
               }}
             >
@@ -221,7 +224,11 @@ const MoveLog: React.FC<{ moves: MoveLogEntry[] }> = ({ moves }) => {
                     fontSize: "1rem",
                   }}
                 >
-                  {move.from} → {move.to}
+                  {move.isCastling
+                    ? move.to.startsWith("g")
+                      ? "O-O"
+                      : "O-O-O"
+                    : `${move.from} → ${move.to}`}
                 </span>
               </div>
               {move.isWormholeMove && (
@@ -237,6 +244,21 @@ const MoveLog: React.FC<{ moves: MoveLogEntry[] }> = ({ moves }) => {
                 >
                   <span>🌀</span>
                   <span>Wormhole traversal</span>
+                </div>
+              )}
+              {move.isCastling && (
+                <div
+                  style={{
+                    color: COLORS.accent,
+                    fontSize: "0.75rem",
+                    marginTop: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <span>🏰</span>
+                  <span>Castling</span>
                 </div>
               )}
             </div>
@@ -519,6 +541,8 @@ useGLTF.preload("/chessboard/pieces.glb");
 
 //
 
+const ORIGINAL_ORIENTATION = new THREE.Quaternion(); // identity quaternion
+
 // ==================== MAIN COMPONENT ====================
 
 const ChessboardScene: React.FC = () => {
@@ -560,13 +584,13 @@ const ChessboardScene: React.FC = () => {
 
   const [pawnDirs, setPawnDirs] = useState<Record<string, Direction>>();
 
-  const [enPassantSquare, setEnPassantSquare] = useState<string | null>(null);
+  const [enPassantSquare] = useState<string | null>(null);
   const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<string[]>([]);
   const [possibleMovePaths, setPossibleMovePaths] = useState<
     Record<string, string[]>
   >({});
-  const [movePaths, setMovePaths] = useState<Record<string, string[]>>({});
+  const [, setMovePaths] = useState<Record<string, string[]>>({});
   const [moveHistory, setMoveHistory] = useState<MoveLogEntry[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<1 | 2 | 3 | 4>(1);
   const [capturedPiece, setCapturedPiece] = useState<string | null>(null);
@@ -830,11 +854,11 @@ const ChessboardScene: React.FC = () => {
 
       // \/\/\/ handle in/out transitions \/\/\/
 
-      if (current in outDir && dir == "out") {
+      if (current in outDir && dir === "out") {
         dir = outDir[current];
       }
 
-      if (current in inDir && dir == inDir[current]) {
+      if (current in inDir && dir === inDir[current]) {
         dir = "in";
       }
       // /\/\/\
@@ -1665,17 +1689,7 @@ const ChessboardScene: React.FC = () => {
     return id.split("-")[1];
   };
 
-  const [animatingPiece, setAnimatingPiece] = useState<string | null>(null);
-
-  const handleMove = (pieceId: string, path: string[]) => {
-    setMovePaths((prev) => ({ ...prev, [pieceId]: path }));
-
-    const finalSquare = path[path.length - 1];
-    setPiecePositions((prev) => ({
-      ...prev,
-      [pieceId]: finalSquare,
-    }));
-  };
+  const [, setAnimatingPiece] = useState<string | null>(null);
 
   useEffect(() => {
     if (capturedPiece) {
@@ -1692,10 +1706,7 @@ const ChessboardScene: React.FC = () => {
   }, [capturedPiece]);
 
   // Add state to track which pieces have moved
-  const [hasMoved, setHasMoved] = useState<Record<string, boolean>>({});
-
-  // Add state to track castling moves
-  const [isCastlingMove, setIsCastlingMove] = useState<string | null>(null);
+  const [hasMoved] = useState<Record<string, boolean>>({});
 
   // Update handlePieceClick to pass hasMoved
   const handlePieceClick = (pieceId: string, notation: string) => {
@@ -1781,156 +1792,7 @@ const ChessboardScene: React.FC = () => {
     }
   };
 
-  // Update MoveLogEntry interface
-  interface MoveLogEntry {
-    moveNumber: number;
-    piece: string;
-    from: string;
-    to: string;
-    timestamp: Date;
-    isWormholeMove?: boolean;
-    isCastling?: boolean;
-  }
 
-  // Update MoveLog component to show castling indicator
-  const MoveLog: React.FC<{ moves: MoveLogEntry[] }> = ({ moves }) => {
-    const moveLogRef = React.useRef<HTMLDivElement>(null);
-
-    React.useEffect(() => {
-      if (moveLogRef.current) {
-        moveLogRef.current.scrollTop = moveLogRef.current.scrollHeight;
-      }
-    }, [moves]);
-
-    return (
-      <div
-        style={{
-          backgroundColor: COLORS.charcoal,
-          borderRadius: "12px",
-          padding: "20px",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)",
-        }}
-      >
-        <h2
-          style={{
-            color: COLORS.warmWhite,
-            fontSize: "1.5rem",
-            fontWeight: "600",
-            marginBottom: "20px",
-            borderBottom: `2px solid ${COLORS.lodenGreen}`,
-            paddingBottom: "10px",
-          }}
-        >
-          Move History
-        </h2>
-
-        <div
-          ref={moveLogRef}
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            paddingRight: "10px",
-          }}
-        >
-          {moves.length === 0 ? (
-            <div
-              style={{
-                color: COLORS.smokeyTaupe,
-                fontStyle: "italic",
-                textAlign: "center",
-                marginTop: "20px",
-              }}
-            >
-              No moves yet
-            </div>
-          ) : (
-            moves.map((move, index) => (
-              <div
-                key={index}
-                style={{
-                  backgroundColor:
-                    index % 2 === 0 ? COLORS.charcoalLight : "transparent",
-                  padding: "10px",
-                  borderRadius: "6px",
-                  marginBottom: "8px",
-                  transition: "all 0.3s ease",
-                  border: `1px solid ${
-                    move.isWormholeMove || move.isCastling
-                      ? COLORS.accent
-                      : "transparent"
-                  }`,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: COLORS.lodenGreenLight,
-                      fontWeight: "600",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    {move.moveNumber}.
-                  </span>
-                  <span
-                    style={{
-                      color: COLORS.warmWhite,
-                      fontFamily: "monospace",
-                      fontSize: "1rem",
-                    }}
-                  >
-                    {move.isCastling
-                      ? move.to.startsWith("g")
-                        ? "O-O"
-                        : "O-O-O"
-                      : `${move.from} → ${move.to}`}
-                  </span>
-                </div>
-                {move.isWormholeMove && (
-                  <div
-                    style={{
-                      color: COLORS.accent,
-                      fontSize: "0.75rem",
-                      marginTop: "4px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                  >
-                    <span>🌀</span>
-                    <span>Wormhole traversal</span>
-                  </div>
-                )}
-                {move.isCastling && (
-                  <div
-                    style={{
-                      color: COLORS.accent,
-                      fontSize: "0.75rem",
-                      marginTop: "4px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                  >
-                    <span>🏰</span>
-                    <span>Castling</span>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    );
-  };
 
   const animatePieceAlongPath = async (
     pieceId: string,
@@ -2111,7 +1973,7 @@ const ChessboardScene: React.FC = () => {
   const controlsRef = useRef<any>(null);
   const [polarLocked, setPolarLocked] = useState(true);
 
-  const animateTo = (
+  const animateTo = useCallback((
     target: { azimuth?: number; polar?: number },
     duration = 0.2,
     onComplete?: () => void
@@ -2142,9 +2004,9 @@ const ChessboardScene: React.FC = () => {
     };
 
     requestAnimationFrame(animate);
-  };
+  }, []);
 
-  const handlePolarLock = () => {
+  const handlePolarLock = useCallback(() => {
     if (!controlsRef.current) return;
 
     if (!polarLocked) {
@@ -2158,9 +2020,9 @@ const ChessboardScene: React.FC = () => {
       // Unlock
       setPolarLocked(false);
     }
-  };
+  }, [polarLocked, animateTo]);
 
-  const handleFlip180 = () => {
+  const handleFlip180 = useCallback(() => {
     if (!controlsRef.current) return;
     setToggle180(prev => !prev);
     console.log("180: " + toggle180)
@@ -2178,11 +2040,11 @@ const ChessboardScene: React.FC = () => {
     }
 
     animateTo({ azimuth: target });
-  };
+  }, [toggle180, animateTo]);
 
   const boardRef = useRef<THREE.Group>(null);
 
-  const rotateBoard90 = () => {
+  const rotateBoard90 = useCallback(() => {
     if (!boardRef.current) return;
     if (isRotating) return;
     setIsRotating(true);
@@ -2211,11 +2073,9 @@ const ChessboardScene: React.FC = () => {
     };
 
     requestAnimationFrame(animate); 
-  };
+  }, [isRotating]);
 
-  const ORIGINAL_ORIENTATION = new THREE.Quaternion(); // identity quaternion
-
-  const resetBoardOrientation = () => {
+  const resetBoardOrientation = useCallback(() => {
     if (!boardRef.current) return;
 
     const startQuaternion = boardRef.current.quaternion.clone();
@@ -2236,7 +2096,7 @@ const ChessboardScene: React.FC = () => {
     };
 
     requestAnimationFrame(animate);
-  };
+  }, []);
 
   const [themePopupOpen, setThemePopupOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -2282,7 +2142,7 @@ const ChessboardScene: React.FC = () => {
     null
   );
 
-  const [boardViewMode, setBoardViewMode] = useState(0);
+  const [boardViewMode] = useState(0);
 
   // ========== HOTKEYS ==========
   useEffect(() => {
@@ -2320,7 +2180,7 @@ const ChessboardScene: React.FC = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
     };
-  }, [handleFlip180, handlePolarLock, rotateBoard90]); // Dependencies - remake listener if these functions change
+  }, [handleFlip180, handlePolarLock, rotateBoard90, resetBoardOrientation]); // Dependencies - remake listener if these functions change
 
   return (
     <div
@@ -2829,8 +2689,8 @@ const ChessboardScene: React.FC = () => {
                   textAlign: "right",
                   fontFamily: "Segoe UI",
                   fontWeight: "300",
-                  color: (quarterRotation % 4 == 0) ? "black" : (quarterRotation % 2 == 0) ? "white" : "black",
-                  backgroundColor: (toggle180) ? ((quarterRotation % 4 == 0) ? "green" : (quarterRotation % 2 == 0) ? COLORS.gold : COLORS.lodenGreenLight) : ((quarterRotation % 4 == 0) ? "white" : (quarterRotation % 2 == 0) ? "black" : "gray"),
+                  color: (quarterRotation % 4 === 0) ? "black" : (quarterRotation % 2 === 0) ? "white" : "black",
+                  backgroundColor: (toggle180) ? ((quarterRotation % 4 === 0) ? "green" : (quarterRotation % 2 === 0) ? COLORS.gold : COLORS.lodenGreenLight) : ((quarterRotation % 4 === 0) ? "white" : (quarterRotation % 2 === 0) ? "black" : "gray"),
                 }}
               >
                 Rotate 90° ⟳ (R)
@@ -2916,6 +2776,8 @@ const ChessboardScene: React.FC = () => {
                       return <Queen key={id} {...props} />;
                     case "king":
                       return <King key={id} {...props} />;
+                    default:
+                      return null;
                   }
                 })}
 
