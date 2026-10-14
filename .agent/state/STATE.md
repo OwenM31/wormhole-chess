@@ -1,14 +1,14 @@
 ---
-updated: 2026-10-14T18:50:00-05:00
+updated: 2026-10-14T18:51:15-05:00
 ---
 
 # Project State
 
 ## Current Position
 
-- **Phase**: 1 - Modern Foundation, Vite Migration & Client Routing (completed)
-- **Task**: Between phases (Phase 1 verified; ready for Phase 2 planning)
-- **Status**: Paused at 2026-10-14T18:50:00-05:00
+- **Phase**: 2 - Cloudflare Backend, D1 Database & Authentication UI
+- **Task**: Planning Phase 2 (discussion completed; ready for /plan 2)
+- **Status**: Active (updated 2026-10-14T18:55:50-05:00)
 
 ## Last Session Summary
 
@@ -17,6 +17,7 @@ Phase 1 executed and verified successfully:
 2. Maintained `build/` output directory for Cloudflare Pages backwards compatibility.
 3. Implemented client routing with `react-router-dom`: Home landing page with variant cards, encapsulated `/wormhole` 3D scene with floating return overlay, and placeholders for Deck Builder, Dashboard, and Auth.
 4. Generated summaries (`01-SUMMARY.md`, `02-SUMMARY.md`) and empirical verification (`VERIFICATION.md`) confirming all must-haves pass.
+5. Completed Phase 2 discussion: selected Cloudflare Pages Functions (`functions/api/*`) and HttpOnly session cookies with D1 sessions table.
 
 ## In-Progress Work
 
@@ -34,6 +35,7 @@ None.
 - [DECISION-002]: Cloudflare serverless stack: Pages (frontend), Workers (API), D1 (relational database), Durable Objects (stateful room/turn coordination).
 - [DECISION-003]: Auth via username/password + optional email stored in D1, plus anonymous Guest sessions.
 - [DECISION-004]: 2D board & card interface for Deck Builder Chess in v1; 3D deferred to future milestones.
+- [DECISION-005]: Cloudflare Pages Functions backend (`functions/api/*`) with HttpOnly cookies, WebCrypto PBKDF2 hashing, and D1 sessions.
 - Turn mechanics: Strictly turn-based across all game variants.
 
 ### Files of Interest

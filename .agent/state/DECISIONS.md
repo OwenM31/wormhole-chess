@@ -91,4 +91,31 @@ Implement Deck Builder Chess using a responsive 2D board and card UI in v1. 3D b
 
 ---
 
+### [DECISION-005] Cloudflare Pages Functions Backend with HttpOnly Cookies & D1 Sessions
+
+**Date**: 2026-10-14
+**Status**: Accepted
+
+#### Context
+Phase 2 requires backend API endpoints for authentication and player profiles, with D1 SQLite persistence. We evaluated standalone Cloudflare Workers vs Cloudflare Pages Functions, and Bearer JWTs vs HttpOnly cookies.
+
+#### Decision
+1. Implement the API backend using **Cloudflare Pages Functions** (`functions/api/*`).
+2. Implement session management using **HttpOnly `Set-Cookie` session tokens** stored in a D1 `sessions` table.
+3. Use browser/edge-native Web Crypto API (`PBKDF2` with HMAC-SHA256 and unique salts) for secure password hashing.
+4. Support anonymous guest sessions via the same session mechanism (tagged as `is_guest: 1`) allowing seamless upgrade to registered accounts.
+
+#### Rationale
+- Pages Functions deploy alongside the Vite static build with zero CORS configuration and shared origin at `wormhole-chess.com`.
+- HttpOnly cookies provide protection against XSS-based session hijacking.
+- Storing active sessions in D1 allows instant server-side revocation and guest-to-registered account conversion without losing player stats.
+
+#### Consequences
+- Need `functions/tsconfig.json` or type support for Cloudflare Pages Functions (`@cloudflare/workers-types`).
+- Requires CSRF prevention (SameSite cookie attributes + anti-CSRF header or token verification on mutating requests).
+- Local dev can use `wrangler pages dev` or Vite proxy with local D1 emulation.
+
+---
+
 *Last updated: 2026-10-14*
+
