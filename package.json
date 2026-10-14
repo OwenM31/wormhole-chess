@@ -18,6 +18,7 @@
     "react": "^19.2.0",
     "react-colorful": "^5.6.1",
     "react-dom": "^19.2.0",
+    "react-router-dom": "^7.18.4",
     "three": "^0.181.0",
     "web-vitals": "^2.1.4"
   },
