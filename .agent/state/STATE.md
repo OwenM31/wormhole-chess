@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-14T23:37:00Z
+updated: 2026-10-14T18:50:00-05:00
 ---
 
 # Project State
@@ -7,8 +7,8 @@ updated: 2026-10-14T23:37:00Z
 ## Current Position
 
 - **Phase**: 1 - Modern Foundation, Vite Migration & Client Routing (completed)
-- **Task**: All tasks complete
-- **Status**: Verified
+- **Task**: Between phases (Phase 1 verified; ready for Phase 2 planning)
+- **Status**: Paused at 2026-10-14T18:50:00-05:00
 
 ## Last Session Summary
 
@@ -37,14 +37,16 @@ None.
 - Turn mechanics: Strictly turn-based across all game variants.
 
 ### Files of Interest
-- `.agent/state/phases/1/01-PLAN.md`: Plan 1.1 (Vite migration tasks).
-- `.agent/state/phases/1/02-PLAN.md`: Plan 1.2 (React Router & Home/Wormhole page tasks).
-- `package.json`: Contains current CRA and Three.js dependencies.
-- `src/App.tsx`: Currently mounts `ChessboardScene` directly; will be refactored to `BrowserRouter` in Plan 1.2.
-- `src/components/ChessboardScene.tsx`: 3D Wormhole Chess engine to be isolated on `/wormhole`.
+- `src/App.tsx`: Central `BrowserRouter` mounting `/`, `/wormhole`, `/deck-builder`, `/dashboard`, `/login`, and `/register`.
+- `src/components/Navigation.tsx`: Sticky top navigation bar with theme styling and active route links.
+- `src/pages/HomePage.tsx`: Platform home page with variant cards and platform highlights.
+- `src/pages/WormholePage.tsx`: Fullscreen 3D non-Euclidean engine container with floating return link.
+- `src/pages/DeckBuilderPage.tsx`, `src/pages/DashboardPage.tsx`, `src/pages/AuthPage.tsx`: Phase 2 & 4 preview shells ready for feature implementation.
+- `vite.config.ts`: Modern Vite build config producing output in `build/`.
 
 ## Next Steps
 
-1. Run `/plan 2` to create execution plans for Phase 2: Cloudflare Backend, D1 Database & Authentication UI.
-2. Design D1 SQLite schema (users, guest_sessions, matches) and Cloudflare Workers API routes.
-3. Build User/Guest authentication flows and Player Dashboard views.
+1. Run `/resume` to restore session state.
+2. Run `/plan 2` to create execution plans for Phase 2: Cloudflare Backend, D1 Database & Authentication UI.
+3. Design D1 SQLite schema (users, guest_sessions, matches) and Cloudflare Workers API endpoints.
+4. Build User/Guest authentication flows and Player Dashboard views.
