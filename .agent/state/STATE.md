@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-14T23:02:00Z
+updated: 2026-10-14T23:28:00Z
 ---
 
 # Project State
@@ -7,47 +7,44 @@ updated: 2026-10-14T23:02:00Z
 ## Current Position
 
 **Milestone:** v1.0 Platform Expansion (Home, Auth, Deck Builder Chess, Cloudflare Stack)
-**Phase:** 0 - Project Initialization & Mapping
+**Phase:** 1 - Modern Foundation, Vite Migration & Client Routing
 **Status:** planning
-**Plan:** None (Initializing project harness via /new-project and /map)
+**Plan:** None (Ready for `/plan 1` or `/discuss-phase 1`)
 
 ## Last Action
 
-Completed codebase mapping (`/map`):
-- Created `.agent/state/ARCHITECTURE.md` (documented 5 components, data flow, 7 technical debt items)
-- Created `.agent/state/STACK.md` (runtime, dependencies, and file inventory)
-- Validated production build (build passes in ~2 mins with `react-scripts`)
+Completed project initialization (`/new-project`):
+- Created `.agent/state/SPEC.md` (`FINALIZED`)
+- Created `.agent/state/REQUIREMENTS.md` (11 functional, 4 non-functional requirements)
+- Created `.agent/state/ROADMAP.md` (5 phases defined)
+- Created `.agent/state/DECISIONS.md` (ADR-001 through ADR-004)
+- Created `.agent/state/JOURNAL.md` and `.agent/state/TODO.md`
+- Created directory `.agent/state/phases/`
 
 ## Next Steps
 
-1. Resume `/new-project` Phase 3 (Deep Questioning):
-   - Clarify Deck Builder Chess mechanics (card types, deck composition, turn sequence, winning conditions)
-   - Clarify Dashboard & User features (match history, profile stats, saved games, active games)
-   - Confirm refactoring path: CRA -> Vite migration + client routing setup (`react-router-dom`)
-2. Generate `.agent/state/SPEC.md`
-3. Generate `.agent/state/ROADMAP.md`
+1. Run `/discuss-phase 1` or `/plan 1` to generate execution plans for Phase 1.
+2. Plan 1.1: Migrate CRA to Vite (replace `react-scripts`, configure `vite.config.ts`, verify sub-10s build).
+3. Plan 1.2: Implement client routing with Home page shell and encapsulated `/wormhole` route.
 
 ## Active Decisions
 
-Decisions made that affect current work:
-
 | Decision | Choice | Made | Affects |
 |----------|--------|------|---------|
-| Cloud Architecture | Cloudflare Pages + Workers + D1 + Durable Objects | 2026-10-14 | Infrastructure, API, Deployment |
-| Authentication | Username/password with optional email stored in D1 | 2026-10-14 | Auth system, Database schema |
-| Deck Builder Chess UI | 2D interface initially (future 3D board optional) | 2026-10-14 | Game UI, Component architecture |
-| Game Mechanics | Turn-based across all chess variants | 2026-10-14 | Network sync, turn loop, D1 schema |
-| Architecture Refactor | Decouple game engines from UI & add client routing | 2026-10-14 | Codebase structure, build pipeline |
+| [DECISION-001] Build Tooling | Vite with React & TypeScript plugin | 2026-10-14 | Phase 1 |
+| [DECISION-002] Cloud Infrastructure | Cloudflare Pages + Workers + D1 + Durable Objects | 2026-10-14 | Phases 2, 3, 5 |
+| [DECISION-003] Authentication Strategy | Username/password with optional email + Guest sessions | 2026-10-14 | Phase 2 |
+| [DECISION-004] Deck Builder Chess UI | 2D board & card interface for v1 | 2026-10-14 | Phase 4 |
+| Turn-Based Mechanics | All variants strictly turn-based | 2026-10-14 | Phases 3, 4 |
 
 ## Blockers
 
-None currently blocking.
+None.
 
 ## Concerns
 
-- CRA build is slow (~2 mins) and deprecated; migrating to Vite is highly recommended early in the refactor.
-- `ChessboardScene.tsx` is 2,941 lines; extracting game state and UI overlays without regressing 3D Wormhole gameplay requires careful test/verification boundaries.
+- Ensuring `@react-spring/three` and `@react-three/drei` bundle smoothly with Vite without ESM/CommonJS conflicts (known Vite + Three.js best practices will be applied in Plan 1.1).
 
 ## Session Context
 
-User requested project initialization via `/new-project` to expand the current Wormhole Chess prototype into a full-featured chess gaming platform with a Home screen, Dashboard, Auth, and a new variant "Deck Builder Chess" on Cloudflare. Codebase mapping is complete and verified.
+Harness initialization complete. The project roadmap is structured into 5 phases, with Phase 1 focusing on foundational modernization (Vite migration + routing) to ensure fast builds and isolated routes before layering the Cloudflare backend and Deck Builder Chess variant.
