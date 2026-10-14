@@ -23,13 +23,13 @@ updated: 2026-10-14T23:27:00Z
 ## Phases
 
 ### Phase 1: Modern Foundation, Vite Migration & Client Routing
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 **Objective:** Replace deprecated Create React App with Vite, implement client-side routing, build the initial Home landing page, and isolate 3D Wormhole Chess on `/wormhole` with zero regressions.
 **Requirements:** REQ-01, REQ-02, REQ-03, NFR-01
 
 **Plans:**
-- [ ] Plan 1.1: Migrate CRA to Vite (replace `react-scripts`, update `index.html`, configure `vite.config.ts`, verify < 10s build)
-- [ ] Plan 1.2: Implement client routing (`react-router-dom`) with Home page shell and encapsulated `/wormhole` route
+- [x] Plan 1.1: Migrate CRA to Vite (replace `react-scripts`, update `index.html`, configure `vite.config.ts`, verify < 10s build)
+- [x] Plan 1.2: Implement client routing (`react-router-dom`) with Home page shell and encapsulated `/wormhole` route
 
 ---
 
