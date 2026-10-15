@@ -7,7 +7,7 @@ updated: 2026-10-15T13:04:00Z
 # Roadmap
 
 > **Current Milestone:** v2.0 Visual Craft & Frontend Redesign
-> **Current Phase:** Phase 2 - Tactical Deck Builder Page & Arena Layout Redesign
+> **Current Phase:** Phase 3 - Home Landing & Authentication Redesign
 > **Status:** 🔄 In Progress
 
 ## Milestone Goal

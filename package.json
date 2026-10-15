@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "dependencies": {
     "@react-spring/core": "^10.0.3",
     "@react-spring/three": "^10.0.3",
