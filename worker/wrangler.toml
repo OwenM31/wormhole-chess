@@ -1,0 +1,18 @@
+name = "wormhole-game-worker"
+main = "src/index.ts"
+compatibility_date = "2024-03-20"
+
+[durable_objects]
+bindings = [
+  { name = "GAME_ROOM", class_name = "GameRoomDO" },
+  { name = "MATCHMAKER", class_name = "MatchmakerDO" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["GameRoomDO", "MatchmakerDO"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "wormhole-chess-db"
+database_id = "local-dev-id"
