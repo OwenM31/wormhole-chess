@@ -341,6 +341,37 @@ Phase 2 redesigns the Deck Builder Chess arena (`/deck-builder`). In v1, the 2D 
 
 ---
 
+### [DECISION-017] Phase 3 Home Landing & Authentication Architecture: Unified Stage & Restrained Copy
+
+**Date**: 2026-10-15
+**Status**: Accepted
+
+#### Context
+Phase 3 redesigns the Home Landing page (`/`) and Authentication page (`/login`, `/register`). The legacy versions featured wordy, generic AI-generated marketing copy, bright GitHub-style blues and greens (`#1f6feb`, `#238636`), and bloated cards. In design research, the user evaluated 3 visual variants and requested a hybrid combining the unified tab stage from Variant B, tactical card asset previews from Variant C, and the total removal of unnecessary under-hero feature cards, with a strict "less is more" copy approach.
+
+#### Decision
+1. **Home Landing Layout**:
+   - Ultra-minimal hero: `Wormhole Chess` with concise subtitle `A collection of chess variants.`.
+   - Total elimination of the 3 under-hero feature cards to eradicate filler text and visual clutter.
+   - Unified stage with tabbed variant switching (`🃏 Deck Builder Chess` | `🌀 3D Wormhole Chess`).
+   - **Deck Builder View**: 4-card sample asset rack (`♞ Knight Escort [2⚡]`, `🛡️ Shield Wall [1⚡]`, `🌀 Spatial Warp [3⚡]`, `👑 King Decree [2⚡]`), 3/3 energy counter, primary action button `Play Deck Builder →`, and secondary `Solo Practice`.
+   - **3D Wormhole View**: Dual isometric board schematic with dimensional portal beam and approved one-liner `Two 8x8 boards linked by a hole in the middle, for up to 4 players.`.
+2. **Authentication Page Layout**:
+   - Crisp 400px centered card adhering to the Wormhole palette (`#24272A` surface, `#191B1D` canvas, `1px solid rgba(139, 126, 116, 0.25)` borders).
+   - Segmented tabs: `Sign In` · `Register` · `Guest`.
+   - Clean form fields with 4px radii, uppercase micro-labels, and `#4C5C4C` Loden Green submit button.
+3. **Approved Copy**:
+   - Hero Subtitle: `A collection of chess variants.`.
+   - 3D Wormhole One-Liner: `Two 8x8 boards linked by a hole in the middle, for up to 4 players.`.
+   - Deck Builder One-Liner: `Standard chess rules with an 8-card loadout and 3 energy per turn.`.
+
+#### Consequences
+- Eliminates generic AI marketing slop across entry-point routes.
+- Promoted UI shell provides concrete foundation for Phase 3 planning and execution.
+- Approved visual reference locked at `.agent/state/artifacts/design/phase_3_approved.png`.
+
+---
+
 *Last updated: 2026-10-15*
 
 

@@ -59,3 +59,31 @@
    - Move history table with zero cringey titles (no "Combat Log").
 3. **Future Polish Tracking**:
    - [TODO]: Further enhance the tactical card carousel with full-card pop-out reveal effect once card visual artwork/archetypes are fully fleshed out.
+
+---
+
+## Phase 3: Home Landing & Authentication Redesign
+
+- **Date Approved:** 2026-10-15
+- **Selected Variant:** **Variant Refined (Minimal Unified Stage with Card Asset Showcase)**
+- **Reference Image:** `.agent/state/artifacts/design/phase_3_approved.png`
+
+### Rationale
+- Combines the unified tabbed stage from Variant B with the tactical card asset preview from Variant C.
+- Strictly adheres to "less is more": completely removes the 3 unnecessary under-hero feature cards, eliminating corporate/generic AI filler.
+- Features an ultra-restrained hero: `Wormhole Chess` with subtitle `A collection of chess variants.`.
+- Direct mode one-liners approved by user:
+  - 3D Wormhole: "Two 8x8 boards linked by a hole in the middle, for up to 4 players."
+  - Deck Builder: "Standard chess rules with an 8-card loadout and 3 energy per turn."
+- Features live 4-card sample loadout preview with piece-class accents (`#3fb950` Knight, `#58a6ff` Rook/Shield, `#A855F7` Warp, `#D4AF37` King) and energy badges.
+- Tabbed authentication view (`Sign In` · `Register` · `Guest`) with crisp 6px card container and 1px hairline inputs, eliminating wordy marketing paragraphs.
+
+### Continuity Directives for Subsequent Pages (Phases 4–5)
+1. **Unified Stage & Tabs**:
+   - Tab switchers must use `#1C1E20` container with 3px padding, 4px border radius, and active `#24272A` background with `#FAF9F6` high-contrast text.
+2. **Minimalist Copy Standard**:
+   - Every headline and subtext must remain ultra-concise ("less is more").
+   - Eliminate filler metrics or generic feature blocks whenever possible.
+3. **Card Asset Integration**:
+   - Tactical card previews should continue using authentic piece-class colors and energy costs as new card archetypes are introduced.
+

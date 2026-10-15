@@ -133,15 +133,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
           {/* Guest Upgrade Alert */}
           {user?.isGuest && (
             <div style={guestNoticeBannerStyle}>
-              <span style={{ fontSize: '1.25rem' }}>🎮</span>
+              <span>🎮</span>
               <div>
-                <strong>Active Guest Session:</strong> You are currently playing as{' '}
-                <span style={{ color: '#58a6ff' }}>{user.username}</span>. Registering will permanently link your stats and rating!
+                Playing as <strong style={{ color: '#D4AF37' }}>{user.username}</strong>. Registering links your stats.
               </div>
             </div>
           )}
 
-          {/* Navigation Tabs */}
+          {/* Segmented Navigation Tabs */}
           <div style={tabContainerStyle}>
             <button
               type="button"
@@ -155,30 +154,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
               onClick={() => handleTabChange('register')}
               style={activeTab === 'register' ? activeTabStyle : tabStyle}
             >
-              {user?.isGuest ? 'Upgrade Account' : 'Create Account'}
+              {user?.isGuest ? 'Upgrade' : 'Register'}
             </button>
             <button
               type="button"
               onClick={() => handleTabChange('guest')}
               style={activeTab === 'guest' ? activeTabStyle : tabStyle}
             >
-              Play as Guest
+              Guest
             </button>
           </div>
-
-          <h1 style={titleStyle}>
-            {activeTab === 'login' && 'Sign In'}
-            {activeTab === 'register' && (user?.isGuest ? 'Upgrade Guest Account' : 'Create Account')}
-            {activeTab === 'guest' && 'Guest Onboarding'}
-          </h1>
-
-          <p style={descriptionStyle}>
-            {activeTab === 'login' && 'Access your competitive rating, custom decks, and match history across all devices.'}
-            {activeTab === 'register' && (user?.isGuest
-              ? 'Choose a permanent username and password to secure your existing rating and match record.'
-              : 'Join the Wormhole Chess arena to construct decks and climb the non-Euclidean leaderboard.')}
-            {activeTab === 'guest' && 'Jump straight into the action immediately without entering an email or password.'}
-          </p>
 
           {displayError && (
             <div style={errorAlertStyle}>
@@ -194,7 +179,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                 <label style={labelStyle}>Username</label>
                 <input
                   type="text"
-                  placeholder="Enter your username"
+                  placeholder="Username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   style={inputStyle}
@@ -207,7 +192,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                 <label style={labelStyle}>Password</label>
                 <input
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={inputStyle}
@@ -232,7 +217,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                 <label style={labelStyle}>Username</label>
                 <input
                   type="text"
-                  placeholder="3-24 characters (letters, numbers, _)"
+                  placeholder="3-24 characters"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   style={inputStyle}
@@ -245,7 +230,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                 <label style={labelStyle}>Email (optional)</label>
                 <input
                   type="email"
-                  placeholder="player@example.com"
+                  placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={inputStyle}
@@ -256,7 +241,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                 <label style={labelStyle}>Password</label>
                 <input
                   type="password"
-                  placeholder="Minimum 8 characters"
+                  placeholder="At least 8 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={inputStyle}
@@ -268,7 +253,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                 <label style={labelStyle}>Confirm Password</label>
                 <input
                   type="password"
-                  placeholder="Repeat your password"
+                  placeholder="Repeat password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   style={inputStyle}
@@ -282,34 +267,34 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                 disabled={isSubmitting || authLoading}
               >
                 {isSubmitting
-                  ? 'Saving Account...'
+                  ? 'Saving...'
                   : user?.isGuest
-                  ? 'Upgrade & Link Stats'
-                  : 'Create Free Account'}
+                  ? 'Upgrade Account'
+                  : 'Create Account'}
               </button>
             </form>
           )}
 
           {/* GUEST MODE */}
           {activeTab === 'guest' && (
-            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <div style={{ textAlign: 'center' }}>
               <div style={guestFeatureCardStyle}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>⚡</div>
-                <h3 style={{ margin: '0 0 0.5rem', color: '#f0f6fc', fontSize: '1.15rem' }}>
-                  Instant Anonymous Access
-                </h3>
-                <p style={{ margin: 0, color: '#8b949e', fontSize: '0.9rem', lineHeight: 1.5 }}>
-                  Play both 3D Wormhole Chess and 2D Deck Builder Chess with full stats tracking. You can convert to a full registered account anytime!
+                <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>⚡</div>
+                <div style={{ margin: '0 0 0.35rem', color: '#FAF9F6', fontSize: '1rem', fontWeight: 600 }}>
+                  Instant Guest Play
+                </div>
+                <p style={{ margin: 0, color: '#8B7E74', fontSize: '0.82rem', lineHeight: 1.45 }}>
+                  Play both 3D and 2D variants immediately. Convert to a permanent account anytime.
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={handleGuestSubmit}
-                style={guestActionBtnStyle}
+                style={submitButtonStyle}
                 disabled={isSubmitting || authLoading}
               >
-                {isSubmitting ? 'Entering Arena...' : 'Launch Instant Guest Session 🚀'}
+                {isSubmitting ? 'Entering...' : 'Play as Guest'}
               </button>
             </div>
           )}
@@ -321,11 +306,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
 
 const containerStyle: React.CSSProperties = {
   minHeight: '100vh',
-  backgroundColor: '#090d16',
-  color: '#e6edf3',
+  backgroundColor: '#191B1D',
+  color: '#FAF9F6',
   display: 'flex',
   flexDirection: 'column',
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
 };
 
 const mainContentStyle: React.CSSProperties = {
@@ -338,11 +323,11 @@ const mainContentStyle: React.CSSProperties = {
 
 const authCardStyle: React.CSSProperties = {
   width: '100%',
-  maxWidth: '480px',
-  backgroundColor: '#161b22',
-  border: '1px solid #30363d',
-  borderRadius: '14px',
-  padding: '2.5rem',
+  maxWidth: '400px',
+  backgroundColor: '#24272A',
+  border: '1px solid rgba(139, 126, 116, 0.25)',
+  borderRadius: '6px',
+  padding: '1.75rem',
   boxSizing: 'border-box',
   boxShadow: '0 12px 32px rgba(0, 0, 0, 0.45)',
 };
@@ -350,136 +335,112 @@ const authCardStyle: React.CSSProperties = {
 const guestNoticeBannerStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '0.75rem',
-  backgroundColor: 'rgba(56, 139, 253, 0.1)',
-  border: '1px solid rgba(56, 139, 253, 0.3)',
-  borderRadius: '8px',
-  padding: '0.75rem 1rem',
-  marginBottom: '1.5rem',
-  fontSize: '0.85rem',
+  gap: '0.65rem',
+  backgroundColor: 'rgba(212, 175, 55, 0.08)',
+  border: '1px solid rgba(212, 175, 55, 0.25)',
+  borderRadius: '4px',
+  padding: '0.6rem 0.75rem',
+  marginBottom: '1.25rem',
+  fontSize: '0.8rem',
   lineHeight: 1.4,
-  color: '#c9d1d9',
+  color: '#FAF9F6',
 };
 
 const tabContainerStyle: React.CSSProperties = {
   display: 'flex',
-  backgroundColor: '#0d1117',
-  padding: '4px',
-  borderRadius: '8px',
-  border: '1px solid #21262d',
-  marginBottom: '1.75rem',
-  gap: '4px',
+  backgroundColor: '#191B1D',
+  padding: '3px',
+  borderRadius: '4px',
+  border: '1px solid rgba(139, 126, 116, 0.15)',
+  marginBottom: '1.5rem',
 };
 
 const tabStyle: React.CSSProperties = {
   flex: 1,
   background: 'transparent',
   border: 'none',
-  color: '#8b949e',
-  padding: '0.6rem 0.5rem',
-  borderRadius: '6px',
-  fontSize: '0.88rem',
+  color: '#8B7E74',
+  padding: '0.45rem 0.25rem',
+  borderRadius: '3px',
+  fontSize: '0.8rem',
   fontWeight: 600,
   cursor: 'pointer',
   transition: 'all 0.15s ease',
+  textAlign: 'center',
 };
 
 const activeTabStyle: React.CSSProperties = {
   ...tabStyle,
-  color: '#f0f6fc',
-  backgroundColor: '#21262d',
-};
-
-const titleStyle: React.CSSProperties = {
-  fontSize: '1.85rem',
-  fontWeight: 700,
-  margin: '0 0 0.5rem',
-  color: '#f0f6fc',
-  letterSpacing: '-0.02em',
-};
-
-const descriptionStyle: React.CSSProperties = {
-  fontSize: '0.92rem',
-  lineHeight: 1.5,
-  color: '#8b949e',
-  margin: '0 0 1.75rem',
+  color: '#FAF9F6',
+  backgroundColor: '#24272A',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
 };
 
 const errorAlertStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '0.6rem',
-  backgroundColor: 'rgba(248, 81, 73, 0.15)',
-  border: '1px solid rgba(248, 81, 73, 0.4)',
-  borderRadius: '6px',
-  padding: '0.75rem 1rem',
-  marginBottom: '1.25rem',
-  fontSize: '0.88rem',
-  color: '#f85149',
+  gap: '0.5rem',
+  backgroundColor: 'rgba(170, 74, 68, 0.15)',
+  border: '1px solid rgba(170, 74, 68, 0.4)',
+  borderRadius: '4px',
+  padding: '0.6rem 0.75rem',
+  marginBottom: '1rem',
+  fontSize: '0.82rem',
+  color: '#FAF9F6',
 };
 
 const formStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '1.25rem',
+  gap: '1rem',
 };
 
 const fieldGroupStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '0.4rem',
+  gap: '0.35rem',
   textAlign: 'left',
 };
 
 const labelStyle: React.CSSProperties = {
-  fontSize: '0.88rem',
+  fontSize: '0.72rem',
   fontWeight: 600,
-  color: '#c9d1d9',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+  color: '#8B7E74',
 };
 
 const inputStyle: React.CSSProperties = {
-  padding: '0.75rem 0.9rem',
-  backgroundColor: '#0d1117',
-  border: '1px solid #30363d',
-  borderRadius: '6px',
-  color: '#f0f6fc',
-  fontSize: '0.95rem',
+  padding: '0.65rem 0.75rem',
+  backgroundColor: '#191B1D',
+  border: '1px solid rgba(139, 126, 116, 0.25)',
+  borderRadius: '4px',
+  color: '#FAF9F6',
+  fontSize: '0.88rem',
   outline: 'none',
   transition: 'border-color 0.15s ease',
 };
 
 const submitButtonStyle: React.CSSProperties = {
-  marginTop: '0.5rem',
-  padding: '0.85rem',
-  backgroundColor: '#238636',
-  color: '#ffffff',
+  width: '100%',
+  height: '38px',
+  backgroundColor: '#4C5C4C',
+  color: '#FAF9F6',
   border: 'none',
-  borderRadius: '6px',
+  borderRadius: '4px',
   fontWeight: 600,
-  fontSize: '1rem',
+  fontSize: '0.88rem',
   cursor: 'pointer',
   transition: 'background-color 0.15s ease',
+  marginTop: '0.25rem',
 };
 
 const guestFeatureCardStyle: React.CSSProperties = {
-  backgroundColor: '#0d1117',
-  border: '1px solid #21262d',
-  borderRadius: '10px',
-  padding: '1.5rem',
-  marginBottom: '1.5rem',
-};
-
-const guestActionBtnStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '0.9rem',
-  backgroundColor: '#1f6feb',
-  color: '#ffffff',
-  border: 'none',
-  borderRadius: '6px',
-  fontWeight: 600,
-  fontSize: '1rem',
-  cursor: 'pointer',
-  transition: 'background-color 0.15s ease',
+  backgroundColor: '#191B1D',
+  border: '1px solid rgba(139, 126, 116, 0.2)',
+  borderRadius: '4px',
+  padding: '1.25rem 1rem',
+  marginBottom: '1.25rem',
 };
 
 export default AuthPage;

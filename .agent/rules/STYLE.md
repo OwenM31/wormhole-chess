@@ -9,9 +9,13 @@
 - Before placing copy into mockups, templates, or components, explicitly present candidate text strings to the user and obtain their confirmation.
 - Ground rules established in Phase 1:
   - Navigation: "Wormhole Chess" · "Home" · "Wormhole" · "Deck Builder" · "Profile"
+  - Home Hero: "Wormhole Chess" · Subtitle: "A collection of chess variants." (strictly eliminate unnecessary feature cards or corporate bloat).
   - Game modes: "Wormhole" (3D) and "Deck Builder" (2D) — avoid adding "Tactical Arena" fluff.
-  - Actions: "Find Match", "Create Room", "Join with Code", "Play Wormhole", "Play Deck Builder", "Replay".
-  - Account state: "Member" vs "Guest" (no "Permanent Account" jargon).
+  - Mode one-liners:
+    - 3D Wormhole: "Two 8x8 boards linked by a hole in the middle, for up to 4 players."
+    - Deck Builder: "Standard chess rules with an 8-card loadout and 3 energy per turn."
+  - Actions: "Find Match", "Create Room", "Join with Code", "Play Wormhole", "Play Deck Builder", "Solo Practice", "Replay".
+  - Account state: "Sign In" · "Register" · "Guest" (clean tabs, zero wordy paragraphs).
 
 ---
 

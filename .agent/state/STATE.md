@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-15T17:32:33-05:00
+updated: 2026-10-15T17:43:35-05:00
 ---
 
 # Project State
@@ -7,34 +7,32 @@ updated: 2026-10-15T17:32:33-05:00
 ## Current Position
 
 - **Milestone**: v2.0 Visual Craft & Frontend Redesign
-- **Phase**: 2 - Tactical Deck Builder Page & Arena Layout Redesign (Completed)
-- **Task**: Phase 2 executed, empirically verified with Playwright UX sweep (PASS)
-- **Status**: Active (resumed 2026-10-15T17:32:33-05:00)
+- **Phase**: 3 - Home Landing & Authentication Redesign
+- **Task**: Design approved and UI shells promoted (`HomePage.tsx`, `AuthPage.tsx`). Ready for task planning.
+- **Status**: Active (updated 2026-10-15T18:08:00-05:00)
 
 ## Last Session Summary
 
-Phase 2 execution and empirical verification completed:
-1. **Wave 1 Execution (Plan 2.1)**:
-   - Refactored `src/components/DeckChessBoard.tsx` with 470px framing, authentic Smokey Taupe (`#8B7E74`) and Loden Green Dark (`#3C493F`) squares, coordinate labels, and warm gold / red tactical highlights.
-   - Refactored `src/pages/DeckBuilderPage.tsx` with 58px collapsible left navigation rail, Chess.com-style active turn illumination on player and opponent status bars, unicode piece graveyard glyphs (`♟ ♞`) with material score tally, tabular move history with AI difficulty selector, and action buttons.
-   - Committed tasks (`f781c45`, `c8bef29`) and documented `01-SUMMARY.md` (`d051201`).
-2. **Wave 2 Execution (Plan 2.2)**:
-   - Refactored `src/components/TacticalHandBar.tsx` with flush 470px framing, 3-cell glowing energy counter (`⚡ ENERGY 3/3`), `(?)` pre-move rules popover, targeting guidance pill, and smooth accordion hover expand effect (`hover:flex-[2.6]`).
-   - Refactored `src/components/DeckBuilderView.tsx` with "Deck Loadout" clean copy, responsive 8-card loadout rack with click-to-remove badges, filterable catalog, and cloud persistence with guest fallback.
-   - Committed tasks (`84b21b8`, `206713e`) and documented `02-SUMMARY.md` (`b56392c`).
-3. **Empirical Verification (`VERIFICATION.md`)**:
-   - Created automated Playwright verification suite `scripts/verify-phase2-ux.mjs`.
-   - Swept desktop 1280x800 viewport: verified clean subheader "Deck Builder Chess", 448px board, flush 452px dock, collapsible left rail, active turn illumination, and captured `phase2_arena_desktop.png`.
-   - Tested card hover accordion: captured `phase2_card_hover_accordion.png` proving card expansion without container overflow.
-   - Tested "My Deck" tab: verified "Deck Loadout" heading, 8-card equipped slots, library filtering, and captured `phase2_my_deck_curator.png`.
-   - All 83 automated card engine tests passed cleanly (`npm test`).
-   - Full-stack typecheck passed cleanly (`npm run typecheck:all`).
-   - Production build compiled cleanly in 1.08s (`npm run build`).
-   - Recorded `VERIFICATION.md` with PASS verdict.
+Phase 3 design phase (`@design-phase.md 3`) completed:
+1. **Benchmark Research & Anti-Slop Directive**:
+   - Researched Lichess minimal layout and Linear/Raycast design aesthetics.
+   - Strictly enforced the Mandatory Copy Approval Mandate: presented draft copy and gathered explicit user feedback.
+2. **Prototype Variants & Selection**:
+   - Generated 3 visual variants: Variant A (Widescreen Split), Variant B (Unified Stage with Tabs), Variant C (Strategy Bento Grid with Card Assets).
+   - User selected a hybrid direction: combined the unified stage tabs from Variant B with the tactical card asset preview from Variant C, and completely removed the 3 under-hero feature cards ("less is more").
+   - Integrated user's exact copy:
+     - Hero Subtitle: "A collection of chess variants."
+     - 3D Wormhole One-Liner: "Two 8x8 boards linked by a hole in the middle, for up to 4 players."
+     - Deck Builder One-Liner: "Standard chess rules with an 8-card loadout and 3 energy per turn."
+3. **Approved Asset & Presentational UI Shells**:
+   - Captured approved 2x retina screenshot at `.agent/state/artifacts/design/phase_3_approved.png`.
+   - Cleaned up all scratch prototypes and unselected images.
+   - Promoted presentational UI shells into `src/pages/HomePage.tsx` and `src/pages/AuthPage.tsx`.
+   - Verified clean typecheck (`npm run typecheck:all`), clean build in 1.30s (`npm run build`), and 83/83 card tests (`npm test`).
 
 ## In-Progress Work
 
-None. Working directory clean and verified.
+Ready for Phase 3 task planning (`@plan.md 3`).
 
 ## Blockers
 
@@ -45,21 +43,18 @@ None.
 ### Decisions Made
 - [DECISION-014]: Frontend Visual Craft & Copy Policy (eradicate AI-slop, design page-by-page, require explicit copy confirmation).
 - [DECISION-015]: Phase 1 Design Direction: Variant A (Technical Density, 2-column command layout).
-- [DECISION-016]: Phase 2 Tactical Arena Architecture & Authentic Wormhole Chess Color System (Variant A Refined, 470px flush dock, accordion hover expand, collapsible left rail, authentic palette from `Constants.tsx`).
+- [DECISION-016]: Phase 2 Tactical Arena Architecture & Authentic Wormhole Chess Color System.
+- [DECISION-017]: Phase 3 Home Landing & Authentication Architecture: Unified Stage & Restrained Copy.
 
 ### Files of Interest
-- `.agent/rules/STYLE.md`: Design system tokens (authentic Wormhole palette) and copy directives.
+- `.agent/rules/STYLE.md`: Design system tokens and copy directives.
 - `.agent/state/DESIGN_STATE.md`: Cumulative log of selected design directions and continuity tokens.
-- `.agent/state/phases/2/VERIFICATION.md`: Verification report for Phase 2.
-- `src/components/DeckChessBoard.tsx`: 2D board component with 470px framing and smokey taupe / loden green squares.
-- `src/pages/DeckBuilderPage.tsx`: Arena container with collapsible left rail and right move history.
-- `src/components/TacticalHandBar.tsx`: Hand dock with flush 470px width and accordion hover expand effect.
-- `src/components/DeckBuilderView.tsx`: Deck curator with Wormhole tokens and clean copy.
-- `src/pages/HomePage.tsx`: Home landing page to be redesigned in Phase 3.
-- `src/pages/AuthPage.tsx`: Authentication page to be redesigned in Phase 3.
+- `.agent/state/artifacts/design/phase_3_approved.png`: Approved design reference for Phase 3.
+- `src/pages/HomePage.tsx`: Promoted presentational UI shell for Home page.
+- `src/pages/AuthPage.tsx`: Promoted presentational UI shell for Auth page.
 
 ## Next Steps
 
-1. Run `/resume` to restore session state.
-2. Proceed to Phase 3: Home Landing & Authentication Redesign (`@[.agent/workflows/design-phase.md] 3 home`).
-3. Conduct design benchmark research, draft candidate UI copy for explicit user confirmation, and generate visual variants.
+1. Run `@[.agent/workflows/plan.md] 3` to decompose Phase 3 into atomic plans (Plan 3.1 & 3.2).
+2. Execute Phase 3 (`@[.agent/workflows/execute.md] 3`).
+3. Verify Phase 3 UX with Playwright sweep (`@[.agent/workflows/verify.md] 3`).
