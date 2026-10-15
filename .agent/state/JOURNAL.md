@@ -6,7 +6,36 @@
 
 ## Sessions
 
-### Session: 2026-10-15 01:35
+### Session: 2026-10-15 02:25
+
+#### Objective
+Resolve GitHub push build failures, detach legacy Worker custom domain, configure Cloudflare DNS CNAME records, and verify live production deployment on `https://wormhole-chess.com`.
+
+#### Accomplished
+- ✅ Diagnosed GitHub push build failure: identified that `origin/master` push triggered a legacy Workers Build on Cloudflare Worker `wormhole-chess` (running `wrangler deploy` without worker entry point) rather than Cloudflare Pages.
+- ✅ Identified domain conflict: `wormhole-chess.com` was registered as a Custom Domain on the legacy Worker, preventing Pages from claiming it.
+- ✅ Detached custom domain from legacy Worker and configured Cloudflare DNS CNAME records for `@` and `www` pointing to `wormhole-chess.pages.dev`.
+- ✅ Created `.node-version` (20.19.0) and pushed commit `f66eca6` to GitHub `origin/master` for automated Cloudflare Pages build compatibility with Vite 8.
+- ✅ Verified live custom domain: `https://wormhole-chess.com` and `https://www.wormhole-chess.com` are active with Google SSL certificates, serving the modern Vite build with 2D Deck Builder Chess, 3D Wormhole Chess, and SPA routing.
+- ✅ Verified live edge API and D1 storage: `GET /api/auth/me` and `POST /api/auth/guest` verified functional over HTTPS on `wormhole-chess.com`.
+
+#### Verification
+- [x] `https://wormhole-chess.com` returns 200 OK with modern Vite assets.
+- [x] `https://www.wormhole-chess.com` returns 200 OK.
+- [x] Edge Pages Functions and Cloudflare D1 guest creation functional on custom domain.
+- [x] Cloudflare Pages custom domain status: `active`.
+- [x] Working tree clean and synced with `origin/master`.
+
+#### Paused Because
+User requested session pause (`/pause`) upon full completion of production custom domain deployment and live verification.
+
+#### Handoff Notes
+- The entire multi-phase platform is live in production at https://wormhole-chess.com!
+- All 5 roadmap phases are complete, verified, and running on Cloudflare Pages + companion Worker + D1.
+- To resume later, run `/resume`.
+
+---
+
 
 #### Objective
 Fix deployment configuration and execute live production deployment of companion worker, remote D1 database, and Cloudflare Pages frontend.

@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-15T01:29:10-05:00
+updated: 2026-10-15T02:25:30-05:00
 ---
 
 # Project State
@@ -7,21 +7,24 @@ updated: 2026-10-15T01:29:10-05:00
 ## Current Position
 
 - **Phase**: 5 - Integration, Polish & Production Deployment (completed)
-- **Task**: All tasks complete (Milestone 100% verified)
-- **Status**: Active (resumed 2026-10-15T01:29:10-05:00)
+- **Task**: Live Custom Domain & Production Deployment (wormhole-chess.com fully operational)
+- **Status**: Paused at 2026-10-15T02:25:30-05:00
 
 ## Last Session Summary
 
-Phase 5 executed and verified successfully across all 3 sequential waves:
-1. Wave 1 (Plan 5.1): D1 Match & Deck Persistence Endpoints (`functions/api/matches.ts`, `functions/api/decks.ts`, `src/services/api.ts`).
-2. Wave 2 (Plan 5.2): Game Flow Match Recording, Cloud Deck Sync & Web Audio SFX (`src/hooks/useDeckChessGame.ts`, `src/pages/WormholePage.tsx`, `src/components/DeckBuilderView.tsx`, `src/utils/soundEffects.ts`).
-3. Wave 3 (Plan 5.3): Historical Match Replay Viewer, Dashboard UI & Cloudflare Production Deployment (`src/components/HistoricalMatchViewer.tsx`, `src/pages/DashboardPage.tsx`, `public/_routes.json`, `public/_redirects`, `package.json`).
-4. Verified all 13 Phase 5 must-haves in `VERIFICATION.md` with PASS verdict.
-5. All 5 phases of the project milestone are completed and verified!
+Successfully deployed platform to production and activated custom domain:
+1. Created remote Cloudflare D1 database `wormhole-chess-db` (`1c1096e9-9d5c-42e8-9c18-c3ce572c8748`) and configured `database_id` in root and worker `wrangler.toml`.
+2. Updated Durable Objects migration to `new_sqlite_classes = ["GameRoomDO", "MatchmakerDO"]` for Cloudflare Free tier compatibility.
+3. Deployed companion Worker with `GameRoomDO` and `MatchmakerDO` to `https://wormhole-game-worker.omeyers31.workers.dev`.
+4. Executed remote D1 schema migration across 12 statements, provisioning all 5 tables (`users`, `sessions`, `player_stats`, `matches`, `custom_decks`).
+5. Created and deployed Cloudflare Pages project `wormhole-chess` (`https://wormhole-chess.pages.dev`).
+6. Detached legacy Worker custom domain, added Cloudflare DNS CNAME records for `wormhole-chess.com` and `www.wormhole-chess.com`, and verified active SSL certificates.
+7. Added `.node-version` (20.19.0) and pushed to GitHub for seamless Cloudflare Pages automated CI/CD builds.
+8. Live verification: Frontend, SPA routing, D1 guest sessions, and Edge Functions verified live on `https://wormhole-chess.com`.
 
 ## In-Progress Work
 
-None. All 5 phases completed.
+None. Working tree clean.
 
 ## Blockers
 
@@ -38,8 +41,15 @@ None.
 - [DECISION-006]: Real-time multiplayer architecture with companion worker, `GameRoomDO`, `MatchmakerDO`, Hibernatable WebSockets, dual matchmaking (private + public queue with live counts), turn clock toggles, and read-only spectators.
 - [DECISION-007]: Deck Builder Chess architecture: `chess.js` foundation, 3-energy per turn economy, fixed tactical hand of 8 cards (no deck fail / no random draw), Compositional Card Graph (`[Piece Anchor] -> [Conditions] -> [Effects] -> [Gambits]`), piece-class color aesthetics, and dual play modes (Solo AI + Online Multiplayer).
 - [DECISION-008]: Phase 5 architecture: Separated match persistence (`POST /api/matches` for solo/local, `GameRoomDO` for online PvP), ELO protection (casual games track wins/losses without modifying competitive ELO), interactive historical match replay viewer with board & tactical card annotations, cloud custom deck sync (`/api/decks`) with guest `localStorage` fallback, synthesized Web Audio SFX, and Cloudflare Pages SPA routing (`_routes.json` / `_redirects`).
+- [DECISION-009]: Production custom domain architecture: `wormhole-chess.com` and `www.wormhole-chess.com` CNAME to `wormhole-chess.pages.dev`, serving Vite assets and `/api/*` Pages Functions; companion Worker `wormhole-game-worker` coordinates stateful Durable Objects (`GameRoomDO`, `MatchmakerDO`) via Hibernatable WebSockets.
+
+### Files of Interest
+- `wrangler.toml`: Cloudflare Pages configuration with D1 database binding and DO bindings.
+- `worker/wrangler.toml`: Companion worker configuration with Durable Objects migrations and D1 binding.
+- `.node-version`: Node.js 20.19.0 pin for Cloudflare Pages build environment.
+- `package.json`: Unified build, test, migration, and deployment scripts (`deploy:pages`, `deploy:worker`, `db:migrate:prod`).
 
 ## Next Steps
 
-1. Milestone Complete: Platform is ready for Cloudflare production deployment (`npm run deploy:worker`, `npm run deploy:pages`).
-2. Optional: Host multiplayer tournaments or build next generation 3D Deck Builder Chess.
+1. Platform is live at https://wormhole-chess.com with all 5 milestone phases complete and operational.
+2. Optional next milestone: 3D Deck Builder Chess, tournament systems, and global ELO leaderboards.
