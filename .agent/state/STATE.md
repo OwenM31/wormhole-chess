@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-15T13:38:00-05:00
+updated: 2026-10-15T14:37:41-05:00
 ---
 
 # Project State
@@ -8,25 +8,32 @@ updated: 2026-10-15T13:38:00-05:00
 
 - **Milestone**: v2.0 Visual Craft & Frontend Redesign
 - **Phase**: 1 - Design System Foundations & Player Dashboard Redesign
-- **Task**: Execute Phase 1 plans (Matchmaking Lobby & Replay Viewer alignment) via @execute.md 1
-- **Status**: Ready for execution
+- **Task**: Ready to execute Phase 1 plans via @execute.md 1
+- **Status**: Paused at 2026-10-15T14:37:41-05:00
 
 ## Last Session Summary
 
-1. Concluded v1.0 milestone with all 5 phases complete, live on `https://wormhole-chess.com`, and verified with 83 automated tests.
-2. User initiated new milestone (`/new-milestone`): refactor frontend, eradicate AI-slop, fix proportions, and design page-by-page.
-3. Executed `@design-phase.md 1`:
-   - Researched benchmarks (Linear, Raycast, tactical engineering HUDs).
-   - Drafted restrained candidate copy and collected user refinements (less is more, drop hyperbolic adjectives, "Wormhole Chess", "Home/Wormhole/Deck Builder/Profile", "Member", "Offline").
-   - Generated 3 distinct visual variants and rendered 2x retina full-page screenshots via Playwright.
-   - User selected **Variant A: Technical Density** (2-column command feed with action grid on left and profile/stats on right).
-   - Locked design system tokens into `.agent/rules/STYLE.md` and `.agent/state/DESIGN_STATE.md`.
-   - Saved visual reference `phase_1_approved.png` and cleaned up all scratch prototypes and discarded screenshots.
-   - Promoted UI shell to `Navigation.tsx` and `DashboardPage.tsx` with full-stack typecheck clean and all 83 automated tests passing.
+1. Resumed session and initialized Phase 1 design phase via `@design-phase.md 1`.
+2. Researched niche benchmarks (Linear, Raycast, tactical engineering HUDs).
+3. Drafted candidate UI copy and gathered user refinements ("less is more", "Wormhole Chess", "Home/Wormhole/Deck Builder/Profile", "Member", "Offline", "Find Match").
+4. Generated 3 distinct HTML prototypes and captured 2x retina screenshots using Playwright.
+5. User selected **Variant A: Technical Density** (2-column command layout with left action feed and right stats sidebar).
+6. Codified locked design tokens in `.agent/rules/STYLE.md` and `.agent/state/DESIGN_STATE.md`.
+7. Recorded architecture decision `[DECISION-015]` in `.agent/state/DECISIONS.md`.
+8. Promoted winning UI shell to `src/components/Navigation.tsx` and `src/pages/DashboardPage.tsx`.
+9. Executed `@plan.md 1`:
+   - Archived v1.0 phases to `.agent/state/milestones/v1.0-phases/`.
+   - Created `01-PLAN.md` (Wave 1: Matchmaking Lobby Component Alignment).
+   - Created `02-PLAN.md` (Wave 2: Historical Replay Viewer Modal Polish & Responsive Layout Hardening).
+   - Validated both plans across all 6 plan-checker dimensions with zero blockers.
+   - Committed plans and updated UI components to git (`d432078`).
 
 ## In-Progress Work
 
-Ready for Phase 1 task decomposition and planning (`@plan.md 1`).
+None. Working directory clean and verified.
+- Tests status: All 83 automated card engine tests pass cleanly (`npm test`).
+- Typecheck status: Full-stack clean across client, Pages Functions, and worker (`npm run typecheck:all`).
+- Build status: Production bundle compiles cleanly in 6.08s (`npm run build`).
 
 ## Blockers
 
@@ -43,12 +50,14 @@ None.
 - `.agent/rules/STYLE.md`: Design system tokens and copy approval directives.
 - `.agent/state/DESIGN_STATE.md`: Cumulative log of selected design directions and continuity tokens.
 - `.agent/state/artifacts/design/phase_1_approved.png`: Approved reference visual layout for Phase 1.
+- `.agent/state/phases/1/01-PLAN.md`: Plan 1.1 Matchmaking Lobby Component Alignment.
+- `.agent/state/phases/1/02-PLAN.md`: Plan 1.2 Historical Replay Viewer Modal Polish & Responsive Layout Hardening.
 - `src/components/Navigation.tsx`: Updated navigation header with approved copy and tokens.
 - `src/pages/DashboardPage.tsx`: Updated 2-column dashboard layout with action feed and stats sidebar.
-- `src/components/MatchmakingLobby.tsx`: Real-time multiplayer lobby to be refined in Phase 1 plans.
-- `src/components/HistoricalMatchViewer.tsx`: Replay viewer to be refined in Phase 1 plans.
+- `src/components/MatchmakingLobby.tsx`: Real-time multiplayer lobby to be styled in Plan 1.1.
+- `src/components/HistoricalMatchViewer.tsx`: Replay viewer modal to be styled in Plan 1.2.
 
 ## Next Steps
 
-1. Run `@plan.md 1` to create atomic execution plans for Phase 1 (Matchmaking Lobby styling, Historical Replay Modal polish, and responsiveness).
-2. Execute Phase 1 plans via `@execute.md 1`.
+1. Run `/resume` to restore session state.
+2. Run `@[.agent/workflows/execute.md] 1` to execute Phase 1 plans (Wave 1: Plan 1.1, Wave 2: Plan 1.2).
