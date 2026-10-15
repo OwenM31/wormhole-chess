@@ -2,6 +2,12 @@ name = "wormhole-chess"
 compatibility_date = "2024-03-20"
 pages_build_output_dir = "build"
 
+[durable_objects]
+bindings = [
+  { name = "GAME_ROOM", class_name = "GameRoomDO", script_name = "wormhole-game-worker" },
+  { name = "MATCHMAKER", class_name = "MatchmakerDO", script_name = "wormhole-game-worker" }
+]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "wormhole-chess-db"
