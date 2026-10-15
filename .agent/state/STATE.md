@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-15T01:02:30-05:00
+updated: 2026-10-15T01:03:30-05:00
 ---
 
 # Project State
@@ -7,29 +7,31 @@ updated: 2026-10-15T01:02:30-05:00
 ## Current Position
 
 - **Phase**: 5 - Integration, Polish & Production Deployment
-- **Task**: Planning complete (3 plans across 3 waves)
-- **Status**: Ready for execution
+- **Task**: Planning complete (3 plans across 3 waves); awaiting Phase 5 execution
+- **Status**: Paused at 2026-10-15T01:03:30-05:00
 
 ## Last Session Summary
 
-Phase 4 executed and verified successfully. 3 plans across 3 waves completed:
-1. Plan 4.1 (Wave 1): Installed chess.js, defined Compositional Card Graph schema, curated 8 starter cards with piece-class visual themes, and built DeckChessEngine with 3-energy economy and invariant protection.
-2. Plan 4.2 (Wave 2): Implemented DeckChessAI with Tomasz Michniewski PSTs, material scoring, card utility heuristics, and alpha-beta minimax search; created useDeckChessGame hook coordinating game loop, card targeting, and AI triggers.
-3. Plan 4.3 (Wave 3): Built responsive 2D DeckChessBoard, TacticalHandBar with live 3-cell energy meter, DeckBuilderView for 8-card loadout curation, and assembled the full battle arena in DeckBuilderPage with solo AI bot and multiplayer room launcher.
+Phase 5 discussion, research, and planning completed successfully:
+1. Discussed Phase 5 requirements via `/discuss-phase 5` and aligned on key architecture: separated match persistence (PvP online vs solo/local practice), ELO rating integrity protection, interactive historical match replay viewer with board & tactical card annotations, cloud custom deck sync (`/api/decks`) with guest fallback, and Cloudflare Pages SPA routing. Recorded `[DECISION-008]`.
+2. Conducted Level 2 research and authored comprehensive `.agent/state/phases/5/RESEARCH.md`.
+3. Planned Phase 5 via `/plan 5` into 3 atomic plans across 3 sequential waves:
+   - Plan 5.1 (Wave 1): D1 Match & Deck Persistence Endpoints (`functions/api/matches.ts`, `functions/api/decks.ts`, `src/services/api.ts`).
+   - Plan 5.2 (Wave 2): Game Flow Match Recording, Cloud Deck Sync & Web Audio SFX (`src/hooks/useDeckChessGame.ts`, `src/pages/WormholePage.tsx`, `src/components/DeckBuilderView.tsx`, `src/utils/soundEffects.ts`).
+   - Plan 5.3 (Wave 3): Historical Match Replay Viewer, Dashboard UI & Cloudflare Production Deployment (`src/components/HistoricalMatchViewer.tsx`, `src/pages/DashboardPage.tsx`, `public/_routes.json`, `package.json`).
+4. Validated all 3 plans against plan-checker dimensions with zero blockers.
+5. Synchronized `ROADMAP.md` marking Phase 5 Ready for Execution.
 
 ## In-Progress Work
 
 - Files modified / created:
-  * `src/types/deckChess.ts` (Card Graph and Deck Builder Chess types)
-  * `src/engine/cardGraph.ts` (Starter deck, visual color themes, expanded library)
-  * `src/engine/DeckChessEngine.ts` (Engine with 3-energy economy and invariant checks)
-  * `src/engine/DeckChessAI.ts` (Minimax heuristic bot with PST evaluation)
-  * `src/hooks/useDeckChessGame.ts` (Reactive game coordinator hook)
-  * `src/components/DeckChessBoard.tsx` (2D SVG responsive chessboard)
-  * `src/components/TacticalHandBar.tsx` (Hand dock with 3-cell energy meter)
-  * `src/components/DeckBuilderView.tsx` (8-card loadout curator)
-  * `src/pages/DeckBuilderPage.tsx` (Full 2D tactical arena view)
-- Tests status: Passing (`npm run build` passes in 868ms; edge and worker typechecks pass with 0 errors).
+  * `.agent/state/phases/5/RESEARCH.md` (Level 2 research findings)
+  * `.agent/state/phases/5/01-PLAN.md` (Plan 5.1 Wave 1)
+  * `.agent/state/phases/5/02-PLAN.md` (Plan 5.2 Wave 2)
+  * `.agent/state/phases/5/03-PLAN.md` (Plan 5.3 Wave 3)
+  * `.agent/state/DECISIONS.md` (Recorded `[DECISION-008]`)
+  * `.agent/state/ROADMAP.md` (Phase 5 plan breakdown)
+- Tests status: Passing (`npm run build` passes in <900ms; edge and worker typechecks pass with 0 errors).
 
 ## Blockers
 
@@ -45,10 +47,12 @@ None.
 - [DECISION-005]: Cloudflare Pages Functions backend (`functions/api/*`) with HttpOnly cookies, WebCrypto PBKDF2 hashing, and D1 sessions.
 - [DECISION-006]: Real-time multiplayer architecture with companion worker, `GameRoomDO`, `MatchmakerDO`, Hibernatable WebSockets, dual matchmaking (private + public queue with live counts), turn clock toggles, and read-only spectators.
 - [DECISION-007]: Deck Builder Chess architecture: `chess.js` foundation, 3-energy per turn economy, fixed tactical hand of 8 cards (no deck fail / no random draw), Compositional Card Graph (`[Piece Anchor] -> [Conditions] -> [Effects] -> [Gambits]`), piece-class color aesthetics, and dual play modes (Solo AI + Online Multiplayer).
+- [DECISION-008]: Phase 5 architecture: Separated match persistence (`POST /api/matches` for solo/local, `GameRoomDO` for online PvP), ELO protection (casual games track wins/losses without modifying competitive ELO), interactive historical match replay viewer with board & tactical card annotations, cloud custom deck sync (`/api/decks`) with guest `localStorage` fallback, synthesized Web Audio SFX, and Cloudflare Pages SPA routing (`_routes.json` / `_redirects`).
 
 ## Next Steps
 
-1. Execute Phase 5 plans via `/execute 5` across all 3 waves.
-2. Wave 1 (Plan 5.1): D1 Match & Deck Persistence Endpoints.
-3. Wave 2 (Plan 5.2): Game Flow Match Recording, Cloud Deck Sync & Web Audio SFX.
-4. Wave 3 (Plan 5.3): Historical Match Replay Viewer, Dashboard UI & Cloudflare Production Deployment.
+1. Run `/resume` to restore session state.
+2. Execute Phase 5 plans via `/execute 5` across all 3 waves.
+3. Wave 1 (Plan 5.1): D1 Match & Deck Persistence Endpoints.
+4. Wave 2 (Plan 5.2): Game Flow Match Recording, Cloud Deck Sync & Web Audio SFX.
+5. Wave 3 (Plan 5.3): Historical Match Replay Viewer, Dashboard UI & Cloudflare Production Deployment.

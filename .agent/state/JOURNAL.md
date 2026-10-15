@@ -6,6 +6,37 @@
 
 ## Sessions
 
+### Session: 2026-10-15 01:03
+
+#### Objective
+Discuss, research, and plan Phase 5 (`/discuss-phase 5`, `/research-phase 5`, `/plan 5`): Integration, Polish & Production Deployment.
+
+#### Accomplished
+- ✅ Aligned on Phase 5 architecture with user in `/discuss-phase 5` and recorded `[DECISION-008]`: separated match persistence (PvP online vs solo/local practice), competitive ELO protection, interactive historical match replay viewer with board and tactical card annotations, cloud custom deck sync (`/api/decks`) with guest fallback, procedural Web Audio SFX, and Cloudflare Pages SPA routing.
+- ✅ Conducted Level 2 research and authored comprehensive `.agent/state/phases/5/RESEARCH.md`.
+- ✅ Decomposed Phase 5 into 3 atomic plans across 3 sequential waves:
+  - Plan 5.1 (Wave 1): D1 Match & Deck Persistence Endpoints (`functions/api/matches.ts`, `functions/api/decks.ts`, `src/services/api.ts`).
+  - Plan 5.2 (Wave 2): Game Flow Match Recording, Cloud Deck Sync & Web Audio SFX (`src/hooks/useDeckChessGame.ts`, `src/pages/WormholePage.tsx`, `src/components/DeckBuilderView.tsx`, `src/utils/soundEffects.ts`).
+  - Plan 5.3 (Wave 3): Historical Match Replay Viewer, Dashboard UI & Cloudflare Production Deployment (`src/components/HistoricalMatchViewer.tsx`, `src/pages/DashboardPage.tsx`, `public/_routes.json`, `package.json`).
+- ✅ Validated plans across all plan-checker dimensions with zero blockers.
+- ✅ Synchronized `ROADMAP.md` and `STATE.md` marking Phase 5 ready for execution.
+
+#### Verification
+- [x] All 3 plans created and validated against plan-checker dimensions with zero blockers.
+- [x] Production build passes cleanly in <900ms (`npm run build`).
+- [x] Edge functions and companion worker typechecks pass cleanly.
+- [ ] Phase 5 execution pending (`/execute 5`).
+
+#### Paused Because
+User requested session pause (`/pause`) at clean handoff point before executing Phase 5.
+
+#### Handoff Notes
+- Run `/resume` to restore session state.
+- Proceed with `/execute 5` to execute Phase 5 plans across all 3 waves.
+- Wave 1 sets up D1 match & deck endpoints; Wave 2 connects game recording, cloud decks, and Web Audio SFX; Wave 3 builds the replay viewer, dashboard match list, and Cloudflare Pages SPA routing.
+
+---
+
 ### Session: 2026-10-15 00:38
 
 #### Objective
