@@ -303,7 +303,7 @@ export function useDeckChessGame({
 
   // Execute standard chess move
   const makeMove = useCallback(
-    (from: string, to: string, promotion: string = 'q') => {
+    (from: string, to: string, promotion?: string) => {
       if (gameState.isGameOver || isAiThinking) return false;
 
       const currentTurn = engineRef.current.getTurn();
@@ -334,10 +334,11 @@ export function useDeckChessGame({
         setTimeout(playCheckSound, 120);
       }
 
+      const actualPromotion = res.move.promotion;
       const turnRecord: RecordedTurn = {
         turnNumber: engineRef.current.getTurnNumber(),
         player: currentTurn,
-        chessMove: { from, to, promotion },
+        chessMove: { from, to, promotion: actualPromotion },
         cardAction: lastCardActionRef.current || undefined,
         fenAfter: engineRef.current.getFen(),
         combatText: `${currentTurn === 'w' ? 'White' : 'Black'} moved ${moveSan}`,
@@ -354,7 +355,7 @@ export function useDeckChessGame({
         const payload: DeckChessTurnPayload = {
           turnNumber: engineRef.current.getTurnNumber(),
           playerColor: currentTurn,
-          chessMove: { from, to, promotion },
+          chessMove: { from, to, promotion: actualPromotion },
           resultingFen: engineRef.current.getFen(),
           activeModifiers: engineRef.current.getActiveModifiers(),
         };
@@ -596,6 +597,19 @@ export function useDeckChessGame({
     },
     [addLog, syncState]
   );
+
+  // Auto-trigger AI turn whenever it is the AI's turn
+  useEffect(() => {
+    if (
+      mode === 'ai' &&
+      !gameState.isGameOver &&
+      !isAiThinking &&
+      gameState.turn !== playerColor
+    ) {
+      const timer = setTimeout(triggerAiTurn, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [mode, gameState.isGameOver, isAiThinking, gameState.turn, playerColor, triggerAiTurn]);
 
   // Match completion recording & victory/defeat sound effects
   useEffect(() => {

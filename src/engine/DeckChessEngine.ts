@@ -864,9 +864,13 @@ export class DeckChessEngine {
 
   public makeMove(move: DeckChessMove): { success: boolean; move?: Move; error?: string } {
     const legalMoves = this.getLegalMoves(move.from);
-    const matchingMove = legalMoves.find(
-      (m) => m.to === move.to && (!move.promotion || m.promotion === move.promotion)
-    );
+    const matchingMove = legalMoves.find((m) => {
+      if (m.to !== move.to) return false;
+      if (m.promotion) {
+        return m.promotion === (move.promotion || 'q');
+      }
+      return true;
+    });
 
     if (!matchingMove) {
       return { success: false, error: 'Illegal chess move' };
@@ -880,7 +884,7 @@ export class DeckChessEngine {
       executedMove = this.chess.move({
         from: move.from as Square,
         to: move.to as Square,
-        promotion: move.promotion,
+        promotion: matchingMove.promotion,
       });
     } catch (e: any) {
       return { success: false, error: e?.message || 'Move failed' };

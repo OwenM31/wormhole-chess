@@ -220,6 +220,7 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
             return (
               <div
                 key={squareName}
+                data-square={squareName}
                 onClick={() => onSquareClick(squareName)}
                 className={`relative flex items-center justify-center transition-colors duration-150 cursor-pointer ${baseBg} hover:opacity-95 aspect-square`}
                 style={{ aspectRatio: '1 / 1' }}
