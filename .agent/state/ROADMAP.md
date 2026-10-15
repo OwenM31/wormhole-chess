@@ -1,111 +1,86 @@
 ---
-milestone: v1.0 Platform Expansion
-version: 1.0.0
-updated: 2026-10-14T23:27:00Z
+milestone: v2.0 Visual Craft & Frontend Redesign
+version: 2.0.0
+updated: 2026-10-15T13:04:00Z
 ---
 
 # Roadmap
 
-> **Current Phase:** Phase 5 - Integration, Polish & Production Deployment
-> **Status:** ⬜ Awaiting Planning
+> **Current Milestone:** v2.0 Visual Craft & Frontend Redesign
+> **Current Phase:** Phase 1 - Design System Foundations & Player Dashboard Redesign
+> **Status:** ⬜ Awaiting Planning / Design Phase
 
-## Must-Haves (from SPEC)
+## Milestone Goal
 
-- [x] Vite-powered build pipeline with sub-10s production builds and instant HMR
-- [x] Client-side routing with Home screen, Auth, Dashboard, and dedicated variant pages
-- [x] Working Cloudflare Workers + D1 backend supporting both Registered Users and Guests
-- [x] Cloudflare Durable Objects managing game rooms and turn-based synchronization
-- [x] Playable 2D Deck Builder Chess with "play card + chess move" turn loop and simple AI testing opponent
-- [x] 3D Wormhole Chess fully preserved and playable on `/wormhole` route
+Systematically eliminate AI-slop across all user-facing screens, establish a distinctive, bespoke visual identity (dark tactical sci-fi / high-craft gaming UI), fix awkward screen proportions (particularly on the Deck Builder and Dashboard), and design each page through `@design-phase.md` while strictly requiring explicit user confirmation before writing any user-facing copy.
+
+## Must-Haves
+
+- [ ] **Mandatory Copy Approval**: Never write or inject user-facing copy into templates, headings, hero sections, cards, or alerts without explicit prior user confirmation (preventing cringey AI filler).
+- [ ] **Global Design Tokens & Identity**: Aesthetic tokens (colors, typography pairings, border radii, spacing rhythm, elevation) locked in `.agent/rules/STYLE.md` and `.agent/state/DESIGN_STATE.md`.
+- [ ] **Player Dashboard Redesign**: Refactored player profile, combat stats, matchmaking lobby, and historical replay viewer with clean density and high craft.
+- [ ] **Tactical Deck Builder Arena Redesign**: Balanced widescreen layout, properly proportioned 2D board, tactile hand bar, energy meter, and card curator/inspector without vertical bloating or awkward grid stretching.
+- [ ] **Home Landing & Authentication Redesign**: Atmospheric dark tactical hero, distinct typography, variant showcase cards, and sleek tabbed auth modals.
+- [ ] **3D Wormhole & PlayRoom HUD Redesign**: Non-intrusive floating glass HUD, move notation ticker, game clock integration, and room coordination status.
+- [ ] **Zero Gameplay Regressions**: All 83 automated card engine tests (`npm test`), 3D WebGL controls, and Cloudflare multiplayer synchronization continue passing 100%.
 
 ---
 
 ## Phases
 
-### Phase 1: Modern Foundation, Vite Migration & Client Routing
-**Status:** ✅ Complete
-**Objective:** Replace deprecated Create React App with Vite, implement client-side routing, build the initial Home landing page, and isolate 3D Wormhole Chess on `/wormhole` with zero regressions.
-**Requirements:** REQ-01, REQ-02, REQ-03, NFR-01
-
-**Plans:**
-- [x] Plan 1.1: Migrate CRA to Vite (replace `react-scripts`, update `index.html`, configure `vite.config.ts`, verify < 10s build)
-- [x] Plan 1.2: Implement client routing (`react-router-dom`) with Home page shell and encapsulated `/wormhole` route
-
----
-
-### Phase 2: Cloudflare Backend, D1 Database & Authentication UI
-**Status:** ✅ Complete
-**Objective:** Set up Cloudflare Pages Functions with D1 SQLite storage, implement secure user registration/login and guest session tokens, and build the Player Dashboard.
-**Depends on:** Phase 1
-**Requirements:** REQ-04, REQ-05, REQ-06, NFR-02, NFR-04
-
-**Plans:**
-- [x] Plan 2.1: Cloudflare D1 Database Schema & Pages Functions Auth Endpoints
-- [x] Plan 2.2: Frontend Auth Integration, AuthContext & Player Dashboard UI
+### Phase 1: Design System Foundations & Player Dashboard Redesign
+**Status:** ⬜ Not Started
+**Objective:** Ground visual identity in niche benchmarks, establish global tokens in `STYLE.md`, and design/implement a high-craft Player Dashboard (`DashboardPage.tsx`), Top Navigation, Matchmaking Lobby, and Historical Replay Viewer using `@design-phase.md` with approved copy.
+**Deliverables:**
+- Global design system tokens in `.agent/rules/STYLE.md` & `.agent/state/DESIGN_STATE.md`
+- Redesigned Top Navigation bar (`Navigation.tsx`)
+- Redesigned Player Dashboard (`DashboardPage.tsx`)
+- Redesigned Matchmaking Lobby (`MatchmakingLobby.tsx`)
+- Redesigned Replay Viewer modal (`HistoricalMatchViewer.tsx`)
 
 ---
 
-### Phase 3: Real-Time Room Coordination & Durable Objects
-**Status:** ✅ Complete
-**Objective:** Deploy Cloudflare Durable Objects to manage room sessions, private room codes, casual matchmaking, and turn coordination for online matches.
-**Depends on:** Phase 2
-**Requirements:** REQ-07, NFR-03, CON-01, CON-02
-
-**Plans:**
-- [x] Plan 3.1: Implement `GameRoomDO` Durable Object for room creation, private invite codes, player connection, and turn synchronization
-- [x] Plan 3.2: Connect frontend match lobby and room joining flow to Durable Objects
-
----
-
-### Phase 4: Deck Builder Chess (2D Variant) & AI Opponent
-**Status:** ✅ Complete
-**Objective:** Build the 2D Deck Builder Chess variant with 8x8 board rules, card action execution, simultaneous turn loop, starter deck management, and a heuristic AI opponent for testing.
-**Depends on:** Phase 3
-**Requirements:** REQ-08, REQ-09, REQ-10, REQ-11, CON-03
-
-**Plans:**
-- [x] Plan 4.1: Core Chess Engine & Compositional Card Graph (Wave 1)
-- [x] Plan 4.2: Heuristic AI Bot & Solo Play Coordinator (Wave 2)
-- [x] Plan 4.3: 2D Board UI, Tactical Hand Bar, Deck Builder & Multiplayer Integration (Wave 3)
+### Phase 2: Tactical Deck Builder Page & Arena Layout Redesign
+**Status:** ⬜ Not Started
+**Objective:** Eliminate proportion distortion on the Deck Builder page. Re-architect the screen layout so the 2D chessboard, tactical hand bar, energy meter, card curator, and combat log fit harmoniously without vertical scroll jank or stretched assets.
+**Deliverables:**
+- Balanced arena layout for `DeckBuilderPage.tsx`
+- Refactored `DeckChessBoard.tsx` framing and coordinates
+- Refined `TacticalHandBar.tsx` and card inspector with tactile states
+- Redesigned 8-card loadout curator in `DeckBuilderView.tsx`
 
 ---
 
-### Phase 5: Integration, Polish & Production Deployment
-**Status:** ✅ Complete
-**Objective:** Link both chess variants to persistent D1 match records, perform full guest/user end-to-end verification, and validate production Cloudflare Pages deployment.
-**Depends on:** Phase 4
-
-**Plans:**
-- [x] Plan 5.1: D1 Match & Deck Persistence Endpoints (Wave 1)
-- [x] Plan 5.2: Game Flow Match Recording, Cloud Deck Sync & Web Audio SFX (Wave 2)
-- [x] Plan 5.3: Historical Match Replay Viewer, Dashboard UI & Cloudflare Production Deployment (Wave 3)
-- [x] Plan 5.4: Tailwind CSS Setup & 2D Deck Builder Layout Fix (Wave 1 - Gap Closure)
-- [x] Plan 5.5: 3D Wormhole Header & Home Page Variant Card Polish (Wave 1 - Gap Closure)
+### Phase 3: Home Landing & Authentication Redesign
+**Status:** ⬜ Not Started
+**Objective:** Design and implement a compelling, atmospheric Home page (`HomePage.tsx`) with restrained, user-approved copy, distinctive game variant showcase cards, feature highlights, and a sleek tabbed Auth page (`AuthPage.tsx`).
+**Deliverables:**
+- Redesigned `HomePage.tsx` hero, mode cards, and CTA sections
+- Redesigned `AuthPage.tsx` with seamless Login / Register / Guest tabs
+- Polished active session and quick-play entry points
 
 ---
 
-## Progress Summary
-
-| Phase | Status | Plans | Complete |
-|-------|--------|-------|----------|
-| 1: Modern Foundation & Routing | ✅ Complete | 2/2 | 100% |
-| 2: Cloudflare Backend & Auth | ✅ Complete | 2/2 | 100% |
-| 3: Room Coordination & DO | ✅ Complete | 2/2 | 100% |
-| 4: Deck Builder Chess (2D) | ✅ Complete | 3/3 | 100% |
-| 5: Polish & Deployment | ✅ Complete | 5/5 | 100% |
+### Phase 4: 3D Wormhole HUD & Multiplayer PlayRoom Redesign
+**Status:** ⬜ Not Started
+**Objective:** Replace cluttered overlays on 3D Wormhole Chess (`WormholePage.tsx`, `ChessboardScene.tsx`) and multiplayer room arena (`PlayRoomPage.tsx`) with a minimalist, non-intrusive floating HUD, move notation drawer, and tactile chess clocks.
+**Deliverables:**
+- Floating glass HUD for `WormholePage.tsx`
+- Refined `ChessClock.tsx` visual states and disconnect warnings
+- Streamlined `PlayRoomPage.tsx` multiplayer battle arena layout
 
 ---
 
-## Timeline
-
-| Phase | Started | Completed | Duration |
-|-------|---------|-----------|----------|
-| 1 | 2026-10-14 18:37 | 2026-10-14 18:50 | 13m |
-| 2 | 2026-10-14 19:04 | 2026-10-14 19:18 | 14m |
-| 3 | 2026-10-14 21:59 | 2026-10-14 22:08 | 9m |
-| 4 | 2026-10-14 23:13 | 2026-10-15 00:36 | 23m |
-| 5 | 2026-10-15 01:06 | 2026-10-15 01:21 | 15m |
+### Phase 5: Global Polish, Micro-interactions, Responsive Audit & Release
+**Status:** ⬜ Not Started
+**Objective:** Conduct cross-page continuity audits, verify mobile and tablet responsive behaviors, add subtle micro-interactions/audio feedback, and deploy the updated frontend to Cloudflare Pages.
+**Deliverables:**
+- Comprehensive UX sweep across all 6 live routes
+- Responsive breakpoint hardening
+- Production build and Cloudflare Pages deployment verification
 
 ---
 
-*Last updated: 2026-10-15*
+## Completed Milestones
+
+- **v1.0 Platform Expansion** (Phases 1–5 complete, verified, and archived in `.agent/state/milestones/v1.0-AUDIT.md` and `.agent/state/milestones/v1.0-ROADMAP.md`).

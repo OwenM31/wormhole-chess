@@ -252,6 +252,27 @@ Deck Builder Chess allows players to play a tactical card during their `PRE_MOVE
 
 ---
 
+### [DECISION-014] Frontend Visual Craft, Anti-AI-Slop & Mandatory Copy Confirmation Policy
+
+**Date**: 2026-10-15
+**Status**: Accepted
+
+#### Context
+The initial implementation of the frontend views relied on default LLM visual patterns (undifferentiated dark grey surfaces, unconstrained card proportions, generic badges, and awkward spacing ratios). Additionally, default LLM-generated UI text often falls into hyperbolic, cringey, or corporate filler.
+
+#### Decision
+1. **Milestone v2.0 Scope**: Systematically redesign all views using `@design-phase.md` page-by-page (researching curated niche benchmarks, generating 3–5 visual variants, capturing screenshots, and gaining user approval before planning or implementation).
+2. **Mandatory Copy Approval Mandate**: The agent must NEVER write or inject user-facing copy (headings, hero text, card descriptions, tooltips, empty states, or button labels) without explicitly proposing the exact text strings to the user and obtaining confirmation first.
+3. **Design System & Anti-Slop Directives**: Codified in `.agent/rules/STYLE.md` with layered neutrals, deliberate typography pairings, restrained tabular figures, and balanced screen proportions (fixing Deck Builder board and panel proportions).
+
+#### Consequences
+- Eliminates AI-slop visual and textual artifacts.
+- Guarantees high-craft aesthetic continuity across all pages.
+- Prevents awkward copy by keeping the user as the final editor of all UI text.
+
+---
+
 *Last updated: 2026-10-15*
+
 
 
