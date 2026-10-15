@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { isMuted, toggleMuted } from '../utils/soundEffects';
 
 export const Navigation: React.FC = () => {
   const { user, logout, isLoading } = useAuth();
   const navigate = useNavigate();
+  const [muted, setMutedState] = useState<boolean>(() => isMuted());
+
+  useEffect(() => {
+    const handleMuteChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ muted: boolean }>;
+      if (customEvent.detail) {
+        setMutedState(customEvent.detail.muted);
+      } else {
+        setMutedState(isMuted());
+      }
+    };
+    window.addEventListener('wormhole_sfx_mute_change', handleMuteChange);
+    return () => window.removeEventListener('wormhole_sfx_mute_change', handleMuteChange);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -49,6 +64,18 @@ export const Navigation: React.FC = () => {
       </nav>
 
       <div style={authContainerStyle}>
+        <button
+          onClick={() => {
+            const next = toggleMuted();
+            setMutedState(next);
+          }}
+          style={soundToggleButtonStyle}
+          title={muted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+          aria-label={muted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+        >
+          {muted ? '🔇' : '🔊'}
+        </button>
+
         {isLoading ? (
           <span style={loadingTextStyle}>Connecting...</span>
         ) : user ? (
@@ -225,6 +252,20 @@ const signOutButtonStyle: React.CSSProperties = {
   fontSize: '0.85rem',
   cursor: 'pointer',
   transition: 'all 0.15s ease',
+};
+
+const soundToggleButtonStyle: React.CSSProperties = {
+  background: '#161b22',
+  border: '1px solid #30363d',
+  borderRadius: '6px',
+  color: '#c9d1d9',
+  fontSize: '1rem',
+  padding: '0.35rem 0.6rem',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'border-color 0.15s ease, background-color 0.15s ease',
 };
 
 export default Navigation;
