@@ -124,13 +124,53 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div style={containerStyle}>
+      <style>{`
+        .dashboard-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+        @media (min-width: 960px) {
+          .dashboard-grid {
+            grid-template-columns: 1fr 340px;
+          }
+        }
+
+        .dashboard-play-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+        @media (min-width: 600px) {
+          .dashboard-play-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .dashboard-grid {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            margin-top: 1rem !important;
+          }
+          .dashboard-match-row {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 0.6rem !important;
+          }
+          .dashboard-match-meta-right {
+            width: 100%;
+            justify-content: space-between;
+          }
+        }
+      `}</style>
       <Navigation />
 
-      <main style={gridContainerStyle}>
+      <main style={gridContainerStyle} className="dashboard-grid">
         {/* LEFT COLUMN: Main Action Feed */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: 0 }}>
           {/* Play Modes Grid */}
-          <div style={playGridStyle}>
+          <div style={playGridStyle} className="dashboard-play-grid">
             {/* Wormhole 3D */}
             <div style={playCardStyle}>
               <div>
@@ -224,7 +264,7 @@ export const DashboardPage: React.FC = () => {
                     : m.whiteUsername || 'Opponent';
 
                   return (
-                    <div key={m.id} style={matchRowStyle}>
+                    <div key={m.id} style={matchRowStyle} className="dashboard-match-row">
                       <div style={matchMetaLeftStyle}>
                         <span
                           style={
@@ -245,7 +285,7 @@ export const DashboardPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div style={matchMetaRightStyle}>
+                      <div style={matchMetaRightStyle} className="dashboard-match-meta-right">
                         <span style={matchTimeStyle}>
                           {turnsCount} moves · {formatDate(m.startedAt)}
                         </span>
@@ -361,9 +401,6 @@ const gridContainerStyle: React.CSSProperties = {
   margin: '1.5rem auto 3rem',
   padding: '0 1.5rem',
   boxSizing: 'border-box',
-  display: 'grid',
-  gridTemplateColumns: '1fr 340px',
-  gap: '1.5rem',
   alignItems: 'start',
 };
 
@@ -380,6 +417,8 @@ const panelHeaderStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
+  flexWrap: 'wrap',
+  gap: '0.5rem',
 };
 
 const panelTitleStyle: React.CSSProperties = {
@@ -391,9 +430,7 @@ const panelTitleStyle: React.CSSProperties = {
 };
 
 const playGridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr',
-  gap: '1rem',
+  width: '100%',
 };
 
 const playCardStyle: React.CSSProperties = {
