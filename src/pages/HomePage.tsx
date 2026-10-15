@@ -9,21 +9,113 @@ export const HomePage: React.FC = () => {
 
   return (
     <div style={containerStyle}>
+      <style>{`
+        .home-tab-btn {
+          outline: none;
+        }
+        .home-tab-btn:hover {
+          color: #FAF9F6 !important;
+        }
+        .home-tab-btn:focus-visible,
+        .home-btn-primary:focus-visible,
+        .home-btn-secondary:focus-visible {
+          outline: 2px solid rgba(212, 175, 55, 0.85) !important;
+          outline-offset: 2px !important;
+        }
+        .home-card-item {
+          transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .home-card-item:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+          border-color: rgba(139, 126, 116, 0.45) !important;
+        }
+        .home-btn-primary {
+          transition: background-color 0.15s ease, transform 0.15s ease;
+        }
+        .home-btn-primary:hover {
+          background-color: #5d705d !important;
+        }
+        .home-btn-secondary {
+          transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        }
+        .home-btn-secondary:hover {
+          border-color: rgba(139, 126, 116, 0.5) !important;
+          background-color: #24272A !important;
+          color: #FAF9F6 !important;
+        }
+
+        @media (max-width: 640px) {
+          .home-main {
+            padding: 1.5rem 1rem 3rem !important;
+            gap: 1.5rem !important;
+          }
+          .home-hero-title {
+            font-size: 2.15rem !important;
+          }
+          .home-hero-subtitle {
+            font-size: 0.95rem !important;
+          }
+          .home-stage-content {
+            padding: 1.25rem 1rem !important;
+            gap: 1.25rem !important;
+          }
+          .home-stage-header-row {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem !important;
+          }
+          .home-cards-grid {
+            grid-template-columns: 1fr !important;
+            gap: 0.75rem !important;
+          }
+          .home-stage-actions {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 0.65rem !important;
+          }
+          .home-stage-actions a {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            text-align: center !important;
+          }
+          .home-stage-actions span {
+            margin-left: 0 !important;
+            text-align: center !important;
+            margin-top: 0.25rem !important;
+          }
+          .home-wormhole-visual {
+            flex-direction: column !important;
+            padding: 1.25rem 0.75rem !important;
+            gap: 1rem !important;
+          }
+          .home-portal-beam {
+            width: 2px !important;
+            height: 32px !important;
+            background: linear-gradient(180deg, #D4AF37, #A855F7) !important;
+          }
+        }
+      `}</style>
       <Navigation />
 
-      <main style={mainContentStyle}>
+      <main style={mainContentStyle} className="home-main">
         {/* Minimalist Hero */}
-        <section style={heroSectionStyle}>
-          <h1 style={heroTitleStyle}>Wormhole Chess</h1>
-          <p style={heroSubtitleStyle}>A collection of chess variants.</p>
+        <section style={heroSectionStyle} className="home-hero">
+          <h1 style={heroTitleStyle} className="home-hero-title">Wormhole Chess</h1>
+          <p style={heroSubtitleStyle} className="home-hero-subtitle">A collection of chess variants.</p>
         </section>
 
         {/* Unified Variant Stage */}
         <section style={stageCardStyle}>
           {/* Variant Selector Tabs */}
-          <div style={stageNavBarStyle}>
+          <div style={stageNavBarStyle} role="tablist" aria-label="Game Variants">
             <button
               type="button"
+              role="tab"
+              id="tab-deck-builder"
+              aria-selected={activeTab === 'deck-builder'}
+              aria-controls="panel-deck-builder"
+              className="home-tab-btn"
               onClick={() => setActiveTab('deck-builder')}
               style={activeTab === 'deck-builder' ? activeTabBtnStyle : tabBtnStyle}
             >
@@ -34,6 +126,11 @@ export const HomePage: React.FC = () => {
             </button>
             <button
               type="button"
+              role="tab"
+              id="tab-wormhole"
+              aria-selected={activeTab === 'wormhole'}
+              aria-controls="panel-wormhole"
+              className="home-tab-btn"
               onClick={() => setActiveTab('wormhole')}
               style={activeTab === 'wormhole' ? activeTabBtnStyle : tabBtnStyle}
             >
@@ -46,8 +143,14 @@ export const HomePage: React.FC = () => {
 
           {/* Active Tab: Deck Builder Chess */}
           {activeTab === 'deck-builder' && (
-            <div style={stageContentStyle}>
-              <div style={stageHeaderRowStyle}>
+            <div
+              style={stageContentStyle}
+              role="tabpanel"
+              id="panel-deck-builder"
+              aria-labelledby="tab-deck-builder"
+              className="home-stage-content"
+            >
+              <div style={stageHeaderRowStyle} className="home-stage-header-row">
                 <div>
                   <h2 style={stageTitleStyle}>Deck Builder Chess</h2>
                   <p style={stageDescStyle}>
@@ -61,9 +164,12 @@ export const HomePage: React.FC = () => {
               </div>
 
               {/* Tactical Card Asset Showcase */}
-              <div style={cardsGridStyle}>
+              <div style={cardsGridStyle} className="home-cards-grid">
                 {/* Knight Escort */}
-                <div style={{ ...cardItemStyle, borderTop: '3px solid #3fb950' }}>
+                <div
+                  className="home-card-item"
+                  style={{ ...cardItemStyle, borderTop: '3px solid #3fb950' }}
+                >
                   <div style={cardTopStyle}>
                     <span style={{ fontSize: '1.25rem' }}>♞</span>
                     <span style={cardCostStyle}>2⚡</span>
@@ -75,7 +181,10 @@ export const HomePage: React.FC = () => {
                 </div>
 
                 {/* Shield Wall */}
-                <div style={{ ...cardItemStyle, borderTop: '3px solid #58a6ff' }}>
+                <div
+                  className="home-card-item"
+                  style={{ ...cardItemStyle, borderTop: '3px solid #58a6ff' }}
+                >
                   <div style={cardTopStyle}>
                     <span style={{ fontSize: '1.25rem' }}>🛡️</span>
                     <span style={cardCostStyle}>1⚡</span>
@@ -87,7 +196,10 @@ export const HomePage: React.FC = () => {
                 </div>
 
                 {/* Spatial Warp */}
-                <div style={{ ...cardItemStyle, borderTop: '3px solid #A855F7' }}>
+                <div
+                  className="home-card-item"
+                  style={{ ...cardItemStyle, borderTop: '3px solid #A855F7' }}
+                >
                   <div style={cardTopStyle}>
                     <span style={{ fontSize: '1.25rem' }}>🌀</span>
                     <span style={cardCostStyle}>3⚡</span>
@@ -99,7 +211,10 @@ export const HomePage: React.FC = () => {
                 </div>
 
                 {/* King Decree */}
-                <div style={{ ...cardItemStyle, borderTop: '3px solid #D4AF37' }}>
+                <div
+                  className="home-card-item"
+                  style={{ ...cardItemStyle, borderTop: '3px solid #D4AF37' }}
+                >
                   <div style={cardTopStyle}>
                     <span style={{ fontSize: '1.25rem' }}>👑</span>
                     <span style={cardCostStyle}>2⚡</span>
@@ -112,11 +227,11 @@ export const HomePage: React.FC = () => {
               </div>
 
               {/* Action Buttons Row */}
-              <div style={stageActionsRowStyle}>
-                <Link to="/deck-builder" style={primaryActionBtnStyle}>
+              <div style={stageActionsRowStyle} className="home-stage-actions">
+                <Link to="/deck-builder" style={primaryActionBtnStyle} className="home-btn-primary">
                   Play Deck Builder →
                 </Link>
-                <Link to="/deck-builder" style={secondaryActionBtnStyle}>
+                <Link to="/deck-builder" style={secondaryActionBtnStyle} className="home-btn-secondary">
                   Solo Practice
                 </Link>
                 <span style={footnoteStyle}>Cloudflare Edge • D1 Sync</span>
@@ -126,8 +241,14 @@ export const HomePage: React.FC = () => {
 
           {/* Active Tab: 3D Wormhole Chess */}
           {activeTab === 'wormhole' && (
-            <div style={stageContentStyle}>
-              <div style={stageHeaderRowStyle}>
+            <div
+              style={stageContentStyle}
+              role="tabpanel"
+              id="panel-wormhole"
+              aria-labelledby="tab-wormhole"
+              className="home-stage-content"
+            >
+              <div style={stageHeaderRowStyle} className="home-stage-header-row">
                 <div>
                   <h2 style={stageTitleStyle}>3D Wormhole Chess</h2>
                   <p style={stageDescStyle}>
@@ -141,7 +262,7 @@ export const HomePage: React.FC = () => {
               </div>
 
               {/* 3D Visual Schematic */}
-              <div style={wormholeVisualBoxStyle}>
+              <div style={wormholeVisualBoxStyle} className="home-wormhole-visual">
                 <div style={boardIsometricStyle}>
                   <div style={sqDarkStyle} /><div style={sqLightStyle} /><div style={sqDarkStyle} /><div style={sqLightStyle} />
                   <div style={sqLightStyle} /><div style={sqDarkStyle} /><div style={sqLightStyle} /><div style={sqDarkStyle} />
@@ -150,7 +271,7 @@ export const HomePage: React.FC = () => {
                 </div>
                 <div style={portalLinkStyle}>
                   <div style={portalLabelStyle}>PORTAL D4 ⇄ H5</div>
-                  <div style={portalBeamStyle} />
+                  <div style={portalBeamStyle} className="home-portal-beam" />
                 </div>
                 <div style={boardIsometricStyle}>
                   <div style={sqLightStyle} /><div style={sqDarkStyle} /><div style={sqLightStyle} /><div style={sqDarkStyle} />
@@ -161,11 +282,11 @@ export const HomePage: React.FC = () => {
               </div>
 
               {/* Action Buttons Row */}
-              <div style={stageActionsRowStyle}>
-                <Link to="/wormhole" style={primaryActionBtnStyle}>
+              <div style={stageActionsRowStyle} className="home-stage-actions">
+                <Link to="/wormhole" style={primaryActionBtnStyle} className="home-btn-primary">
                   Launch 3D Wormhole →
                 </Link>
-                <Link to="/wormhole" style={secondaryActionBtnStyle}>
+                <Link to="/wormhole" style={secondaryActionBtnStyle} className="home-btn-secondary">
                   Solo Practice
                 </Link>
                 <span style={footnoteStyle}>Cloudflare Edge • Durable Objects</span>
@@ -181,6 +302,10 @@ export const HomePage: React.FC = () => {
 // Styles following Wormhole Chess Design System Tokens
 const containerStyle: React.CSSProperties = {
   minHeight: '100vh',
+  width: '100%',
+  maxWidth: '100vw',
+  overflowX: 'hidden',
+  boxSizing: 'border-box',
   backgroundColor: '#191B1D',
   color: '#FAF9F6',
   display: 'flex',
