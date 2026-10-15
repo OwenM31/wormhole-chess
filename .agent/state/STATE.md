@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-14T22:13:00-05:00
+updated: 2026-10-14T23:07:00-05:00
 ---
 
 # Project State
@@ -7,22 +7,28 @@ updated: 2026-10-14T22:13:00-05:00
 ## Current Position
 
 - **Phase**: 4 - Deck Builder Chess (2D Variant) & AI Opponent
-- **Task**: Planning complete (3 plans across 3 waves)
-- **Status**: Ready for execution (planned 2026-10-14T23:06:00-05:00)
+- **Task**: Planning complete (3 plans across 3 waves ready for execution)
+- **Status**: Paused at 2026-10-14T23:07:00-05:00
 
 ## Last Session Summary
 
-Phase 3 executed and verified successfully:
-1. Wave 1 (`01-PLAN.md`): Setup companion worker (`worker/`) with `GameRoomDO` (Hibernatable WebSockets, server-authoritative clock alarms, 60s disconnect grace period, D1 match recording) and `MatchmakerDO` (FIFO queues per variant, player pairing, live metrics), bound to Pages Functions via `functions/api/room/[code].ts` and `functions/api/matchmaking/*`.
-2. Wave 2 (`02-PLAN.md`): Built typed client room protocol (`src/types/room.ts`), WebSocket hook (`useGameRoom.ts`), `MatchmakingLobby.tsx` component with quick match and private code tabs mounted in `DashboardPage.tsx`, `ChessClock.tsx` component with untimed and disconnect alerts, and `PlayRoomPage.tsx` mounted at `/play/:code`.
-3. Verified all 9 must-haves in `VERIFICATION.md` with PASS verdict.
+Phase 4 discussed, researched, and planned:
+1. Discussion (`/discuss-phase 4`): Formulated `[DECISION-007]` — `chess.js` engine foundation, 3-energy per turn pool, fixed tactical hand (no random draw / no deck fail), and dual play modes (Solo AI + Online Multiplayer).
+2. Card Graph Architecture (`RESEARCH.md`): Integrated user's Compositional Multi-Partite Graph specification (`[Piece Anchor] -> [Conditions] -> [Effects] -> [Gambit Tradeoff]`), 4 global engine invariants (PRE_MOVE_WINDOW, Graveyard Conservation, No-Direct-Mate, 8-card deck), and piece-class color aesthetics (`#d29922` Pawn, `#3fb950` Knight, `#bc8cff` Bishop, `#58a6ff` Rook, `#f778ba` Queen, `#e3b341` King). Pruned clunky temporal/pacify effects in favor of kinetic and spatial moves.
+3. Execution Planning (`/plan 4`): Decomposed Phase 4 into 3 sequential waves:
+   - Plan 4.1 (Wave 1): Core Chess Engine & Compositional Card Graph (`01-PLAN.md`).
+   - Plan 4.2 (Wave 2): Heuristic AI Bot & Solo Play Coordinator (`02-PLAN.md`).
+   - Plan 4.3 (Wave 3): 2D Board UI, Tactical Hand Bar, Deck Builder & Multiplayer Integration (`03-PLAN.md`).
 
 ## In-Progress Work
 
-- Files created:
-  * `.agent/state/phases/4/01-PLAN.md` (Wave 1: Core Chess Engine & Compositional Card Graph)
-  * `.agent/state/phases/4/02-PLAN.md` (Wave 2: Heuristic AI Bot & Solo Play Coordinator)
-  * `.agent/state/phases/4/03-PLAN.md` (Wave 3: 2D Board UI, Tactical Hand Bar, Deck Builder & Multiplayer Integration)
+- Files modified / created:
+  * `.agent/state/phases/4/RESEARCH.md` (Level 2 research document)
+  * `.agent/state/phases/4/01-PLAN.md` (Wave 1: Core Engine & Graph)
+  * `.agent/state/phases/4/02-PLAN.md` (Wave 2: AI Bot & Coordinator)
+  * `.agent/state/phases/4/03-PLAN.md` (Wave 3: UI, Hand Bar & Deck Builder)
+  * `.agent/state/DECISIONS.md` (Recorded DECISION-007)
+  * `.agent/state/ROADMAP.md` (Updated Phase 4 to Ready for Execution)
 - Tests status: Passing (`npm run build` passes in 827ms; edge functions and companion worker typechecks pass with 0 errors).
 
 ## Blockers
@@ -38,19 +44,20 @@ None.
 - [DECISION-004]: 2D board & card interface for Deck Builder Chess in v1; 3D deferred to future milestones.
 - [DECISION-005]: Cloudflare Pages Functions backend (`functions/api/*`) with HttpOnly cookies, WebCrypto PBKDF2 hashing, and D1 sessions.
 - [DECISION-006]: Real-time multiplayer architecture with companion worker, `GameRoomDO`, `MatchmakerDO`, Hibernatable WebSockets, dual matchmaking (private + public queue with live counts), turn clock toggles, and read-only spectators.
-- [DECISION-007]: Deck Builder Chess architecture: `chess.js` foundation, 3-energy per turn economy, fixed tactical hand of 6 cards (no deck fail / no random draw), and dual play modes (Solo AI + Online Multiplayer).
+- [DECISION-007]: Deck Builder Chess architecture: `chess.js` foundation, 3-energy per turn economy, fixed tactical hand of 8 cards (no deck fail / no random draw), Compositional Card Graph (`[Piece Anchor] -> [Conditions] -> [Effects] -> [Gambits]`), piece-class color aesthetics, and dual play modes (Solo AI + Online Multiplayer).
 
 ### Files of Interest
-- `worker/src/GameRoomDO.ts`: Durable Object handling room state, seat allocation, Hibernatable WebSockets, clock/disconnect alarms, and D1 match history.
-- `worker/src/MatchmakerDO.ts`: Durable Object singleton managing variant queues, player pairing, and live metric broadcasts.
-- `src/hooks/useGameRoom.ts`: Client hook with WebSocket management, exponential backoff reconnection, ping/pong latency measurement, and interpolated clocks.
-- `src/components/MatchmakingLobby.tsx`: Battle hub component with quick match queue and private room generation.
-- `src/components/ChessClock.tsx`: Dual digital clocks with active turn glow, untimed mode, and disconnect alert.
-- `src/pages/PlayRoomPage.tsx`: Full game room shell mounted at `/play/:code`.
+- `.agent/state/phases/4/01-PLAN.md`: Plan 4.1 prompt (Core Engine & Card Graph).
+- `.agent/state/phases/4/02-PLAN.md`: Plan 4.2 prompt (AI Bot & Game Coordinator Hook).
+- `.agent/state/phases/4/03-PLAN.md`: Plan 4.3 prompt (2D Board UI, Tactical Hand Bar, Deck Builder & Multiplayer).
+- `worker/src/GameRoomDO.ts`: Durable Object coordinator ready to transport generic `DeckChessTurnPayload`.
+- `src/hooks/useGameRoom.ts`: Client hook for online multiplayer WebSocket synchronization.
+- `src/pages/DeckBuilderPage.tsx`: Target view to be converted from placeholder into the live battle arena.
 
 ## Next Steps
 
-1. Proceed to Phase 4 Planning: Run `/plan 4` to generate atomic execution plans.
-2. Wave 1: 2D Chessboard engine (`chess.js` wrapper), card action system (6 core abilities, 3-energy economy), and fixed tactical hand state.
-3. Wave 2: Heuristic AI opponent bot (minimax + piece evaluation + card utility) for instant Solo Play.
-4. Wave 3: UI integration — interactive 2D board, card hand bar, energy meter, dual play mode launcher (Solo AI vs Online), and custom deck loadout builder.
+1. Run `/resume` to restore session state.
+2. Execute Phase 4 via `/execute 4`.
+3. Plan 4.1 (Wave 1): Install `chess.js`, define Compositional Card Graph types, author starter cards, and implement `DeckChessEngine`.
+4. Plan 4.2 (Wave 2): Implement `DeckChessAI.ts` (PST + minimax depth 2-3) and `useDeckChessGame.ts` hook.
+5. Plan 4.3 (Wave 3): Build `DeckChessBoard.tsx`, `TacticalHandBar.tsx`, `DeckBuilderView.tsx`, and mount into `DeckBuilderPage.tsx`.
