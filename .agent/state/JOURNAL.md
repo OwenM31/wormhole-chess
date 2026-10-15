@@ -6,6 +6,42 @@
 
 ## Sessions
 
+### Session: 2026-10-15 11:53
+
+#### Objective
+Audit milestone deliverables (`/audit-milestone`), perform full-surface UX sweep (`/ux-sweep all`), and diagnose/fix playability defect in Deck Builder Chess ("Illegal move" on piece movement).
+
+#### Accomplished
+- ✅ Executed `/audit-milestone`: Compiled `.agent/state/milestones/v1.0-AUDIT.md`, updated all 11 Functional Requirements & 4 NFRs to verified status in `REQUIREMENTS.md`, and confirmed zero blocking technical debt.
+- ✅ Executed full automated UX sweep (`/ux-sweep all`) covering all 6 live routes on `https://wormhole-chess.com`.
+- ✅ Investigated playability blocker: user reported that making the first move in Deck Builder Chess rejected every move as "Illegal move".
+- ✅ Systematic root cause isolation (`DEBUG.md`):
+  - Created minimal node test reproduction with `tsx`.
+  - Discovered `DeckChessEngine.ts` evaluated `(!move.promotion || m.promotion === move.promotion)`.
+  - Because `useDeckChessGame.ts` passed `promotion: 'q'` by default, every non-promoting move (where `m.promotion === undefined`) was rejected by the equality check.
+- ✅ Fixed `src/engine/DeckChessEngine.ts`: Updated `matchingMove` to only evaluate promotion when `m.promotion` is defined (`m.promotion ? m.promotion === (move.promotion || 'q') : true`), defaulting to queen on promotions.
+- ✅ Fixed `src/hooks/useDeckChessGame.ts`: Removed default `'q'` on `promotion?: string` in `makeMove`, and added an automatic `useEffect` trigger for AI bot turns (`mode === 'ai' && gameState.turn !== playerColor`).
+- ✅ Enhanced `src/components/DeckChessBoard.tsx`: Added `data-square={squareName}` to all board squares.
+- ✅ Created `scripts/verify-deck-builder-moves.mjs`: Automated interactive browser test verifying pawn `e2`->`e4`, AI bot `Nc6`, knight `g1`->`f3`, and AI bot `Nf6`.
+- ✅ Built and deployed production bundle to Cloudflare Pages (`https://wormhole-chess.com`).
+- ✅ Verified live on `https://wormhole-chess.com/deck-builder`: 4 turns played, moves executed cleanly with sounds, AI bot responded in <500ms, and 0 illegal move errors occurred.
+
+#### Verification
+- [x] Full-stack typecheck clean (`npm run typecheck:all`).
+- [x] Production build clean in 3.38s (`npm run build:all`).
+- [x] Headless Chrome test against live production site `https://wormhole-chess.com/deck-builder` executed multiple full turns with bot countermoves successfully.
+- [x] Live custom domain `https://wormhole-chess.com` serving updated build.
+
+#### Paused Because
+User requested session pause (`/pause`) at clean handoff point before investigating 3D Wormhole Chess playability.
+
+#### Handoff Notes
+- Deck Builder Chess is now 100% playable, responsive, and verified live on production.
+- Next session should focus on 3D Wormhole Chess (`/wormhole`), diagnosing piece selection, move execution, and 3D board controls.
+- To resume, run `/resume`.
+
+---
+
 ### Session: 2026-10-15 03:25
 
 #### Objective
