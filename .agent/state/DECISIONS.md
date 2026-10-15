@@ -117,5 +117,36 @@ Phase 2 requires backend API endpoints for authentication and player profiles, w
 
 ---
 
+### [DECISION-006] Real-Time Multiplayer Architecture: Durable Objects, WebSockets, Dual Matchmaking & Spectators
+
+**Date**: 2026-10-14
+**Status**: Accepted
+
+#### Context
+Phase 3 requires stateful room coordination and multiplayer synchronization for turn-based variants (Deck Builder Chess and Wormhole Chess). We evaluated room lifecycle architecture, networking protocols, matchmaking queues, spectator modes, and clock synchronization.
+
+#### Decision
+1. **Variant-Agnostic Room Coordinator**: Implement a generic `GameRoomDO` Durable Object that manages seats (White, Black, Spectators), turn order alternation, clocks, disconnect/reconnect grace periods, and broadcasts opaque move payloads. Decouples networking from specific chess rules, allowing reuse across all variants.
+2. **Hibernatable WebSockets**: Use Cloudflare Durable Objects Hibernatable WebSockets (`state.acceptWebSocket`) for ultra-low latency (<50ms) turn propagation and zero-cost idle connection handling.
+3. **Dual Matchmaking Modes**:
+   - **Private Rooms**: 6-character room codes with shareable URLs (`/play/:code`), optional custom clocks, or untimed casual play.
+   - **Global Random Matchmaking Queue**: Centralized `MatchmakerDO` / lobby coordinator that pairs waiting players and broadcasts live visual metrics (players in queue, active matches).
+4. **Configurable Turn Clocks**: Support timed clocks (e.g., 3m, 5m, 10m blitz/rapid) with the option to disable the clock completely for untimed matches.
+5. **Read-Only Spectators**: Additional connections beyond the two players are granted spectator seats to receive live moves and clock sync without mutation permissions.
+
+#### Rationale
+- Decoupled room coordination prevents code duplication between 2D Deck Builder and 3D Wormhole Chess.
+- Hibernatable WebSockets satisfy NFR-03 (<150ms turn submission) with high efficiency.
+- Dual matchmaking satisfies casual friendly matches and instant public play.
+- Live lobby counts provide immediate visual feedback of platform activity.
+- Spectators support sharing matches and watching friends play.
+
+#### Consequences
+- Need a dedicated Cloudflare Worker package/directory (`worker/` or `packages/game-server/`) defining `GameRoomDO` and `MatchmakerDO`.
+- Pages Functions or direct WebSocket routing to proxy connections to the DO stubs.
+- Frontend requires a reusable `useGameRoom` React hook / WebSocket client to manage reconnects, heartbeats, and room events.
+
+---
+
 *Last updated: 2026-10-14*
 
