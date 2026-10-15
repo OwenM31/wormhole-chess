@@ -10,9 +10,9 @@ bindings = [
 
 [[migrations]]
 tag = "v1"
-new_classes = ["GameRoomDO", "MatchmakerDO"]
+new_sqlite_classes = ["GameRoomDO", "MatchmakerDO"]
 
 [[d1_databases]]
 binding = "DB"
 database_name = "wormhole-chess-db"
-database_id = "local-dev-id"
+database_id = "1c1096e9-9d5c-42e8-9c18-c3ce572c8748"

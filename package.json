@@ -31,9 +31,9 @@
     "typecheck:all": "tsc --noEmit && npx tsc -p functions/tsconfig.json --noEmit && npx tsc -p worker/tsconfig.json --noEmit",
     "build:all": "npm run build",
     "db:migrate:local": "wrangler d1 execute DB --local --file=./d1/schema.sql",
-    "db:migrate:prod": "wrangler d1 execute DB --file=./d1/schema.sql",
+    "db:migrate:prod": "wrangler d1 execute DB --remote --file=./d1/schema.sql",
     "deploy:worker": "cd worker && wrangler deploy",
-    "deploy:pages": "wrangler pages deploy build"
+    "deploy:pages": "wrangler pages deploy build --project-name=wormhole-chess"
   },
   "eslintConfig": {
     "extends": [

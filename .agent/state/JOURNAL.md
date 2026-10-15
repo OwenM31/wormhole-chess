@@ -6,7 +6,29 @@
 
 ## Sessions
 
-### Session: 2026-10-15 01:22
+### Session: 2026-10-15 01:35
+
+#### Objective
+Fix deployment configuration and execute live production deployment of companion worker, remote D1 database, and Cloudflare Pages frontend.
+
+#### Accomplished
+- ✅ Created remote Cloudflare D1 database `wormhole-chess-db` (`1c1096e9-9d5c-42e8-9c18-c3ce572c8748`) and configured `database_id` in root and worker `wrangler.toml`.
+- ✅ Resolved Cloudflare Free Plan Durable Objects requirement: updated migration from `new_classes` to `new_sqlite_classes = ["GameRoomDO", "MatchmakerDO"]` in `worker/wrangler.toml`.
+- ✅ Successfully deployed companion Worker to Cloudflare: `https://wormhole-game-worker.omeyers31.workers.dev`.
+- ✅ Updated `package.json` with `db:migrate:prod` using `--remote`, and ran initial schema migration on Cloudflare remote D1 (12 queries executed, all 5 tables created).
+- ✅ Created Cloudflare Pages project `wormhole-chess` on branch `master`, updated `deploy:pages` with `--project-name=wormhole-chess`, and deployed production build to `https://wormhole-chess.pages.dev`.
+- ✅ Verified live edge endpoints: `GET /api/auth/me` (401 unauthenticated), `POST /api/auth/guest` (201 created guest user & stats in live D1, session cookie set), and `GET /play/deck-builder` (200 OK SPA route).
+- ✅ Added `.wrangler/` to `.gitignore`.
+
+#### Verification
+- [x] Full-stack typecheck clean (`npm run typecheck:all`).
+- [x] Production build clean in 1.00s (`npm run build:all`).
+- [x] Remote companion Worker live at `https://wormhole-game-worker.omeyers31.workers.dev`.
+- [x] Remote D1 database migrated with all 5 tables (`users`, `sessions`, `player_stats`, `matches`, `custom_decks`).
+- [x] Cloudflare Pages live at `https://wormhole-chess.pages.dev`.
+
+---
+
 
 #### Objective
 Execute and verify Phase 5 (`/execute 5`): Integration, Polish & Production Deployment.
