@@ -6,17 +6,17 @@ updated: 2026-10-14T23:27:00Z
 
 # Roadmap
 
-> **Current Phase:** Phase 1 - Modern Foundation, Vite Migration & Client Routing
-> **Status:** ⬜ Not Started
+> **Current Phase:** Phase 2 - Cloudflare Backend, D1 Database & Authentication UI
+> **Status:** 🔄 Ready for Execution
 
 ## Must-Haves (from SPEC)
 
-- [ ] Vite-powered build pipeline with sub-10s production builds and instant HMR
-- [ ] Client-side routing with Home screen, Auth, Dashboard, and dedicated variant pages
+- [x] Vite-powered build pipeline with sub-10s production builds and instant HMR
+- [x] Client-side routing with Home screen, Auth, Dashboard, and dedicated variant pages
 - [ ] Working Cloudflare Workers + D1 backend supporting both Registered Users and Guests
 - [ ] Cloudflare Durable Objects managing game rooms and turn-based synchronization
 - [ ] Playable 2D Deck Builder Chess with "play card + chess move" turn loop and simple AI testing opponent
-- [ ] 3D Wormhole Chess fully preserved and playable on `/wormhole` route
+- [x] 3D Wormhole Chess fully preserved and playable on `/wormhole` route
 
 ---
 
@@ -34,14 +34,14 @@ updated: 2026-10-14T23:27:00Z
 ---
 
 ### Phase 2: Cloudflare Backend, D1 Database & Authentication UI
-**Status:** ⬜ Not Started
-**Objective:** Set up Cloudflare Workers with D1 SQLite storage, implement secure user registration/login and guest session tokens, and build the Player Dashboard.
+**Status:** 🔄 Ready for Execution
+**Objective:** Set up Cloudflare Pages Functions with D1 SQLite storage, implement secure user registration/login and guest session tokens, and build the Player Dashboard.
 **Depends on:** Phase 1
 **Requirements:** REQ-04, REQ-05, REQ-06, NFR-02, NFR-04
 
 **Plans:**
-- [ ] Plan 2.1: Cloudflare D1 schema design & Workers authentication endpoints (register, login, guest token, profile)
-- [ ] Plan 2.2: Frontend Auth views (Login, Register, Guest modal) and Player Dashboard UI
+- [ ] Plan 2.1: Cloudflare D1 Database Schema & Pages Functions Auth Endpoints
+- [ ] Plan 2.2: Frontend Auth Integration, AuthContext & Player Dashboard UI
 
 ---
 
@@ -85,8 +85,8 @@ updated: 2026-10-14T23:27:00Z
 
 | Phase | Status | Plans | Complete |
 |-------|--------|-------|----------|
-| 1: Modern Foundation & Routing | ⬜ Not Started | 0/2 | — |
-| 2: Cloudflare Backend & Auth | ⬜ Not Started | 0/2 | — |
+| 1: Modern Foundation & Routing | ✅ Complete | 2/2 | 100% |
+| 2: Cloudflare Backend & Auth | 🔄 Ready | 0/2 | 0% |
 | 3: Room Coordination & DO | ⬜ Not Started | 0/2 | — |
 | 4: Deck Builder Chess (2D) | ⬜ Not Started | 0/3 | — |
 | 5: Polish & Deployment | ⬜ Not Started | 0/2 | — |
@@ -97,7 +97,8 @@ updated: 2026-10-14T23:27:00Z
 
 | Phase | Started | Completed | Duration |
 |-------|---------|-----------|----------|
-| 1 | — | — | — |
+| 1 | 2026-10-14 18:37 | 2026-10-14 18:50 | 13m |
+| 2 | 2026-10-14 18:55 | — | — |
 | 2 | — | — | — |
 | 3 | — | — | — |
 | 4 | — | — | — |
