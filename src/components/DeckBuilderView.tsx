@@ -43,7 +43,6 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
   });
 
   const [filterAnchor, setFilterAnchor] = useState<PieceAnchor | 'all'>('all');
-  const [activePreviewCard, setActivePreviewCard] = useState<CardDefinition | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   // Sync from cloud on mount if authenticated
@@ -147,43 +146,40 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
   ];
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 sm:p-6 flex flex-col gap-6 text-slate-100">
+    <div className="w-full max-w-6xl mx-auto p-3 sm:p-5 flex flex-col gap-5 text-[#FAF9F6]">
       {/* Top Banner & Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-900/90 p-5 rounded-2xl border border-slate-700/80 shadow-xl backdrop-blur-md">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-[#24272A] p-4 rounded-md border border-[rgba(139,126,116,0.25)] shadow-xl">
         <div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-amber-400 via-purple-300 to-sky-400 bg-clip-text text-transparent">
-            Tactical Deck Forge
+          <h2 className="text-xl font-bold tracking-tight text-[#FAF9F6]">
+            Deck Loadout
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Curate your 8-card battle loadout. Cards can be activated during your pre-move window.
-          </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {onBackToBattle && (
             <button
               onClick={onBackToBattle}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-sm font-semibold transition-all cursor-pointer border border-slate-700"
+              className="px-3 py-1.5 bg-[#191B1D] hover:bg-[#282B2E] text-[#FAF9F6] rounded text-xs font-medium transition-colors cursor-pointer border border-[rgba(139,126,116,0.3)]"
             >
-              ← Back to Battle
+              Back to Arena
             </button>
           )}
           <button
             onClick={handleResetStarter}
-            className="px-4 py-2 bg-slate-800/80 hover:bg-slate-700 text-amber-300 rounded-xl text-sm font-semibold transition-all cursor-pointer border border-amber-500/30"
+            className="px-3 py-1.5 bg-[#191B1D] hover:bg-[#282B2E] text-[#D4AF37] rounded text-xs font-medium transition-colors cursor-pointer border border-[#D4AF37]/40"
           >
-            Reset to Starter
+            Reset Starter
           </button>
           <button
             onClick={handleSave}
             disabled={!validation.isValid}
-            className={`px-5 py-2 rounded-xl text-sm font-bold transition-all shadow-lg cursor-pointer ${
+            className={`px-4 py-1.5 rounded text-xs font-bold transition-colors shadow cursor-pointer ${
               validation.isValid
-                ? 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-emerald-900/40'
-                : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                ? 'bg-[#4C5C4C] hover:bg-[#5C6C5C] text-[#FAF9F6]'
+                : 'bg-[#191B1D] text-[#8B7E74] cursor-not-allowed border border-[rgba(139,126,116,0.2)]'
             }`}
           >
-            Save & Activate Deck
+            Save Loadout
           </button>
         </div>
       </div>
@@ -191,56 +187,53 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
       {/* Validation / Save Alert */}
       {saveMessage && (
         <div
-          className={`p-3 rounded-xl border text-sm font-medium ${
+          className={`p-2.5 rounded-md border text-xs font-medium ${
             saveMessage.includes('cloud') ||
             saveMessage.includes('locally') ||
             saveMessage.includes('successfully') ||
             saveMessage.includes('Reset')
-              ? 'bg-emerald-950/70 border-emerald-500/50 text-emerald-300'
-              : 'bg-rose-950/70 border-rose-500/50 text-rose-300'
+              ? 'bg-[#4C5C4C]/30 border-[#4C5C4C] text-[#FAF9F6]'
+              : 'bg-[#AA4A44]/30 border-[#AA4A44] text-[#FAF9F6]'
           }`}
         >
           {saveMessage}
         </div>
       )}
 
-      {/* Loadout Status Bar */}
-      <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-bold text-slate-300">Active Loadout:</span>
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-mono font-bold ${
-              selectedIds.length === 8
-                ? 'bg-emerald-900/60 text-emerald-300 border border-emerald-500/40'
-                : 'bg-amber-900/60 text-amber-300 border border-amber-500/40'
-            }`}
-          >
-            {selectedIds.length} / 8 Cards Selected
-          </span>
+      {/* Equipped Loadout Rack */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between px-1">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#8B7E74]">
+            Equipped Loadout (Click to remove)
+          </h3>
+          <div className="flex items-center gap-2">
+            {!validation.isValid && (
+              <span className="text-xs font-medium text-[#AA4A44] flex items-center gap-1">
+                ⚠️ {validation.error}
+              </span>
+            )}
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold ${
+                selectedIds.length === 8
+                  ? 'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/50'
+                  : 'bg-[#AA4A44]/20 text-[#AA4A44] border border-[#AA4A44]/50'
+              }`}
+            >
+              {selectedIds.length} / 8 Cards Equipped
+            </span>
+          </div>
         </div>
 
-        {!validation.isValid && (
-          <span className="text-xs font-medium text-amber-400 flex items-center gap-1.5">
-            ⚠️ {validation.error}
-          </span>
-        )}
-      </div>
-
-      {/* Active 8-Card Rack */}
-      <div className="flex flex-col gap-2">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
-          Currently Equipped (Click to remove)
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2.5">
           {Array.from({ length: 8 }).map((_, idx) => {
             const card = selectedCards[idx];
             if (!card) {
               return (
                 <div
                   key={`empty_${idx}`}
-                  className="h-28 rounded-xl border-2 border-dashed border-slate-800 bg-slate-950/40 flex flex-col items-center justify-center p-2 text-center text-slate-600"
+                  className="h-28 rounded-md border-2 border-dashed border-[rgba(139,126,116,0.2)] bg-[#141618] flex flex-col items-center justify-center p-2 text-center text-[#8B7E74]"
                 >
-                  <span className="text-xl">+</span>
+                  <span className="text-xl opacity-60">+</span>
                   <span className="text-[10px] font-mono mt-1">Empty Slot</span>
                 </div>
               );
@@ -253,13 +246,13 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
                 key={card.id}
                 onClick={() => toggleCard(card.id)}
                 style={{ borderColor: theme.hex }}
-                className="group relative h-28 p-2 rounded-xl border-2 bg-slate-900/90 hover:bg-rose-950/40 hover:border-rose-500 transition-all cursor-pointer flex flex-col justify-between shadow-md"
+                className="group relative h-28 p-2 rounded-md border-2 bg-[#1C1E20] hover:bg-[#AA4A44]/20 hover:border-[#AA4A44] transition-all cursor-pointer flex flex-col justify-between shadow-md"
               >
                 <div className="flex items-center justify-between">
                   <span style={{ color: theme.hex }} className="text-base font-bold">
                     {theme.badgeIcon}
                   </span>
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40">
                     ⚡{card.energyCost}
                   </span>
                 </div>
@@ -271,13 +264,13 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
                   >
                     {card.name}
                   </p>
-                  <p className="text-[11px] font-bold text-rose-400 hidden group-hover:block">
+                  <p className="text-[11px] font-bold text-[#AA4A44] hidden group-hover:block">
                     Click to Remove
                   </p>
                 </div>
 
                 <div className="text-center">
-                  <span className="text-[9px] font-mono text-slate-400 capitalize">
+                  <span className="text-[9px] font-mono text-[#8B7E74] capitalize">
                     {card.anchor}
                   </span>
                 </div>
@@ -288,20 +281,20 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
       </div>
 
       {/* Card Library Filter Tabs */}
-      <div className="flex flex-col gap-3 mt-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Card Catalog Library
+      <div className="flex flex-col gap-3 mt-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(139,126,116,0.2)] pb-2.5">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[#8B7E74]">
+            Card Library
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {anchors.map((anchor) => (
               <button
                 key={anchor}
                 onClick={() => setFilterAnchor(anchor)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded text-xs font-semibold capitalize transition-colors cursor-pointer ${
                   filterAnchor === anchor
-                    ? 'bg-sky-600 text-white shadow-md shadow-sky-900/40'
-                    : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                    ? 'bg-[#D4AF37] text-[#141618] font-bold'
+                    : 'bg-[#24272A] text-[#8B7E74] hover:text-[#FAF9F6] border border-[rgba(139,126,116,0.2)]'
                 }`}
               >
                 {anchor}
@@ -311,7 +304,7 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
         </div>
 
         {/* Library Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-1">
           {filteredLibrary.map((card) => {
             const isEquipped = selectedIds.includes(card.id);
             const theme = PIECE_COLOR_THEMES[card.anchor];
@@ -319,54 +312,54 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
             return (
               <div
                 key={card.id}
-                style={{ borderColor: isEquipped ? theme.hex : '#334155' }}
-                className={`flex flex-col justify-between p-4 rounded-xl border-2 transition-all duration-200 ${
+                style={{ borderColor: isEquipped ? theme.hex : 'rgba(139, 126, 116, 0.25)' }}
+                className={`flex flex-col justify-between p-3.5 rounded-md border transition-all duration-200 ${
                   isEquipped
-                    ? 'bg-slate-900/90 shadow-lg'
-                    : 'bg-slate-950/60 hover:bg-slate-900/70 border-slate-800'
+                    ? 'bg-[#24272A] shadow-lg'
+                    : 'bg-[#191B1D] hover:bg-[#24272A] border-[rgba(139,126,116,0.2)]'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
                     <span
                       style={{ color: theme.hex }}
-                      className="text-lg font-bold flex items-center gap-1.5"
+                      className="text-base font-bold flex items-center gap-1.5"
                     >
                       <span>{theme.badgeIcon}</span>
                       <span className="text-xs uppercase font-mono tracking-wider">
                         {card.anchor}
                       </span>
                     </span>
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40">
                       ⚡ {card.energyCost} Energy
                     </span>
                   </div>
 
                   <h4
                     style={{ color: theme.hex }}
-                    className="text-base font-bold mt-2 leading-snug"
+                    className="text-sm font-bold mt-2 leading-snug"
                   >
                     {card.name}
                   </h4>
 
-                  <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                  <p className="text-xs text-[#FAF9F6]/90 mt-1.5 leading-relaxed">
                     {card.description}
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
-                  <span className="text-[11px] font-mono text-slate-500">
+                <div className="mt-3 pt-2.5 border-t border-[rgba(139,126,116,0.2)] flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-[#8B7E74]">
                     {card.tradeoff ? `Tradeoff: ${card.tradeoff}` : 'No tradeoff'}
                   </span>
                   <button
                     onClick={() => toggleCard(card.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded text-xs font-bold transition-colors cursor-pointer ${
                       isEquipped
-                        ? 'bg-rose-900/70 hover:bg-rose-800 text-rose-200 border border-rose-700/50'
-                        : 'bg-sky-600 hover:bg-sky-500 text-white shadow-md'
+                        ? 'bg-[#AA4A44]/20 hover:bg-[#AA4A44]/40 text-[#AA4A44] border border-[#AA4A44]/50'
+                        : 'bg-[#4C5C4C] hover:bg-[#5C6C5C] text-[#FAF9F6]'
                     }`}
                   >
-                    {isEquipped ? 'Remove' : 'Equip Card'}
+                    {isEquipped ? 'Remove' : 'Equip'}
                   </button>
                 </div>
               </div>
