@@ -45,15 +45,15 @@ export const HomePage: React.FC = () => {
             <div style={cardStyle}>
               <div style={cardHeaderStyle}>
                 <span style={cardIconStyle}>🃏</span>
-                <span style={statusTagRoadmapStyle}>In Development (2D)</span>
+                <span style={statusTagLiveStyle}>Playable (2D)</span>
               </div>
               <h3 style={cardTitleStyle}>Deck Builder Chess</h3>
               <p style={cardDescriptionStyle}>
                 Draft tactical cards to modify piece movement, place barriers, create portal hazards, and execute game-changing combos in synchronous turn-based battles.
               </p>
               <div style={cardFooterStyle}>
-                <Link to="/deck-builder" style={secondaryButtonActionStyle}>
-                  Explore Rules & Preview →
+                <Link to="/deck-builder" style={primaryButtonActionStyle}>
+                  Play Deck Builder Chess →
                 </Link>
               </div>
             </div>
