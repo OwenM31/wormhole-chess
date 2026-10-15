@@ -29,17 +29,64 @@ export const Navigation: React.FC = () => {
   const elo = stats?.eloRating ?? 1200;
 
   return (
-    <header style={navContainerStyle}>
-      <div style={brandGroupStyle}>
+    <header style={navContainerStyle} className="nav-header">
+      <style>{`
+        @media (max-width: 860px) {
+          .nav-header {
+            padding: 0 0.75rem !important;
+          }
+          .nav-brand-group {
+            gap: 0.5rem !important;
+          }
+          .nav-brand-badge {
+            display: none !important;
+          }
+          .nav-user-elo {
+            display: none !important;
+          }
+          .nav-sign-out {
+            display: none !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .nav-header {
+            padding: 0 0.5rem !important;
+          }
+          .nav-brand-text {
+            display: none !important;
+          }
+          .nav-brand-group {
+            gap: 0.25rem !important;
+          }
+          .nav-link-item {
+            padding: 0.2rem 0.35rem !important;
+            font-size: 0.72rem !important;
+          }
+          .nav-auth-container {
+            gap: 0.25rem !important;
+          }
+          .nav-user-pill {
+            padding: 0.2rem 0.4rem !important;
+            font-size: 0.72rem !important;
+            max-width: 75px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+          }
+        }
+      `}</style>
+      <div style={brandGroupStyle} className="nav-brand-group">
         <NavLink to="/" style={brandLinkStyle}>
-          <span>Wormhole Chess</span>
-          <span style={brandBadgeStyle}>v2.0</span>
+          <span style={{ fontSize: '1.05rem', lineHeight: 1 }}>🌀</span>
+          <span className="nav-brand-text">Wormhole Chess</span>
+          <span style={brandBadgeStyle} className="nav-brand-badge">v2.0</span>
         </NavLink>
 
         <nav style={navLinksStyle}>
           <NavLink
             to="/"
             style={({ isActive }) => (isActive ? activeLinkStyle : linkStyle)}
+            className="nav-link-item"
             end
           >
             Home
@@ -47,25 +94,28 @@ export const Navigation: React.FC = () => {
           <NavLink
             to="/wormhole"
             style={({ isActive }) => (isActive ? activeLinkStyle : linkStyle)}
+            className="nav-link-item"
           >
             Wormhole
           </NavLink>
           <NavLink
             to="/deck-builder"
             style={({ isActive }) => (isActive ? activeLinkStyle : linkStyle)}
+            className="nav-link-item"
           >
             Deck Builder
           </NavLink>
           <NavLink
             to="/dashboard"
             style={({ isActive }) => (isActive ? activeLinkStyle : linkStyle)}
+            className="nav-link-item"
           >
             Profile
           </NavLink>
         </nav>
       </div>
 
-      <div style={authContainerStyle}>
+      <div style={authContainerStyle} className="nav-auth-container">
         <button
           onClick={() => {
             const next = toggleMuted();
@@ -82,9 +132,10 @@ export const Navigation: React.FC = () => {
           <span style={loadingTextStyle}>Connecting...</span>
         ) : user ? (
           <div style={userSectionStyle}>
-            <Link to="/dashboard" style={userPillLinkStyle}>
+            <Link to="/dashboard" style={userPillLinkStyle} className="nav-user-pill">
               <span style={monoTextStyle}>
-                {user.username} · {elo} ELO
+                {user.username}
+                <span className="nav-user-elo"> · {elo} ELO</span>
               </span>
               {user.isGuest && <span style={guestChipStyle}>Guest</span>}
             </Link>
@@ -95,7 +146,7 @@ export const Navigation: React.FC = () => {
               </Link>
             ) : null}
 
-            <button onClick={handleLogout} style={signOutButtonStyle}>
+            <button onClick={handleLogout} style={signOutButtonStyle} className="nav-sign-out">
               Sign Out
             </button>
           </div>
@@ -122,6 +173,8 @@ const navContainerStyle: React.CSSProperties = {
   position: 'sticky',
   top: 0,
   zIndex: 100,
+  maxWidth: '100vw',
+  overflow: 'hidden',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
 };
 
