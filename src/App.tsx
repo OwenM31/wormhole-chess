@@ -6,6 +6,7 @@ import WormholePage from './pages/WormholePage';
 import DeckBuilderPage from './pages/DeckBuilderPage';
 import DashboardPage from './pages/DashboardPage';
 import AuthPage from './pages/AuthPage';
+import { PlayRoomPage } from './pages/PlayRoomPage';
 
 const App: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const App: React.FC = () => {
           <Route path="/wormhole" element={<WormholePage />} />
           <Route path="/deck-builder" element={<DeckBuilderPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/play/:code" element={<PlayRoomPage />} />
           <Route path="/login" element={<AuthPage mode="login" />} />
           <Route path="/register" element={<AuthPage mode="register" />} />
           <Route path="*" element={<Navigate to="/" replace />} />

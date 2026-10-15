@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import { useAuth } from '../context/AuthContext';
+import { MatchmakingLobby } from '../components/MatchmakingLobby';
 
 export const DashboardPage: React.FC = () => {
   const { user, stats, isLoading, logout } = useAuth();
@@ -162,6 +163,9 @@ export const DashboardPage: React.FC = () => {
             <span style={statSubtextStyle}>Match breakdown</span>
           </div>
         </div>
+
+        {/* REAL-TIME MULTIPLAYER LOBBY */}
+        <MatchmakingLobby />
 
         {/* QUICK GAME LAUNCHERS */}
         <h2 style={sectionHeaderStyle}>Launch Game Variant</h2>
