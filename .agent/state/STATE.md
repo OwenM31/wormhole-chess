@@ -1,14 +1,14 @@
 ---
-updated: 2026-10-14T22:12:09-05:00
+updated: 2026-10-14T22:13:00-05:00
 ---
 
 # Project State
 
 ## Current Position
 
-- **Phase**: 3 - Real-Time Room Coordination & Durable Objects (completed)
-- **Task**: Phase 3 complete; ready for Phase 4 planning
-- **Status**: Paused at 2026-10-14T22:12:09-05:00
+- **Phase**: 4 - Deck Builder Chess (2D Variant) & AI Opponent
+- **Task**: Phase 4 discussed and aligned; ready for planning (/plan 4)
+- **Status**: Active (aligned 2026-10-14T22:20:00-05:00)
 
 ## Last Session Summary
 
@@ -19,7 +19,7 @@ Phase 3 executed and verified successfully:
 
 ## In-Progress Work
 
-- Files modified: Clean working tree ready for commit.
+- Files modified: Clean working tree; DECISION-007 added to `DECISIONS.md`.
 - Tests status: Passing (`npm run build` passes in 827ms; edge functions and companion worker typechecks pass with 0 errors).
 
 ## Blockers
@@ -35,6 +35,7 @@ None.
 - [DECISION-004]: 2D board & card interface for Deck Builder Chess in v1; 3D deferred to future milestones.
 - [DECISION-005]: Cloudflare Pages Functions backend (`functions/api/*`) with HttpOnly cookies, WebCrypto PBKDF2 hashing, and D1 sessions.
 - [DECISION-006]: Real-time multiplayer architecture with companion worker, `GameRoomDO`, `MatchmakerDO`, Hibernatable WebSockets, dual matchmaking (private + public queue with live counts), turn clock toggles, and read-only spectators.
+- [DECISION-007]: Deck Builder Chess architecture: `chess.js` foundation, 3-energy per turn economy, fixed tactical hand of 6 cards (no deck fail / no random draw), and dual play modes (Solo AI + Online Multiplayer).
 
 ### Files of Interest
 - `worker/src/GameRoomDO.ts`: Durable Object handling room state, seat allocation, Hibernatable WebSockets, clock/disconnect alarms, and D1 match history.
@@ -46,8 +47,7 @@ None.
 
 ## Next Steps
 
-1. Proceed to Phase 4: Deck Builder Chess (2D Variant) & AI Opponent.
-2. Plan Phase 4 with `/plan 4` or discuss with `/discuss-phase 4`.
-3. Plan 4.1: 2D Chessboard engine, card action system, and simultaneous "play card + move" turn loop.
-4. Plan 4.2: Lightweight heuristic AI opponent for solo testing.
-5. Plan 4.3: Deck builder UI for card collection and custom deck configuration.
+1. Proceed to Phase 4 Planning: Run `/plan 4` to generate atomic execution plans.
+2. Wave 1: 2D Chessboard engine (`chess.js` wrapper), card action system (6 core abilities, 3-energy economy), and fixed tactical hand state.
+3. Wave 2: Heuristic AI opponent bot (minimax + piece evaluation + card utility) for instant Solo Play.
+4. Wave 3: UI integration — interactive 2D board, card hand bar, energy meter, dual play mode launcher (Solo AI vs Online), and custom deck loadout builder.

@@ -146,6 +146,39 @@ Phase 3 requires stateful room coordination and multiplayer synchronization for 
 - Pages Functions or direct WebSocket routing to proxy connections to the DO stubs.
 - Frontend requires a reusable `useGameRoom` React hook / WebSocket client to manage reconnects, heartbeats, and room events.
 
+### [DECISION-007] Deck Builder Chess Architecture: chess.js Foundation, Energy Economy, Fixed Tactical Hand & Dual Play Modes
+
+**Date**: 2026-10-14
+**Status**: Accepted
+
+#### Context
+Phase 4 requires building the 2D Deck Builder Chess variant, including board rules, card action system, turn loop, AI opponent, and deck customization. We evaluated chess move generation options, card resource economy, card pool mechanics (preventing "deck fail"), and game modes.
+
+#### Scope
+- Implement 2D Deck Builder Chess board engine and rules with 8x8 chess + card action resolution (REQ-08, REQ-09).
+- Implement a lightweight heuristic AI bot for solo testing (REQ-10).
+- Support both Solo Play vs AI (instant client-side) and Online Multiplayer via existing `GameRoomDO` rooms (REQ-07, REQ-09).
+- Implement Deck Builder card collection and custom loadout configuration UI (REQ-11).
+
+#### Approach
+1. **Chess Engine Foundation (`chess.js`)**:
+   - Chose: Use `chess.js` for standard 8x8 move validation, king safety, check/checkmate detection, and FEN tracking, wrapped with a custom `DeckChessEngine` / `CardActionResolver`.
+   - Reason: Prevents subtle chess rule bugs (castling privileges, en passant, pins) and isolates card effects into a clean, testable wrapper layer.
+2. **Energy Economy (3 Energy per Turn)**:
+   - Chose: Each player receives 3 Energy at the start of their turn to spend on tactical cards (cards cost 1–3 Energy), combined with 1 mandatory chess move.
+   - Reason: Provides rich tactical decision-making and allows combining multiple low-cost cards or single powerful high-cost cards.
+3. **Fixed Tactical Hand (No Deck Fail)**:
+   - Chose: Players enter matches with a fixed hand of 6 curated cards (selected from a library of 5–8 abilities). No random drawing or deck exhaustion mechanic.
+   - Reason: Eliminates RNG draw frustration and deck-fail states while maintaining chess-like strategic determinism. The Deck Builder UI allows players to configure their active loadout.
+4. **Dual Play Modes (Solo AI + Online Multiplayer)**:
+   - Chose: Build both instant Solo Play vs AI (client-side heuristic minimax evaluator with piece values and card utility scoring) and Online Multiplayer (using Phase 3's `GameRoomDO` WebSocket coordinator).
+   - Reason: Solo AI provides immediate zero-wait testing and casual practice, while online multiplayer delivers the full competitive experience.
+
+#### Constraints
+- 2D responsive board interface in v1 (CON-03).
+- Strictly turn-based gameplay (CON-02).
+- Pure TypeScript implementation of card resolver and AI bot compatible with browser and server.
+
 ---
 
 *Last updated: 2026-10-14*
