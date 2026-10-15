@@ -6,6 +6,51 @@
 
 ## Sessions
 
+### Session: 2026-10-15 15:22
+
+#### Objective
+Restore session context (`/resume`), execute Phase 1 plans (`@[.agent/workflows/execute.md] 1`) to align the Matchmaking Lobby and Historical Match Replay Viewer with Phase 1 design tokens, harden responsive mobile breakpoints on Dashboard and Navigation, run empirical Playwright UX sweep, and document Phase 1 verification (`VERIFICATION.md`).
+
+#### Accomplished
+- ✅ Resumed session with clean git working tree (`d432078`).
+- ✅ Executed Wave 1 (Plan 1.1):
+  - Refactored `src/components/MatchmakingLobby.tsx` to inherit locked design tokens (`#0e1118` surface, `#0c0e14` panel header, 6px radii, hairline borders, monospace time control pills, and approved action copy: "Find Match", "Create Room", "Join with Code").
+  - Committed task changes (`40fdcda`) and documented `01-SUMMARY.md` (`895f3ea`).
+- ✅ Executed Wave 2 (Plan 1.2):
+  - Refactored `src/components/HistoricalMatchViewer.tsx` modal with dark glass backdrop (`rgba(9, 10, 15, 0.85)` + `backdrop-filter: blur(8px)`), `#0e1118` surface, 6px radii, tabular move history with active ply auto-scroll, board orientation flip control (`b2a6f87`).
+  - Hardened responsive layout in `src/pages/DashboardPage.tsx` (`.dashboard-grid` 2-column collapsing to 1-column on <960px, `.dashboard-play-grid` stacking on <600px, responsive match rows) (`68c6db9`).
+  - Hardened mobile responsiveness in `src/components/Navigation.tsx` (collapsing branding and user pills on small viewports) to eliminate mobile horizontal scroll (`c31faa8`).
+  - Documented `02-SUMMARY.md` (`8b45491`).
+- ✅ Empirical Validation:
+  - Created automated Playwright verification suite `scripts/verify-phase1-ux.mjs`.
+  - Swept Desktop (1280x800) and verified Navigation branding, approved copy, 2-column command layout, and captured `phase1_dashboard_desktop.png`.
+  - Verified Replay Modal interactivity, move history sidebar, and captured `phase1_replay_modal.png`.
+  - Swept Mobile (375x667) and confirmed zero horizontal scrolling (`scrollWidth=375`, `clientWidth=375`, 0 overflowing elements) and captured `phase1_dashboard_mobile.png`.
+  - Verified full-stack typecheck clean (`npm run typecheck:all`), production build clean in 1.21s (`npm run build`), and 83/83 card engine tests pass cleanly (`npm test`).
+- ✅ Compiled `.agent/state/phases/1/VERIFICATION.md` with PASS verdict.
+- ✅ Updated `ROADMAP.md` marking Phase 1 complete and moving current phase to Phase 2 (`5192db6`).
+
+#### Verification
+- [x] Full-stack typecheck clean across client, Pages Functions, and worker (`npm run typecheck:all`).
+- [x] All 83 automated card engine tests pass cleanly (`npm test`).
+- [x] Production build passes cleanly in 1.21s (`npm run build`).
+- [x] Automated Headless Chrome UX test suite passed across desktop (1280px) and mobile (375px) with screenshots verified.
+- [x] Phase 1 VERIFICATION.md recorded with PASS verdict.
+
+#### Paused Because
+User requested session pause (`/pause`) at clean milestone handoff point upon 100% completion and verification of Phase 1.
+
+#### Handoff Notes
+- Phase 1 (Design System Foundations & Player Dashboard Redesign) is 100% complete, verified, and committed.
+- Working tree is clean.
+- When resuming, run `/resume` to restore context.
+- Proceed to Phase 2: Tactical Deck Builder Page & Arena Layout Redesign (`@design-phase.md 2 deck-builder`):
+  1. Conduct visual craft research for the 2D arena layout (eliminating vertical scroll jank and balanced widescreen proportions).
+  2. Draft candidate UI copy strings and gather user confirmation.
+  3. Generate 3 visual HTML prototype variants and capture 2x retina screenshots via Playwright.
+
+---
+
 ### Session: 2026-10-15 14:37
 
 #### Objective
