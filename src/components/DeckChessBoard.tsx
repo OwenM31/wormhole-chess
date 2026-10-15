@@ -30,7 +30,7 @@ function ChessPieceSvg({
   switch (type) {
     case 'p':
       return (
-        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md">
+        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md" style={{ width: '80%', height: '80%', maxHeight: '100%' }}>
           <path
             d="m 22.5,9 c -2.21,0 -4,1.79 -4,4 0,0.89 0.29,1.71 0.78,2.38 C 17.33,16.5 16,18.59 16,21 c 0,2.03 0.94,3.84 2.41,5.03 C 15.41,27.09 11,31.58 11,39.5 l 23,0 c 0,-7.92 -4.41,-12.41 -7.41,-13.47 C 28.06,24.84 29,23.03 29,21 29,18.59 27.67,16.5 25.72,15.38 26.21,14.71 26.5,13.89 26.5,13 c 0,-2.21 -1.79,-4 -4,-4 z"
             fill={fill}
@@ -43,7 +43,7 @@ function ChessPieceSvg({
 
     case 'n':
       return (
-        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md">
+        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md" style={{ width: '80%', height: '80%', maxHeight: '100%' }}>
           <path
             d="m 22,10 c 10.5,1 16.5,8 16,29 L 15,39 C 15,33.5 17,29 20,26 21,25 22,23 22,20 22,18 20,16 18,16 c -3,0 -4,2 -4,5 l -4,-1 c 0,-4 3,-7.5 8,-7.5 1.5,0 2.5,0.5 4,1.5 z"
             fill={fill}
@@ -57,7 +57,7 @@ function ChessPieceSvg({
 
     case 'b':
       return (
-        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md">
+        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md" style={{ width: '80%', height: '80%', maxHeight: '100%' }}>
           <path
             d="m 9,36 c 3.39,-0.97 10.11,0.43 13.5,-2 3.39,2.43 10.11,1.03 13.5,2 0,0 1.65,0.54 3,2 -0.68,0.97 -1.65,0.99 -3,1 -5.5,0 -14,-0.03 -27,0 -1.35,-0.01 -2.32,-0.03 -3,-1 1.35,-1.46 3,-2 3,-2 z"
             fill={fill}
@@ -76,7 +76,7 @@ function ChessPieceSvg({
 
     case 'r':
       return (
-        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md">
+        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md" style={{ width: '80%', height: '80%', maxHeight: '100%' }}>
           <path
             d="m 9,39 27,0 c 0,-3 -2.5,-3.5 -2.5,-3.5 l -22,0 c 0,0 -2.5,0.5 -2.5,3.5 z"
             fill={fill}
@@ -100,7 +100,7 @@ function ChessPieceSvg({
 
     case 'q':
       return (
-        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md">
+        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md" style={{ width: '80%', height: '80%', maxHeight: '100%' }}>
           <path
             d="m 9,36 c 3.39,-0.97 10.11,0.43 13.5,-2 3.39,2.43 10.11,1.03 13.5,2 0,0 1.65,0.54 3,2 -0.68,0.97 -1.65,0.99 -3,1 -5.5,0 -14,-0.03 -27,0 -1.35,-0.01 -2.32,-0.03 -3,-1 1.35,-1.46 3,-2 3,-2 z"
             fill={fill}
@@ -119,7 +119,7 @@ function ChessPieceSvg({
 
     case 'k':
       return (
-        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md">
+        <svg viewBox="0 0 45 45" className="w-4/5 h-4/5 drop-shadow-md" style={{ width: '80%', height: '80%', maxHeight: '100%' }}>
           <path
             d="m 9,36 c 3.39,-0.97 10.11,0.43 13.5,-2 3.39,2.43 10.11,1.03 13.5,2 0,0 1.65,0.54 3,2 -0.68,0.97 -1.65,0.99 -3,1 -5.5,0 -14,-0.03 -27,0 -1.35,-0.01 -2.32,-0.03 -3,-1 1.35,-1.46 3,-2 3,-2 z"
             fill={fill}
@@ -221,7 +221,8 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
               <div
                 key={squareName}
                 onClick={() => onSquareClick(squareName)}
-                className={`relative flex items-center justify-center transition-colors duration-150 cursor-pointer ${baseBg} hover:opacity-95`}
+                className={`relative flex items-center justify-center transition-colors duration-150 cursor-pointer ${baseBg} hover:opacity-95 aspect-square`}
+                style={{ aspectRatio: '1 / 1' }}
               >
                 {/* Coordinate labels */}
                 {fileDisplayIndex === 0 && (

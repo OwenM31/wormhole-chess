@@ -77,7 +77,7 @@ export const DeckBuilderPage: React.FC = () => {
               <h1 className="text-sm font-bold text-slate-100 flex items-center gap-2">
                 Deck Builder Chess
                 <span className="text-[10px] font-mono uppercase bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full font-bold">
-                  2D Phase 4
+                  Tactical 2D
                 </span>
               </h1>
             </div>
