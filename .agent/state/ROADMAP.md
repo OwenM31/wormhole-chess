@@ -6,8 +6,8 @@ updated: 2026-10-14T23:27:00Z
 
 # Roadmap
 
-> **Current Phase:** Phase 2 - Cloudflare Backend, D1 Database & Authentication UI
-> **Status:** 🔄 Ready for Execution
+> **Current Phase:** Phase 4 - Deck Builder Chess (2D Variant) & AI Opponent
+> **Status:** 🔄 Ready for Execution (3 plans across 3 waves)
 
 ## Must-Haves (from SPEC)
 
@@ -58,15 +58,15 @@ updated: 2026-10-14T23:27:00Z
 ---
 
 ### Phase 4: Deck Builder Chess (2D Variant) & AI Opponent
-**Status:** ⬜ Not Started
+**Status:** 🔄 Ready for Execution
 **Objective:** Build the 2D Deck Builder Chess variant with 8x8 board rules, card action execution, simultaneous turn loop, starter deck management, and a heuristic AI opponent for testing.
 **Depends on:** Phase 3
 **Requirements:** REQ-08, REQ-09, REQ-10, REQ-11, CON-03
 
 **Plans:**
-- [ ] Plan 4.1: 2D Chessboard engine, card action system, and simultaneous "play card + move" turn loop
-- [ ] Plan 4.2: Lightweight heuristic AI opponent for full-flow solo testing
-- [ ] Plan 4.3: Deck builder UI for card collection and custom deck configuration
+- [ ] Plan 4.1: Core Chess Engine & Compositional Card Graph (Wave 1)
+- [ ] Plan 4.2: Heuristic AI Bot & Solo Play Coordinator (Wave 2)
+- [ ] Plan 4.3: 2D Board UI, Tactical Hand Bar, Deck Builder & Multiplayer Integration (Wave 3)
 
 ---
 

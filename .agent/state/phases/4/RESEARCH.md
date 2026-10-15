@@ -32,21 +32,37 @@ Key APIs:
 
 **Recommendation:** Install `chess.js` as a production dependency and encapsulate it inside a `DeckChessEngine` class. The wrapper coordinates standard chess moves, tracks active board modifiers (traps, barriers), and manages player energy and card usage.
 
-### 2. Tactical Card System & Board Modifiers
+### 2. Compositional Card Graph Architecture & Engine Invariants
 
-To maintain chess rule integrity while introducing deck-building mechanics, cards are executed through a **Two-Phase Action Pipeline**:
-1. **Card Resolution Phase**: The player can spend available Energy (0 to 3) to activate tactical cards from their hand. Card effects mutate board state or attach ephemeral modifiers (e.g. barriers or frozen pieces) to squares.
-2. **Chess Move Phase**: The player executes standard legal chess move on the modified board.
+Following user alignment, cards are not hardcoded one-off scripts. The card engine is an **Entity-Component-System Compositional Multi-Partite Graph**:
+`[Piece Anchor] ──(Energy Cost & Friction)──> [Condition Node(s)] ──> [Reward Node(s)] ──> [Optional Gambit Tradeoff] ──> [Global Guardrail Validator]`
 
-#### The Core 6 Tactical Cards:
-1. **Portal Leap (Cost: 2 Energy)**: Teleport any friendly non-king piece to an empty square (no capture, cannot place king in check).
-2. **Phase Shift (Cost: 1 Energy)**: Swap positions of two friendly non-king pieces.
-3. **Gravity Barrier (Cost: 2 Energy)**: Place an impassable barrier on any empty square for 2 turns. Pieces cannot land on or slide through this square.
-4. **Cryo Freeze (Cost: 2 Energy)**: Freeze an enemy piece for 1 turn. That piece cannot move or capture on the opponent's next turn.
-5. **Kinetic Shield (Cost: 1 Energy)**: Grant a friendly piece a 1-turn shield. If the opponent captures it, the capture is negated and the shield shatters.
-6. **Tactical Overdrive (Cost: 3 Energy)**: Take a second chess move this turn, provided neither move leaves your king in check.
+#### Global Engine Invariants:
+1. **Execution Window (`PRE_MOVE_WINDOW`)**: In each player's turn, after the opponent's move resolves and before the player commits their standard chess move, the player may play **at most 1 card** (unless `TEMPO_CONCESSION`, which consumes the chess move).
+2. **The Graveyard Conservation Law**: No card effect may spawn, revive, or convert/recruit a piece onto the board unless the player currently holds the corresponding piece in their captured/graveyard pool. Total material can never exceed standard starting counts.
+3. **The No-Direct-Mate Law**: A card effect cannot resolve into an immediate, unavoidable checkmate during the card-resolution step itself, nor can a card directly capture the enemy King.
+4. **Deck Construction**: Standard battle loadout is **8 cards**, selected before the match.
 
-**Recommendation:** Model board modifiers as an explicit array of `BoardModifier` objects (`{ id, type: 'barrier' | 'freeze' | 'shield', square, ownerColor, turnsRemaining }`). In legal move generation, `DeckChessEngine` filters out moves blocked by barriers or attempted by frozen pieces.
+#### Piece Class Motifs & Visual Color Identity:
+Every card is anchored to one of the 6 chess piece classes with dedicated color styling and visual sigil:
+- **Pawn (Amber `#d29922`)**: Formations, infantry advances, tactical sacrifices (`EXTEND_RANGE`, `SCUTTLE`, `VECTOR_GRAFT`).
+- **Knight (Emerald `#3fb950`)**: Cavalry escort, dislocation swaps (`CARRY_PASSENGER`, `COORDINATE_SWAP`).
+- **Bishop (Violet `#bc8cff`)**: Diagonal piercing, color-shift geometry (`PIERCE_CAPTURE`, `VECTOR_GRAFT`).
+- **Rook (Cobalt `#58a6ff`)**: Fortification, terrain barriers, displacement (`DEPLOY_OBSTACLE`, `DRAG_OR_PUSH`).
+- **Queen (Rose `#f778ba`)**: High command, devastating swaps, tactical momentum (`COORDINATE_SWAP`, `AURA_COMMAND`).
+- **King (Solar Gold `#e3b341`)**: Entrenchment, retinue formation, royal decrees (`TANDEM_SHIFT`, `SPAWN_FROM_GRAVEYARD`).
+
+*(Note: Unintuitive temporal and pacify effects such as `CARD_SILENCE`, `PACIFY_PIECE`, and `LINE_QUARANTINE` are explicitly excluded in favor of kinetic, spatial, and positional chess moves).*
+
+#### The 8-Card Starter Pool for Phase 4:
+1. **Vanguard Advance (Pawn | Cost: 1 | Amber)**: `UNMOVED` -> `EXTEND_RANGE(1)` (Pawn can advance 3 squares from home, or 2 squares when already advanced).
+2. **Abandon Ship / Scuttle (Pawn | Cost: 1 | Amber)**: `UNDER_FIRE` -> `SCUTTLE` (Voluntarily sacrifice pawn into graveyard to clear lines of sight without consuming your normal chess move).
+3. **Cavalry Escort (Knight | Cost: 2 | Emerald)**: `FRIENDLY_ADJACENCY` -> `CARRY_PASSENGER` (When Knight leaps, adjacent ally is carried to the vacated square).
+4. **Dislocation Swap (Knight | Cost: 2 | Emerald)**: `IN_TERRITORY(ENEMY_HALF)` -> `COORDINATE_SWAP` (Swap deep Knight and another friendly piece).
+5. **Prism Ray (Bishop | Cost: 3 | Violet)**: `LINE_OF_SIGHT_ALIGNMENT` -> `PIERCE_CAPTURE(maxTargets: 2)` (Capture target and continue along ray to capture a second non-king target).
+6. **Color Inversion (Bishop | Cost: 2 | Violet)**: Active Bishop -> `VECTOR_GRAFT(orthogonal)` (Bishop takes 1 orthogonal step to invert its square color complex).
+7. **Rampart Deploy (Rook | Cost: 2 | Cobalt)**: `OPEN_LINE` -> `DEPLOY_OBSTACLE(duration: 2 turns)` (Place an impassable energy barrier on an empty square along Rook's line of sight).
+8. **Royal Decree (King | Cost: 2 | Gold)**: `FRIENDLY_ADJACENCY` -> `TANDEM_SHIFT` (Move King and an adjacent bodyguard 1 square in the same direction simultaneously).
 
 ### 3. Turn Economy & Fixed Tactical Hand (No Deck Fail)
 
