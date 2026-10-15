@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-15T16:21:40-05:00
+updated: 2026-10-15T16:29:45-05:00
 ---
 
 # Project State
@@ -8,8 +8,8 @@ updated: 2026-10-15T16:21:40-05:00
 
 - **Milestone**: v2.0 Visual Craft & Frontend Redesign
 - **Phase**: 2 - Tactical Deck Builder Page & Arena Layout Redesign (In Progress)
-- **Task**: Phase 2 design approved and locked; ready for task decomposition (@plan.md 2)
-- **Status**: Active
+- **Task**: Planning complete (Plans 2.1 and 2.2 verified)
+- **Status**: Ready for execution
 
 ## Last Session Summary
 
@@ -48,4 +48,6 @@ None.
 
 ## Next Steps
 
-1. Run `@plan.md 2` to break down Phase 2 (Tactical Deck Builder Page & Arena Layout Redesign) into atomic executable plans based on approved design tokens and layout architecture.
+1. Run `@[.agent/workflows/execute.md] 2` to execute Phase 2 plans:
+   - Wave 1 (Plan 2.1): `DeckChessBoard.tsx` framing and `DeckBuilderPage.tsx` arena shell.
+   - Wave 2 (Plan 2.2): `TacticalHandBar.tsx` accordion dock and `DeckBuilderView.tsx` loadout curator.
