@@ -79,8 +79,8 @@ updated: 2026-10-14T23:27:00Z
 - [x] Plan 5.1: D1 Match & Deck Persistence Endpoints (Wave 1)
 - [x] Plan 5.2: Game Flow Match Recording, Cloud Deck Sync & Web Audio SFX (Wave 2)
 - [x] Plan 5.3: Historical Match Replay Viewer, Dashboard UI & Cloudflare Production Deployment (Wave 3)
-- [ ] Plan 5.4: Tailwind CSS Setup & 2D Deck Builder Layout Fix (Wave 1 - Gap Closure)
-- [ ] Plan 5.5: 3D Wormhole Header & Home Page Variant Card Polish (Wave 1 - Gap Closure)
+- [x] Plan 5.4: Tailwind CSS Setup & 2D Deck Builder Layout Fix (Wave 1 - Gap Closure)
+- [x] Plan 5.5: 3D Wormhole Header & Home Page Variant Card Polish (Wave 1 - Gap Closure)
 
 ---
 
@@ -92,7 +92,7 @@ updated: 2026-10-14T23:27:00Z
 | 2: Cloudflare Backend & Auth | ✅ Complete | 2/2 | 100% |
 | 3: Room Coordination & DO | ✅ Complete | 2/2 | 100% |
 | 4: Deck Builder Chess (2D) | ✅ Complete | 3/3 | 100% |
-| 5: Polish & Deployment | ✅ Complete | 3/3 | 100% |
+| 5: Polish & Deployment | ✅ Complete | 5/5 | 100% |
 
 ---
 

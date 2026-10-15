@@ -76,12 +76,22 @@ Link both chess variants to persistent D1 match records, perform full guest/user
 
 ---
 
+### Gap Closure Verification (Plans 5.4 & 5.5)
+| Defect | Severity | Status | Verification Evidence |
+|--------|----------|:------:|-----------------------|
+| `DEF-001` (Chessboard layout collapsed & pieces unconstrained) | P0 | ✓ RESOLVED | `@tailwindcss/vite` compiles utility classes into `build/assets/*.css` (49.32 kB). Pieces have explicit inline style bounds `style={{ width: '80%', height: '80%', maxHeight: '100%' }}` and squares have `aspect-square` with `style={{ aspectRatio: '1 / 1' }}`. |
+| `DEF-002` (Wormhole overlay header text clipping) | P2 | ✓ RESOLVED | `ChessboardScene.tsx` supports `hideHeaderTitle?: boolean`. `WormholePage.tsx` passes `hideHeaderTitle={true}`, cleanly suppressing duplicate canvas header title without overlapping overlay navigation. |
+| `DEF-003` (Home page variant card stale status) | P3 | ✓ RESOLVED | `HomePage.tsx` updated to `Playable (2D)` with `primaryButtonActionStyle` and `Play Deck Builder Chess →` button text. |
+| `DEF-004` (Deck Builder subheader internal sprint badge) | P3 | ✓ RESOLVED | `DeckBuilderPage.tsx` subheader badge updated from `2D Phase 4` to player-facing `Tactical 2D`. |
+
+---
+
 ### Human Verification Recommended
 1. **Audio Autoplay Policy:** Verify sound effects play cleanly after first user click in browser (Chrome/Firefox/Safari).
 2. **Interactive Match Replay Modal:** Visually inspect step navigation and card highlight banners in browser at `/dashboard`.
-3. **Cloudflare Deployment:** Run `npm run deploy:worker` and `npm run deploy:pages` with live Cloudflare credentials when ready for remote cloud hosting.
+3. **Cloudflare Deployment:** Run `npm run deploy:pages` to deploy the latest polished build to `https://wormhole-chess.com`.
 
 ---
 
 ## Verdict
-**PASS** — All 7 Phase 5 must-haves and 15 required artifacts are verified with empirical evidence. Zero gaps found.
+**PASS** — All 7 Phase 5 must-haves, 2 gap-closure remediation plans, and 4/4 UX sweep defects are verified with empirical evidence. Zero gaps remain.
