@@ -126,10 +126,46 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
 
   return (
     <div style={containerStyle}>
+      <style>{`
+        .auth-tab-btn {
+          outline: none;
+        }
+        .auth-tab-btn:hover {
+          color: #FAF9F6 !important;
+        }
+        .auth-tab-btn:focus-visible,
+        .auth-submit-btn:focus-visible {
+          outline: 2px solid rgba(212, 175, 55, 0.85) !important;
+          outline-offset: 2px !important;
+        }
+        .auth-input:focus {
+          border-color: #D4AF37 !important;
+          box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.4) !important;
+        }
+        .auth-submit-btn {
+          transition: background-color 0.15s ease, opacity 0.15s ease;
+        }
+        .auth-submit-btn:hover:not(:disabled) {
+          background-color: #5d705d !important;
+        }
+        .auth-submit-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        @media (max-width: 640px) {
+          .auth-main {
+            padding: 1.5rem 1rem !important;
+          }
+          .auth-card {
+            padding: 1.25rem 1rem !important;
+          }
+        }
+      `}</style>
       <Navigation />
 
-      <main style={mainContentStyle}>
-        <div style={authCardStyle}>
+      <main style={mainContentStyle} className="auth-main">
+        <div style={authCardStyle} className="auth-card">
           {/* Guest Upgrade Alert */}
           {user?.isGuest && (
             <div style={guestNoticeBannerStyle}>
@@ -141,9 +177,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
           )}
 
           {/* Segmented Navigation Tabs */}
-          <div style={tabContainerStyle}>
+          <div style={tabContainerStyle} role="tablist" aria-label="Authentication Modes">
             <button
               type="button"
+              role="tab"
+              id="auth-tab-login"
+              aria-selected={activeTab === 'login'}
+              aria-controls="auth-panel-login"
+              className="auth-tab-btn"
               onClick={() => handleTabChange('login')}
               style={activeTab === 'login' ? activeTabStyle : tabStyle}
             >
@@ -151,6 +192,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
             </button>
             <button
               type="button"
+              role="tab"
+              id="auth-tab-register"
+              aria-selected={activeTab === 'register'}
+              aria-controls="auth-panel-register"
+              className="auth-tab-btn"
               onClick={() => handleTabChange('register')}
               style={activeTab === 'register' ? activeTabStyle : tabStyle}
             >
@@ -158,6 +204,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
             </button>
             <button
               type="button"
+              role="tab"
+              id="auth-tab-guest"
+              aria-selected={activeTab === 'guest'}
+              aria-controls="auth-panel-guest"
+              className="auth-tab-btn"
               onClick={() => handleTabChange('guest')}
               style={activeTab === 'guest' ? activeTabStyle : tabStyle}
             >
@@ -174,7 +225,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
 
           {/* LOGIN FORM */}
           {activeTab === 'login' && (
-            <form onSubmit={handleLoginSubmit} style={formStyle}>
+            <form
+              onSubmit={handleLoginSubmit}
+              style={formStyle}
+              role="tabpanel"
+              id="auth-panel-login"
+              aria-labelledby="auth-tab-login"
+            >
               <div style={fieldGroupStyle}>
                 <label style={labelStyle}>Username</label>
                 <input
@@ -183,6 +240,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   style={inputStyle}
+                  className="auth-input"
                   required
                   autoFocus
                 />
@@ -196,6 +254,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={inputStyle}
+                  className="auth-input"
                   required
                 />
               </div>
@@ -203,6 +262,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
               <button
                 type="submit"
                 style={submitButtonStyle}
+                className="auth-submit-btn"
                 disabled={isSubmitting || authLoading}
               >
                 {isSubmitting ? 'Signing In...' : 'Sign In'}
@@ -212,7 +272,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
 
           {/* REGISTER FORM */}
           {activeTab === 'register' && (
-            <form onSubmit={handleRegisterSubmit} style={formStyle}>
+            <form
+              onSubmit={handleRegisterSubmit}
+              style={formStyle}
+              role="tabpanel"
+              id="auth-panel-register"
+              aria-labelledby="auth-tab-register"
+            >
               <div style={fieldGroupStyle}>
                 <label style={labelStyle}>Username</label>
                 <input
@@ -221,6 +287,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   style={inputStyle}
+                  className="auth-input"
                   required
                   autoFocus
                 />
@@ -234,6 +301,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   style={inputStyle}
+                  className="auth-input"
                 />
               </div>
 
@@ -245,6 +313,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   style={inputStyle}
+                  className="auth-input"
                   required
                 />
               </div>
@@ -257,6 +326,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   style={inputStyle}
+                  className="auth-input"
                   required
                 />
               </div>
@@ -264,6 +334,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
               <button
                 type="submit"
                 style={submitButtonStyle}
+                className="auth-submit-btn"
                 disabled={isSubmitting || authLoading}
               >
                 {isSubmitting
@@ -277,7 +348,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
 
           {/* GUEST MODE */}
           {activeTab === 'guest' && (
-            <div style={{ textAlign: 'center' }}>
+            <div
+              style={{ textAlign: 'center' }}
+              role="tabpanel"
+              id="auth-panel-guest"
+              aria-labelledby="auth-tab-guest"
+            >
               <div style={guestFeatureCardStyle}>
                 <div style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>⚡</div>
                 <div style={{ margin: '0 0 0.35rem', color: '#FAF9F6', fontSize: '1rem', fontWeight: 600 }}>
@@ -292,6 +368,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
                 type="button"
                 onClick={handleGuestSubmit}
                 style={submitButtonStyle}
+                className="auth-submit-btn"
                 disabled={isSubmitting || authLoading}
               >
                 {isSubmitting ? 'Entering...' : 'Play as Guest'}
@@ -306,6 +383,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
 
 const containerStyle: React.CSSProperties = {
   minHeight: '100vh',
+  width: '100%',
+  maxWidth: '100vw',
+  overflowX: 'hidden',
+  boxSizing: 'border-box',
   backgroundColor: '#191B1D',
   color: '#FAF9F6',
   display: 'flex',
