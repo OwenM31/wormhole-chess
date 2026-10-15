@@ -115,141 +115,186 @@ export const MatchmakingLobby: React.FC = () => {
 
   return (
     <div style={styles.container}>
-      {/* Header with live metrics */}
+      <style>{`
+        @keyframes mmSpin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes mmPulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(0.9); }
+        }
+      `}</style>
+
+      {/* Panel Header */}
       <div style={styles.header}>
-        <div>
-          <h2 style={styles.title}>Multiplayer Battle Hub</h2>
-          <p style={styles.subtitle}>Enter the queue or create a custom war room</p>
+        <div style={styles.headerLeft}>
+          <span style={styles.headerTitle}>Matchmaking</span>
         </div>
         <div style={styles.metricBadge}>
           <span style={styles.pulseDot} />
           <span style={styles.metricText}>
-            {metrics.inQueue.total} queuing • {metrics.activeMatches} active battles
+            {metrics.inQueue.total} queuing · {metrics.activeMatches} active matches
           </span>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={styles.tabs}>
-        <button
-          style={{
-            ...styles.tabButton,
-            ...(activeTab === 'quick' ? styles.tabButtonActive : {}),
-          }}
-          onClick={() => setActiveTab('quick')}
-        >
-          ⚡ Quick Match (Random Queue)
-        </button>
-        <button
-          style={{
-            ...styles.tabButton,
-            ...(activeTab === 'private' ? styles.tabButtonActive : {}),
-          }}
-          onClick={() => setActiveTab('private')}
-        >
-          🔐 Private Room (Code / Link)
-        </button>
-      </div>
-
-      {/* Tab 1: Quick Match */}
-      {activeTab === 'quick' && (
-        <div style={styles.tabContent}>
-          <label style={styles.fieldLabel}>Select Combat Variant:</label>
-          <div style={styles.variantGrid}>
-            <div
+      {/* Body Area */}
+      <div style={styles.body}>
+        {/* Segmented Tab Controls */}
+        <div style={styles.tabBar}>
+          <div style={styles.segmentedControl}>
+            <button
               style={{
-                ...styles.variantCard,
-                ...(selectedVariant === 'deck_builder' ? styles.variantCardActive : {}),
+                ...styles.segmentedBtn,
+                ...(activeTab === 'quick' ? styles.segmentedBtnActive : {}),
               }}
-              onClick={() => !isSearching && setSelectedVariant('deck_builder')}
+              onClick={() => setActiveTab('quick')}
             >
-              <div style={styles.variantIcon}>🃏</div>
-              <div style={styles.variantInfo}>
-                <div style={styles.variantName}>Deck Builder Chess</div>
-                <div style={styles.variantDesc}>2D board + card deck tactics</div>
-                <div style={styles.variantQueueCount}>
-                  {metrics.inQueue.deck_builder} players in queue
-                </div>
-              </div>
-            </div>
-
-            <div
-              style={{
-                ...styles.variantCard,
-                ...(selectedVariant === 'wormhole_3d' ? styles.variantCardActive : {}),
-              }}
-              onClick={() => !isSearching && setSelectedVariant('wormhole_3d')}
-            >
-              <div style={styles.variantIcon}>🌀</div>
-              <div style={styles.variantInfo}>
-                <div style={styles.variantName}>3D Wormhole Chess</div>
-                <div style={styles.variantDesc}>Three.js hyperbolic geometry</div>
-                <div style={styles.variantQueueCount}>
-                  {metrics.inQueue.wormhole_3d} players in queue
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {matchedRoom ? (
-            <div style={styles.matchedBanner}>
-              <div style={styles.matchedIcon}>⚔️</div>
-              <div>
-                <div style={styles.matchedTitle}>Match Found!</div>
-                <div style={styles.matchedDesc}>
-                  Engaging <strong>{matchedRoom.opponent}</strong> in room{' '}
-                  <span style={styles.codeHighlight}>{matchedRoom.roomCode}</span>...
-                </div>
-              </div>
-            </div>
-          ) : isSearching ? (
-            <div style={styles.searchingBox}>
-              <div style={styles.radarRing} />
-              <div style={styles.searchingText}>
-                Finding challenger for{' '}
-                {selectedVariant === 'deck_builder' ? 'Deck Builder' : 'Wormhole 3D'}...
-              </div>
-              <div style={styles.timerText}>
-                Elapsed: {Math.floor(searchElapsed / 60)}:
-                {String(searchElapsed % 60).padStart(2, '0')}
-              </div>
-              <button style={styles.cancelButton} onClick={handleCancelSearch}>
-                Cancel Queue
-              </button>
-            </div>
-          ) : (
-            <button style={styles.actionButton} onClick={handleStartSearch}>
-              Find Match Now
+              Find Match
             </button>
-          )}
+            <button
+              style={{
+                ...styles.segmentedBtn,
+                ...(activeTab === 'private' ? styles.segmentedBtnActive : {}),
+              }}
+              onClick={() => setActiveTab('private')}
+            >
+              Private Room
+            </button>
+          </div>
         </div>
-      )}
 
-      {/* Tab 2: Private Room */}
-      {activeTab === 'private' && (
-        <div style={styles.tabContent}>
+        {/* Tab 1: Quick Match */}
+        {activeTab === 'quick' && (
+          <div>
+            <div style={styles.sectionLabel}>Select Mode</div>
+            <div style={styles.variantGrid}>
+              <div
+                style={{
+                  ...styles.variantCard,
+                  ...(selectedVariant === 'deck_builder' ? styles.variantCardActive : {}),
+                }}
+                onClick={() => !isSearching && setSelectedVariant('deck_builder')}
+              >
+                <div style={styles.variantHeaderRow}>
+                  <span style={styles.variantName}>Deck Builder</span>
+                  <span style={styles.variantTag}>2D</span>
+                </div>
+                <div style={styles.variantDesc}>Chess with card actions & energy</div>
+                <div style={styles.variantQueueCount}>
+                  {metrics.inQueue.deck_builder} queuing
+                </div>
+              </div>
+
+              <div
+                style={{
+                  ...styles.variantCard,
+                  ...(selectedVariant === 'wormhole_3d' ? styles.variantCardActive : {}),
+                }}
+                onClick={() => !isSearching && setSelectedVariant('wormhole_3d')}
+              >
+                <div style={styles.variantHeaderRow}>
+                  <span style={styles.variantName}>Wormhole</span>
+                  <span style={styles.variantTag}>3D</span>
+                </div>
+                <div style={styles.variantDesc}>Multi-board spatial geometry</div>
+                <div style={styles.variantQueueCount}>
+                  {metrics.inQueue.wormhole_3d} queuing
+                </div>
+              </div>
+            </div>
+
+            {matchedRoom ? (
+              <div style={styles.matchedBanner}>
+                <div style={styles.matchedPulseDot} />
+                <div style={styles.matchedInfo}>
+                  <div style={styles.matchedTitle}>Match Found</div>
+                  <div style={styles.matchedDesc}>
+                    Opponent: <strong style={{ color: '#f8fafc' }}>{matchedRoom.opponent}</strong> · Room{' '}
+                    <span style={styles.codeHighlight}>{matchedRoom.roomCode}</span>
+                  </div>
+                </div>
+              </div>
+            ) : isSearching ? (
+              <div style={styles.searchingBox}>
+                <div style={styles.spinnerRing} />
+                <div style={styles.searchingText}>
+                  Searching for {selectedVariant === 'deck_builder' ? 'Deck Builder' : 'Wormhole'} match...
+                </div>
+                <div style={styles.timerText}>
+                  Elapsed: {Math.floor(searchElapsed / 60)}:
+                  {String(searchElapsed % 60).padStart(2, '0')}
+                </div>
+                <button style={styles.cancelButton} onClick={handleCancelSearch}>
+                  Cancel Search
+                </button>
+              </div>
+            ) : (
+              <button style={styles.primaryActionButton} onClick={handleStartSearch}>
+                Find Match
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Tab 2: Private Room */}
+        {activeTab === 'private' && (
           <div style={styles.privateGrid}>
             {/* Create Room Box */}
             <div style={styles.privateCard}>
-              <h3 style={styles.privateTitle}>Create Private Room</h3>
-              <p style={styles.privateDesc}>Generate a private code to invite a friend</p>
+              <div>
+                <div style={styles.privateCardTitle}>Create Room</div>
+                <div style={styles.privateCardDesc}>Generate a private room code for a friend.</div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={styles.fieldLabel}>Time Control:</label>
-                <div style={styles.timeButtons}>
-                  {['3+0', '5+0', '10+0', 'untimed'].map((tc) => (
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={styles.subFieldLabel}>Mode</div>
+                  <div style={styles.modeMiniGrid}>
                     <button
-                      key={tc}
                       type="button"
                       style={{
-                        ...styles.timeButton,
-                        ...(timeControl === tc ? styles.timeButtonActive : {}),
+                        ...styles.miniModeBtn,
+                        ...(selectedVariant === 'deck_builder' ? styles.miniModeBtnActive : {}),
                       }}
-                      onClick={() => setTimeControl(tc)}
+                      onClick={() => setSelectedVariant('deck_builder')}
                     >
-                      {tc === 'untimed' ? 'Untimed (Casual)' : tc}
+                      Deck Builder
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      style={{
+                        ...styles.miniModeBtn,
+                        ...(selectedVariant === 'wormhole_3d' ? styles.miniModeBtnActive : {}),
+                      }}
+                      onClick={() => setSelectedVariant('wormhole_3d')}
+                    >
+                      Wormhole
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={styles.subFieldLabel}>Time Control</div>
+                  <div style={styles.timeButtonsGrid}>
+                    {[
+                      { id: '3+0', label: '3 min' },
+                      { id: '5+0', label: '5 min' },
+                      { id: '10+0', label: '10 min' },
+                      { id: 'untimed', label: 'Untimed' },
+                    ].map(({ id, label }) => (
+                      <button
+                        key={id}
+                        type="button"
+                        style={{
+                          ...styles.timeButton,
+                          ...(timeControl === id ? styles.timeButtonActive : {}),
+                        }}
+                        onClick={() => setTimeControl(id)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -258,363 +303,458 @@ export const MatchmakingLobby: React.FC = () => {
                   <div style={styles.roomCodeDisplay}>{createdRoomCode}</div>
                   <div style={styles.buttonRow}>
                     <button style={styles.secondaryButton} onClick={handleCopyLink}>
-                      {copiedLink ? '✓ Copied Link!' : '📋 Copy Invite Link'}
+                      {copiedLink ? '✓ Copied' : 'Copy Invite Link'}
                     </button>
                     <button
-                      style={styles.actionButtonSmall}
-                      onClick={() => navigate(`/play/${createdRoomCode}?timeControl=${timeControl}`)}
+                      style={styles.enterRoomButton}
+                      onClick={() =>
+                        navigate(
+                          `/play/${createdRoomCode}?variant=${selectedVariant}&timeControl=${timeControl}`
+                        )
+                      }
                     >
                       Enter Room →
                     </button>
                   </div>
                 </div>
               ) : (
-                <button style={styles.actionButton} onClick={handleCreatePrivateRoom}>
-                  Generate Private Room
+                <button style={styles.createActionButton} onClick={handleCreatePrivateRoom}>
+                  Create Room
                 </button>
               )}
             </div>
 
             {/* Join Room Box */}
             <div style={styles.privateCard}>
-              <h3 style={styles.privateTitle}>Join With Code</h3>
-              <p style={styles.privateDesc}>Enter your friend's 6-character room code</p>
+              <div>
+                <div style={styles.privateCardTitle}>Join with Code</div>
+                <div style={styles.privateCardDesc}>Enter a private room code to join an existing game.</div>
 
-              <form onSubmit={handleJoinPrivateRoom} style={styles.joinForm}>
-                <input
-                  type="text"
-                  placeholder="WH-XXXX"
-                  maxLength={10}
-                  value={customRoomCode}
-                  onChange={(e) => setCustomRoomCode(e.target.value.toUpperCase())}
-                  style={styles.input}
-                />
-                <button
-                  type="submit"
-                  disabled={!customRoomCode.trim()}
-                  style={{
-                    ...styles.actionButton,
-                    opacity: customRoomCode.trim() ? 1 : 0.5,
-                  }}
-                >
-                  Join Match
-                </button>
-              </form>
+                <form onSubmit={handleJoinPrivateRoom} style={styles.joinForm}>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <div style={styles.subFieldLabel}>Room Code</div>
+                    <input
+                      type="text"
+                      placeholder="WH-XXXX"
+                      maxLength={10}
+                      value={customRoomCode}
+                      onChange={(e) => setCustomRoomCode(e.target.value.toUpperCase())}
+                      style={styles.input}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!customRoomCode.trim()}
+                    style={{
+                      ...styles.joinActionButton,
+                      opacity: customRoomCode.trim() ? 1 : 0.4,
+                      cursor: customRoomCode.trim() ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    Join with Code
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    backgroundColor: 'rgba(18, 21, 48, 0.85)',
-    backdropFilter: 'blur(16px)',
-    border: '1px solid rgba(99, 102, 241, 0.25)',
-    borderRadius: '16px',
-    padding: '1.75rem',
-    color: '#ffffff',
-    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-    margin: '2rem 0',
+    backgroundColor: '#0e1118',
+    color: '#f8fafc',
+    margin: 0,
+    width: '100%',
   },
   header: {
+    padding: '0.85rem 1.15rem',
+    backgroundColor: '#0c0e14',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     flexWrap: 'wrap',
-    gap: '1rem',
-    marginBottom: '1.5rem',
+    gap: '0.75rem',
   },
-  title: {
-    margin: 0,
-    fontSize: '1.4rem',
-    fontWeight: 700,
-    background: 'linear-gradient(135deg, #ffffff, #a855f7)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-  },
-  subtitle: {
-    margin: '0.25rem 0 0 0',
-    fontSize: '0.9rem',
-    color: '#94a3b8',
-  },
-  metricBadge: {
+  headerLeft: {
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    backgroundColor: 'rgba(16, 185, 129, 0.12)',
-    border: '1px solid rgba(16, 185, 129, 0.3)',
-    borderRadius: '9999px',
-    padding: '0.4rem 0.9rem',
+  },
+  headerTitle: {
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase',
+    color: '#94a3b8',
+  },
+  metricBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.45rem',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    border: '1px solid rgba(16, 185, 129, 0.25)',
+    borderRadius: '4px',
+    padding: '0.2rem 0.55rem',
   },
   pulseDot: {
+    width: '6px',
+    height: '6px',
+    borderRadius: '50%',
+    backgroundColor: '#10b981',
+    animation: 'mmPulse 2s infinite ease-in-out',
+  },
+  metricText: {
+    fontSize: '0.75rem',
+    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+    fontVariantNumeric: 'tabular-nums',
+    color: '#4ade80',
+    fontWeight: 500,
+  },
+  body: {
+    padding: '1.15rem',
+  },
+  tabBar: {
+    marginBottom: '1rem',
+  },
+  segmentedControl: {
+    display: 'inline-flex',
+    backgroundColor: '#090a0f',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: '4px',
+    padding: '3px',
+    gap: '3px',
+  },
+  segmentedBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#94a3b8',
+    padding: '0.35rem 0.85rem',
+    borderRadius: '3px',
+    cursor: 'pointer',
+    fontSize: '0.75rem',
+    fontWeight: 500,
+    transition: 'all 0.15s ease',
+  },
+  segmentedBtnActive: {
+    backgroundColor: '#171b26',
+    color: '#f8fafc',
+    fontWeight: 600,
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+  },
+  sectionLabel: {
+    fontSize: '0.7rem',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    color: '#94a3b8',
+    marginBottom: '0.5rem',
+  },
+  subFieldLabel: {
+    fontSize: '0.7rem',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    color: '#94a3b8',
+    marginBottom: '0.4rem',
+  },
+  variantGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '0.75rem',
+    marginBottom: '1rem',
+  },
+  variantCard: {
+    backgroundColor: '#090a0f',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: '6px',
+    padding: '0.85rem 1rem',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  variantCardActive: {
+    backgroundColor: '#141722',
+    borderColor: '#38bdf8',
+    boxShadow: '0 0 0 1px rgba(56, 189, 248, 0.25)',
+  },
+  variantHeaderRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '0.3rem',
+  },
+  variantName: {
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    color: '#f8fafc',
+  },
+  variantTag: {
+    fontSize: '0.65rem',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    padding: '0.1rem 0.4rem',
+    borderRadius: '3px',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    color: '#94a3b8',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+  },
+  variantDesc: {
+    fontSize: '0.75rem',
+    color: '#94a3b8',
+    lineHeight: 1.4,
+  },
+  variantQueueCount: {
+    fontSize: '0.75rem',
+    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+    fontVariantNumeric: 'tabular-nums',
+    color: '#38bdf8',
+    marginTop: '0.5rem',
+    fontWeight: 500,
+  },
+  primaryActionButton: {
+    width: '100%',
+    padding: '0.65rem 1.25rem',
+    borderRadius: '4px',
+    border: 'none',
+    backgroundColor: '#10b981',
+    color: '#ffffff',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    transition: 'background-color 0.15s ease',
+  },
+  createActionButton: {
+    width: '100%',
+    padding: '0.65rem 1.25rem',
+    borderRadius: '4px',
+    border: 'none',
+    backgroundColor: '#2563eb',
+    color: '#ffffff',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    transition: 'background-color 0.15s ease',
+  },
+  joinActionButton: {
+    width: '100%',
+    padding: '0.65rem 1.25rem',
+    borderRadius: '4px',
+    border: '1px solid rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#171b26',
+    color: '#f8fafc',
+    fontWeight: 600,
+    fontSize: '0.85rem',
+    transition: 'all 0.15s ease',
+  },
+  secondaryButton: {
+    flex: 1,
+    padding: '0.5rem 0.85rem',
+    borderRadius: '4px',
+    border: '1px solid rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#171b26',
+    color: '#f8fafc',
+    fontWeight: 500,
+    fontSize: '0.8rem',
+    cursor: 'pointer',
+  },
+  enterRoomButton: {
+    flex: 1,
+    padding: '0.5rem 0.85rem',
+    borderRadius: '4px',
+    border: 'none',
+    backgroundColor: '#2563eb',
+    color: '#ffffff',
+    fontWeight: 600,
+    fontSize: '0.8rem',
+    cursor: 'pointer',
+  },
+  searchingBox: {
+    textAlign: 'center',
+    padding: '1.5rem 1rem',
+    backgroundColor: '#090a0f',
+    borderRadius: '6px',
+    border: '1px dashed rgba(56, 189, 248, 0.35)',
+  },
+  spinnerRing: {
+    width: '28px',
+    height: '28px',
+    margin: '0 auto 0.75rem',
+    borderRadius: '50%',
+    border: '2px solid rgba(56, 189, 248, 0.2)',
+    borderTopColor: '#38bdf8',
+    animation: 'mmSpin 0.9s linear infinite',
+  },
+  searchingText: {
+    fontSize: '0.85rem',
+    fontWeight: 500,
+    color: '#f8fafc',
+  },
+  timerText: {
+    fontSize: '0.8rem',
+    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+    fontVariantNumeric: 'tabular-nums',
+    color: '#94a3b8',
+    margin: '0.35rem 0 0.85rem',
+  },
+  cancelButton: {
+    padding: '0.4rem 1rem',
+    backgroundColor: 'rgba(248, 113, 113, 0.1)',
+    border: '1px solid rgba(248, 113, 113, 0.25)',
+    color: '#f87171',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.75rem',
+    fontWeight: 500,
+  },
+  matchedBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.85rem 1rem',
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    border: '1px solid #10b981',
+    borderRadius: '6px',
+  },
+  matchedPulseDot: {
     width: '8px',
     height: '8px',
     borderRadius: '50%',
     backgroundColor: '#10b981',
     boxShadow: '0 0 8px #10b981',
+    flexShrink: 0,
   },
-  metricText: {
-    fontSize: '0.85rem',
-    color: '#34d399',
-    fontWeight: 600,
-  },
-  tabs: {
-    display: 'flex',
-    gap: '0.5rem',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-    paddingBottom: '0.75rem',
-    marginBottom: '1.5rem',
-  },
-  tabButton: {
-    background: 'none',
-    border: 'none',
-    color: '#94a3b8',
-    padding: '0.6rem 1.2rem',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '0.95rem',
-    fontWeight: 600,
-    transition: 'all 0.2s',
-  },
-  tabButtonActive: {
-    backgroundColor: 'rgba(99, 102, 241, 0.2)',
-    color: '#ffffff',
-    border: '1px solid rgba(99, 102, 241, 0.5)',
-  },
-  tabContent: {
-    paddingTop: '0.5rem',
-  },
-  fieldLabel: {
-    display: 'block',
-    fontSize: '0.85rem',
-    fontWeight: 600,
-    color: '#cbd5e1',
-    marginBottom: '0.75rem',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  },
-  variantGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-    gap: '1rem',
-    marginBottom: '1.5rem',
-  },
-  variantCard: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    padding: '1rem',
-    backgroundColor: 'rgba(30, 41, 59, 0.6)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '12px',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  variantCardActive: {
-    backgroundColor: 'rgba(99, 102, 241, 0.25)',
-    borderColor: '#6366f1',
-    boxShadow: '0 0 16px rgba(99, 102, 241, 0.3)',
-  },
-  variantIcon: {
-    fontSize: '2rem',
-  },
-  variantInfo: {
+  matchedInfo: {
     flex: 1,
   },
-  variantName: {
-    fontWeight: 700,
-    fontSize: '1rem',
-  },
-  variantDesc: {
-    fontSize: '0.8rem',
-    color: '#94a3b8',
-    marginTop: '0.2rem',
-  },
-  variantQueueCount: {
-    fontSize: '0.75rem',
-    color: '#38bdf8',
-    marginTop: '0.3rem',
-    fontWeight: 500,
-  },
-  actionButton: {
-    width: '100%',
-    padding: '0.9rem',
-    borderRadius: '10px',
-    border: 'none',
-    background: 'linear-gradient(135deg, #6366f1, #a855f7)',
-    color: '#ffffff',
-    fontWeight: 700,
-    fontSize: '1rem',
-    cursor: 'pointer',
-    boxShadow: '0 4px 16px rgba(99, 102, 241, 0.4)',
-    transition: 'transform 0.15s, opacity 0.15s',
-  },
-  actionButtonSmall: {
-    padding: '0.6rem 1.2rem',
-    borderRadius: '8px',
-    border: 'none',
-    background: 'linear-gradient(135deg, #6366f1, #a855f7)',
-    color: '#ffffff',
-    fontWeight: 600,
-    fontSize: '0.9rem',
-    cursor: 'pointer',
-  },
-  secondaryButton: {
-    padding: '0.6rem 1.2rem',
-    borderRadius: '8px',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    color: '#ffffff',
-    fontWeight: 600,
-    fontSize: '0.9rem',
-    cursor: 'pointer',
-  },
-  searchingBox: {
-    textAlign: 'center',
-    padding: '2rem',
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-    borderRadius: '12px',
-    border: '1px dashed #6366f1',
-  },
-  radarRing: {
-    width: '48px',
-    height: '48px',
-    margin: '0 auto 1rem',
-    borderRadius: '50%',
-    border: '3px solid rgba(99, 102, 241, 0.3)',
-    borderTopColor: '#6366f1',
-    animation: 'spin 1s linear infinite',
-  },
-  searchingText: {
-    fontSize: '1rem',
-    fontWeight: 600,
-    color: '#e2e8f0',
-  },
-  timerText: {
-    fontSize: '0.85rem',
-    color: '#94a3b8',
-    margin: '0.5rem 0 1.25rem',
-  },
-  cancelButton: {
-    padding: '0.5rem 1.2rem',
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    border: '1px solid rgba(239, 68, 68, 0.4)',
-    color: '#f87171',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontWeight: 600,
-  },
-  matchedBanner: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    padding: '1.25rem',
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    border: '1px solid #10b981',
-    borderRadius: '12px',
-  },
-  matchedIcon: {
-    fontSize: '2rem',
-  },
   matchedTitle: {
-    fontSize: '1.1rem',
-    fontWeight: 700,
-    color: '#34d399',
+    fontSize: '0.85rem',
+    fontWeight: 600,
+    color: '#4ade80',
   },
   matchedDesc: {
-    fontSize: '0.9rem',
-    color: '#e2e8f0',
-    marginTop: '0.2rem',
+    fontSize: '0.75rem',
+    color: '#cbd5e1',
+    marginTop: '0.15rem',
   },
   codeHighlight: {
-    fontFamily: 'monospace',
-    color: '#a7f3d0',
-    fontWeight: 700,
+    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+    color: '#38bdf8',
+    fontWeight: 600,
   },
   privateGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '1.5rem',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+    gap: '1rem',
   },
   privateCard: {
-    padding: '1.5rem',
-    backgroundColor: 'rgba(30, 41, 59, 0.5)',
+    padding: '1rem',
+    backgroundColor: '#090a0f',
     border: '1px solid rgba(255, 255, 255, 0.08)',
-    borderRadius: '12px',
+    borderRadius: '6px',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
+    minHeight: '220px',
   },
-  privateTitle: {
-    margin: '0 0 0.25rem 0',
-    fontSize: '1.1rem',
-    fontWeight: 700,
-  },
-  privateDesc: {
-    margin: '0 0 1.25rem 0',
+  privateCardTitle: {
     fontSize: '0.85rem',
-    color: '#94a3b8',
+    fontWeight: 600,
+    color: '#f8fafc',
   },
-  timeButtons: {
-    display: 'flex',
-    gap: '0.5rem',
-    flexWrap: 'wrap',
+  privateCardDesc: {
+    fontSize: '0.75rem',
+    color: '#94a3b8',
+    margin: '0.2rem 0 0.85rem',
+  },
+  modeMiniGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '0.35rem',
+  },
+  miniModeBtn: {
+    padding: '0.35rem 0.65rem',
+    backgroundColor: 'transparent',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: '4px',
+    color: '#94a3b8',
+    fontSize: '0.75rem',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  },
+  miniModeBtnActive: {
+    backgroundColor: '#171b26',
+    borderColor: '#38bdf8',
+    color: '#f8fafc',
+    fontWeight: 600,
+  },
+  timeButtonsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: '0.35rem',
   },
   timeButton: {
-    padding: '0.4rem 0.8rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: '6px',
-    color: '#cbd5e1',
+    padding: '0.35rem 0.25rem',
+    backgroundColor: 'transparent',
+    border: '1px solid rgba(255, 255, 255, 0.08)',
+    borderRadius: '4px',
+    color: '#94a3b8',
     cursor: 'pointer',
-    fontSize: '0.85rem',
+    fontSize: '0.75rem',
+    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+    fontVariantNumeric: 'tabular-nums',
+    textAlign: 'center',
+    transition: 'all 0.15s ease',
   },
   timeButtonActive: {
-    backgroundColor: 'rgba(99, 102, 241, 0.3)',
-    borderColor: '#6366f1',
-    color: '#ffffff',
+    backgroundColor: '#171b26',
+    borderColor: '#38bdf8',
+    color: '#f8fafc',
     fontWeight: 600,
   },
   createdBox: {
-    marginTop: '1rem',
-    padding: '1rem',
-    backgroundColor: 'rgba(15, 23, 42, 0.8)',
-    borderRadius: '8px',
+    marginTop: '0.75rem',
+    padding: '0.85rem',
+    backgroundColor: '#0c0e14',
+    border: '1px solid rgba(56, 189, 248, 0.25)',
+    borderRadius: '4px',
     textAlign: 'center',
   },
   roomCodeDisplay: {
-    fontFamily: 'monospace',
-    fontSize: '1.8rem',
-    fontWeight: 800,
-    letterSpacing: '0.15em',
+    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+    fontSize: '1.4rem',
+    fontWeight: 700,
+    letterSpacing: '0.12em',
     color: '#38bdf8',
-    marginBottom: '1rem',
+    marginBottom: '0.75rem',
   },
   buttonRow: {
     display: 'flex',
     gap: '0.5rem',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
   },
   joinForm: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '1rem',
   },
   input: {
     width: '100%',
-    padding: '0.8rem 1rem',
-    backgroundColor: 'rgba(15, 23, 42, 0.8)',
-    border: '1px solid rgba(255, 255, 255, 0.15)',
-    borderRadius: '8px',
-    color: '#ffffff',
-    fontSize: '1.1rem',
-    fontFamily: 'monospace',
-    letterSpacing: '0.1em',
+    padding: '0.6rem 0.75rem',
+    backgroundColor: '#0c0e14',
+    border: '1px solid rgba(255, 255, 255, 0.12)',
+    borderRadius: '4px',
+    color: '#f8fafc',
+    fontSize: '1rem',
+    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+    letterSpacing: '0.12em',
     textAlign: 'center',
     boxSizing: 'border-box',
+    outline: 'none',
   },
 };
