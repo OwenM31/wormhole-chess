@@ -34,14 +34,14 @@ updated: 2026-10-14T23:27:00Z
 ---
 
 ### Phase 2: Cloudflare Backend, D1 Database & Authentication UI
-**Status:** 🔄 Ready for Execution
+**Status:** ✅ Complete
 **Objective:** Set up Cloudflare Pages Functions with D1 SQLite storage, implement secure user registration/login and guest session tokens, and build the Player Dashboard.
 **Depends on:** Phase 1
 **Requirements:** REQ-04, REQ-05, REQ-06, NFR-02, NFR-04
 
 **Plans:**
-- [ ] Plan 2.1: Cloudflare D1 Database Schema & Pages Functions Auth Endpoints
-- [ ] Plan 2.2: Frontend Auth Integration, AuthContext & Player Dashboard UI
+- [x] Plan 2.1: Cloudflare D1 Database Schema & Pages Functions Auth Endpoints
+- [x] Plan 2.2: Frontend Auth Integration, AuthContext & Player Dashboard UI
 
 ---
 
