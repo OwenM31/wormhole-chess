@@ -7,6 +7,8 @@ import {
   validateDeckLoadout,
   getCardById,
 } from '../engine/cardGraph';
+import { useAuth } from '../context/AuthContext';
+import { api } from '../services/api';
 
 export interface DeckBuilderViewProps {
   initialDeck?: string[];
@@ -21,6 +23,8 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
   onSaveDeck,
   onBackToBattle,
 }) => {
+  const { user } = useAuth();
+
   // Load saved deck or fallback to starter deck
   const [selectedIds, setSelectedIds] = useState<string[]>(() => {
     if (initialDeck && initialDeck.length === 8) return initialDeck;
@@ -41,6 +45,33 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
   const [filterAnchor, setFilterAnchor] = useState<PieceAnchor | 'all'>('all');
   const [activePreviewCard, setActivePreviewCard] = useState<CardDefinition | null>(null);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  // Sync from cloud on mount if authenticated
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchCloudDecks() {
+      if (!user || user.isGuest) return;
+      try {
+        const res = await api.getCustomDecks();
+        if (isMounted && res.success && res.decks && res.decks.length > 0) {
+          const activeDeck = res.decks.find((d) => d.isActive) || res.decks[0];
+          if (activeDeck && activeDeck.cardIds && activeDeck.cardIds.length === 8) {
+            setSelectedIds(activeDeck.cardIds);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(activeDeck.cardIds));
+            onSaveDeck(activeDeck.cardIds);
+            setSaveMessage('☁️ Loaded active loadout from cloud');
+            setTimeout(() => setSaveMessage(null), 3000);
+          }
+        }
+      } catch (err) {
+        // Fallback to localStorage load
+      }
+    }
+    fetchCloudDecks();
+    return () => {
+      isMounted = false;
+    };
+  }, [user, onSaveDeck]);
 
   // Selected cards converted to CardDefinition array
   const selectedCards = selectedIds
@@ -70,14 +101,33 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
     setSaveMessage('Reset to balanced Starter Deck!');
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validation.isValid) {
       setSaveMessage(validation.error || 'Invalid deck loadout');
       return;
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedIds));
     onSaveDeck(selectedIds);
-    setSaveMessage('Loadout saved successfully!');
+
+    if (user && !user.isGuest) {
+      try {
+        setSaveMessage('Syncing to cloud...');
+        const res = await api.saveCustomDeck({
+          deckName: 'Active Loadout',
+          cardIds: selectedIds,
+          isActive: true,
+        });
+        if (res.success) {
+          setSaveMessage('☁️ Deck synced to cloud & activated!');
+        } else {
+          setSaveMessage('💾 Saved locally');
+        }
+      } catch (err) {
+        setSaveMessage('💾 Saved locally (cloud sync offline)');
+      }
+    } else {
+      setSaveMessage('💾 Saved locally (Guest mode)');
+    }
   };
 
   // Filter available library
@@ -133,7 +183,7 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
             }`}
           >
-            Save Loadout
+            Save & Activate Deck
           </button>
         </div>
       </div>
@@ -142,7 +192,10 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
       {saveMessage && (
         <div
           className={`p-3 rounded-xl border text-sm font-medium ${
-            saveMessage.includes('successfully') || saveMessage.includes('Reset')
+            saveMessage.includes('cloud') ||
+            saveMessage.includes('locally') ||
+            saveMessage.includes('successfully') ||
+            saveMessage.includes('Reset')
               ? 'bg-emerald-950/70 border-emerald-500/50 text-emerald-300'
               : 'bg-rose-950/70 border-rose-500/50 text-rose-300'
           }`}
