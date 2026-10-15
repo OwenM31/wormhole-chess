@@ -15,28 +15,28 @@
 
 ---
 
-## Design System Tokens (Locked in Phase 1: Technical Density)
+## Design System Tokens (Locked in Phase 2: Wormhole Authentic Palette)
 
-### 1. Color Palette
-- **Base Background**: `#090a0f` (deep jet black)
-- **Primary Surface / Cards**: `#0e1118`
-- **Panel Header / Navigation**: `#0c0e14`
-- **Elevated Controls / Inputs / Inactive Pills**: `#141722` or `#171b26` (hover `#1b2030`)
-- **Card Hover Background**: `#11141d`
-- **Border Stroke**: `1px solid rgba(255, 255, 255, 0.08)` (subtle dividers: `rgba(255, 255, 255, 0.04)`)
-- **Border Highlight**: `rgba(56, 189, 248, 0.35)` on card focus/hover
+### 1. Color Palette (From Constants.tsx)
+- **Base Background**: `#191B1D` (warm deep charcoal)
+- **Primary Surface / Cards**: `#24272A` (charcoal panel surface)
+- **Panel Header / Navigation**: `#1C1E20` (dark charcoal bar)
+- **Elevated Controls / Inputs / Inactive Pills**: `#222528` or `#282B2E`
+- **Border Stroke**: `1px solid rgba(139, 126, 116, 0.2)` (subtle dividers: `rgba(139, 126, 116, 0.12)`)
+- **Border Highlight**: `rgba(212, 175, 55, 0.45)` on active focus/hover
 
 #### Text Hierarchy
-- **Primary Text**: `#f8fafc` (high contrast)
-- **Secondary Text**: `#94a3b8` (labels, subtitles, secondary metadata)
-- **Muted Text**: `#64748b` (timestamps, subtle units, disabled states)
+- **Primary Text**: `#FAF9F6` (warm white, high contrast)
+- **Secondary Text**: `#8B7E74` (smokey taupe, labels, subtitles, secondary metadata)
+- **Muted Text**: `#6E665E` (timestamps, subtle units, disabled states)
 
-#### Semantic Accents
-- **Cyan / Brand Accent**: `#38bdf8` (badge bg: `rgba(56, 189, 248, 0.12)`, border: `rgba(56, 189, 248, 0.25)`)
-- **Emerald / Positive / Matchmaking**: `#10b981` (hover `#059669`; text/badge `#4ade80`, bg `rgba(74, 222, 128, 0.1)`)
-- **3D Arena Blue**: `#2563eb` (hover `#1d4ed8`)
-- **Deck Builder Purple**: `#7c3aed` (hover `#6d28d9`)
-- **Rose / Danger / Loss**: `#f87171` (badge bg: `rgba(248, 113, 113, 0.1)`, border `rgba(248, 113, 113, 0.25)`)
+#### Semantic & Tactical Accents
+- **Warm Gold Accent**: `#D4AF37` (brand glyphs, active player glow, turn highlights, energy pips `⚡`)
+- **Loden Green**: `#4C5C4C` (hover `#5C6C5C`, text `#FAF9F6`; primary action buttons, online matchmaking)
+- **Loden Green Dark**: `#3C493F` (dark chessboard squares)
+- **Smokey Taupe**: `#8B7E74` (light chessboard squares, secondary pills)
+- **Brick Red / Danger**: `#AA4A44` (resign button, check alert, loss)
+- **Tactical Purple**: `#A855F7` (card targeting highlight, active card aura)
 
 ---
 

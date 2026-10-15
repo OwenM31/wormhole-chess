@@ -21,7 +21,8 @@
 - [ ] Different Piece Colors for different sides (normal is black v white, opposite is green vs grey) `low` — 2026-10-14
 - [ ] Clean up deprecated EC2 deployment instructions in root README.md `medium` — 2026-10-14
 - [ ] Explore future 3D board rendering for Deck Builder Chess `low` — 2026-10-14
+- [ ] Refine Tactical Hand card carousel visual with full-card pop-out reveal effect on hover `low` — 2026-10-15
 
 ---
 
-*Last updated: 2026-10-14*
+*Last updated: 2026-10-15*
