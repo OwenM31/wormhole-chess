@@ -6,6 +6,49 @@
 
 ## Sessions
 
+### Session: 2026-10-15 16:32
+
+#### Objective
+Restore session context (`/resume`), conduct Phase 2 design research, candidate copy approval, and prototype generation for the Tactical Deck Builder arena (`@[.agent/workflows/design-phase.md] 2`), refine the winning layout with user feedback, lock design tokens into `STYLE.md` and `DESIGN_STATE.md`, and decompose Phase 2 into executable plans (`@[.agent/workflows/plan.md] 2`).
+
+#### Accomplished
+- ✅ Resumed session and verified clean git working tree (`5192db6`).
+- ✅ Executed `@design-phase.md 2`:
+  - Researched Lichess, Chess.com, Slay the Spire, and Linear design patterns.
+  - Resolved desktop vertical scroll jank on standard 1280x800 viewports by reducing board footprint to 470px and aligning the dock flush with the board.
+  - Aligned with user on candidate copy: restrained "Deck Builder Chess" (no subtitle), "Find Match" and "My Deck" view tabs, real piece glyphs for graveyards (`♟ ♞`), Chess.com-style active turn illumination/shading, and clean tabular move notation with zero cringey titles.
+  - Generated 3 distinct visual variants in HTML prototypes and rendered 2x retina full-page screenshots via headless Chrome Playwright.
+  - Incorporated user feedback on Variant A: added a 58px collapsible left navigation rail (Home, 3D Wormhole, Deck Builder, Profile, Settings), locked the tactical hand dock flush to 470px width, and engineered an accordion/carousel card hover expand effect where hovering a card smoothly expands it horizontally to reveal its full name and effect rules while contracting neighbors within the 470px boundary.
+  - Integrated the user's authentic custom Wormhole Chess color scheme from `src/components/Constants.tsx` (`#191B1D` deep charcoal base, `#24272A` surface, `#FAF9F6` warm white, `#8B7E74` smokey taupe, `#3C493F` / `#4C5C4C` loden green, `#D4AF37` warm gold, `#AA4A44` brick red).
+  - User approved the refined layout and color scheme. Preserved approved reference image at `.agent/state/artifacts/design/phase_2_approved.png`.
+  - Executed automated cleanup of scratch prototypes and unselected images.
+  - Logged future card pop-out visual reveal effect to `.agent/state/TODO.md` (`/add-todo`).
+  - Recorded `[DECISION-016]` in `.agent/state/DECISIONS.md`.
+- ✅ Executed `@plan.md 2`:
+  - Authored `.agent/state/phases/2/RESEARCH.md`.
+  - Authored `01-PLAN.md` (Wave 1: Arena Layout & Chessboard Redesign) and `02-PLAN.md` (Wave 2: Tactical Hand Bar & Deck Curator Redesign).
+  - Validated plans across all 6 plan-checker dimensions with zero blockers (PASS).
+  - Committed Phase 2 execution plans to git (`69fc700`).
+
+#### Verification
+- [x] Full-stack typecheck clean (`npm run typecheck:all`).
+- [x] All 83 automated card engine tests pass cleanly (`npm test`).
+- [x] Production build passes cleanly in 1.21s (`npm run build`).
+- [x] Phase 2 visual prototype rendered and verified with Playwright 2x retina screenshot (`phase_2_approved.png`).
+- [x] Plan checker verified Plan 2.1 and Plan 2.2 with PASS verdict.
+- [ ] Phase 2 execution pending (`/execute 2`).
+
+#### Paused Because
+User requested session pause (`/pause`) at clean handoff point after completing design approval and task planning for Phase 2.
+
+#### Handoff Notes
+- Run `/resume` to restore session state.
+- Proceed with `@[.agent/workflows/execute.md] 2` to execute Phase 2 plans:
+  - Wave 1 (Plan 2.1): `DeckChessBoard.tsx` framing and `DeckBuilderPage.tsx` arena shell.
+  - Wave 2 (Plan 2.2): `TacticalHandBar.tsx` accordion dock and `DeckBuilderView.tsx` loadout curator.
+
+---
+
 ### Session: 2026-10-15 15:22
 
 #### Objective

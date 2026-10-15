@@ -301,6 +301,46 @@ Following the `@design-phase.md` workflow for Phase 1 (Design System Foundations
 
 ---
 
+### [DECISION-016] Phase 2 Tactical Arena Architecture & Authentic Wormhole Chess Color System
+
+**Date**: 2026-10-15
+**Status**: Accepted
+
+#### Context
+Phase 2 redesigns the Deck Builder Chess arena (`/deck-builder`). In v1, the 2D chessboard (520px) stacked vertically above the tactical hand bar (140px) and opponent bars exceeded 800px in height, causing vertical scroll jank on standard 1280x800 desktop viewports. Additionally, the user requested incorporating the authentic custom color scheme they manually created for the 3D Wormhole Chess game (`src/components/Constants.tsx`) project-wide, anchoring the left side with a collapsible rail, and keeping the tactical card dock flush to the board width with an accordion/carousel hover expand effect.
+
+#### Decision
+1. **Arena Layout Architecture**: Variant A Refined (Collapsible Left Rail + Balanced Center Stage + Tabular Move History Right Sidebar).
+   - Board size balanced at 470px by 470px (`aspect-ratio: 1 / 1`).
+   - Tactical card dock locked to strictly 470px width, perfectly flush with the board.
+   - Accordion/carousel card hover expand effect: hovering a card expands its width from 42px to ~115px (`flex: 2.6`) to reveal its title and effect rules without expanding the 470px container.
+   - Collapsible left navigation rail (58px) with quick route icons, settings, and collapse toggle.
+2. **Authentic Wormhole Color Palette** (codified in `STYLE.md` and `DESIGN_STATE.md` project-wide):
+   - Base Background: Deep Charcoal `#191B1D`
+   - Card / Panel Surface: Charcoal `#24272A`
+   - Header / Rail: Dark Charcoal `#1C1E20`
+   - Light Squares: Smokey Taupe `#8B7E74`
+   - Dark Squares: Loden Green Dark `#3C493F`
+   - Brand & Active Glow: Warm Gold `#D4AF37`
+   - Primary Actions: Loden Green `#4C5C4C`
+   - Resign / Danger: Brick Red `#AA4A44`
+   - Primary Headings / Text: Warm White `#FAF9F6`
+3. **Approved UI Copy**:
+   - Mode Header: "Deck Builder Chess" (no subtitle).
+   - View Tabs: "Find Match" and "My Deck".
+   - Opponent & Player Graveyard: Real piece glyphs (`♟ ♞`) with advantage tally (`+2`).
+   - Turn indicator: Chess.com-style illumination/shading.
+   - Move History: Clean algebraic notation plies without "Combat Log" title.
+4. **Future Polish Item**:
+   - Refine the tactical hand carousel with a full-card pop-out reveal effect on hover (tracked in `TODO.md`).
+
+#### Consequences
+- Eliminates 100% of vertical scrolling on standard desktop viewports (1280x800).
+- Harmonizes the aesthetic identity of the entire website with the creator's original custom 3D Wormhole Chess colors.
+- Approved visual reference locked at `.agent/state/artifacts/design/phase_2_approved.png`.
+
+---
+
 *Last updated: 2026-10-15*
 
 
