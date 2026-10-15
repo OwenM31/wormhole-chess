@@ -19,7 +19,7 @@ Systematically eliminate AI-slop across all user-facing screens, establish a dis
 - [x] **Mandatory Copy Approval**: Never write or inject user-facing copy into templates, headings, hero sections, cards, or alerts without explicit prior user confirmation (preventing cringey AI filler).
 - [x] **Global Design Tokens & Identity**: Aesthetic tokens (colors, typography pairings, border radii, spacing rhythm, elevation) locked in `.agent/rules/STYLE.md` and `.agent/state/DESIGN_STATE.md`.
 - [x] **Player Dashboard Redesign**: Refactored player profile, combat stats, matchmaking lobby, and historical replay viewer with clean density and high craft.
-- [ ] **Tactical Deck Builder Arena Redesign**: Balanced widescreen layout, properly proportioned 2D board, tactile hand bar, energy meter, and card curator/inspector without vertical bloating or awkward grid stretching.
+- [x] **Tactical Deck Builder Arena Redesign**: Balanced widescreen layout, properly proportioned 2D board, tactile hand bar, energy meter, and card curator/inspector without vertical bloating or awkward grid stretching.
 - [ ] **Home Landing & Authentication Redesign**: Atmospheric dark tactical hero, distinct typography, variant showcase cards, and sleek tabbed auth modals.
 - [ ] **3D Wormhole & PlayRoom HUD Redesign**: Non-intrusive floating glass HUD, move notation ticker, game clock integration, and room coordination status.
 - [x] **Zero Gameplay Regressions**: All 83 automated card engine tests (`npm test`), 3D WebGL controls, and Cloudflare multiplayer synchronization continue passing 100%.
@@ -41,7 +41,7 @@ Systematically eliminate AI-slop across all user-facing screens, establish a dis
 ---
 
 ### Phase 2: Tactical Deck Builder Page & Arena Layout Redesign
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 **Objective:** Eliminate proportion distortion on the Deck Builder page. Re-architect the screen layout so the 2D chessboard, tactical hand bar, energy meter, card curator, and combat log fit harmoniously without vertical scroll jank or stretched assets.
 **Deliverables:**
 - Balanced arena layout for `DeckBuilderPage.tsx`
