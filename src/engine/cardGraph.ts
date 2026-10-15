@@ -1,0 +1,229 @@
+import { CardDefinition, PieceAnchor } from '../types/deckChess';
+
+/**
+ * Visual color identities and badges by piece class
+ */
+export const PIECE_COLOR_THEMES: Record<
+  PieceAnchor,
+  { color: string; hex: string; badgeIcon: string; label: string }
+> = {
+  pawn: {
+    color: 'Amber',
+    hex: '#d29922',
+    badgeIcon: '♟',
+    label: 'Pawn Infantry',
+  },
+  knight: {
+    color: 'Emerald',
+    hex: '#3fb950',
+    badgeIcon: '♞',
+    label: 'Knight Cavalry',
+  },
+  bishop: {
+    color: 'Violet',
+    hex: '#bc8cff',
+    badgeIcon: '♝',
+    label: 'Bishop Cleric',
+  },
+  rook: {
+    color: 'Cobalt',
+    hex: '#58a6ff',
+    badgeIcon: '♜',
+    label: 'Rook Citadel',
+  },
+  queen: {
+    color: 'Rose',
+    hex: '#f778ba',
+    badgeIcon: '♛',
+    label: 'Queen Regent',
+  },
+  king: {
+    color: 'Solar Gold',
+    hex: '#e3b341',
+    badgeIcon: '♚',
+    label: 'Royal Sovereign',
+  },
+};
+
+/**
+ * 8-Card Curated Starter Deck
+ */
+export const STARTER_DECK: CardDefinition[] = [
+  {
+    id: 'pawn_vanguard',
+    name: 'Vanguard Advance',
+    anchor: 'pawn',
+    energyCost: 1,
+    conditions: [{ type: 'UNMOVED' }],
+    effects: [{ type: 'EXTEND_RANGE', param: 1 }],
+    description: 'An unmoved pawn can advance 3 squares forward on its opening leap instead of 2 (if unobstructed).',
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+  },
+  {
+    id: 'pawn_scuttle',
+    name: 'Abandon Ship',
+    anchor: 'pawn',
+    energyCost: 1,
+    conditions: [{ type: 'UNDER_FIRE' }],
+    effects: [{ type: 'SCUTTLE' }],
+    description: 'Scuttle an attacked pawn off the board to your graveyard before it is taken, denying enemy tempo.',
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+  },
+  {
+    id: 'knight_escort',
+    name: 'Cavalry Escort',
+    anchor: 'knight',
+    energyCost: 2,
+    conditions: [{ type: 'FRIENDLY_ADJACENCY' }],
+    effects: [{ type: 'CARRY_PASSENGER' }],
+    description: 'Target a friendly adjacent pawn. When the Knight jumps, transport the passenger to the landing square or adjacent flank.',
+    visualTheme: PIECE_COLOR_THEMES.knight,
+  },
+  {
+    id: 'knight_swap',
+    name: 'Dislocation Swap',
+    anchor: 'knight',
+    energyCost: 2,
+    conditions: [{ type: 'IN_TERRITORY', param: 'ENEMY_HALF' }],
+    effects: [{ type: 'COORDINATE_SWAP' }],
+    tradeoff: 'TEMPO_CONCESSION',
+    description: 'A knight deep in enemy territory swaps coordinates with any friendly minor piece or pawn.',
+    visualTheme: PIECE_COLOR_THEMES.knight,
+  },
+  {
+    id: 'bishop_pierce',
+    name: 'Prism Ray',
+    anchor: 'bishop',
+    energyCost: 3,
+    conditions: [{ type: 'LINE_OF_SIGHT_ALIGNMENT' }],
+    effects: [{ type: 'PIERCE_CAPTURE', param: 2 }],
+    description: 'Bishop fires along a diagonal, capturing an enemy piece and immediately continuing to capture the piece directly behind it.',
+    visualTheme: PIECE_COLOR_THEMES.bishop,
+  },
+  {
+    id: 'bishop_invert',
+    name: 'Color Inversion',
+    anchor: 'bishop',
+    energyCost: 2,
+    conditions: [{ type: 'OPEN_LINE' }],
+    effects: [{ type: 'VECTOR_GRAFT', param: 'orthogonal_step' }],
+    description: 'Shift an active bishop 1 square orthogonally onto an empty square, permanently inverting its diagonal square color.',
+    visualTheme: PIECE_COLOR_THEMES.bishop,
+  },
+  {
+    id: 'rook_rampart',
+    name: 'Rampart Deploy',
+    anchor: 'rook',
+    energyCost: 2,
+    conditions: [{ type: 'OPEN_LINE' }],
+    effects: [{ type: 'DEPLOY_OBSTACLE', param: 2 }],
+    description: 'Deploy a holographic barrier along the rook line on an empty square for 2 rounds, blocking line-of-sight and passage.',
+    visualTheme: PIECE_COLOR_THEMES.rook,
+  },
+  {
+    id: 'king_decree',
+    name: 'Royal Decree',
+    anchor: 'king',
+    energyCost: 2,
+    conditions: [{ type: 'FRIENDLY_ADJACENCY' }],
+    effects: [{ type: 'TANDEM_SHIFT' }],
+    description: 'The King steps 1 square and an adjacent friendly piece immediately shifts into the square vacated by the King.',
+    visualTheme: PIECE_COLOR_THEMES.king,
+  },
+];
+
+/**
+ * Expanded Card Library for deck customization
+ */
+export const EXPANDED_LIBRARY: CardDefinition[] = [
+  ...STARTER_DECK,
+  {
+    id: 'queen_aegis',
+    name: "Regent's Aegis",
+    anchor: 'queen',
+    energyCost: 3,
+    conditions: [{ type: 'FRIENDLY_ADJACENCY' }],
+    effects: [{ type: 'DEPLOY_OBSTACLE', param: { type: 'shield', duration: 2 } }],
+    description: 'Grant a kinetic shield to an adjacent piece, protecting it from capture for 2 turns.',
+    visualTheme: PIECE_COLOR_THEMES.queen,
+  },
+  {
+    id: 'rook_ironclad',
+    name: 'Ironclad Battery',
+    anchor: 'rook',
+    energyCost: 2,
+    conditions: [{ type: 'BATTERY_ALIGNMENT' }],
+    effects: [{ type: 'EXTEND_RANGE', param: 'unlimited' }],
+    description: 'When aligned in battery with another major piece, this rook pierces through the first friendly obstruction.',
+    visualTheme: PIECE_COLOR_THEMES.rook,
+  },
+  {
+    id: 'pawn_reinforce',
+    name: 'Conscription Call',
+    anchor: 'pawn',
+    energyCost: 2,
+    conditions: [{ type: 'GRAVEYARD_COUNT', param: 1 }],
+    effects: [{ type: 'SPAWN_FROM_GRAVEYARD', param: 'pawn' }],
+    description: 'Resurrect a fallen pawn from your graveyard onto any empty square in your home 2nd rank.',
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+  },
+  {
+    id: 'knight_outflank',
+    name: 'Ghost Steed',
+    anchor: 'knight',
+    energyCost: 2,
+    conditions: [{ type: 'ON_RIM' }],
+    effects: [{ type: 'PHASE_THROUGH' }],
+    description: 'A knight on the rim can leap through an edge warp directly to the opposing rim file.',
+    visualTheme: PIECE_COLOR_THEMES.knight,
+  },
+];
+
+/**
+ * Get card definition by unique ID
+ */
+export function getCardById(id: string): CardDefinition | undefined {
+  return EXPANDED_LIBRARY.find((c) => c.id === id);
+}
+
+/**
+ * Filter library cards by piece anchor
+ */
+export function getCardsByAnchor(anchor?: PieceAnchor): CardDefinition[] {
+  if (!anchor) return EXPANDED_LIBRARY;
+  return EXPANDED_LIBRARY.filter((c) => c.anchor === anchor);
+}
+
+/**
+ * Validate that an 8-card deck complies with tournament rules:
+ * - Exactly 8 cards
+ * - Energy cost of each card is between 1 and 3
+ * - At least 1 pawn card
+ * - At least 1 minor piece card (knight or bishop)
+ */
+export function validateDeckLoadout(deck: CardDefinition[]): {
+  isValid: boolean;
+  error?: string;
+} {
+  if (deck.length !== 8) {
+    return { isValid: false, error: `Deck must contain exactly 8 cards (currently ${deck.length})` };
+  }
+
+  const hasPawn = deck.some((c) => c.anchor === 'pawn');
+  if (!hasPawn) {
+    return { isValid: false, error: 'Deck must contain at least 1 Pawn card' };
+  }
+
+  const hasMinor = deck.some((c) => c.anchor === 'knight' || c.anchor === 'bishop');
+  if (!hasMinor) {
+    return { isValid: false, error: 'Deck must contain at least 1 Minor piece card (Knight or Bishop)' };
+  }
+
+  for (const card of deck) {
+    if (card.energyCost < 1 || card.energyCost > 3) {
+      return { isValid: false, error: `Card ${card.name} has invalid energy cost ${card.energyCost}` };
+    }
+  }
+
+  return { isValid: true };
+}
