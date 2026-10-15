@@ -6,16 +6,16 @@ updated: 2026-10-14T23:27:00Z
 
 # Roadmap
 
-> **Current Phase:** Phase 4 - Deck Builder Chess (2D Variant) & AI Opponent
-> **Status:** 🔄 Ready for Execution (3 plans across 3 waves)
+> **Current Phase:** Phase 5 - Integration, Polish & Production Deployment
+> **Status:** ⬜ Awaiting Planning
 
 ## Must-Haves (from SPEC)
 
 - [x] Vite-powered build pipeline with sub-10s production builds and instant HMR
 - [x] Client-side routing with Home screen, Auth, Dashboard, and dedicated variant pages
-- [ ] Working Cloudflare Workers + D1 backend supporting both Registered Users and Guests
-- [ ] Cloudflare Durable Objects managing game rooms and turn-based synchronization
-- [ ] Playable 2D Deck Builder Chess with "play card + chess move" turn loop and simple AI testing opponent
+- [x] Working Cloudflare Workers + D1 backend supporting both Registered Users and Guests
+- [x] Cloudflare Durable Objects managing game rooms and turn-based synchronization
+- [x] Playable 2D Deck Builder Chess with "play card + chess move" turn loop and simple AI testing opponent
 - [x] 3D Wormhole Chess fully preserved and playable on `/wormhole` route
 
 ---

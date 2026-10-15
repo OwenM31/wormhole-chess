@@ -181,5 +181,40 @@ Phase 4 requires building the 2D Deck Builder Chess variant, including board rul
 
 ---
 
-*Last updated: 2026-10-14*
+### [DECISION-008] Phase 5 Integration, Cloud Deck Sync, Replay Viewer & Production Deployment
+
+**Date**: 2026-10-15
+**Status**: Accepted
+
+#### Context
+Phase 5 addresses end-to-end integration, persistence, and production deployment across both chess variants (3D Wormhole Chess and 2D Deck Builder Chess). We evaluated match recording scope (PvP vs solo/local), ELO integrity, custom deck cloud persistence, replay viewer capabilities, and Cloudflare Pages SPA deployment.
+
+#### Scope
+- **D1 Match History for Online & Local Games**: Record both multiplayer games (via `GameRoomDO`) and local/solo games (via `POST /api/matches`), explicitly tagged (`pvp_online` vs `solo_local` or variant sub-tags like `deck_builder:ai`, `wormhole:local`).
+- **ELO Integrity**: Only competitive online multiplayer matches modify ELO rating. Solo AI and local matches record games played, win/loss stats, and move histories without inflating competitive ELO.
+- **Interactive Historical Match Viewer**: Build an interactive replay viewer in `DashboardPage` allowing players to step forward/backward through moves, auto-play, and inspect card actions played alongside chess moves.
+- **Cloud Custom Deck Sync**: Implement `/api/decks` endpoints backing 8-card loadouts in D1 `custom_decks` for registered players, with automatic fallback to `localStorage` for guests and seamless migration upon registration.
+- **Production Deployment & SPA Routing**: Unified build & verification scripts (`npm run build:all`, `npm run typecheck:all`), Cloudflare Pages SPA routing fallback (`_routes.json` / `404.html`), and documented D1 migration workflow.
+
+#### Approach
+1. **Separated Match Persistence (`POST /api/matches`, `GET /api/matches`)**:
+   - Chose: Dedicated endpoints in Pages Functions. `GET /api/matches` returns recent match history for the current user. `POST /api/matches` records completed solo/local games.
+   - Reason: Enables players to review all games while preserving server-authoritative ELO computation in `GameRoomDO`.
+2. **Enriched Replay Move Representation**:
+   - Chose: Serialize moves as a structured JSON array containing `{ turnNumber, player, chessMove, cardAction, fen, combatText, timestamp }`.
+   - Reason: Enables the historical replay viewer to reproduce both chess board state and tactical card activations accurately.
+3. **Cloud Deck Sync with Guest Fallback**:
+   - Chose: `/api/decks` REST endpoint saving to D1 `custom_decks`. If offline or in guest mode without DB connectivity, seamlessly fall back to `localStorage`.
+   - Reason: Ensures deck persistence across devices for registered players while preserving zero-barrier play for guests.
+4. **Lightweight Tactile Audio Polish**:
+   - Chose: Synthesized Web Audio API sound effects for move, capture, check, card activation, and victory/defeat.
+   - Reason: Zero external audio asset downloads, instantaneous feedback, and easy mute/unmute control.
+
+#### Constraints
+- Must adhere to Cloudflare Pages Functions and D1 schema.
+- SPA routes (`/play/:code`, `/deck-builder`, `/dashboard`) must load cleanly in Cloudflare Pages without 404 errors.
+
+---
+
+*Last updated: 2026-10-15*
 
