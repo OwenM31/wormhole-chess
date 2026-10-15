@@ -1,6 +1,5 @@
 import React from 'react';
 import { BoardModifier, PieceColor, Square } from '../types/deckChess';
-import { DeckChessEngine } from '../engine/DeckChessEngine';
 
 export interface DeckChessBoardProps {
   fen: string;
@@ -23,9 +22,9 @@ function ChessPieceSvg({
   color: 'w' | 'b';
 }) {
   const isWhite = color === 'w';
-  const fill = isWhite ? '#f0f6fc' : '#1e293b';
-  const stroke = isWhite ? '#0d1117' : '#58a6ff';
-  const accent = isWhite ? '#d29922' : '#388bfd';
+  const fill = isWhite ? '#FAF9F6' : '#191B1D';
+  const stroke = isWhite ? '#191B1D' : '#8B7E74';
+  const accent = isWhite ? '#D4AF37' : '#D4AF37';
 
   switch (type) {
     case 'p':
@@ -184,9 +183,9 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
   const displayRanks = orientation === 'w' ? ranks : [...ranks].reverse();
 
   return (
-    <div className="relative inline-block select-none p-3 bg-slate-900/90 rounded-2xl border border-slate-700/60 shadow-2xl backdrop-blur-md">
+    <div className="relative inline-block select-none p-2 sm:p-2.5 bg-[#191B1D] rounded-md border border-[rgba(139,126,116,0.25)] shadow-2xl backdrop-blur-md w-full max-w-[470px]">
       {/* 8x8 Grid */}
-      <div className="grid grid-cols-8 grid-rows-8 w-[340px] h-[340px] sm:w-[460px] sm:h-[460px] md:w-[520px] md:h-[520px] rounded-lg overflow-hidden border border-slate-800 shadow-inner">
+      <div className="grid grid-cols-8 grid-rows-8 w-full aspect-square rounded overflow-hidden border border-[rgba(139,126,116,0.2)] shadow-inner">
         {displayRanks.map((rankStr, rankDisplayIndex) => {
           return displayFiles.map((fileStr, fileDisplayIndex) => {
             const squareName = `${fileStr}${rankStr}` as Square;
@@ -196,9 +195,9 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
 
             const piece = pieceGrid[rankIndex]?.[fileIndex] || null;
 
-            // Checkerboard coloring
+            // Checkerboard coloring (Smokey Taupe #8B7E74 vs Loden Green Dark #3C493F)
             const isLight = (fileIndex + rankActual) % 2 !== 0;
-            const baseBg = isLight ? 'bg-slate-700/50' : 'bg-slate-900/80';
+            const squareBg = isLight ? '#8B7E74' : '#3C493F';
 
             // Active highlights
             const isSelected = selectedSquare === squareName;
@@ -222,39 +221,39 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                 key={squareName}
                 data-square={squareName}
                 onClick={() => onSquareClick(squareName)}
-                className={`relative flex items-center justify-center transition-colors duration-150 cursor-pointer ${baseBg} hover:opacity-95 aspect-square`}
-                style={{ aspectRatio: '1 / 1' }}
+                className="relative flex items-center justify-center transition-[filter,background-color] duration-150 cursor-pointer hover:brightness-110 aspect-square"
+                style={{ backgroundColor: squareBg, aspectRatio: '1 / 1' }}
               >
                 {/* Coordinate labels */}
                 {fileDisplayIndex === 0 && (
-                  <span className="absolute top-0.5 left-1 text-[10px] font-mono text-slate-400 select-none pointer-events-none opacity-60">
+                  <span className="absolute top-0.5 left-1 text-[10px] font-mono text-[#FAF9F6] select-none pointer-events-none opacity-60">
                     {rankStr}
                   </span>
                 )}
                 {rankDisplayIndex === 7 && (
-                  <span className="absolute bottom-0.5 right-1 text-[10px] font-mono text-slate-400 select-none pointer-events-none opacity-60">
+                  <span className="absolute bottom-0.5 right-1 text-[10px] font-mono text-[#FAF9F6] select-none pointer-events-none opacity-60">
                     {fileStr}
                   </span>
                 )}
 
                 {/* Selected Piece Highlight */}
                 {isSelected && (
-                  <div className="absolute inset-0 bg-sky-500/30 border-2 border-sky-400 rounded-sm pointer-events-none" />
+                  <div className="absolute inset-0 bg-[#D4AF37]/30 border-2 border-[#D4AF37] rounded-sm pointer-events-none z-10" />
                 )}
 
                 {/* King Check Glow */}
                 {isKingInCheck && (
-                  <div className="absolute inset-0 bg-rose-600/40 border-2 border-rose-500 animate-pulse pointer-events-none" />
+                  <div className="absolute inset-0 bg-[#AA4A44]/40 border-2 border-[#AA4A44] animate-pulse pointer-events-none z-10" />
                 )}
 
-                {/* Card Anchor Highlight (Amber) */}
+                {/* Card Anchor Highlight (Warm Gold) */}
                 {isValidAnchor && (
-                  <div className="absolute inset-0 border-2 border-amber-400 bg-amber-500/25 animate-pulse rounded-sm pointer-events-none z-10" />
+                  <div className="absolute inset-0 border-2 border-[#D4AF37] bg-[#D4AF37]/30 animate-pulse rounded-sm pointer-events-none z-10" />
                 )}
 
-                {/* Card Target Destination Highlight (Violet) */}
+                {/* Card Target Destination Highlight (Tactical Purple) */}
                 {isValidTarget && (
-                  <div className="absolute inset-0 border-2 border-purple-400 bg-purple-500/30 animate-pulse rounded-sm pointer-events-none z-10" />
+                  <div className="absolute inset-0 border-2 border-[#A855F7] bg-[#A855F7]/35 animate-pulse rounded-sm pointer-events-none z-10" />
                 )}
 
                 {/* Legal Move Indicator */}
@@ -262,10 +261,10 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                     {piece ? (
                       // Capture ring
-                      <div className="w-4/5 h-4/5 rounded-full border-4 border-rose-500/80 animate-pulse" />
+                      <div className="w-4/5 h-4/5 rounded-full border-4 border-[#AA4A44]/85 animate-pulse" />
                     ) : (
                       // Empty move dot
-                      <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-emerald-400/80 shadow-[0_0_10px_#3fb950]" />
+                      <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#D4AF37]/90 shadow-[0_0_8px_#D4AF37]" />
                     )}
                   </div>
                 )}
@@ -279,17 +278,17 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
 
                 {/* Holographic Barrier Modifier */}
                 {barrier && (
-                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-cyan-900/50 border border-cyan-400/80 backdrop-blur-[2px] animate-pulse">
-                    <span className="text-xl sm:text-2xl drop-shadow-[0_0_8px_#58a6ff]">🛡️</span>
-                    <span className="text-[9px] font-mono font-bold text-cyan-200">
-                      {barrier.turnsRemaining}R
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#3C493F]/80 border border-[#D4AF37] backdrop-blur-[2px] animate-pulse">
+                    <span className="text-xl sm:text-2xl drop-shadow-[0_0_8px_#D4AF37]">🛡️</span>
+                    <span className="text-[9px] font-mono font-bold text-[#FAF9F6]">
+                      {barrier.turnsRemaining}T
                     </span>
                   </div>
                 )}
 
                 {/* Kinetic Shield Modifier */}
                 {shield && (
-                  <div className="absolute inset-0 z-20 border-2 border-amber-400 rounded-full shadow-[0_0_12px_#d29922] pointer-events-none animate-spin" />
+                  <div className="absolute inset-0 z-20 border-2 border-[#D4AF37] rounded-full shadow-[0_0_12px_#D4AF37] pointer-events-none animate-spin" />
                 )}
               </div>
             );
