@@ -1,6 +1,7 @@
 import React, { Suspense, useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Canvas, ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Box, Environment } from "@react-three/drei";
+import { playMoveSound, playCaptureSound } from "../utils/soundEffects";
 
 import { HexColorPicker } from "react-colorful";
 
@@ -1923,6 +1924,12 @@ const ChessboardScene: React.FC = () => {
         return animatePieceAlongPath(castlingRookId, castlingRookPath);
       }
     });
+
+    if (capturedPiece) {
+      playCaptureSound();
+    } else {
+      playMoveSound();
+    }
 
     setMoveHistory((prev) => [
       ...prev,

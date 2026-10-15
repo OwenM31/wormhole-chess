@@ -13,6 +13,15 @@ import {
 import { DeckChessEngine, DeckChessEngineState } from '../engine/DeckChessEngine';
 import { computeBestTurn } from '../engine/DeckChessAI';
 import { getCardById } from '../engine/cardGraph';
+import { api } from '../services/api';
+import {
+  playMoveSound,
+  playCaptureSound,
+  playCheckSound,
+  playCardSound,
+  playVictorySound,
+  playDefeatSound,
+} from '../utils/soundEffects';
 
 export interface CombatLogEntry {
   id: string;
@@ -20,6 +29,16 @@ export interface CombatLogEntry {
   timestamp: number;
   type: 'move' | 'card' | 'system';
   playerColor?: PieceColor;
+}
+
+export interface RecordedTurn {
+  turnNumber: number;
+  player: PieceColor;
+  chessMove: DeckChessMove;
+  cardAction?: DeckChessCardAction;
+  fenAfter: string;
+  combatText?: string;
+  timestamp: number;
 }
 
 export interface UseDeckChessGameOptions {
@@ -73,6 +92,12 @@ export function useDeckChessGame({
       type: 'system',
     },
   ]);
+
+  // Enriched recorded turns for match replay and persistence
+  const [recordedTurns, setRecordedTurns] = useState<RecordedTurn[]>([]);
+  const lastCardActionRef = useRef<DeckChessCardAction | null>(null);
+  const gameStartedAtRef = useRef<number>(Date.now());
+  const hasRecordedRef = useRef<boolean>(false);
 
   // Sync state from engine
   const syncState = useCallback(() => {
@@ -185,6 +210,9 @@ export function useDeckChessGame({
         return false;
       }
 
+      playCardSound();
+      lastCardActionRef.current = { cardId, anchorSquare, targetSquare, extraSquare };
+
       const cardName = card ? card.name : cardId;
       const targetStr = targetSquare ? ` ➔ ${targetSquare}` : '';
       addLog(
@@ -222,6 +250,7 @@ export function useDeckChessGame({
           const { cardId, anchorSquare, targetSquare, extraSquare } = decision.cardToPlay;
           const cardDef = getCardById(cardId);
           engine.activateCard(cardId, anchorSquare, targetSquare, extraSquare);
+          playCardSound();
           addLog(
             `AI Bot played [${cardDef?.name || cardId}] on ${anchorSquare}${targetSquare ? ` ➔ ${targetSquare}` : ''}`,
             'card',
@@ -234,6 +263,33 @@ export function useDeckChessGame({
         if (moveRes.success && moveRes.move) {
           const moveDesc = moveRes.move.san || `${decision.move.from}-${decision.move.to}`;
           addLog(`AI Bot moved ${moveDesc}`, 'move', aiColor);
+
+          if (moveRes.move.captured) {
+            playCaptureSound();
+          } else {
+            playMoveSound();
+          }
+          if (engine.inCheck()) {
+            setTimeout(playCheckSound, 120);
+          }
+
+          const turnRecord: RecordedTurn = {
+            turnNumber: engine.getTurnNumber(),
+            player: aiColor,
+            chessMove: decision.move,
+            cardAction: decision.cardToPlay
+              ? {
+                  cardId: decision.cardToPlay.cardId,
+                  anchorSquare: decision.cardToPlay.anchorSquare,
+                  targetSquare: decision.cardToPlay.targetSquare,
+                  extraSquare: decision.cardToPlay.extraSquare,
+                }
+              : undefined,
+            fenAfter: engine.getFen(),
+            combatText: `AI Bot moved ${moveDesc}`,
+            timestamp: Date.now(),
+          };
+          setRecordedTurns((prev) => [...prev, turnRecord]);
         }
 
         syncState();
@@ -268,6 +324,27 @@ export function useDeckChessGame({
         'move',
         currentTurn
       );
+
+      if (res.move.captured) {
+        playCaptureSound();
+      } else {
+        playMoveSound();
+      }
+      if (engineRef.current.inCheck()) {
+        setTimeout(playCheckSound, 120);
+      }
+
+      const turnRecord: RecordedTurn = {
+        turnNumber: engineRef.current.getTurnNumber(),
+        player: currentTurn,
+        chessMove: { from, to, promotion },
+        cardAction: lastCardActionRef.current || undefined,
+        fenAfter: engineRef.current.getFen(),
+        combatText: `${currentTurn === 'w' ? 'White' : 'Black'} moved ${moveSan}`,
+        timestamp: Date.now(),
+      };
+      lastCardActionRef.current = null;
+      setRecordedTurns((prev) => [...prev, turnRecord]);
 
       clearPieceSelection();
       syncState();
@@ -441,6 +518,7 @@ export function useDeckChessGame({
         const { cardId, anchorSquare, targetSquare, extraSquare } = payload.cardAction;
         const cardDef = getCardById(cardId);
         engine.activateCard(cardId, anchorSquare, targetSquare, extraSquare);
+        playCardSound();
         addLog(
           `${payload.playerColor === 'w' ? 'White' : 'Black'} played [${cardDef?.name || cardId}] on ${anchorSquare}`,
           'card',
@@ -456,6 +534,26 @@ export function useDeckChessGame({
           'move',
           payload.playerColor
         );
+
+        if (moveRes.move.captured) {
+          playCaptureSound();
+        } else {
+          playMoveSound();
+        }
+        if (engine.inCheck()) {
+          setTimeout(playCheckSound, 120);
+        }
+
+        const turnRecord: RecordedTurn = {
+          turnNumber: payload.turnNumber,
+          player: payload.playerColor,
+          chessMove: payload.chessMove,
+          cardAction: payload.cardAction,
+          fenAfter: payload.resultingFen,
+          combatText: `${payload.playerColor === 'w' ? 'White' : 'Black'} moved ${moveSan}`,
+          timestamp: Date.now(),
+        };
+        setRecordedTurns((prev) => [...prev, turnRecord]);
       }
 
       clearPieceSelection();
@@ -472,6 +570,10 @@ export function useDeckChessGame({
       clearPieceSelection();
       cancelCardSelection();
       setIsAiThinking(false);
+      gameStartedAtRef.current = Date.now();
+      hasRecordedRef.current = false;
+      lastCardActionRef.current = null;
+      setRecordedTurns([]);
       setCombatLog([
         {
           id: `sys_reset_${Date.now()}`,
@@ -494,6 +596,56 @@ export function useDeckChessGame({
     },
     [addLog, syncState]
   );
+
+  // Match completion recording & victory/defeat sound effects
+  useEffect(() => {
+    if (gameState.isGameOver && !hasRecordedRef.current) {
+      hasRecordedRef.current = true;
+      const isSolo = mode === 'ai';
+      const winner =
+        gameState.winner === 'w'
+          ? 'white'
+          : gameState.winner === 'b'
+          ? 'black'
+          : gameState.winner === 'draw'
+          ? 'draw'
+          : null;
+      const result =
+        gameState.winner === 'w'
+          ? '1-0'
+          : gameState.winner === 'b'
+          ? '0-1'
+          : '1/2-1/2';
+
+      if (gameState.winner === playerColor) {
+        playVictorySound();
+      } else if (gameState.winner && gameState.winner !== 'draw') {
+        playDefeatSound();
+      }
+
+      api
+        .recordMatch({
+          variant: isSolo
+            ? 'deck_builder:ai'
+            : mode === 'multiplayer'
+            ? 'deck_builder:pvp'
+            : 'deck_builder:local',
+          opponentName: isSolo
+            ? 'Minimax AI Bot'
+            : mode === 'multiplayer'
+            ? 'Online Opponent'
+            : 'Local Player',
+          result,
+          winner,
+          moves: recordedTurns,
+          startedAt: gameStartedAtRef.current,
+          endedAt: Date.now(),
+        })
+        .catch((err) => {
+          console.warn('Failed to record deck chess match:', err);
+        });
+    }
+  }, [gameState.isGameOver, gameState.winner, mode, playerColor, recordedTurns]);
 
   return {
     // Engine State
@@ -523,8 +675,9 @@ export function useDeckChessGame({
     selectedSquare,
     legalMovesForSelected,
 
-    // Combat Log
+    // Combat Log & Match Records
     combatLog,
+    recordedTurns,
 
     // Actions
     handleSquareClick,
