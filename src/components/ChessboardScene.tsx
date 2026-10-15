@@ -546,7 +546,13 @@ const ORIGINAL_ORIENTATION = new THREE.Quaternion(); // identity quaternion
 
 // ==================== MAIN COMPONENT ====================
 
-const ChessboardScene: React.FC = () => {
+export interface ChessboardSceneProps {
+  hideHeaderTitle?: boolean;
+}
+
+const ChessboardScene: React.FC<ChessboardSceneProps> = ({
+  hideHeaderTitle = false,
+}) => {
   // Handles the colors for the UI buttons in scene
   const [toggle180, setToggle180] = useState(false);
   const [isRotating, setIsRotating] = useState(false);
@@ -2216,24 +2222,28 @@ const ChessboardScene: React.FC = () => {
           justifyContent: "space-between",
         }}
       >
-        <h1
-          style={{
-            color: COLORS.warmWhite,
-            fontSize: "2rem",
-            fontWeight: "700",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Wormhole Chess
-          <span
+        {!hideHeaderTitle ? (
+          <h1
             style={{
-              color: COLORS.lodenGreenLight,
-              fontSize: "1rem",
-              marginLeft: "15px",
-              fontWeight: "400",
+              color: COLORS.warmWhite,
+              fontSize: "2rem",
+              fontWeight: "700",
+              letterSpacing: "-0.02em",
             }}
-          ></span>
-        </h1>
+          >
+            Wormhole Chess
+            <span
+              style={{
+                color: COLORS.lodenGreenLight,
+                fontSize: "1rem",
+                marginLeft: "15px",
+                fontWeight: "400",
+              }}
+            ></span>
+          </h1>
+        ) : (
+          <div style={{ flex: 1 }} />
+        )}
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           {/* Mode Switch */}
           <div

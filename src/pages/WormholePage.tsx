@@ -109,7 +109,7 @@ export const WormholePage: React.FC = () => {
 
       {/* Full-viewport Three.js Canvas Container */}
       <div style={canvasContainerStyle}>
-        <ChessboardScene />
+        <ChessboardScene hideHeaderTitle={true} />
       </div>
     </div>
   );
