@@ -108,6 +108,7 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
           return (
             <div
               key={cardId}
+              data-card-id={cardId}
               onClick={() => {
                 if (isPlayable || isSelected) {
                   onSelectCard(cardId);

@@ -6,6 +6,46 @@
 
 ## Sessions
 
+### Session: 2026-10-15 12:18
+
+#### Objective
+Systematically verify and test all Deck Builder Chess move mechanics and card actions (`/debug`), decouple card execution into a modular architecture open to future card additions/iterations, and fix all edge-case bugs and chess invariant violations.
+
+#### Accomplished
+- ✅ Isolated root causes of card and move edge-case bugs:
+  - Discovered that `knight_escort` placed passenger pawns on the knight's vacated anchor square (`b1`/`g1`), and `king_decree` allowed swapping with pawns from back ranks. Pawns on rank 1 or 8 caused `chess.js` to crash on FEN parsing with `Invalid FEN: some pawns are on the edge rows`, breaking engine cloning, minimax search, multiplayer sync, and replay viewing.
+  - Discovered that holographic barriers in `getLegalMoves()` only checked sliding rays, allowing pawn double-steps (`e2` -> `e4` through `e3`) and castling transit to pass through barriers.
+  - Discovered that shields stayed on their origin square when pieces moved.
+  - Identified that expanded cards (`pawn_reinforce`, `knight_outflank`, `rook_ironclad`) lacked execution handlers.
+- ✅ Designed & implemented modular Card Behavior Registry in `src/engine/cards/cardRegistry.ts`:
+  - `CardBehaviorHandler` interface with `evaluateConditions`, `getTargets`, `getSecondaryTargets`, and `execute`.
+  - Self-contained handlers for all 8 starter cards and 4 expanded cards.
+  - `DeckChessEngine` delegates card targeting and execution to the registry, completely decoupled from engine internals.
+- ✅ Hardened chess invariants in `DeckChessEngine.ts`:
+  - Pawn rank boundary safety (pawns strictly constrained to ranks 2..7; `knight_escort` transports passenger pawns to safe flank squares, never rank 1 or 8; `king_decree` excludes pawns on back rank).
+  - Barrier collision enforced for pawn double-steps and castling transit squares.
+  - Dynamic shield migration in `makeMove()` so shields follow the piece.
+  - FEN integrity check (`new Chess(simulation.getFen())`) and active player legal move check in `activateCard()`.
+- ✅ Upgraded UI & Tooling:
+  - Added `data-card-id` to `TacticalHandBar.tsx`.
+  - Generalized multi-stage secondary targeting in `useDeckChessGame.ts`.
+  - Created 83-assertion automated test suite `scripts/verify-all-cards.ts` covering turn lifecycle, every card effect, barrier/shield rules, and edge cases.
+  - Added `"test": "tsx scripts/verify-all-cards.ts"` to `package.json`.
+  - Created automated browser test `scripts/verify-browser-card-play.mjs` verifying live card selection, targeting, and countermoves.
+
+#### Verification
+- [x] All 83 automated test assertions passed cleanly with 0 failures (`npm test`).
+- [x] Full-stack typecheck clean across client, Pages Functions, and worker DOs (`npm run typecheck:all`).
+- [x] Production build passes cleanly in 1.04s (`npm run build`).
+- [x] Headless Chrome browser test passes with screenshot verified (`deck_builder_card_play_verified.png`).
+- [x] Recorded `[DECISION-013]` in `DECISIONS.md`.
+
+#### Handoff Notes
+- Every single card behavior and move interaction is verified correct, robust, and covered by automated tests.
+- The card logic is now cleanly modularized in `cardRegistry.ts`, making it easy to add, tweak, or retire cards in future iterations without touching the chess engine core.
+
+---
+
 ### Session: 2026-10-15 11:53
 
 #### Objective

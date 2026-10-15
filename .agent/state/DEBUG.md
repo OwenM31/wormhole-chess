@@ -1,50 +1,84 @@
 ---
 status: resolved
-trigger: "right now, when trying to make the first move in deck builder, it just says 'illegal move'"
-created: 2026-10-15T03:45:00-05:00
-updated: 2026-10-15T03:52:00-05:00
+trigger: "In deck builder, I am still not sure if each of the moves does exactly what they are supposed to; this is especially true when playing cards during the turn. Can we go through and verify the behaviors with tests, while still keeping the card logic open to changes in the future (the current iterations of the cards may not be around forever, but I'd still like them to be correct for now)"
+created: 2026-10-15T12:05:00-05:00
+updated: 2026-10-15T12:17:00-05:00
 ---
 
-## Current Focus
-hypothesis: In DeckChessEngine.ts line 868, matchingMove required `(!move.promotion || m.promotion === move.promotion)`. In useDeckChessGame.ts, makeMove defaulted `promotion: string = 'q'`. For any normal non-promoting move (such as e2 to e4, g1 to f3), m.promotion is undefined in chess.js. Because move.promotion was truthy ('q'), `!move.promotion` was false and `m.promotion === move.promotion` was `undefined === 'q'` (false). This caused EVERY normal chess move to fail and return `{ success: false, error: 'Illegal chess move' }`.
-test: Run test in node/tsx with `{ from: 'e2', to: 'e4', promotion: 'q' }` vs `{ from: 'e2', to: 'e4' }`.
-expecting: `{ from: 'e2', to: 'e4', promotion: 'q' }` returns `{ success: false, error: 'Illegal chess move' }`, while `{ from: 'e2', to: 'e4' }` returns `{ success: true }`.
-next_action: Fix applied, deployed, and verified.
+# Debug Session: Deck Builder Chess Card & Move Correctness
 
-## Symptoms
-expected: Clicking a friendly piece on DeckChessBoard highlights legal move dots, and clicking a legal destination square executes the chess move and passes the turn.
-actual: Clicking a legal destination square results in combat log saying "Illegal move: {from} to {to}", no move is made on the board.
-errors: Combat log: "Illegal move: e2 to e4". Engine return: `{ success: false, error: 'Illegal chess move' }`.
+## Symptom
+**When:** Playing cards and executing subsequent chess moves in Deck Builder Chess.
+**Expected:**
+1. Every card performs exactly what its card description states without producing invalid board states or FEN errors.
+2. Pawn positions respect chess rules (pawns must never be placed on rank 1 or rank 8).
+3. Board modifiers (barriers, shields) strictly govern move legality:
+   - Barriers block all transit through their square (sliding pieces, pawn double-steps, castling rays) and cannot be stepped onto.
+   - Shields protect the designated piece from capture and migrate with the piece.
+4. Cards cannot leave the active player's King in illegal check without legal escape moves.
+5. Card logic is modular, extensible, and open to future iterations (clean handler/strategy architecture instead of monolithic engine switches).
+6. Expanded library cards (`queen_aegis`, `pawn_reinforce`, `rook_ironclad`, `knight_outflank`) function with robust implementations.
 
-## Eliminated
-- hypothesis: chess.js rejects moves with promotion property
-  evidence: Tested `new Chess().move({ from: 'e2', to: 'e4', promotion: 'q' })` in node. chess.js accepts and executes the move successfully (`san: 'e4'`). The rejection happened before `this.chess.move()` was ever reached, in DeckChessEngine's legal move filter.
+**Actual:**
+1. `knight_escort` and `king_decree` placed pawns on rank 1 (or rank 8), causing `chess.js` to crash with `Invalid FEN: some pawns are on the edge rows` when cloning the engine (breaking AI minimax search, WebSocket multiplayer sync, and dashboard replay).
+2. Barriers did not block pawn double-steps (e.g. `e2`->`e4` jumped over a barrier at `e3`) or castling transit.
+3. Shields attached to squares rather than tracking pieces, leaving the shield behind on an empty square when the piece moved.
+4. `bishop_pierce` ignored active shields on enemy pieces.
+5. `bishop_invert` conditions checked diagonal line-of-sight instead of orthogonal step availability.
+6. Expanded library cards were missing execution cases in the engine.
+7. Monolithic hardcoded `switch(cardId)` statements in `DeckChessEngine.ts` made future card addition/modification brittle.
 
 ## Evidence
-- checked: `src/hooks/useDeckChessGame.ts` line 306
-  found: `const makeMove = useCallback((from: string, to: string, promotion: string = 'q') => {`
-  implication: Every user move sends `promotion: 'q'` to the engine.
-- checked: `src/engine/DeckChessEngine.ts` line 867-873
-  found: `const matchingMove = legalMoves.find((m) => m.to === move.to && (!move.promotion || m.promotion === move.promotion));`
-  implication: For non-promotion moves, `m.promotion` is undefined. When `move.promotion` is `'q'`, `!move.promotion` is false, and `undefined === 'q'` is false. Result is `matchingMove === undefined`, triggering line 872 `return { success: false, error: 'Illegal chess move' }`.
-- checked: Node reproduction via `tsx`
-  found: `makeMove({ from: 'e2', to: 'e4', promotion: 'q' })` fails with `Illegal chess move`. `makeMove({ from: 'e2', to: 'e4' })` succeeds.
+- tested: `npx tsx scripts/test-escort-clone.ts`
+  found: `engine.clone()` threw `Error: Invalid FEN: some pawns are on the edge rows` when passenger pawn was placed on b1.
+- tested: `scripts/test-card-mechanics.ts` Test 4
+  found: Pawn at `e2` could move to `e4` when barrier was on `e3`.
+- checked: `src/engine/DeckChessEngine.ts` lines 846-859
+  found: Only `r`, `b`, `q` checked intermediate squares for barriers. `p` double-step and `k` castling were ignored.
+- checked: `src/engine/DeckChessEngine.ts` lines 792-802 & lines 817-820
+  found: Shields were stored as `{ type: 'shield', square: targetSquare }` without tracking piece movement.
+- checked: `src/engine/DeckChessEngine.ts` lines 280-306
+  found: `bishop_invert` conditions checked diagonal open squares (`[1, 1]`, `[-1, -1]`), but `getValidTargetsForCard` checked orthogonal steps (`[1, 0]`, `[0, 1]`).
+
+## Hypotheses
+
+| # | Hypothesis | Likelihood | Status |
+|---|------------|------------|--------|
+| 1 | `knight_escort` and `king_decree` place pawns on rank 1/8 because target/anchor coordinates are swapped without rank boundary checks. | 100% | CONFIRMED & FIXED |
+| 2 | Barrier filtering in `getLegalMoves()` omits pawn double-step path (`rank + dir`) and castling transit squares (`f1`/`g1` or `d1`/`c1`). | 100% | CONFIRMED & FIXED |
+| 3 | BoardModifier for shield stores a static square string rather than tracking piece or transferring on piece move. | 100% | CONFIRMED & FIXED |
+| 4 | Card logic can be refactored into a declarative, modular CardBehaviorHandler registry so current cards are 100% correct and future cards can be added/altered with zero engine coupling. | 95% | IMPLEMENTED & VERIFIED |
 
 ## Resolution
-root_cause: Faulty promotion equality check in DeckChessEngine.ts combined with default `promotion = 'q'` parameter in useDeckChessGame.ts.
-fix:
-1. Updated `DeckChessEngine.ts`: `matchingMove` checks `if (m.promotion) return m.promotion === (move.promotion || 'q'); return true;` so non-promoting moves ignore `move.promotion` while actual pawn promotions still match correctly.
-2. Updated `useDeckChessGame.ts`: Removed default `'q'` on `promotion?: string` in `makeMove`.
-3. Updated `useDeckChessGame.ts`: Added `useEffect` to automatically trigger the AI turn whenever `mode === 'ai' && !gameState.isGameOver && !isAiThinking && gameState.turn !== playerColor`.
-4. Updated `DeckChessBoard.tsx`: Added `data-square={squareName}` attribute to all board squares.
-5. Deployed build to Cloudflare Pages (`https://wormhole-chess.com`).
-verification:
-- Full-stack typecheck clean (`npm run typecheck:all`).
-- Production build clean (`npm run build:all`).
-- Headless Chrome test against live production URL (`https://wormhole-chess.com`):
-  - User moved pawn `e2` -> `e4` (Verified in Combat Log: "White moved e4").
-  - AI Bot computed and responded with `Nc6` (Verified in Combat Log: "AI Bot moved Nc6").
-  - User moved knight `g1` -> `f3` (Verified in Combat Log: "White moved Nf3").
-  - AI Bot computed and responded with `Nf6` (Verified in Combat Log: "AI Bot moved Nf6").
-  - 0 illegal move errors.
-  - Screenshot verified: `.agent/state/artifacts/screenshots/deck_builder_playable_verified.png`.
+**Root Cause:**
+1. `knight_escort` placed passenger pawns on the knight's vacated anchor square (which was on rank 1 for initial knights at `b1`/`g1`), and `king_decree` allowed swapping with pawns from rank 1/8. Pawns on back ranks violate chess invariants and cause `chess.js` to crash on FEN parsing.
+2. `getLegalMoves()` barrier filter only checked sliding ray pieces (`r`, `b`, `q`), omitting pawn double-steps and castling transit squares.
+3. Shields remained static on their initial square when pieces moved.
+4. Monolithic switches in `DeckChessEngine.ts` prevented easy extension and left expanded cards unimplemented.
+
+**Fix:**
+1. **Modular Card Architecture (`src/engine/cards/cardRegistry.ts`)**:
+   - Defined `CardBehaviorHandler` interface with `evaluateConditions`, `getTargets`, `getSecondaryTargets`, and `execute`.
+   - Decoupled card targeting and mutation from `DeckChessEngine.ts`.
+   - Any new card or future rule tweak can now be added or modified in the registry without touching core engine code.
+2. **Rank Boundary Safety**:
+   - Updated `knight_escort` to transport passenger pawns exclusively to legal flank/adjacent squares (ranks 2..7), never leaving pawns on rank 1 or 8.
+   - Updated `king_decree` to exclude pawns from swap targets when King is on rank 1 or 8.
+   - Added FEN integrity verification (`new Chess(simulation.getFen())`) and active player legal move verification to `activateCard()`.
+3. **Barrier Path Enforcement**:
+   - Updated `getLegalMoves()` in `DeckChessEngine.ts` to block pawn double-steps through barriers (`rank + dir`) and castling king transit squares (`f1`/`d1` or `f8`/`d8`).
+4. **Dynamic Shield Migration**:
+   - Updated `makeMove()` in `DeckChessEngine.ts` so that when a shielded piece moves, its active shield migrates with it to the destination square.
+   - Enforced `isSquareShielded` check in `bishop_pierce` (Prism Ray).
+5. **Expanded Library Support**:
+   - Implemented full handlers for `pawn_reinforce` (graveyard resurrection), `knight_outflank` (rim leap), and `rook_ironclad` (battery leap).
+6. **Testing & Tooling**:
+   - Added `data-card-id` to `TacticalHandBar.tsx`.
+   - Created comprehensive 83-assertion automated test suite `scripts/verify-all-cards.ts` and registered `"test": "tsx scripts/verify-all-cards.ts"` in `package.json`.
+   - Created Playwright browser test `scripts/verify-browser-card-play.mjs` verifying live card selection, targeting, combat log recording, and countermoves.
+
+**Verified:**
+- `npm test`: 83 / 83 unit and engine assertions passed (0 failures).
+- `npm run typecheck:all`: Passed cleanly with 0 errors across frontend, Pages Functions, and worker DOs.
+- `npm run build`: Production bundle built cleanly in 1.04s.
+- `node scripts/verify-browser-card-play.mjs`: Live headless Chrome test verified card execution `e2` -> `e5`, knight move `g1` -> `f3`, and AI countermove with screenshot saved to `.agent/state/artifacts/screenshots/deck_builder_card_play_verified.png`.

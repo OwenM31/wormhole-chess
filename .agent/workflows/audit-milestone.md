@@ -40,12 +40,15 @@ Check TODO.md and DECISIONS.md for:
 
 ---
 
-## 4. Analyze Phase Quality
+## 4. Analyze Phase Quality & Full-Surface Sweep
 
 For each phase:
 - Review VERIFICATION.md
 - Check for gap closures (were there many?)
 - Note recurring issues
+
+**For Web Applications:**
+- Run `@ux-sweep.md all` to perform an exploratory sweep across all milestone routes, confirming that cross-phase navigation, shared layouts, and interactive flows work seamlessly without dead clicks or visual slop.
 
 ---
 
@@ -98,10 +101,29 @@ Health: {GOOD | CONCERNS | NEEDS ATTENTION}
 
 ▶ ACTIONS
 
-/plan-milestone-gaps — Create plans to address gaps
-/add-todo — Capture debt items for later
+/ux-sweep all         — Run full-app exploratory UX sweep across all milestone routes
+/plan-milestone-gaps  — Create plans to address gaps
+/add-todo             — Capture debt items for later
 
 ───────────────────────────────────────────────────────
 ```
 
 </process>
+
+<related>
+## Related
+
+### Workflows
+| Command | Relationship |
+|---|---|
+| `/complete-milestone` | Sign off on milestone after audit passes |
+| `/ux-sweep` | Full-app exploratory sweep across all routes |
+| `/plan-milestone-gaps` | Plan remediation for issues found during audit |
+
+### Skills
+| Skill | Purpose |
+|---|---|
+| `verifier` | Spec-level requirement auditing |
+| `ux-sweeper` | Exploratory UX inspection & defect ledger |
+| `playwright-cli` | Headless browser automation driver |
+</related>

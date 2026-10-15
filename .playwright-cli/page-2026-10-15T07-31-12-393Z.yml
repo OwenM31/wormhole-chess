@@ -1,0 +1,57 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - link "🌀 Wormhole Chess" [ref=e6] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e7]: 🌀
+      - generic [ref=e8]: Wormhole Chess
+    - navigation [ref=e9]:
+      - link "Home" [ref=e10] [cursor=pointer]:
+        - /url: /
+      - link "3D Wormhole" [ref=e11] [cursor=pointer]:
+        - /url: /wormhole
+      - link "Deck Builder" [ref=e12] [cursor=pointer]:
+        - /url: /deck-builder
+      - link "Dashboard" [ref=e13] [cursor=pointer]:
+        - /url: /dashboard
+    - generic [ref=e14]:
+      - button "Mute Sound Effects" [ref=e15] [cursor=pointer]: 🔊
+      - generic [ref=e16]: Connecting...
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]: Multi-Variant Chess Platform
+      - heading "Redefining Chess in Higher Dimensions & Tactical Cards" [level=1] [ref=e20]
+      - paragraph [ref=e21]: Experience non-Euclidean 3D board topology where wormholes connect disconnected boards, or battle in 2D Deck Builder Chess where every move is fueled by custom card abilities.
+    - generic [ref=e22]:
+      - heading "Choose Your Variant" [level=2] [ref=e23]
+      - generic [ref=e24]:
+        - generic [ref=e25]:
+          - generic [ref=e26]:
+            - generic [ref=e27]: 🌀
+            - generic [ref=e28]: Playable (3D)
+          - heading "3D Wormhole Chess" [level=3] [ref=e29]
+          - paragraph [ref=e30]: Navigate 8x8 boards connected through spatial wormhole tiles. Pieces travel through dimensional portals with custom lighting, camera controls, and non-Euclidean movement.
+          - link "Launch 3D Wormhole Chess →" [ref=e32] [cursor=pointer]:
+            - /url: /wormhole
+        - generic [ref=e33]:
+          - generic [ref=e34]:
+            - generic [ref=e35]: 🃏
+            - generic [ref=e36]: In Development (2D)
+          - heading "Deck Builder Chess" [level=3] [ref=e37]
+          - paragraph [ref=e38]: Draft tactical cards to modify piece movement, place barriers, create portal hazards, and execute game-changing combos in synchronous turn-based battles.
+          - link "Explore Rules & Preview →" [ref=e40] [cursor=pointer]:
+            - /url: /deck-builder
+    - generic [ref=e41]:
+      - heading "Platform Highlights" [level=2] [ref=e42]
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - generic [ref=e45]: ⚡
+          - heading "Edge-Powered Multiplayer" [level=4] [ref=e46]
+          - paragraph [ref=e47]: Zero-cold-start turn coordination powered by Cloudflare Workers and Durable Objects.
+        - generic [ref=e48]:
+          - generic [ref=e49]: 👤
+          - heading "Instant Guest Access" [level=4] [ref=e50]
+          - paragraph [ref=e51]: Jump directly into games with 1-click anonymous guest sessions or create an account to save stats.
+        - generic [ref=e52]:
+          - generic [ref=e53]: 🤖
+          - heading "AI Testing Opponent" [level=4] [ref=e54]
+          - paragraph [ref=e55]: Hone your strategies against an integrated tactical AI opponent with zero matchmaking wait time.

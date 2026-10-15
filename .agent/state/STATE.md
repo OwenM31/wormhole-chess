@@ -7,27 +7,25 @@ updated: 2026-10-15T11:53:00-05:00
 ## Current Position
 
 - **Phase**: 5 - Integration, Polish & Production Deployment (Complete & Verified)
-- **Task**: Deck Builder Chess move execution defect diagnosed, fixed, deployed & verified; ready to investigate 3D Wormhole Chess playability
-- **Status**: Paused at 2026-10-15T11:53:00-05:00
+- **Task**: Deck Builder card behaviors, piece movements, and invariant enforcement verified with 83 automated tests; card logic modularized via cardRegistry.ts
+- **Status**: Active (updated 2026-10-15T12:18:00-05:00)
 
 ## Last Session Summary
 
-1. Completed milestone audit via `/audit-milestone`, created `.agent/state/milestones/v1.0-AUDIT.md`, and marked all 11 Functional Requirements & 4 Non-Functional Requirements as verified in `REQUIREMENTS.md`.
-2. Executed full exploratory sweep (`/ux-sweep all`) on `https://wormhole-chess.com`.
-3. Addressed critical user finding: Deck Builder Chess rejected every move as "Illegal move".
-4. Systematic debugging via `DEBUG.md`:
-   - Reproduced bug in `tsx` with `makeMove({ from: 'e2', to: 'e4', promotion: 'q' })` failing with `{ success: false, error: 'Illegal chess move' }`.
-   - Identified root cause in `DeckChessEngine.ts` line 868 (`matchingMove` required `m.promotion === move.promotion` when `move.promotion` was passed as `'q'`; for non-promotion moves, `m.promotion` is `undefined`, causing equality failure).
-   - Fixed `DeckChessEngine.ts` to only evaluate `promotion` when `m.promotion` is defined (`m.promotion ? m.promotion === (move.promotion || 'q') : true`), defaulting to queen on actual promotions.
-   - Fixed `useDeckChessGame.ts` to remove default `'q'` on `promotion?: string` and record actual promotion.
-   - Added `useEffect` in `useDeckChessGame.ts` to automatically trigger AI bot turn when `mode === 'ai' && gameState.turn !== playerColor`.
-   - Added `data-square` attribute to `DeckChessBoard.tsx`.
-5. Built production bundle and deployed update to Cloudflare Pages (`https://wormhole-chess.com`).
-6. Empirically verified live gameplay on `https://wormhole-chess.com/deck-builder` using automated browser test: pawn `e2`->`e4`, AI countermove `Nc6`, knight `g1`->`f3`, and AI countermove `Nf6` executed seamlessly with 0 errors.
+1. Executed `/debug` on Deck Builder move and card behaviors.
+2. Isolated multiple invariant vulnerabilities:
+   - `knight_escort` and `king_decree` could leave pawns on edge rows (rank 1 or 8), causing `chess.js` to crash on FEN parsing (`Invalid FEN: some pawns are on the edge rows`).
+   - Barrier checking in `getLegalMoves()` allowed pawn double-steps and castling transit to jump through barriers.
+   - Shields remained static on squares when pieces moved.
+   - Expanded library cards (`pawn_reinforce`, `knight_outflank`, `rook_ironclad`) were missing execution cases.
+3. Architected modular `CardBehaviorHandler` registry in `src/engine/cards/cardRegistry.ts`, decoupling card targeting and execution from the core chess engine.
+4. Corrected card rules, edge row safety, barrier transit filtering, and shield piece-following logic.
+5. Created automated 83-assertion test suite in `scripts/verify-all-cards.ts` (`npm test`) and automated browser test `scripts/verify-browser-card-play.mjs`. All 83 tests pass cleanly.
+6. Full-stack typecheck (`npm run typecheck:all`) and production build pass with 0 errors.
 
 ## In-Progress Work
 
-None. Working tree clean, all changes committed and synced with GitHub `origin/master`.
+None. All 83 tests pass cleanly, builds and typechecks green.
 
 ## Blockers
 
@@ -36,13 +34,16 @@ None.
 ## Context Dump
 
 ### Decisions Made
-- [DECISION-001] through [DECISION-011]: Cloudflare serverless architecture, Vite 8 migration, Deck Builder Chess rules/compositional card graph, Web Audio SFX, and custom domain setup.
-- [DECISION-012]: Promotion parameters must only be evaluated for actual pawn promotion moves (when `m.promotion` is defined in `chess.js`). Non-promoting chess moves must never fail validation due to promotion attributes.
+- [DECISION-001] through [DECISION-012]: Cloudflare stack, Vite migration, Deck Builder compositional card graph, Web Audio SFX, custom domain, promotion validation.
+- [DECISION-013]: Modular Card Behavior Registry and Chess Invariant Enforcement (`cardRegistry.ts`, pawn rank 2..7 bounds, barrier path checks, dynamic shield migration).
 
 ### Files of Interest
-- `.agent/state/DEBUG.md`: Detailed root cause, reproduction, and resolution record for the Deck Builder illegal move defect.
-- `src/engine/DeckChessEngine.ts`: Wrapped chess.js engine with resilient move matching.
-- `src/hooks/useDeckChessGame.ts`: Reactive game coordinator with auto AI trigger effect.
+- `.agent/state/DEBUG.md`: Detailed root cause, reproduction, and resolution record for the card behaviors and move invariants.
+- `src/engine/cards/cardRegistry.ts`: Modular handler registry implementing all starter and expanded deck cards.
+- `src/engine/DeckChessEngine.ts`: Wrapped chess engine with invariant simulations, barrier filtering, and shield migration.
+- `src/hooks/useDeckChessGame.ts`: Reactive game coordinator with multi-stage secondary target support.
+- `scripts/verify-all-cards.ts`: 83-assertion automated test suite runnable via `npm test`.
+- `scripts/verify-browser-card-play.mjs`: Playwright browser test verifying card selection, targeting, and countermoves.
 - `src/components/DeckChessBoard.tsx`: 2D board with `data-square` attributes and responsive SVG pieces.
 - `src/pages/WormholePage.tsx` & `src/components/ChessboardScene.tsx`: 3D Wormhole Chess canvas and gameplay logic to investigate next.
 - `scripts/verify-deck-builder-moves.mjs`: Automated interactive move test script targeting local or production URLs.

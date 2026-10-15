@@ -185,6 +185,7 @@ After all waves complete:
 1. **Read phase goal** from ROADMAP.md
 2. **Check must-haves** against actual codebase (not SUMMARY claims)
 3. **Run verification commands** specified in phase
+4. **For UI / Frontend Phases:** Run `@ux-sweep.md` to perform an exploratory sweep, test interactive states (dead buttons, modals), and ensure no visual AI-slop remains before signing off on the goal.
 
 **Create VERIFICATION.md:**
 ```markdown
@@ -307,6 +308,7 @@ Gap closure plans created.
 |---------|--------------|
 | `/plan` | Creates PLAN.md files that /execute runs |
 | `/verify` | Validates work after /execute completes |
+| `/ux-sweep` | Exploratory UI & interaction sweep for frontend phases |
 | `/debug` | Use when tasks fail verification |
 | `/pause` | Use after 3 debugging failures |
 
@@ -314,6 +316,8 @@ Gap closure plans created.
 | Skill | Purpose |
 |-------|---------|
 | `executor` | Detailed execution protocol |
+| `ux-sweeper` | Exploratory UX inspection & anti-slop heuristics |
+| `playwright-cli` | Headless browser automation & interaction driver |
 | `context-fetch` | Search-first file access |
 | `context-compressor` | Summary & outline compression |
 | `token-budget` | Budget estimation & tracking |

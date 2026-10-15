@@ -66,7 +66,7 @@ For each must-have:
 | Type | Method | Evidence |
 |------|--------|----------|
 | API/Backend | Run curl or test command | Command output |
-| UI | Use browser tool | Screenshot |
+| UI / Frontend | Run @ux-sweep.md [route] or browser tool | Screenshot & defect ledger |
 | Build | Run build command | Success output |
 | Tests | Run test suite | Test results |
 | File exists | Check filesystem | File listing |
@@ -75,6 +75,10 @@ For each must-have:
 ### 3b. Execute Verification
 
 Run the verification command/action.
+
+> [!TIP]
+> **For Frontend & UI Phases:**
+> Synthetic unit/mock tests can pass even when buttons are dead or layouts are broken. Run `@ux-sweep.md [route]` to perform an exploratory sweep, test interactive states, and check for visual AI-slop before marking UI must-haves verified.
 
 // turbo
 ```bash
@@ -253,11 +257,14 @@ Never accept these as verification:
 |---------|--------------|
 | `/execute` | Run before /verify to implement work |
 | `/execute --gaps-only` | Fix issues found by /verify |
+| `/ux-sweep` | Exploratory visual & dead-button sweep for UI deliverables |
 | `/debug` | Diagnose verification failures |
 
 ### Skills
 | Skill | Purpose |
 |-------|---------|
 | `verifier` | Detailed verification methodology |
+| `ux-sweeper` | Exploratory UX inspection & anti-slop heuristics |
+| `playwright-cli` | Headless browser automation & interaction driver |
 | `empirical-validation` | Evidence requirements |
 </related>

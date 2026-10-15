@@ -11,6 +11,7 @@ import {
   Square,
 } from '../types/deckChess';
 import { getCardById, STARTER_DECK } from './cardGraph';
+import { getCardHandler } from './cards/cardRegistry';
 
 export interface DeckChessEngineState {
   fen: string;
@@ -229,6 +230,11 @@ export class DeckChessEngine {
     if (piece.type !== anchorTypeMap[card.anchor]) return false;
     if (piece.color !== this.getTurn()) return false;
 
+    const handler = getCardHandler(card.id);
+    if (handler?.evaluateConditions) {
+      if (!handler.evaluateConditions(this, anchorSquare)) return false;
+    }
+
     const coords = DeckChessEngine.squareToCoords(anchorSquare);
     const currentTurn = this.getTurn();
     const opponentColor = (currentTurn === 'w' ? 'b' : 'w') as Color;
@@ -422,172 +428,19 @@ export class DeckChessEngine {
   }
 
   public getValidTargetsForCard(cardId: string, anchorSquare: string): string[] {
-    const card = getCardById(cardId);
-    if (!card) return [];
-    const targets: string[] = [];
-    const coords = DeckChessEngine.squareToCoords(anchorSquare);
-    const turn = this.getTurn();
-
-    switch (cardId) {
-      case 'pawn_vanguard': {
-        const dir = turn === 'w' ? 1 : -1;
-        const step1 = DeckChessEngine.coordsToSquare(coords.file, coords.rank + dir);
-        const step2 = DeckChessEngine.coordsToSquare(coords.file, coords.rank + dir * 2);
-        const step3 = DeckChessEngine.coordsToSquare(coords.file, coords.rank + dir * 3);
-        if (
-          step1 &&
-          step2 &&
-          step3 &&
-          !this.chess.get(step1) &&
-          !this.chess.get(step2) &&
-          !this.chess.get(step3) &&
-          !this.isSquareBlockedByBarrier(step1) &&
-          !this.isSquareBlockedByBarrier(step2) &&
-          !this.isSquareBlockedByBarrier(step3)
-        ) {
-          targets.push(step3);
-        }
-        break;
-      }
-
-      case 'knight_escort': {
-        // Target is an adjacent friendly pawn
-        for (let df = -1; df <= 1; df++) {
-          for (let dr = -1; dr <= 1; dr++) {
-            if (df === 0 && dr === 0) continue;
-            const sq = DeckChessEngine.coordsToSquare(coords.file + df, coords.rank + dr);
-            if (sq) {
-              const p = this.chess.get(sq);
-              if (p && p.color === turn && p.type === 'p') {
-                targets.push(sq);
-              }
-            }
-          }
-        }
-        break;
-      }
-
-      case 'knight_swap': {
-        // Any friendly piece on board (other than the knight itself)
-        const board = this.chess.board();
-        for (let r = 0; r < 8; r++) {
-          for (let f = 0; f < 8; f++) {
-            const sq = DeckChessEngine.coordsToSquare(f, r);
-            if (sq && sq !== anchorSquare) {
-              const p = this.chess.get(sq);
-              if (p && p.color === turn && p.type !== 'k') {
-                targets.push(sq);
-              }
-            }
-          }
-        }
-        break;
-      }
-
-      case 'bishop_invert': {
-        // Target is adjacent orthogonal empty square
-        const orthogonals = [
-          [1, 0],
-          [-1, 0],
-          [0, 1],
-          [0, -1],
-        ];
-        for (const [df, dr] of orthogonals) {
-          const sq = DeckChessEngine.coordsToSquare(coords.file + df, coords.rank + dr);
-          if (sq && !this.chess.get(sq) && !this.isSquareBlockedByBarrier(sq)) {
-            targets.push(sq);
-          }
-        }
-        break;
-      }
-
-      case 'rook_rampart': {
-        // Empty squares along rook's open line
-        const orthogonals = [
-          [1, 0],
-          [-1, 0],
-          [0, 1],
-          [0, -1],
-        ];
-        for (const [df, dr] of orthogonals) {
-          let step = 1;
-          while (true) {
-            const sq = DeckChessEngine.coordsToSquare(coords.file + df * step, coords.rank + dr * step);
-            if (!sq) break;
-            if (this.chess.get(sq) || this.isSquareBlockedByBarrier(sq)) break;
-            targets.push(sq);
-            step++;
-          }
-        }
-        break;
-      }
-
-      case 'king_decree': {
-        // Adjacent friendly piece to swap/tandem step with
-        for (let df = -1; df <= 1; df++) {
-          for (let dr = -1; dr <= 1; dr++) {
-            if (df === 0 && dr === 0) continue;
-            const sq = DeckChessEngine.coordsToSquare(coords.file + df, coords.rank + dr);
-            if (sq) {
-              const p = this.chess.get(sq);
-              if (p && p.color === turn) {
-                targets.push(sq);
-              }
-            }
-          }
-        }
-        break;
-      }
-
-      case 'bishop_pierce': {
-        // First enemy target along bishop's diagonal
-        const diagonals = [
-          [1, 1],
-          [1, -1],
-          [-1, 1],
-          [-1, -1],
-        ];
-        for (const [df, dr] of diagonals) {
-          let step = 1;
-          while (true) {
-            const sq = DeckChessEngine.coordsToSquare(coords.file + df * step, coords.rank + dr * step);
-            if (!sq) break;
-            if (this.isSquareBlockedByBarrier(sq)) break;
-            const p = this.chess.get(sq);
-            if (p) {
-              if (p.color !== turn && p.type !== 'k') {
-                targets.push(sq);
-              }
-              break;
-            }
-            step++;
-          }
-        }
-        break;
-      }
-
-      case 'queen_aegis': {
-        // Adjacent friendly piece
-        for (let df = -1; df <= 1; df++) {
-          for (let dr = -1; dr <= 1; dr++) {
-            if (df === 0 && dr === 0) continue;
-            const sq = DeckChessEngine.coordsToSquare(coords.file + df, coords.rank + dr);
-            if (sq) {
-              const p = this.chess.get(sq);
-              if (p && p.color === turn) {
-                targets.push(sq);
-              }
-            }
-          }
-        }
-        break;
-      }
-
-      default:
-        break;
+    const handler = getCardHandler(cardId);
+    if (handler) {
+      return handler.getTargets(this, anchorSquare);
     }
+    return [];
+  }
 
-    return targets;
+  public getSecondaryTargetsForCard(cardId: string, anchorSquare: string, targetSquare: string): string[] {
+    const handler = getCardHandler(cardId);
+    if (handler?.getSecondaryTargets) {
+      return handler.getSecondaryTargets(this, anchorSquare, targetSquare);
+    }
+    return [];
   }
 
   // --- Card Activation & Mutation ---
@@ -622,7 +475,7 @@ export class DeckChessEngine {
       return { success: false, error: 'Card conditions not met on anchor piece' };
     }
 
-    // Invariant Simulation (No-Direct-Mate / King Protection)
+    // Invariant Simulation (No-Direct-Mate / FEN Integrity / King Protection)
     const simulation = this.clone();
     const simResult = simulation.executeCardMutation(cardId, anchorSquare, targetSquare, extraSquare);
     if (!simResult.success) {
@@ -634,6 +487,24 @@ export class DeckChessEngine {
       return {
         success: false,
         error: 'No-Direct-Mate Invariant: Cards cannot deliver direct checkmate prior to normal chess move',
+      };
+    }
+
+    // Verify FEN validity (e.g. no pawns on edge rows)
+    try {
+      new Chess(simulation.getFen());
+    } catch (e: any) {
+      return {
+        success: false,
+        error: `FEN Invariant Violation: ${e?.message || 'Invalid board position'}`,
+      };
+    }
+
+    // Verify Active Player has at least 1 legal chess move to complete their turn
+    if (simulation.getLegalMoves().length === 0) {
+      return {
+        success: false,
+        error: 'Illegal Card State: Playing this card leaves you with no legal chess moves',
       };
     }
 
@@ -663,149 +534,11 @@ export class DeckChessEngine {
     targetSquare?: string,
     extraSquare?: string
   ): { success: boolean; error?: string } {
-    const piece = this.chess.get(anchorSquare as Square);
-    if (!piece) return { success: false, error: 'No piece at anchor square' };
-    const currentTurn = this.getTurn();
-
-    switch (cardId) {
-      case 'pawn_vanguard': {
-        const dest = targetSquare || this.getValidTargetsForCard(cardId, anchorSquare)[0];
-        if (!dest) return { success: false, error: 'Invalid vanguard destination' };
-        this.chess.remove(anchorSquare as Square);
-        this.chess.put({ type: 'p', color: currentTurn }, dest as Square);
-        break;
-      }
-
-      case 'pawn_scuttle': {
-        this.chess.remove(anchorSquare as Square);
-        this.graveyard[currentTurn].p += 1;
-        break;
-      }
-
-      case 'knight_escort': {
-        // Escort passenger pawn
-        if (!targetSquare || !extraSquare) {
-          return { success: false, error: 'Knight Escort requires target passenger and landing destination' };
-        }
-        const passenger = this.chess.get(targetSquare as Square);
-        if (!passenger || passenger.type !== 'p') {
-          return { success: false, error: 'Passenger must be a pawn' };
-        }
-
-        // Knight leaps to extraSquare, passenger shifts to anchorSquare
-        this.chess.remove(anchorSquare as Square);
-        this.chess.remove(targetSquare as Square);
-        this.chess.put({ type: 'n', color: currentTurn }, extraSquare as Square);
-        this.chess.put({ type: 'p', color: currentTurn }, anchorSquare as Square);
-        break;
-      }
-
-      case 'knight_swap': {
-        if (!targetSquare) {
-          return { success: false, error: 'Knight Swap requires a target piece square' };
-        }
-        const targetPiece = this.chess.get(targetSquare as Square);
-        if (!targetPiece || targetPiece.type === 'k') {
-          return { success: false, error: 'Cannot swap with King or empty square' };
-        }
-        this.chess.remove(anchorSquare as Square);
-        this.chess.remove(targetSquare as Square);
-        this.chess.put(targetPiece, anchorSquare as Square);
-        this.chess.put(piece, targetSquare as Square);
-        break;
-      }
-
-      case 'bishop_invert': {
-        const dest = targetSquare || this.getValidTargetsForCard(cardId, anchorSquare)[0];
-        if (!dest) return { success: false, error: 'No valid orthogonal square' };
-        this.chess.remove(anchorSquare as Square);
-        this.chess.put(piece, dest as Square);
-        break;
-      }
-
-      case 'rook_rampart': {
-        const dest = targetSquare || this.getValidTargetsForCard(cardId, anchorSquare)[0];
-        if (!dest) return { success: false, error: 'No valid square for rampart' };
-        this.activeModifiers.push({
-          id: `barrier_${Date.now()}_${dest}`,
-          type: 'barrier',
-          square: dest,
-          ownerColor: currentTurn,
-          turnsRemaining: 2,
-        });
-        break;
-      }
-
-      case 'king_decree': {
-        if (!targetSquare) {
-          return { success: false, error: 'Royal Decree requires adjacent target piece' };
-        }
-        const friendlyPiece = this.chess.get(targetSquare as Square);
-        if (!friendlyPiece) return { success: false, error: 'No piece at target' };
-
-        // King steps to an adjacent empty square or swaps with friendly piece
-        const dest = extraSquare || targetSquare;
-        if (dest === targetSquare) {
-          // Tandem shift: King takes target's square, target shifts to King's vacated square
-          this.chess.remove(anchorSquare as Square);
-          this.chess.remove(targetSquare as Square);
-          this.chess.put(piece, targetSquare as Square);
-          this.chess.put(friendlyPiece, anchorSquare as Square);
-        }
-        break;
-      }
-
-      case 'bishop_pierce': {
-        if (!targetSquare) {
-          return { success: false, error: 'Prism Ray requires a target square' };
-        }
-        const target1 = this.chess.get(targetSquare as Square);
-        if (!target1 || target1.type === 'k') {
-          return { success: false, error: 'Invalid target piece' };
-        }
-
-        // Add target1 to opponent graveyard
-        const oppColor = currentTurn === 'w' ? 'b' : 'w';
-        this.addToGraveyard(oppColor, target1.type);
-        this.chess.remove(targetSquare as Square);
-
-        // Check for piercing target 2 directly behind target 1
-        const cAnchor = DeckChessEngine.squareToCoords(anchorSquare);
-        const cTarget = DeckChessEngine.squareToCoords(targetSquare);
-        const df = Math.sign(cTarget.file - cAnchor.file);
-        const dr = Math.sign(cTarget.rank - cAnchor.rank);
-        const nextSq = DeckChessEngine.coordsToSquare(cTarget.file + df, cTarget.rank + dr);
-        if (nextSq) {
-          const target2 = this.chess.get(nextSq);
-          if (target2 && target2.color !== currentTurn && target2.type !== 'k') {
-            this.addToGraveyard(oppColor, target2.type);
-            this.chess.remove(nextSq);
-          }
-        }
-
-        // Bishop advances to target 1's square
-        this.chess.remove(anchorSquare as Square);
-        this.chess.put(piece, targetSquare as Square);
-        break;
-      }
-
-      case 'queen_aegis': {
-        if (!targetSquare) return { success: false, error: 'Target piece required for Aegis' };
-        this.activeModifiers.push({
-          id: `shield_${Date.now()}_${targetSquare}`,
-          type: 'shield',
-          square: targetSquare,
-          ownerColor: currentTurn,
-          turnsRemaining: 2,
-        });
-        break;
-      }
-
-      default:
-        break;
+    const handler = getCardHandler(cardId);
+    if (!handler) {
+      return { success: false, error: `No handler registered for card ${cardId}` };
     }
-
-    return { success: true };
+    return handler.execute(this, anchorSquare, targetSquare, extraSquare);
   }
 
   // --- Barrier & Shield Modifiers ---
@@ -820,10 +553,30 @@ export class DeckChessEngine {
     );
   }
 
-  private addToGraveyard(color: PieceColor, pieceType: PieceSymbol): void {
+  public getInternalChess(): Chess {
+    return this.chess;
+  }
+
+  public addToPlayerGraveyard(color: PieceColor, pieceType: PieceSymbol): void {
     if (pieceType === 'p' || pieceType === 'n' || pieceType === 'b' || pieceType === 'r' || pieceType === 'q') {
       this.graveyard[color][pieceType] += 1;
     }
+  }
+
+  public decrementPlayerGraveyard(color: PieceColor, pieceType: PieceSymbol): void {
+    if (pieceType === 'p' || pieceType === 'n' || pieceType === 'b' || pieceType === 'r' || pieceType === 'q') {
+      if (this.graveyard[color][pieceType] > 0) {
+        this.graveyard[color][pieceType] -= 1;
+      }
+    }
+  }
+
+  public addModifier(modifier: BoardModifier): void {
+    this.activeModifiers.push(modifier);
+  }
+
+  private addToGraveyard(color: PieceColor, pieceType: PieceSymbol): void {
+    this.addToPlayerGraveyard(color, pieceType);
   }
 
   // --- Chess Move Execution ---
@@ -843,10 +596,11 @@ export class DeckChessEngine {
       // 2. Destination protected by active shield
       if (this.isSquareShielded(m.to, defenderColor)) return false;
 
+      const cFrom = DeckChessEngine.squareToCoords(m.from);
+      const cTo = DeckChessEngine.squareToCoords(m.to);
+
       // 3. Sliding piece ray cannot pass through barrier
       if (m.piece === 'r' || m.piece === 'b' || m.piece === 'q') {
-        const cFrom = DeckChessEngine.squareToCoords(m.from);
-        const cTo = DeckChessEngine.squareToCoords(m.to);
         const df = Math.sign(cTo.file - cFrom.file);
         const dr = Math.sign(cTo.rank - cFrom.rank);
         let step = 1;
@@ -855,6 +609,24 @@ export class DeckChessEngine {
           if (!intermediateSq || intermediateSq === m.to) break;
           if (this.isSquareBlockedByBarrier(intermediateSq)) return false;
           step++;
+        }
+      }
+
+      // 4. Pawn double-step cannot pass through barrier
+      if (m.piece === 'p' && Math.abs(cTo.rank - cFrom.rank) === 2) {
+        const intermediateRank = (cFrom.rank + cTo.rank) / 2;
+        const intermediateSq = DeckChessEngine.coordsToSquare(cFrom.file, intermediateRank);
+        if (intermediateSq && this.isSquareBlockedByBarrier(intermediateSq)) {
+          return false;
+        }
+      }
+
+      // 5. Castling king transit cannot pass through barrier
+      if (m.piece === 'k' && Math.abs(cTo.file - cFrom.file) === 2) {
+        const transitFile = cTo.file > cFrom.file ? cFrom.file + 1 : cFrom.file - 1;
+        const transitSq = DeckChessEngine.coordsToSquare(transitFile, cFrom.rank);
+        if (transitSq && this.isSquareBlockedByBarrier(transitSq)) {
+          return false;
         }
       }
 
@@ -895,6 +667,14 @@ export class DeckChessEngine {
       const oppColor = previousTurn === 'w' ? 'b' : 'w';
       this.addToGraveyard(oppColor, executedMove.captured);
     }
+
+    // If moved piece had an active shield, move shield with the piece
+    this.activeModifiers = this.activeModifiers.map((mod) => {
+      if (mod.type === 'shield' && mod.square === move.from && mod.ownerColor === previousTurn) {
+        return { ...mod, square: move.to };
+      }
+      return mod;
+    });
 
     // Decrement and expire active modifiers owned by previous player
     this.activeModifiers = this.activeModifiers

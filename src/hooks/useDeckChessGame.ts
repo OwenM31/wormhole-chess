@@ -415,21 +415,20 @@ export function useDeckChessGame({
             return;
           }
 
-          // Check if card needs 3rd step (e.g. knight_escort)
-          if (selectedCard.id === 'knight_escort') {
-            setSelectedTargetSquare(square);
-            setTargetingStage('pick_secondary');
-            // Passenger pawn chosen, now pick knight landing leap
-            if (selectedAnchorSquare) {
-              const knightMoves = engineRef.current
-                .getLegalMoves(selectedAnchorSquare)
-                .map((m) => m.to);
-              setValidTargetSquares(knightMoves);
-            }
-            return;
-          }
-
+          // Check if card needs secondary target step (e.g. knight_escort)
           if (selectedAnchorSquare) {
+            const secondaryTargets = engineRef.current.getSecondaryTargetsForCard(
+              selectedCard.id,
+              selectedAnchorSquare,
+              square
+            );
+            if (secondaryTargets.length > 0) {
+              setSelectedTargetSquare(square);
+              setTargetingStage('pick_secondary');
+              setValidTargetSquares(secondaryTargets);
+              return;
+            }
+
             executeCard(selectedCard.id, selectedAnchorSquare, square);
           }
           return;

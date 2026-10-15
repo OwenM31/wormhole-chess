@@ -216,5 +216,42 @@ Phase 5 addresses end-to-end integration, persistence, and production deployment
 
 ---
 
+### [DECISION-013] Modular Card Behavior Registry and Chess Invariant Enforcement
+
+**Date**: 2026-10-15
+**Status**: Accepted
+
+#### Context
+Deck Builder Chess allows players to play a tactical card during their `PRE_MOVE_WINDOW` before making their standard chess move. Previously, card targeting and mutation logic was embedded in monolithic switch statements in `DeckChessEngine.ts`. This led to tight coupling, unimplemented expanded cards, and critical invariant bugs:
+1. `knight_escort` placed passenger pawns on the knight's starting anchor square (e.g. `b1` or `g1`), and `king_decree` allowed swapping with pawns from back ranks. Pawns on rank 1 or 8 violated chess rules and caused `chess.js` to crash (`Invalid FEN: some pawns are on the edge rows`), breaking engine cloning, minimax AI search, multiplayer WebSocket syncing, and replay viewing.
+2. Holographic barriers in `getLegalMoves()` only checked sliding rays (`r`, `b`, `q`), allowing pawn double-steps (`e2` -> `e4` through `e3`) and castling transit to pass through barriers.
+3. Shields attached to static square coordinates without following the piece when it moved.
+4. Future iterations or card balance changes required touching core chess engine code.
+
+#### Decision
+1. **Extracted Modular Card Registry (`src/engine/cards/cardRegistry.ts`)**:
+   - Created `CardBehaviorHandler` interface declaring `evaluateConditions`, `getTargets`, `getSecondaryTargets`, and `execute`.
+   - Extracted all 8 starter cards and 4 expanded cards into dedicated, self-contained handlers.
+   - Core `DeckChessEngine` delegates card targeting and mutation to the registry, completely decoupled from engine internals.
+2. **Rank Boundary & FEN Invariant Enforcement**:
+   - `isValidPawnSquare(square)` enforces ranks 2..7 for all pawns.
+   - `knight_escort` transports passenger pawns exclusively to safe flank/adjacent squares on ranks 2..7.
+   - `king_decree` excludes pawns from swap targets when King is on rank 1 (White) or rank 8 (Black), and simulates King safety against check.
+   - `activateCard()` simulates the board state before applying mutations, validating FEN integrity via `new Chess(fen)` and ensuring the active player retains at least 1 legal chess move.
+3. **Barrier Path Enforcement**:
+   - `getLegalMoves()` blocks pawn double-steps through barriers (`(from.rank + to.rank) / 2`) and castling king transit squares (`f1`/`d1` or `f8`/`d8`).
+4. **Dynamic Shield Migration**:
+   - When a shielded piece moves in `makeMove()`, its active shield modifier automatically migrates to the destination square.
+5. **Comprehensive Automated Test Suite**:
+   - Added `scripts/verify-all-cards.ts` with 83 automated assertions covering turn lifecycle, every card effect, barrier/shield rules, and edge cases, registered as `npm test`.
+
+#### Consequences
+- Any card can be added, tweaked, rebalanced, or retired in `cardRegistry.ts` without touching the chess engine.
+- FEN errors are completely eliminated.
+- Test suite guarantees continuous correctness.
+
+---
+
 *Last updated: 2026-10-15*
+
 
