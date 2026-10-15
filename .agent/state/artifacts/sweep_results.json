@@ -7,35 +7,11 @@
     "/wormhole",
     "/play/SWEEPROOM"
   ],
-  "interactiveElementsTested": 6,
+  "interactiveElementsTested": 9,
   "consoleErrors": [
     {
-      "url": "http://localhost:4173/",
-      "text": "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
-    },
-    {
-      "url": "http://localhost:4173/login",
-      "text": "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
-    },
-    {
-      "url": "http://localhost:4173/login",
-      "text": "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
-    },
-    {
-      "url": "http://localhost:4173/dashboard",
-      "text": "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
-    },
-    {
-      "url": "http://localhost:4173/deck-builder",
-      "text": "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
-    },
-    {
-      "url": "http://localhost:4173/wormhole",
-      "text": "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
-    },
-    {
-      "url": "http://localhost:4173/play/SWEEPROOM",
-      "text": "Failed to load resource: the server responded with a status of 502 (Bad Gateway)"
+      "url": "https://wormhole-chess.com/",
+      "text": "Failed to load resource: the server responded with a status of 401 ()"
     }
   ],
   "pageErrors": [],
