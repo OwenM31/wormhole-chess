@@ -1,14 +1,14 @@
 ---
-updated: 2026-10-14T19:25:40-05:00
+updated: 2026-10-14T19:35:40-05:00
 ---
 
 # Project State
 
 ## Current Position
 
-- **Phase**: 2 - Cloudflare Backend, D1 Database & Authentication UI (completed)
-- **Task**: Phase 2 verified; ready for Phase 3 planning
-- **Status**: Active (resumed 2026-10-14T19:25:40-05:00)
+- **Phase**: 3 - Real-Time Room Coordination & Durable Objects
+- **Task**: Planning complete (Plans 3.1 & 3.2 validated)
+- **Status**: Ready for execution
 
 ## Last Session Summary
 
@@ -48,6 +48,7 @@ None.
 
 ## Next Steps
 
-1. Resume session with `/resume`.
-2. Proceed to Phase 3: Real-Time Room Coordination & Durable Objects.
-3. Conduct Phase 3 planning or discussion (`/plan 3` or `/discuss-phase 3`).
+1. Execute Phase 3 with `/execute 3`.
+2. Execute Wave 1 (Plan 3.1): Companion Worker with `GameRoomDO`, `MatchmakerDO`, and Pages Functions proxies.
+3. Execute Wave 2 (Plan 3.2): Client `useGameRoom` hook, `MatchmakingLobby`, `ChessClock`, and `PlayRoomPage`.
+4. Verify Phase 3 must-haves with `/verify 3`.
