@@ -71,13 +71,14 @@ updated: 2026-10-14T23:27:00Z
 ---
 
 ### Phase 5: Integration, Polish & Production Deployment
-**Status:** ⬜ Not Started
+**Status:** 🔄 Ready for Execution (3 plans across 3 waves)
 **Objective:** Link both chess variants to persistent D1 match records, perform full guest/user end-to-end verification, and validate production Cloudflare Pages deployment.
 **Depends on:** Phase 4
 
 **Plans:**
-- [ ] Plan 5.1: End-to-end match completion flow, match history recording in D1, and stats tracking
-- [ ] Plan 5.2: Production build verification and Cloudflare Pages deployment configuration
+- [ ] Plan 5.1: D1 Match & Deck Persistence Endpoints (Wave 1)
+- [ ] Plan 5.2: Game Flow Match Recording, Cloud Deck Sync & Web Audio SFX (Wave 2)
+- [ ] Plan 5.3: Historical Match Replay Viewer, Dashboard UI & Cloudflare Production Deployment (Wave 3)
 
 ---
 
@@ -89,7 +90,7 @@ updated: 2026-10-14T23:27:00Z
 | 2: Cloudflare Backend & Auth | ✅ Complete | 2/2 | 100% |
 | 3: Room Coordination & DO | ✅ Complete | 2/2 | 100% |
 | 4: Deck Builder Chess (2D) | ✅ Complete | 3/3 | 100% |
-| 5: Polish & Deployment | ⬜ Not Started | 0/2 | — |
+| 5: Polish & Deployment | 🔄 Ready for Execution | 0/3 | — |
 
 ---
 
