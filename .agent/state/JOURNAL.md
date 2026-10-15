@@ -40,9 +40,14 @@ Systematically verify and test all Deck Builder Chess move mechanics and card ac
 - [x] Headless Chrome browser test passes with screenshot verified (`deck_builder_card_play_verified.png`).
 - [x] Recorded `[DECISION-013]` in `DECISIONS.md`.
 
+#### Paused Because
+User requested session pause (`/pause`) at clean handoff point after successful card behavior verification and modularization.
+
 #### Handoff Notes
-- Every single card behavior and move interaction is verified correct, robust, and covered by automated tests.
+- Every single card behavior and move interaction is verified correct, robust, and covered by 83 automated tests (`npm test`).
 - The card logic is now cleanly modularized in `cardRegistry.ts`, making it easy to add, tweak, or retire cards in future iterations without touching the chess engine core.
+- Working tree clean, build deployed to Cloudflare Pages.
+- Next session will focus on 3D Wormhole Chess playability on `/wormhole`.
 
 ---
 
