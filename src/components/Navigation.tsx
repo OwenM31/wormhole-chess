@@ -1,7 +1,16 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export const Navigation: React.FC = () => {
+  const { user, logout, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
+
   return (
     <header style={navContainerStyle}>
       <div style={brandContainerStyle}>
@@ -40,12 +49,31 @@ export const Navigation: React.FC = () => {
       </nav>
 
       <div style={authContainerStyle}>
-        <NavLink
-          to="/login"
-          style={loginButtonStyle}
-        >
-          Sign In
-        </NavLink>
+        {isLoading ? (
+          <span style={loadingTextStyle}>Connecting...</span>
+        ) : user ? (
+          <div style={userSectionStyle}>
+            <Link to="/dashboard" style={userBadgeLinkStyle}>
+              <span style={userAvatarStyle}>{user.isGuest ? '👾' : '👑'}</span>
+              <span style={usernameTextStyle}>{user.username}</span>
+              {user.isGuest && <span style={guestChipStyle}>Guest</span>}
+            </Link>
+
+            {user.isGuest ? (
+              <Link to="/register" style={registerUpgradeBtnStyle}>
+                Upgrade
+              </Link>
+            ) : null}
+
+            <button onClick={handleLogout} style={signOutButtonStyle}>
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <NavLink to="/login" style={loginButtonStyle}>
+            Sign In
+          </NavLink>
+        )}
       </div>
     </header>
   );
@@ -117,6 +145,66 @@ const authContainerStyle: React.CSSProperties = {
   gap: '0.75rem',
 };
 
+const loadingTextStyle: React.CSSProperties = {
+  color: '#8b949e',
+  fontSize: '0.85rem',
+};
+
+const userSectionStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.75rem',
+};
+
+const userBadgeLinkStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.4rem',
+  textDecoration: 'none',
+  color: '#c9d1d9',
+  backgroundColor: '#161b22',
+  border: '1px solid #30363d',
+  padding: '0.35rem 0.75rem',
+  borderRadius: '20px',
+  fontSize: '0.85rem',
+  fontWeight: 600,
+  transition: 'border-color 0.15s ease',
+};
+
+const userAvatarStyle: React.CSSProperties = {
+  fontSize: '1rem',
+};
+
+const usernameTextStyle: React.CSSProperties = {
+  maxWidth: '120px',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
+const guestChipStyle: React.CSSProperties = {
+  fontSize: '0.7rem',
+  backgroundColor: 'rgba(210, 153, 34, 0.2)',
+  color: '#d29922',
+  border: '1px solid rgba(210, 153, 34, 0.4)',
+  borderRadius: '10px',
+  padding: '0.1rem 0.4rem',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.04em',
+};
+
+const registerUpgradeBtnStyle: React.CSSProperties = {
+  textDecoration: 'none',
+  color: '#f0f6fc',
+  backgroundColor: '#8957e5',
+  padding: '0.4rem 0.85rem',
+  borderRadius: '6px',
+  fontSize: '0.85rem',
+  fontWeight: 600,
+  transition: 'background-color 0.15s ease',
+};
+
 const loginButtonStyle: React.CSSProperties = {
   textDecoration: 'none',
   color: '#f0f6fc',
@@ -126,6 +214,17 @@ const loginButtonStyle: React.CSSProperties = {
   fontSize: '0.9rem',
   fontWeight: 600,
   transition: 'background-color 0.15s ease',
+};
+
+const signOutButtonStyle: React.CSSProperties = {
+  background: 'transparent',
+  border: '1px solid #30363d',
+  color: '#8b949e',
+  padding: '0.4rem 0.75rem',
+  borderRadius: '6px',
+  fontSize: '0.85rem',
+  cursor: 'pointer',
+  transition: 'all 0.15s ease',
 };
 
 export default Navigation;
