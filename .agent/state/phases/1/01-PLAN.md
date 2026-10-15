@@ -4,90 +4,83 @@ plan: 1
 wave: 1
 depends_on: []
 files_modified:
-  - package.json
-  - vite.config.ts
-  - index.html
-  - tsconfig.json
-  - .env
-  - src/vite-env.d.ts
-  - src/react-app-env.d.ts
-  - src/App.test.tsx
+  - src/components/MatchmakingLobby.tsx
 autonomous: true
 
 must_haves:
   truths:
-    - "Vite compiles the production bundle in under 10 seconds without errors"
-    - "Build outputs to build/ directory maintaining Cloudflare Pages backward compatibility"
+    - "Matchmaking lobby renders using Phase 1 design tokens (#0e1118 surface, 6px radii, 1px border stroke)"
+    - "Mode switcher displays clean segmented controls for Deck Builder and Wormhole"
+    - "Time control pills use monospace tabular figures (3 min, 5 min, 10 min, Untimed)"
+    - "Queue actions use approved copy ('Find Match', 'Create Room', 'Join with Code')"
+    - "Real-time WebSocket events and private room generation remain 100% functional"
   artifacts:
-    - "vite.config.ts"
-    - "index.html"
-    - "src/vite-env.d.ts"
-    - "build/index.html"
+    - "src/components/MatchmakingLobby.tsx"
 ---
 
-# Plan 1.1: Migrate CRA to Vite & Modernize Tooling
+# Plan 1.1: Matchmaking Lobby Component Alignment
 
 <objective>
-Replace deprecated Create React App (`react-scripts` 5.0.1) with Vite. This cuts production build times from ~120s down to < 5s, provides instant HMR, fixes TypeScript configuration, and ensures compatibility with Cloudflare Pages and modern serverless workflows.
+Refactor the internal styling, layout, and copy of `MatchmakingLobby.tsx` to inherit Phase 1 design system tokens (Variant A: Technical Density) and user-approved copy ("Find Match", "Create Room", "Join with Code"). Ensure all WebSocket queue events, room code generation, and live player metrics continue functioning without regressions.
 
-Purpose: Eliminate the primary development blocker (slow builds, CRA deprecation) and prepare clean bundling for upcoming features.
-Output: Working Vite configuration (`vite.config.ts`), root `index.html`, modernized `tsconfig.json`, and verified production build in `build/`.
+Purpose: Eliminate legacy styling artifacts, remove hyperbolic copy, and unify the matchmaking lobby within the new 2-column Dashboard layout.
+Output: Refactored `src/components/MatchmakingLobby.tsx` adhering to locked design tokens.
 </objective>
 
 <context>
+Load for context:
 - .agent/state/SPEC.md
-- .agent/state/ARCHITECTURE.md
+- .agent/rules/STYLE.md
+- .agent/state/DESIGN_STATE.md
 - .agent/state/phases/1/RESEARCH.md
-- package.json
-- tsconfig.json
+- src/components/MatchmakingLobby.tsx
+- src/services/matchmakingApi.ts
 </context>
 
 <tasks>
 
 <task type="auto">
-  <name>Migrate Build Tooling from CRA to Vite</name>
-  <files>package.json, vite.config.ts, index.html, tsconfig.json, .env</files>
+  <name>Refactor MatchmakingLobby styling and copy to locked tokens</name>
+  <files>src/components/MatchmakingLobby.tsx</files>
   <action>
-    1. Uninstall `react-scripts` and install `vite` and `@vitejs/plugin-react` as devDependencies.
-    2. Create `vite.config.ts` configuring `@vitejs/plugin-react` and explicitly setting `build.outDir: 'build'` to maintain parity with Cloudflare Pages.
-    3. Copy and convert `public/index.html` to root `index.html`:
-       - Remove all `%PUBLIC_URL%` tokens (e.g. `%PUBLIC_URL%/favicon.ico` -> `/favicon.ico`).
-       - Add `<script type="module" src="/src/index.tsx"></script>` before `</body>`.
-    4. Update `package.json` scripts:
-       - `"dev": "vite"`
-       - `"build": "tsc && vite build"`
-       - `"preview": "vite preview"`
-    5. Modernize `tsconfig.json` compilerOptions for Vite: set `"target": "ES2020"`, `"moduleResolution": "bundler"`, `"module": "ESNext"`.
-    6. Remove CRA-specific `.env` content (`GENERATE_SOURCEMAP=false`).
-    AVOID: Do not change the build output directory to `dist/`; keep it as `build/` so existing Cloudflare Pages deployments continue uninterrupted.
+    Update internal CSS properties and JSX in `src/components/MatchmakingLobby.tsx`:
+    1. Align panel surfaces to `#0e1118` with `#0c0e14` headers and `1px solid rgba(255, 255, 255, 0.08)` borders.
+    2. Convert mode selector to compact segmented control (`#090a0f` container, `#171b26` active state, `#f8fafc` text).
+    3. Update time control options to 4 clean pills (`Untimed`, `3 min`, `5 min`, `10 min`) using `ui-monospace` tabular numbers.
+    4. Apply approved action copy: "Find Match" primary CTA button with emerald accent (`#10b981`), "Create Room" secondary button, and "Join with Code".
+    5. Clean up private room creation UI and join code inputs to use 4px/6px radii, hairline borders, and monospace room code display (`WH-XXXX`).
+    6. AVOID: Do not break WebSocket event handlers (`clientRef.current.joinQueue`, `leaveQueue`), navigation redirection on `match_found`, or clipboard copying logic.
+    7. AVOID: Never reintroduce hyperbolic fluff ("Galactic Arena", "Cosmic Queue", etc.).
   </action>
-  <verify>npm run build</verify>
-  <done>Vite compiles bundle into build/ in < 10 seconds</done>
+  <verify>npm run typecheck:all</verify>
+  <done>MatchmakingLobby compiles cleanly with zero TypeScript errors and matches Phase 1 design tokens.</done>
 </task>
 
 <task type="auto">
-  <name>Clean Deprecated CRA Artifacts & Update Types</name>
-  <files>src/vite-env.d.ts, src/react-app-env.d.ts, src/App.test.tsx</files>
+  <name>Verify matchmaking queue controls and state transitions</name>
+  <files>src/components/MatchmakingLobby.tsx</files>
   <action>
-    1. Replace `src/react-app-env.d.ts` with `src/vite-env.d.ts` containing `/// <reference types="vite/client" />`.
-    2. Remove obsolete `src/react-app-env.d.ts`.
-    3. Update `src/App.test.tsx` to remove the outdated CRA "learn react" assertion and verify clean mounting.
+    Review state transitions in `MatchmakingLobby.tsx`:
+    1. Ensure `isSearching` state renders clean countdown timer and "Cancel Search" button with rose accent (`#f87171`).
+    2. Ensure `matchedRoom` banner renders high-contrast confirmation before redirecting to `/play/:roomCode`.
+    3. Verify private room code generator produces 4-character random codes (`WH-XXXX`) with copy-to-clipboard button.
+    4. Confirm all styles use consistent inline CSS or Tailwind utility tokens matching `STYLE.md`.
   </action>
   <verify>npm run build</verify>
-  <done>Build passes cleanly with no CRA type errors</done>
+  <done>Production build passes cleanly in < 10s with zero bundling warnings.</done>
 </task>
 
 </tasks>
 
 <verification>
 After all tasks, verify:
-- [ ] `npm run build` completes in < 10 seconds
-- [ ] `build/index.html` and `build/static/` or `build/assets/` are generated
-- [ ] Zero references to `react-scripts` in `package.json`
+- [ ] Matchmaking lobby conforms to 6px border radii and 1px hairline border tokens.
+- [ ] Approved copy ("Find Match", "Create Room", "Join with Code") rendered correctly.
+- [ ] Full-stack typecheck passes (`npm run typecheck:all`).
+- [ ] Production build succeeds (`npm run build`).
 </verification>
 
 <success_criteria>
 - [ ] All tasks verified
-- [ ] Production build succeeds with Vite
 - [ ] Must-haves confirmed
 </success_criteria>

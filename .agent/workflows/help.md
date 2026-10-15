@@ -36,11 +36,13 @@ Run workflows by referencing their file: @<workflow>.md (or /<workflow> if alias
 
 CORE EXECUTION
 ──────────────
+@discuss-phase.md [N]      Discuss scope, trade-offs, and architecture BEFORE planning
+@research-phase.md [N]     Deep technical discovery & documentation (Level 1–3)
+@design-phase.md [N]       Research aesthetic benchmarks & generate 3-5 UI variants for user selection
 @plan.md [N]               Decompose phase N into atomic, wave-sequenced plans (2-3 tasks max)
 @execute.md [N]            Execute wave-by-wave with atomic task verification & commits
 @verify.md [N]             Validate phase deliverables against SPEC.md with empirical proof
 @ux-sweep.md [route]       Exploratory UX sweep: dead buttons, broken wiring, visual AI-slop
-@discuss-phase.md [N]      Discuss scope, trade-offs, and architecture BEFORE planning
 @debug.md [issue]          Systematic 3-strike debugging with fresh subagent contexts
 @map.md                    Analyze existing codebase architecture → ARCHITECTURE.md
 
@@ -88,13 +90,13 @@ RECOMMENDED WORKFLOW CYCLES
 ───────────────────────────
 
 1. Standard Phase Loop (Managing Context Rot):
-   /clear-context ➔ @resume.md ➔ @plan.md {N} ➔ @pause.md ➔
-   /clear-context ➔ @resume.md ➔ @execute.md {N} ➔ @verify.md {N}
+   /clear-context ➔ @resume.md ➔ @discuss-phase.md {N} ➔ @research-phase.md {N} ➔ @design-phase.md {N} (if UI) ➔ @plan.md {N} ➔ @pause.md ➔
+   /clear-context ➔ @resume.md ➔ @execute.md {N} ➔ @verify.md {N} ➔ @ux-sweep.md (if UI)
 
 2. Full Milestone Lifecycle:
    @new-milestone.md (establishes release goals & ROADMAP.md phases)
      └── For each Phase 1..N:
-           @discuss-phase.md {N} ➔ @plan.md {N} ➔ @execute.md {N} ➔ @verify.md {N}
+           @discuss-phase.md {N} ➔ @research-phase.md {N} ➔ @design-phase.md {N} (if UI) ➔ @plan.md {N} ➔ @execute.md {N} ➔ @verify.md {N}
      └── Closeout:
            @audit-milestone.md ➔ @complete-milestone.md (tags git vX.X)
 

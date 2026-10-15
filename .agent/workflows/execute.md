@@ -161,7 +161,8 @@ For each plan in the current wave:
 
 1. **Load plan context** — Read only the PLAN.md file
 2. **Context efficiency** — Follow `context-fetch` discipline: search before reading files. For files >100 lines, extract targeted sections or use outline mode (`context-compressor`) instead of loading full files.
-3. **Execute tasks** — Follow `<task>` blocks in order
+3. **Execute tasks** — Follow `<task>` blocks in order:
+   - **For UI tasks:** If an approved presentational UI shell component was established by `@design-phase` (e.g. `src/pages/.../View.tsx`), do NOT rewrite styling or layout from scratch. Preserve the approved design tokens, cards, and structure; wire real data hooks, state management, and event mutations into the existing shell.
 4. **Verify each task** — Run `<verify>` commands
 5. **Commit per task:**
    ```bash

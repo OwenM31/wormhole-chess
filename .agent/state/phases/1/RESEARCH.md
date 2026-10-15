@@ -1,96 +1,65 @@
-# Phase 1 Research: CRA to Vite Migration & Client Routing
+# Phase 1 Research: Design System Foundations & Player Dashboard Redesign
 
-> **Phase**: 1 - Modern Foundation, Vite Migration & Client Routing
-> **Date**: 2026-10-14
-> **Discovery Level**: Level 1 (Quick Verification)
+## Discovery Level: Level 0 (Internal Styling & Component Refactoring)
 
-## 1. Objectives & Context
+All architectural and visual discoveries were conducted during `@design-phase.md 1` with explicit user confirmation of candidate UI copy and visual direction selection (**Variant A: Technical Density**).
 
-Phase 1 establishes a fast, modern foundation for the entire platform expansion:
-- Replace deprecated `react-scripts` (Create React App 5.0.1) with **Vite** (~120s build down to < 5s).
-- Ensure smooth Three.js / React Three Fiber / `@react-spring/three` bundling under Vite.
-- Introduce client-side routing (`react-router-dom`) to support Home, Auth, Dashboard, and dedicated variant pages.
-- Encapsulate the ~3,000 LOC 3D Wormhole Chess game inside `/wormhole` with zero visual or interactive regressions.
+---
 
-## 2. Vite Migration Findings
+## 1. Locked Visual System Tokens & Identity
 
-### Dependency Changes
-- **Remove:** `react-scripts`
-- **Add (devDependencies):** `vite`, `@vitejs/plugin-react`
-- **Add (dependencies):** `react-router-dom`
+### Design Foundations
+- **Base Canvas**: `#090a0f` (deep jet space)
+- **Primary Surface / Cards**: `#0e1118` with `#0c0e14` panel headers
+- **Elevated Controls / Inactive Filters**: `#141722` or `#171b26` (border `rgba(255, 255, 255, 0.08)`)
+- **Card Hover Elevation**: `#11141d` with subtle border highlight `rgba(56, 189, 248, 0.35)`
+- **Dividers & Strokes**: strictly `1px solid rgba(255, 255, 255, 0.08)` (subtle dividers: `rgba(255, 255, 255, 0.04)`)
+- **Accents**:
+  - Cyan: `#38bdf8`
+  - Emerald (Matchmaking / Win): `#10b981` (hover `#059669`; badge `#4ade80`, bg `rgba(74, 222, 128, 0.1)`)
+  - Rose (Loss / Danger): `#f87171`
+  - 3D Arena Blue: `#2563eb`
+  - Deck Builder Purple: `#7c3aed`
+- **Typography**:
+  - Sans: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif`
+  - Monospace: `ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace` with `font-variant-numeric: tabular-nums` for all metrics, timers, ratings, and move counts.
+- **Radii**: `6px` for structural panels, cards, and modal dialogs; `4px` for buttons, pills, and inputs.
 
-### HTML Entry Point
-In Create React App, `public/index.html` was the template using `%PUBLIC_URL%`.
-In Vite:
-- `index.html` sits at the **root** of the repository.
-- Remove all `%PUBLIC_URL%` tokens (e.g., replace `%PUBLIC_URL%/favicon.ico` with `/favicon.ico`).
-- Add script entry:
-  ```html
-  <script type="module" src="/src/index.tsx"></script>
-  ```
+---
 
-### Vite Configuration (`vite.config.ts`)
-```typescript
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+## 2. Approved UI Copy & Tone of Voice
 
-export default defineConfig({
-  plugins: [react()],
-  build: {
-    outDir: 'build', // Maintain 'build' directory so existing Cloudflare Pages config continues without disruption
-  },
-  server: {
-    port: 3000,
-    open: true,
-  },
-});
-```
-*Note on `outDir: 'build'`*: Cloudflare Pages currently deploys from `./build/`. Keeping `outDir: 'build'` ensures total backward compatibility with the existing Cloudflare Pages configuration!
+1. **Top Navigation**:
+   - Logo: `Wormhole Chess` with `v2.0` badge
+   - Links: `Home` · `Wormhole` · `Deck Builder` · `Profile`
+   - Audio: `🔊` / `🔇`
+   - User pill: `{user.username} · {elo} ELO` (no emojis)
+   - Account: `Member` vs `Guest`
+2. **Dashboard Quick Play**:
+   - `Wormhole`: "3D chess across connected boards and portals." [Play Wormhole →]
+   - `Deck Builder`: "Chess with card actions and energy management." [Play Deck Builder →]
+3. **Matchmaking Lobby**:
+   - Modes: `Deck Builder` / `Wormhole`
+   - Clocks: `Untimed`, `3 min`, `5 min`, `10 min`
+   - Actions: `Find Match`, `Create Room`, `Join with Code`
+4. **Recent Matches**:
+   - Filters: `All`, `Online`, `Offline`
+   - Status: `Win` (emerald), `Loss` (rose), `Draw` (muted slate)
+   - Action: `Replay` (launches historical viewer modal)
+5. **Historical Replay Viewer**:
+   - Header: `Match Replay` (`[White] vs [Black] · [Date]`)
+   - Controls: `◀ Prev`, `Auto Play`, `Next ▶`, `Flip Board`
 
-### Three.js & GLTF Asset Loading
-- Static 3D assets in `public/chessboard/` (`wormhole-chessboard.glb`, `pieces.glb`) will continue to be served at `/chessboard/...` automatically by Vite's public directory handling.
+---
 
-### TypeScript Configuration (`tsconfig.json`)
-CRA's tsconfig uses `"target": "es5"`. For Vite, update to:
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": false,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
-  },
-  "include": ["src"]
-}
-```
+## 3. Scope Decomposition for Phase 1 Execution
 
-## 3. Client Routing Architecture (`react-router-dom`)
+The presentational UI shell for `Navigation.tsx` and `DashboardPage.tsx` was established in `@design-phase.md`. Phase 1 execution now decomposes into two focused plans:
 
-### Route Hierarchy
-```
-/              -> HomePage (Hero, Variant Selection, Quick Play, Login prompt)
-/wormhole      -> WormholePage (Encapsulates ChessboardScene with back-to-home navigation)
-/deck-builder  -> DeckBuilderPage (Placeholder shell for Phase 4)
-/dashboard     -> DashboardPage (Placeholder shell for Phase 2)
-/login         -> LoginPage (Placeholder shell for Phase 2)
-/register      -> RegisterPage (Placeholder shell for Phase 2)
-```
-
-## 4. Verification Strategy
-1. Run `npm run build` using Vite.
-   - Criteria: Must compile in under 10 seconds (vs 120+ seconds on CRA).
-   - Artifacts: Outputs to `build/` directory with `index.html` and bundled assets.
-2. Run `npm test` or verify unit tests.
-3. Verify `/` loads HomePage with nav links.
-4. Verify `/wormhole` loads the 3D Three.js canvas and board without errors.
+- **Plan 1.1 (Wave 1): Matchmaking Lobby Component Alignment**
+  - Refactor `MatchmakingLobby.tsx` internal styles and copy to inherit Phase 1 tokens (segmented control, clock pills, 6px panel styling, approved text strings, clean responsive wrapping).
+  - Ensure real-time WebSocket events and private room generation remain 100% functional without regressions.
+  
+- **Plan 1.2 (Wave 2): Historical Replay Viewer Modal Polish & Mobile Responsive Hardening**
+  - Refactor `HistoricalMatchViewer.tsx` modal styling to match Phase 1 design tokens (deep `#090a0f` overlay, `#0e1118` modal body, 6px radius, tabular monospace move notations, clean step/auto-play controls).
+  - Harden responsive breakpoints for the 2-column Dashboard grid so on screens < 900px it stacks into a single column cleanly.

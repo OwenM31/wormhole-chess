@@ -272,6 +272,35 @@ The initial implementation of the frontend views relied on default LLM visual pa
 
 ---
 
+### [DECISION-015] Phase 1 Design System Tokens & Technical Density Dashboard Architecture
+
+**Date**: 2026-10-15
+**Status**: Accepted
+
+#### Context
+Following the `@design-phase.md` workflow for Phase 1 (Design System Foundations & Player Dashboard Redesign), three distinct visual variants were generated, rendered with Playwright at 2x retina scale, and presented for user evaluation: Variant A (Technical Density 2-Column Command Layout), Variant B (Minimalist Monochrome Single-Column), and Variant C (Tactical Glass Bento). Candidate copy was reviewed with the user, establishing that "less is more" for daily use.
+
+#### Decision
+1. **Design Direction Selected**: Variant A (Technical Density).
+2. **Layout Geometry**: Widescreen-balanced 2-column distribution (`1fr 340px`) separating interactive queues and recent matches into an expansive left feed while anchoring identity, tabular statistics, and deck loadouts in a right sidebar.
+3. **Design Tokens**:
+   - Palette: Deep jet canvas (`#090a0f`), primary surface (`#0e1118`), panel headers (`#0c0e14`), borders (`1px solid rgba(255, 255, 255, 0.08)`).
+   - Accents: Cyan (`#38bdf8`), Matchmaking / Victory Emerald (`#10b981`), Defeat Rose (`#f87171`), 3D Arena Blue (`#2563eb`), Deck Builder Purple (`#7c3aed`).
+   - Radii: `6px` structural panels and cards, `4px` interactive buttons and status pills.
+   - Typography: Tabular monospace figures (`ui-monospace`) for ratings, timers, and game records.
+4. **Copy Nomenclature**:
+   - Logo: "Wormhole Chess"
+   - Navigation: "Home" · "Wormhole" · "Deck Builder" · "Profile"
+   - Actions: "Find Match", "Create Room", "Join with Code", "Replay", "Play Wormhole", "Play Deck Builder"
+   - Modes: "Wormhole" (3D) and "Deck Builder" (2D) without hyperbolic adjectives.
+
+#### Consequences
+- Forms the core design tokens codified in `STYLE.md` and `DESIGN_STATE.md` to be inherited by Phases 2–5.
+- Dashboard avoids vertical scroll bloating on standard 1280x800 screens.
+- Approved visual reference locked at `.agent/state/artifacts/design/phase_1_approved.png`.
+
+---
+
 *Last updated: 2026-10-15*
 
 
