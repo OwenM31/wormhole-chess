@@ -1,3 +1,33 @@
+import { hashToken } from './_crypto';
+
+export interface SessionUser {
+  userId: string;
+  username: string;
+  isGuest: boolean;
+}
+
+export async function getSession(db: D1Database, request: Request): Promise<SessionUser | null> {
+  const token = getSessionToken(request);
+  if (!token) return null;
+
+  const tokenHash = await hashToken(token);
+  const row = await db.prepare(
+    `SELECT s.user_id, u.username, s.is_guest
+     FROM sessions s
+     JOIN users u ON u.id = s.user_id
+     WHERE s.token_hash = ? AND s.expires_at > datetime('now')`
+  )
+    .bind(tokenHash)
+    .first<{ user_id: string; username: string; is_guest: number }>();
+
+  if (!row) return null;
+
+  return {
+    userId: row.user_id,
+    username: row.username,
+    isGuest: Boolean(row.is_guest),
+  };
+}
 export function getSessionToken(request: Request): string | null {
   const cookieHeader = request.headers.get('Cookie');
   if (!cookieHeader) return null;

@@ -59,4 +59,6 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_matches_white ON matches(white_user_id);
 CREATE INDEX IF NOT EXISTS idx_matches_black ON matches(black_user_id);
+CREATE INDEX IF NOT EXISTS idx_matches_white_started ON matches(white_user_id, started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_matches_black_started ON matches(black_user_id, started_at DESC);
 CREATE INDEX IF NOT EXISTS idx_custom_decks_user ON custom_decks(user_id);
