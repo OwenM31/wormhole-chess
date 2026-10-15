@@ -1,12 +1,61 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import { useAuth } from '../context/AuthContext';
 import { MatchmakingLobby } from '../components/MatchmakingLobby';
+import { api, MatchRecord } from '../services/api';
+import { HistoricalMatchViewer } from '../components/HistoricalMatchViewer';
 
 export const DashboardPage: React.FC = () => {
   const { user, stats, isLoading, logout } = useAuth();
   const navigate = useNavigate();
+
+  const [matches, setMatches] = useState<MatchRecord[]>([]);
+  const [isLoadingMatches, setIsLoadingMatches] = useState<boolean>(true);
+  const [filter, setFilter] = useState<'all' | 'pvp' | 'solo_local'>('all');
+  const [selectedReplayMatch, setSelectedReplayMatch] = useState<MatchRecord | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchMatches() {
+      if (!user) return;
+      setIsLoadingMatches(true);
+      try {
+        const res = await api.getMatchHistory({ limit: 50 });
+        if (isMounted && res.success && Array.isArray(res.matches)) {
+          setMatches(res.matches);
+        }
+      } catch (err) {
+        // Fallback
+      } finally {
+        if (isMounted) setIsLoadingMatches(false);
+      }
+    }
+    fetchMatches();
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  const filteredMatches = matches.filter((m) => {
+    if (filter === 'all') return true;
+    if (filter === 'pvp') {
+      return (
+        m.variant === 'deck_builder:pvp' ||
+        m.variant.includes('pvp') ||
+        (m.whiteUserId && m.blackUserId)
+      );
+    }
+    if (filter === 'solo_local') {
+      return (
+        m.variant === 'deck_builder:ai' ||
+        m.variant.includes('ai') ||
+        m.variant.includes('local') ||
+        m.variant === 'wormhole:local'
+      );
+    }
+    return true;
+  });
 
   const handleLogout = async () => {
     if (window.confirm('Are you sure you want to log out of your session?')) {
@@ -212,19 +261,120 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* MATCH HISTORY */}
-        <h2 style={sectionHeaderStyle}>Recent Match History</h2>
-        <div style={emptyHistoryCardStyle}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📜</div>
-          <h4 style={{ margin: '0 0 0.4rem', color: '#f0f6fc', fontSize: '1.1rem' }}>
-            No Matches Recorded Yet
-          </h4>
-          <p style={{ margin: '0 0 1.25rem', color: '#8b949e', fontSize: '0.9rem', maxWidth: '420px', marginInline: 'auto' }}>
-            Launch a game variant above to commence your competitive record. All wins, losses, and rating adjustments will appear here.
-          </p>
-          <Link to="/wormhole" style={secondaryBtnStyle}>
-            Play First Match
-          </Link>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginTop: '3rem', marginBottom: '1.25rem' }}>
+          <h2 style={{ ...sectionHeaderStyle, margin: 0 }}>Recent Match History</h2>
+
+          {/* Filter Pills */}
+          <div style={{ display: 'flex', gap: '0.4rem', backgroundColor: '#161b22', padding: '0.25rem', borderRadius: '8px', border: '1px solid #30363d' }}>
+            <button
+              onClick={() => setFilter('all')}
+              style={filter === 'all' ? activeFilterPillStyle : filterPillStyle}
+            >
+              All Matches ({matches.length})
+            </button>
+            <button
+              onClick={() => setFilter('pvp')}
+              style={filter === 'pvp' ? activeFilterPillStyle : filterPillStyle}
+            >
+              Ranked PvP
+            </button>
+            <button
+              onClick={() => setFilter('solo_local')}
+              style={filter === 'solo_local' ? activeFilterPillStyle : filterPillStyle}
+            >
+              Practice & Local
+            </button>
+          </div>
         </div>
+
+        {isLoadingMatches ? (
+          <div style={{ textAlign: 'center', padding: '3rem', color: '#8b949e' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🌀</div>
+            Loading match history...
+          </div>
+        ) : filteredMatches.length === 0 ? (
+          <div style={emptyHistoryCardStyle}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📜</div>
+            <h4 style={{ margin: '0 0 0.4rem', color: '#f0f6fc', fontSize: '1.1rem' }}>
+              No {filter === 'all' ? '' : filter === 'pvp' ? 'Ranked PvP ' : 'Practice '}Matches Recorded Yet
+            </h4>
+            <p style={{ margin: '0 0 1.25rem', color: '#8b949e', fontSize: '0.9rem', maxWidth: '420px', marginInline: 'auto' }}>
+              Launch a game variant above to commence your battle history. All wins, losses, and tactical replays will appear here.
+            </p>
+            <Link to="/deck-builder" style={secondaryBtnStyle}>
+              Play Deck Builder
+            </Link>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {filteredMatches.map((m) => {
+              const isDeck = m.variant.includes('deck_builder');
+              const isPvp = m.variant.includes('pvp') || (Boolean(m.whiteUserId) && Boolean(m.blackUserId));
+              const isWhite = user ? m.whiteUserId === user.id : true;
+              const isDraw = m.result === '1/2-1/2' || m.result === 'draw';
+              const isVictory = !isDraw && (m.winnerId === user?.id || (isWhite && m.result === '1-0') || (!isWhite && m.result === '0-1'));
+              const turnsCount = Array.isArray(m.moves) ? m.moves.length : 0;
+              const opponent = isWhite
+                ? m.blackUsername || (isPvp ? 'Online Opponent' : 'Minimax AI Bot')
+                : m.whiteUsername || 'Opponent';
+
+              return (
+                <div key={m.id} style={matchCardStyle}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1, minWidth: '220px' }}>
+                    <div style={matchVariantIconStyle}>{isDeck ? '🃏' : '🌀'}</div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                        <span style={matchVariantTitleStyle}>
+                          {isDeck ? 'Deck Builder Chess' : '3D Wormhole Chess'}
+                        </span>
+                        <span style={isPvp ? pvpBadgeStyle : practiceBadgeStyle}>
+                          {isPvp ? 'Ranked PvP' : 'Practice'}
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.85rem', color: '#8b949e' }}>
+                        vs <strong style={{ color: '#c9d1d9' }}>{opponent}</strong> • {formatDate(m.startedAt)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+                    <span
+                      style={
+                        isDraw
+                          ? drawBadgeStyle
+                          : isVictory
+                          ? victoryBadgeStyle
+                          : defeatBadgeStyle
+                      }
+                    >
+                      {isDraw ? '🤝 Draw' : isVictory ? '🏆 Victory' : '💀 Defeat'}
+                    </span>
+
+                    <span style={{ fontSize: '0.85rem', color: '#8b949e', fontFamily: 'monospace' }}>
+                      {turnsCount} Turns
+                    </span>
+
+                    <button
+                      onClick={() => setSelectedReplayMatch(m)}
+                      style={reviewBtnStyle}
+                      title="Review interactive replay of this match"
+                    >
+                      Review Match 🔍
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* REPLAY MODAL VIEWER */}
+        {selectedReplayMatch && (
+          <HistoricalMatchViewer
+            match={selectedReplayMatch}
+            onClose={() => setSelectedReplayMatch(null)}
+          />
+        )}
       </main>
     </div>
   );
@@ -528,6 +678,119 @@ const descriptionStyle: React.CSSProperties = {
   lineHeight: 1.5,
   color: '#8b949e',
   margin: '0 0 1.5rem',
+};
+
+const filterPillStyle: React.CSSProperties = {
+  background: 'transparent',
+  border: 'none',
+  color: '#8b949e',
+  fontSize: '0.8rem',
+  fontWeight: 600,
+  padding: '0.35rem 0.75rem',
+  borderRadius: '6px',
+  cursor: 'pointer',
+  transition: 'all 0.15s ease',
+};
+
+const activeFilterPillStyle: React.CSSProperties = {
+  ...filterPillStyle,
+  background: '#21262d',
+  color: '#58a6ff',
+};
+
+const matchCardStyle: React.CSSProperties = {
+  backgroundColor: '#161b22',
+  border: '1px solid #30363d',
+  borderRadius: '12px',
+  padding: '1rem 1.25rem',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  flexWrap: 'wrap',
+  gap: '1rem',
+  transition: 'border-color 0.15s ease',
+};
+
+const matchVariantIconStyle: React.CSSProperties = {
+  fontSize: '1.75rem',
+  width: '42px',
+  height: '42px',
+  borderRadius: '10px',
+  backgroundColor: '#0d1117',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '1px solid #30363d',
+};
+
+const matchVariantTitleStyle: React.CSSProperties = {
+  color: '#f0f6fc',
+  fontWeight: 700,
+  fontSize: '0.95rem',
+};
+
+const pvpBadgeStyle: React.CSSProperties = {
+  fontSize: '0.7rem',
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  padding: '0.15rem 0.45rem',
+  borderRadius: '4px',
+  backgroundColor: 'rgba(56, 139, 253, 0.15)',
+  color: '#58a6ff',
+  border: '1px solid rgba(56, 139, 253, 0.3)',
+};
+
+const practiceBadgeStyle: React.CSSProperties = {
+  fontSize: '0.7rem',
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  padding: '0.15rem 0.45rem',
+  borderRadius: '4px',
+  backgroundColor: 'rgba(110, 118, 129, 0.15)',
+  color: '#8b949e',
+  border: '1px solid rgba(110, 118, 129, 0.3)',
+};
+
+const victoryBadgeStyle: React.CSSProperties = {
+  fontSize: '0.8rem',
+  fontWeight: 700,
+  padding: '0.25rem 0.6rem',
+  borderRadius: '6px',
+  backgroundColor: 'rgba(46, 160, 67, 0.15)',
+  color: '#3fb950',
+  border: '1px solid rgba(46, 160, 67, 0.3)',
+};
+
+const defeatBadgeStyle: React.CSSProperties = {
+  fontSize: '0.8rem',
+  fontWeight: 700,
+  padding: '0.25rem 0.6rem',
+  borderRadius: '6px',
+  backgroundColor: 'rgba(248, 81, 73, 0.15)',
+  color: '#f85149',
+  border: '1px solid rgba(248, 81, 73, 0.3)',
+};
+
+const drawBadgeStyle: React.CSSProperties = {
+  fontSize: '0.8rem',
+  fontWeight: 700,
+  padding: '0.25rem 0.6rem',
+  borderRadius: '6px',
+  backgroundColor: 'rgba(110, 118, 129, 0.15)',
+  color: '#8b949e',
+  border: '1px solid rgba(110, 118, 129, 0.3)',
+};
+
+const reviewBtnStyle: React.CSSProperties = {
+  backgroundColor: '#21262d',
+  border: '1px solid #30363d',
+  color: '#c9d1d9',
+  padding: '0.45rem 0.85rem',
+  borderRadius: '8px',
+  fontSize: '0.8rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+  transition: 'all 0.15s ease',
 };
 
 export default DashboardPage;
