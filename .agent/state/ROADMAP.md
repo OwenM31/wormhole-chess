@@ -62,7 +62,7 @@ Systematically eliminate AI-slop across all user-facing screens, establish a dis
 ---
 
 ### Phase 4: 3D Wormhole HUD & Multiplayer PlayRoom Redesign
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 **Objective:** Replace cluttered overlays on 3D Wormhole Chess (`WormholePage.tsx`, `ChessboardScene.tsx`) and multiplayer room arena (`PlayRoomPage.tsx`) with a minimalist, non-intrusive floating HUD, move notation drawer, and tactile chess clocks.
 **Deliverables:**
 - Floating glass HUD for `WormholePage.tsx`
