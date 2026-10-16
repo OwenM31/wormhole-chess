@@ -7,7 +7,7 @@ updated: 2026-10-15T13:04:00Z
 # Roadmap
 
 > **Current Milestone:** v2.0 Visual Craft & Frontend Redesign
-> **Current Phase:** Phase 6 - Global Polish, Micro-interactions, Responsive Audit & Release
+> **Current Phase:** Phase 6 - Major Unit Card Graph & Royal Power Taxonomy (Rook, Queen, King)
 > **Status:** 🔄 In Progress
 
 ## Milestone Goal
@@ -22,6 +22,7 @@ Systematically eliminate AI-slop across all user-facing screens, establish a dis
 - [x] **Tactical Deck Builder Arena Redesign**: Balanced widescreen layout, properly proportioned 2D board, tactile hand bar, energy meter, and card curator/inspector without vertical bloating or awkward grid stretching.
 - [x] **Home Landing & Authentication Redesign**: Atmospheric dark tactical hero, distinct typography, variant showcase cards, and sleek tabbed auth modals.
 - [x] **3D Wormhole & PlayRoom HUD Redesign**: Non-intrusive floating glass HUD, move notation ticker, game clock integration, and room coordination status.
+- [ ] **Full 180-Card Canonical Graph**: Author, integrate, and test all 90 cards for Major Units (30 Rook, 30 Queen, 30 King), completing the full 180-card library across all 6 piece classes with 0 engine regressions.
 - [x] **Zero Gameplay Regressions**: All 140 automated card engine tests (`npm test`), 3D WebGL controls, and Cloudflare multiplayer synchronization continue passing 100%.
 
 ---
@@ -82,7 +83,19 @@ Systematically eliminate AI-slop across all user-facing screens, establish a dis
 
 ---
 
-### Phase 6: Global Polish, Micro-interactions, Responsive Audit & Release
+### Phase 6: Major Unit Card Graph & Royal Power Taxonomy (Rook, Queen, King)
+**Status:** ⬜ Not Started
+**Objective:** Author, validate, and integrate the 90 canonical cards for the Royal Court Major Units (30 Rook, 30 Queen, 30 King) into the catalog, completing the 180-card library under the 6×6 condition-to-effect grammar matrix and symmetrical Major 3-cycle (Rook: Good at Neighbors, excl. Position; King: Good at Position, excl. Threat; Queen: Good at Threat, excl. Neighbors). Implement Major Unit behavior handlers and invariant checks in `cardRegistry.ts` / `DeckChessEngine.ts`, expand `DeckBuilderView.tsx` filter tabs to all 6 piece classes (`All (180)`, `Pawn (30)`, `Knight (30)`, `Bishop (30)`, `Rook (30)`, `Queen (30)`, `King (30)`), and verify with contract tests and headless Playwright suite.
+**Deliverables:**
+- 90 canonical Major Unit cards (30 Rook, 30 Queen, 30 King) in `src/engine/cards/cardCatalog180.json` (or updated catalog) with 12/12/6 energy cost curve
+- Behavior handlers for Rook, Queen, and King cards in `src/engine/cards/cardRegistry.ts` and `src/engine/DeckChessEngine.ts`
+- Automated test suites (card catalog integrity, king safety, fairy geometry, and engine invariants) expanding engine tests
+- `DeckBuilderView.tsx` updated with 6 piece filter tabs and 180-card curator rack
+- Playwright headless UI verification and visual evidence screenshots
+
+---
+
+### Phase 7: Global Polish, Micro-interactions, Responsive Audit & Release
 **Status:** ⬜ Not Started
 **Objective:** Conduct cross-page continuity audits, verify mobile and tablet responsive behaviors, add subtle micro-interactions/audio feedback, and deploy the updated frontend to Cloudflare Pages.
 **Deliverables:**
