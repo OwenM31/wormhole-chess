@@ -420,6 +420,115 @@ console.log('\nSuite 12: 6x6 Taxonomy & 90-Card Canonical Catalog Contract');
 }
 
 // ==========================================
+// Suite 13: Unified Move Generation & Invariants
+// ==========================================
+console.log('\nSuite 13: Unified Move Generation & Invariants');
+{
+  // 1. Camel leap (3,1) for Knight from starting square (knight_cavalry_charge)
+  const camelEngine = new DeckChessEngine(undefined, ['knight_cavalry_charge']);
+  const camelMoves = camelEngine.getEmpoweredMoves('b1');
+  const camelTargets = camelMoves.map(m => m.to);
+  assert(camelTargets.includes('a4') && camelTargets.includes('c4'), 'Knight at b1 gets Camel (3,1) leaps to a4 and c4');
+  assert(camelMoves[0].energyCost === 2, 'Cavalry Charge requires 2 energy');
+
+  const execCamel = camelEngine.makeEmpoweredMove(camelMoves.find(m => m.to === 'c4')!);
+  assert(execCamel.success === true, 'Executing Camel leap c4 succeeds');
+  assert(camelEngine.getPiece('b1') === undefined, 'b1 vacated');
+  assert(camelEngine.getPiece('c4')?.type === 'n', 'Knight arrived at c4');
+  assert(camelEngine.getTurn() === 'b', 'Turn advanced to Black atomically');
+  assert(camelEngine.getEnergy() === 3, 'Energy reset to 3 for Black');
+  assert(!camelEngine.getWhiteHand().includes('knight_cavalry_charge'), 'Card consumed from White hand');
+
+  // 2. Zebra leap (3,2) for Knight (knight_spring_vault)
+  const zebraEngine = new DeckChessEngine('rnbqkbnr/pppp1ppp/8/8/3N4/8/PPP1PPPP/R1BQKBNR w KQkq - 0 1', ['knight_spring_vault']);
+  const zebraMoves = zebraEngine.getEmpoweredMoves('d4');
+  const zebraTargets = zebraMoves.map(m => m.to);
+  assert(zebraTargets.includes('g6') && zebraTargets.includes('f7'), 'Knight at d4 gets Zebra (3,2) leaps to g6 and f7');
+  const execZebra = zebraEngine.makeEmpoweredMove(zebraMoves.find(m => m.to === 'f7')!);
+  assert(execZebra.success === true, 'Executing Zebra leap to f7 succeeds');
+  assert(zebraEngine.getPiece('f7')?.type === 'n', 'Knight arrived at f7');
+  assert(zebraEngine.getGraveyard().b.p === 1, 'Black pawn at f7 added to graveyard');
+
+  // 3. Dabbaba straight jump (2,0) for Knight (knight_straight_lance)
+  const lanceEngine = new DeckChessEngine('rnbqkbnr/pppp1ppp/3p4/8/3N4/8/PPP1PPPP/R1BQKBNR w KQkq - 0 1', ['knight_straight_lance']);
+  const lanceMoves = lanceEngine.getEmpoweredMoves('d4');
+  const lanceTargets = lanceMoves.map(m => m.to);
+  assert(lanceTargets.includes('d6'), 'Knight at d4 gets straight 2-square lunge to d6 over empty d5');
+  const execLance = lanceEngine.makeEmpoweredMove(lanceMoves.find(m => m.to === 'd6')!);
+  assert(execLance.success === true, 'Executing straight lance to d6 succeeds');
+  assert(lanceEngine.getPiece('d6')?.type === 'n', 'Knight arrived at d6');
+
+  // 4. Bayonet forward capture & Rank 8 promotion invariant (pawn_bayonet_charge)
+  const bayonetEngine = new DeckChessEngine('4r3/4P3/8/8/8/8/8/4K2k w - - 0 1', ['pawn_bayonet_charge']);
+  const bayonetMoves = bayonetEngine.getEmpoweredMoves('e7');
+  assert(bayonetMoves.length === 1 && bayonetMoves[0].to === 'e8', 'Bayonet Charge allows straight capture of enemy rook on e8');
+  const execBayonet = bayonetEngine.makeEmpoweredMove(bayonetMoves[0]);
+  assert(execBayonet.success === true, 'Bayonet Charge executes straight forward capture');
+  assert(bayonetEngine.getPiece('e8')?.type === 'q', 'CRITICAL INVARIANT: Pawn landing on rank 8 promoted to Queen');
+  assert(bayonetEngine.getGraveyard().b.r === 1, 'Captured enemy rook added to graveyard');
+
+  // 5. Prism Ray piercing slide through pawn (bishop_piercing_ray)
+  const rayEngine = new DeckChessEngine('rnbqkbnr/pp1ppppp/8/8/5p2/4p3/PPP1PPPP/RNBQKBNR w KQkq - 0 1', ['bishop_piercing_ray']);
+  const rayMoves = rayEngine.getEmpoweredMoves('c1');
+  assert(rayMoves.some(m => m.to === 'f4'), 'Piercing ray targets second enemy piece on diagonal at f4');
+  const execRay = rayEngine.makeEmpoweredMove(rayMoves.find(m => m.to === 'f4')!);
+  assert(execRay.success === true, 'Piercing ray executes double-target slide');
+  assert(rayEngine.getPiece('f4')?.type === 'b', 'Bishop arrived at f4');
+  assert(rayEngine.getPiece('e3') === undefined, 'Intervening enemy pawn at e3 destroyed');
+  assert(rayEngine.getGraveyard().b.p === 2, 'Both enemy pawns added to Black graveyard (count = 2)');
+
+  // 6. In-place diagonal capture under pin (pawn_hold_the_line)
+  const pinEngine = new DeckChessEngine('4q2k/8/8/8/8/3b4/4P3/4K3 w - - 0 1', ['pawn_hold_the_line']);
+  assert(!pinEngine.getLegalMoves('e2').map(m => m.to).includes('d3'), 'Pawn at e2 cannot capture diagonally on d3 in standard chess due to pin');
+  const holdMoves = pinEngine.getEmpoweredMoves('e2');
+  assert(holdMoves.length === 1 && holdMoves[0].to === 'd3', 'Hold the Line provides in-place capture on d3');
+  assert(holdMoves[0].actionType === 'in_place', 'Action type is in_place');
+  const execHold = pinEngine.makeEmpoweredMove(holdMoves[0]);
+  assert(execHold.success === true, 'Hold the Line executes in-place diagonal destruction');
+  assert(pinEngine.getPiece('e2')?.type === 'p', 'Pawn remained at e2 (did not move)');
+  assert(pinEngine.getPiece('d3') === undefined, 'Enemy bishop at d3 destroyed');
+  assert(pinEngine.getGraveyard().b.b === 1, 'Enemy bishop added to Black graveyard');
+  assert(!pinEngine.inCheck(), 'King at e1 safely preserved out of check');
+
+  // 7. Bishop orthogonal step color inversion (bishop_aisle_step)
+  const aisleEngine = new DeckChessEngine('rnbqkbnr/pppppppp/8/8/3B4/8/PPPPPPPP/RN1QK1NR w KQkq - 0 1', ['bishop_aisle_step']);
+  const aisleMoves = aisleEngine.getEmpoweredMoves('d4');
+  const aisleTargets = aisleMoves.map(m => m.to);
+  assert(aisleTargets.includes('d5') && aisleTargets.includes('e4') && aisleTargets.includes('d3') && aisleTargets.includes('c4'), 'All 4 orthogonal steps available for Aisle Step');
+  const execAisle = aisleEngine.makeEmpoweredMove(aisleMoves.find(m => m.to === 'd5')!);
+  assert(execAisle.success === true, 'Aisle step succeeds');
+  assert(aisleEngine.getPiece('d5')?.type === 'b', 'Bishop now at d5 (light square, color inverted!)');
+
+  // 8. Knight jump color flip (bishop_heretic_s_gambit)
+  const hereticEngine = new DeckChessEngine('4b3/8/8/8/8/8/8/2B1K2k w - - 0 1', ['bishop_heretic_s_gambit']);
+  const hereticMoves = hereticEngine.getEmpoweredMoves('c1');
+  const hereticTargets = hereticMoves.map(m => m.to);
+  assert(hereticTargets.includes('d3') && hereticTargets.includes('b3'), 'Heretic Gambit provides Knight jumps from bishop square');
+  const execHeretic = hereticEngine.makeEmpoweredMove(hereticMoves.find(m => m.to === 'd3')!);
+  assert(execHeretic.success === true, 'Heretic Gambit executed');
+  assert(hereticEngine.getPiece('d3')?.type === 'b', 'Bishop jumped like a knight to d3');
+
+  // 9. Pawn sideways bypass step (pawn_sidestep)
+  const sideEngine = new DeckChessEngine('4k3/8/8/4p3/4P3/8/8/4K3 w - - 0 1', ['pawn_sidestep']);
+  const sideMoves = sideEngine.getEmpoweredMoves('e4');
+  const sideTargets = sideMoves.map(m => m.to);
+  assert(sideTargets.includes('d4') && sideTargets.includes('f4'), 'Sidestep offers d4 and f4 when blocked in front');
+  const execSide = sideEngine.makeEmpoweredMove(sideMoves.find(m => m.to === 'd4')!);
+  assert(execSide.success === true, 'Sidestep executed');
+  assert(sideEngine.getPiece('d4')?.type === 'p', 'Pawn sidestepped to d4');
+
+  // 10. King Safety Invariant: Pin Ray Linear Intercept (knight_ray_intercept)
+  const rayPinEngine = new DeckChessEngine('4k3/8/8/b7/8/8/3N4/4K3 w - - 0 1', ['knight_ray_intercept']);
+  const interceptMoves = rayPinEngine.getEmpoweredMoves('d2');
+  const interceptTargets = interceptMoves.map(m => m.to);
+  assert(interceptTargets.includes('c3') && interceptTargets.includes('b4'), 'Knight can slide along pin ray to c3 and b4');
+  assert(!interceptTargets.includes('f3'), 'CRITICAL KING SAFETY: Knight CANNOT leap off pin ray to f3');
+  const execIntercept = rayPinEngine.makeEmpoweredMove(interceptMoves.find(m => m.to === 'c3')!);
+  assert(execIntercept.success === true, 'Knight slid along pin ray to c3');
+  assert(!rayPinEngine.inCheck(), 'Friendly King remains safe from check');
+}
+
+// ==========================================
 // Summary
 // ==========================================
 console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
