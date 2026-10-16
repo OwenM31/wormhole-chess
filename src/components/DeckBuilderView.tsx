@@ -262,7 +262,7 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
                 <div className="text-center my-1">
                   <p
                     style={{ color: theme.hex }}
-                    className="text-[11px] font-bold leading-tight group-hover:hidden line-clamp-2"
+                    className="text-[11px] font-bold leading-tight group-hover:hidden"
                   >
                     {card.name}
                   </p>

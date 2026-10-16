@@ -254,7 +254,7 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
                     <p className="text-[7px] font-mono font-bold text-[#D4AF37] uppercase tracking-wider truncate text-center leading-none">
                       {conditionLabel} ➔ {effectLabel}
                     </p>
-                    <p className="text-[7.5px] text-[#FAF9F6]/85 line-clamp-2 leading-tight text-center mt-0.5">
+                    <p className="text-[7.5px] text-[#FAF9F6]/85 leading-tight text-center mt-0.5">
                       {card.description}
                     </p>
                   </div>
