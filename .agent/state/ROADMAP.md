@@ -29,7 +29,7 @@ Transform Deck Builder Chess into a visually rewarding, visceral tactical experi
 ## Phases
 
 ### Phase 1: Card Nomenclature Polish & Schema Finalization (All 180 Cards)
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 **Objective:** Audit and finalize all 180 card titles (<=21 characters), refine condition/effect copy to eradicate awkward phrasing, standardize asset naming IDs, and author contract validation tests.
 **Deliverables:**
 - Polished titles and rule descriptions for all 180 cards in `cardCatalog90.json` and `cardCatalogMajor90.json`

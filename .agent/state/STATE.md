@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-16T10:23:00-05:00
+updated: 2026-10-16T11:45:00-05:00
 ---
 
 # Project State
@@ -7,32 +7,21 @@ updated: 2026-10-16T10:23:00-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Deck Builder Visual Immersion & Board Action Effects
-- **Phase**: 1 — Card Nomenclature Polish & Schema Finalization (All 180 Cards)
-- **Task**: Execution pending (`@[.agent/workflows/execute.md] 1`)
-- **Status**: Paused at 2026-10-16 10:23
-- **Roadmap Status**: Phase 1 Planned (4 plans across 3 waves); Ready for Execution (`@[.agent/workflows/execute.md] 1`)
+- **Phase**: 1 — Card Nomenclature Polish & Schema Finalization (All 180 Cards) (completed)
+- **Task**: All tasks complete
+- **Status**: Verified (verdict: PASS)
+- **Roadmap Status**: Phase 1 Complete; Ready for Phase 2 (`@[.agent/workflows/plan.md] 2`)
 
 ## Last Session Summary
-
-1. **Phase 1 Discussion & Directives (`@discuss-phase.md 1`)**:
-   - Received user mandate: **Zero-Ellipsis Rule** (no `...` on screen, brief notes, direct active tactical language, no flowery/fantasy jargon).
-   - Documented `[DECISION-023]` in `DECISIONS.md`.
-   - Updated `STYLE.md` with Section 6 locking the Zero-Ellipsis Rule and Direct Tactical Language directives.
-2. **Deep Technical Research & Data Contracts (`@research-phase.md 1`)**:
-   - Formulated 5-layer contract alignment table, exhaustive state transition matrix, immutable system invariants, and static vector asset pipeline (`public/assets/cards/{piece}/{artId}.svg`).
-   - Authored and committed `.agent/state/phases/1/RESEARCH.md` (`76380c0`).
-3. **Execution Plan Decomposition (`@plan.md 1`)**:
-   - Decomposed Phase 1 into 4 atomic plans across 3 sequential waves:
-     - `01-PLAN.md` (Wave 1: Schema Definition, TypeScript Contracts & Contract Test Harness `Suite 16`).
-     - `02-PLAN.md` (Wave 2: Battlefield Minor Unit Catalog Polish — 90 Cards).
-     - `03-PLAN.md` (Wave 2: Royal Court Major Unit Catalog Polish — 90 Cards).
-     - `04-PLAN.md` (Wave 3: UI Card Component Zero-Ellipsis Polish & Static Asset Directory Scaffolding).
-   - Validated plans against all plan-checker dimensions (PASS).
-   - Committed execution plans cleanly to git (`b4eccba`).
+Phase 1 executed successfully across all 3 waves (4 plans, 8 tasks completed):
+- Wave 1 (Plan 1.1): Updated `src/types/deckChess.ts` with `artId`, updated `src/engine/cardGraph.ts` mapping, and authored `Suite 16` contract test harness in `scripts/verify-all-cards.ts`.
+- Wave 2 (Plan 1.2 & Plan 1.3): Polished all 90 Minor Unit cards and 90 Major Unit cards in `cardCatalog90.json` and `cardCatalogMajor90.json`. Removed duplicate keys, assigned `artId`, replaced 13 awkward/fantasy titles with direct tactical names, and condensed all 180 descriptions into direct tactical formulas <= 120 chars with zero ellipses.
+- Wave 3 (Plan 1.4): Removed `line-clamp-2` from `TacticalHandBar.tsx` and `DeckBuilderView.tsx`, scaffolded `public/assets/cards/{pawn,knight,bishop,rook,queen,king}/` with `.gitkeep`, verified full-stack typechecks, tests (236/236 passed), and production build.
+- Formal Phase 1 verification report authored in `VERIFICATION.md` with PASS verdict.
 
 ## In-Progress Work
 
-None. All research, decisions, style rules, and execution plans are 100% complete and committed to git.
+None. Phase 1 is 100% complete and verified.
 
 ## Blockers
 
@@ -58,22 +47,17 @@ None.
 
 ### Files of Interest
 - `.agent/state/phases/1/RESEARCH.md`: Phase 1 research, 5-layer contracts, state transitions, and invariants.
-- `.agent/state/phases/1/01-PLAN.md`: Plan 1.1 (Wave 1: Types & Contract Test Harness `Suite 16`).
-- `.agent/state/phases/1/02-PLAN.md`: Plan 1.2 (Wave 2: Minor Unit Catalog Polish — 90 Cards).
-- `.agent/state/phases/1/03-PLAN.md`: Plan 1.3 (Wave 2: Major Unit Catalog Polish — 90 Cards).
-- `.agent/state/phases/1/04-PLAN.md`: Plan 1.4 (Wave 3: UI Zero-Ellipsis Polish & Static Asset Directory Scaffolding).
-- `src/engine/cards/cardCatalog90.json`: 90 Minor Unit cards (Pawn, Knight, Bishop).
-- `src/engine/cards/cardCatalogMajor90.json`: 90 Major Unit cards (Rook, Queen, King).
-- `src/types/deckChess.ts`: CardDefinition interface.
-- `src/engine/cardGraph.ts`: Canonical card arrays and loadout helpers.
-- `scripts/verify-all-cards.ts`: Automated card engine and contract test suite.
-- `src/components/TacticalHandBar.tsx`: Left TCG hand stage (removing `line-clamp-2`).
-- `src/components/DeckBuilderView.tsx`: Deck builder curator and card library grid.
+- `.agent/state/phases/1/VERIFICATION.md`: Formal verification audit report (verdict: PASS).
+- `src/engine/cards/cardCatalog90.json`: 90 Minor Unit cards (Pawn, Knight, Bishop) with artId and zero-ellipsis formulas.
+- `src/engine/cards/cardCatalogMajor90.json`: 90 Major Unit cards (Rook, Queen, King) with artId and zero-ellipsis formulas.
+- `src/types/deckChess.ts`: CardDefinition interface with `artId`.
+- `src/engine/cardGraph.ts`: Canonical card arrays and loadout helpers mapping `artId`.
+- `scripts/verify-all-cards.ts`: Automated card engine and contract test suite (all 16 suites / 236 tests passing).
+- `scripts/verify-phase1-contracts.mjs`: Formal contract audit script (33 assertions passing).
+- `src/components/TacticalHandBar.tsx`: Left TCG hand stage (zero line-clamp).
+- `src/components/DeckBuilderView.tsx`: Deck builder curator and card library grid (zero line-clamp).
+- `public/assets/cards/`: Scaffolded static vector asset directories.
 
 ## Next Steps
 
-1. Run `/resume` to restore session state.
-2. Run `@[.agent/workflows/execute.md] 1` to execute Phase 1 plans:
-   - Wave 1: Plan 1.1 (Schema Definition, TypeScript Contracts & Contract Test Harness).
-   - Wave 2: Plan 1.2 (Battlefield Minor Unit Catalog Polish) & Plan 1.3 (Royal Court Major Unit Catalog Polish).
-   - Wave 3: Plan 1.4 (UI Card Component Zero-Ellipsis Polish & Static Asset Directory Scaffolding).
+1. Proceed to Phase 2: Minor Unit Vector Artwork Suite (90 Cards: Pawn, Knight, Bishop) via `@[.agent/workflows/plan.md] 2` or `@[.agent/workflows/discuss-phase.md] 2`.
