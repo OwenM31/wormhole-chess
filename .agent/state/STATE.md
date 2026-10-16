@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-16T12:08:00-05:00
+updated: 2026-10-16T13:56:00-05:00
 ---
 
 # Project State
@@ -7,21 +7,23 @@ updated: 2026-10-16T12:08:00-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Deck Builder Visual Immersion & Board Action Effects
-- **Phase**: 1 — Card Nomenclature Polish & Schema Finalization (All 180 Cards) (completed)
-- **Task**: All tasks complete
-- **Status**: Paused at 2026-10-16 12:08
-- **Roadmap Status**: Phase 1 Complete; Ready for Phase 2 (`@[.agent/workflows/plan.md] 2`)
+- **Phase**: 2 — Minor Unit Vector Artwork Suite (90 Cards: Pawn, Knight, Bishop)
+- **Task**: Planning complete (4 plans, 8 tasks across 3 waves)
+- **Status**: Ready for execution
+- **Roadmap Status**: Phase 2 Planned; Ready for Execution (`@[.agent/workflows/execute.md] 2`)
 
 ## Last Session Summary
-Phase 1 executed successfully across all 3 waves (4 plans, 8 tasks completed):
-- Wave 1 (Plan 1.1): Updated `src/types/deckChess.ts` with `artId`, updated `src/engine/cardGraph.ts` mapping, and authored `Suite 16` contract test harness in `scripts/verify-all-cards.ts`.
-- Wave 2 (Plan 1.2 & Plan 1.3): Polished all 90 Minor Unit cards and 90 Major Unit cards in `cardCatalog90.json` and `cardCatalogMajor90.json`. Removed duplicate keys, assigned `artId`, replaced 13 awkward/fantasy titles with direct tactical names, and condensed all 180 descriptions into direct tactical formulas <= 120 chars with zero ellipses.
-- Wave 3 (Plan 1.4): Removed `line-clamp-2` from `TacticalHandBar.tsx` and `DeckBuilderView.tsx`, scaffolded `public/assets/cards/{pawn,knight,bishop,rook,queen,king}/` with `.gitkeep`, verified full-stack typechecks, tests (236/236 passed), and production build.
-- Formal Phase 1 verification report authored in `VERIFICATION.md` with PASS verdict.
+Phase 2 design phase completed and approved by user:
+- Standardized 5×5 coplanar isometric board foundation established (Option B Ivory `#D5CDC0` & Obsidian Slate `#2C3539`, strict parity, 3D perimeter slab).
+- Staunton Knight silhouette with turned plinth base (50% FIDE base-to-tile ratio, $rx=5.0, ry=2.75$, height 17px) centered squarely on origin tile $(3, 2)$ leaping to target tile $(1, 2)$ approved by user (Option 1).
+- Pure vector move optics (3D parabolic ballistic arcs, ground file guides, glowing landing reticles) with zero text on tiles.
+- Canonical golden SVG asset generated at `public/assets/cards/knight/knight_cavalry_charge.svg`.
+- Decoupled `<CardArt />` component authored and typechecked in `src/components/CardArt.tsx`.
+- Planning complete: 4 execution plans authored across 3 waves (Plan 2.1 Knight suite & test harness, Plan 2.2 Pawn suite, Plan 2.3 Bishop suite, Plan 2.4 UI integration & contract audit).
 
 ## In-Progress Work
 
-None. Phase 1 is 100% complete and verified.
+None. Phase 2 plans verified and ready for execution.
 
 ## Blockers
 
@@ -60,5 +62,7 @@ None.
 
 ## Next Steps
 
-1. Run `/resume` to restore session state.
-2. Proceed to Phase 2: Minor Unit Vector Artwork Suite (90 Cards: Pawn, Knight, Bishop) via `@[.agent/workflows/discuss-phase.md] 2` or `@[.agent/workflows/plan.md] 2`.
+1. Run `@[.agent/workflows/execute.md] 2` to execute Phase 2 plans.
+2. Wave 1: Execute Plan 2.1 (Contract test harness & 30 Knight vector assets).
+3. Wave 2: Execute Plan 2.2 (30 Pawn assets) & Plan 2.3 (30 Bishop assets).
+4. Wave 3: Execute Plan 2.4 (UI component integration in TacticalHandBar/DeckBuilderView & contract audit).

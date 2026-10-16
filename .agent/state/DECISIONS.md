@@ -555,4 +555,32 @@ Prior to authoring task plans for Phase 1 (Card Nomenclature Polish & Schema Fin
 
 ---
 
+### [DECISION-024] Phase 2 Minor Unit Vector Artwork Strategy, Generation Architecture & UI Integration
+
+**Date**: 2026-10-16
+**Status**: Accepted
+
+#### Context
+Phase 2 requires generating, reviewing, and integrating 90 bespoke vector illustration assets for Battlefield Minor Units (30 Pawn, 30 Knight, 30 Bishop) into the card game UI (`TacticalHandBar.tsx` and `DeckBuilderView.tsx`). We discussed scope presentation, aesthetic style-locking, and execution phasing.
+
+#### Decision
+1. **Option A Execution Strategy: Archetype Style-Lock Prototype + 3 Piece Waves**:
+   - Step 1: Lock the Minor Unit visual grammar (line weights, duotone gold/taupe fills, tactical emblem framing) adhering to the Authentic Wormhole palette (`#D4AF37`, `#8B7E74`, `#FAF9F6`, `#191B1D`, `#24272A`).
+   - Wave 1: Generate & verify 30 Pawn Vector Assets in `public/assets/cards/pawn/{artId}.svg`.
+   - Wave 2: Generate & verify 30 Knight Vector Assets in `public/assets/cards/knight/{artId}.svg`.
+   - Wave 3: Generate & verify 30 Bishop Vector Assets in `public/assets/cards/bishop/{artId}.svg`, wire card rendering components into UI, and visually verify via Playwright.
+2. **UI Integration Scope**:
+   - `TacticalHandBar.tsx`: Replace the default raw unicode glyph in the card's 38px center window with the vector illustration (`/assets/cards/{piece}/{artId}.svg`), while preserving the interactive flip to the 5x4 mini-board schematic on hover or active selection.
+   - `DeckBuilderView.tsx`: Add a dedicated vector art thumbnail frame (e.g. 56px–64px) to each card item in the curator/library grid, introducing rich visual distinction while browsing loadouts.
+   - Fallback Resilience: A dedicated `<CardArt />` component or standard `img` with `onError` fallback gracefully renders the piece glyph if an SVG fails to load or is being fetched.
+3. **Asset Constraints**:
+   - Clean, lightweight native SVGs (0-byte external dependencies, ~1.5–3KB each) with crisp vector geometry, no raster filters, scalable across retina displays.
+
+#### Consequences
+- Eliminates placeholder unicode glyphs across all 90 Minor Unit cards.
+- Provides immediate visual flavor and card recognition in both the active game hand and deck builder curator.
+- Retains full backward compatibility with engine handlers and preserves 100% test passing rate.
+
+---
+
 *Last updated: 2026-10-16*

@@ -89,3 +89,30 @@
 ### 6. Card Rules & Nomenclature Directives (Milestone v3.0)
 - **Zero-Ellipsis Rule**: NEVER allow text on screen to be truncated or cut off with an ellipsis (`...` or `text-overflow: ellipsis` or `line-clamp`). All card titles and rules notes must be authored to fit completely and cleanly within their allocated card containers across all viewport sizes.
 - **Direct Tactical Language**: No flowery, melodramatic, or overly metaphorical filler. Move and card names must be direct, evocative, and punchy. Rules descriptions must state concrete piece actions directly (e.g. `[Pin] Capture adjacent diagonal enemy in-place without moving.`).
+
+---
+
+### 7. 5×5 Standardized Isometric Vector Card Art Specifications (Milestone v3.0 Phase 2)
+- **Geometry & Matrix**:
+  - Reusable 5×5 isometric board ($c \in [0..4], r \in [0..4]$, 25 tiles total).
+  - Isometric constants: $W = 10.5, H = 5.8, X_0 = 60, Y_0 = 38$, 3D perimeter depth $dz = 6$.
+  - Shared vertex formulation: zero floating or stepped squares, 100% coplanar slab.
+- **Palette Tokens (Option B Ivory & Obsidian)**:
+  - Light Squares: `#D5CDC0` (Alabaster Ivory)
+  - Dark Squares: `#2C3539` (Dark Obsidian Slate)
+  - Grid Seam Stroke: `#141618` at 0.5px
+  - 3D Perimeter Slab: `#222629` (left face), `#151719` (right face)
+  - Ground Shadow: `#0A0B0C` ellipse at opacity 0.6
+- **Strict Parity Invariant**:
+  - Square color must strictly evaluate `(col + row) % 2 === 0 ? LIGHT : DARK`. Zero adjacent same-color squares.
+- **Move Optics (Zero Text on Board)**:
+  - Movement and special action paths must be depicted via clean vector optics: high 3D parabolic arcs with gradient fills (`#FFFDF7` core, `#D4AF37` outer glow), ground-plane dashed file guides, glowing landing reticles (`rgba(212, 175, 55, 0.42)`), and downward impact chevrons.
+  - Zero raw text labels stamped onto chess squares.
+- **Piece Proportions & Centering**:
+  - Authentic Staunton piece silhouette mounted on a turned circular plinth base.
+  - Base diameter strictly $50\%$ of tile width ($rx=5.0, ry=2.75$), anchored directly at the tile center.
+  - Piece height capped at $16–18$px to prevent overhanging into neighboring squares.
+- **Condition HUD Badge**:
+  - Top HUD badge at $(10, 6)$, dimensions $100 \times 11$, $rx=2$, fill `#141618`, stroke `#D4AF37`.
+  - Displays trigger condition in bold monospace (e.g. `COND: 2 SQUARES CLEAR`).
+

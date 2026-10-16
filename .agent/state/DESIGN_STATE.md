@@ -127,3 +127,30 @@
 - Each portrait card (`5:7` aspect ratio) follows a Pokémon/TCG layout (Header with Title & `⚡` Cost, Center Art / Animated Mini-Board Explainer Window showing the piece's move geometry, and Bottom Rules Box with `Condition ➔ Effect` tags and description) with smooth hover pop-out (`scale(1.22) translateY(-18px) rotate(0deg)`).
 - Unifies Phase 1 views (`Navigation.tsx`, `DashboardPage.tsx`, `MatchmakingLobby.tsx`, `HistoricalMatchViewer.tsx`) onto the Authentic Wormhole Palette (`#191B1D`, `#24272A`, `#1C1E20`, `#D4AF37`, `#4C5C4C`).
 
+---
+
+## Milestone v3.0 — Phase 2: Minor Unit Vector Artwork Suite (90 Cards: Pawn, Knight, Bishop)
+
+- **Date Approved:** 2026-10-16
+- **Selected Baseline:** **Standardized 5×5 Isometric Board Foundation (Option B Ivory & Obsidian) with Authentic Staunton Piece Silhouette & Pure Vector Optics (Option 1: Centered Over Center)**
+- **Reference Image:** `.agent/state/artifacts/design/phase_2_approved.png`
+- **Canonical Asset Scaffold:** `public/assets/cards/knight/knight_cavalry_charge.svg`
+
+### Rationale
+- Completely eliminates floating/stepped square visual defects by establishing an immutable, mathematically coplanar 5×5 isometric board ($W=10.5, H=5.8, X_0=60, Y_0=38$, $dz=6$) that is reused across all card illustrations.
+- Eliminates adjacent same-color square defects with a strict alternating parity formula `(col + row) % 2 === 0`.
+- Option B (Alabaster Ivory `#D5CDC0` & Dark Obsidian `#2C3539`) delivers maximum visual contrast, allowing piece silhouettes, high 3D ballistic arcs, and glowing target reticles to remain crisp and readable at both full 220px zoom and in 38px TCG hand windows.
+- Redesigned Knight piece using the official brand Staunton warhorse profile (tucked chin, Roman nose, broad muscular crest with 4 mane notches, turned plinth base, zero alpaca features), strictly centered on the origin tile with a 50% FIDE base-to-tile ratio ($rx=5.0, ry=2.75$).
+- Eliminates raw text on board squares (`LEAP OVER`), relying strictly on high-craft vector optics: high 3D ballistic leap arcs, dashed ground-plane trajectory guides, glowing landing reticles with impact chevrons, and top HUD trigger condition badges (`COND: 2 SQUARES CLEAR`).
+
+### Continuity Directives for Artwork Generation (Phases 2 & 3)
+1. **Immutable Board Base**:
+   - Every single Minor Unit (Pawn, Knight, Bishop) and Major Unit (Rook, Queen, King) vector asset MUST inherit the exact 5×5 coplanar board geometry and Option B palette.
+2. **Strict Centering & Sizing**:
+   - Piece bases must sit dead-center on the origin tile, with base diameter $\le 50\%$ tile width ($rx=5.0, ry=2.75$) and height $16–18$px. Zero overhang into adjacent squares.
+3. **Pure Vector Storytelling**:
+   - No stamped text on board tiles. Trigger conditions must live exclusively in the top HUD badge. Actions/effects must be rendered via luminous vector trajectories, beams, arcs, or impact reticles.
+4. **Decoupled `<CardArt />` Component**:
+   - Render assets via `public/assets/cards/{piece}/{artId}.svg` with zero layout shift and graceful piece glyph fallback.
+
+
