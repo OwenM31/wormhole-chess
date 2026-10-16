@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="goldK_focus" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFDF7" />
+      <stop offset="35%" stop-color="#F5D061" />
+      <stop offset="80%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#AA8A2A" />
+    </linearGradient>
+    <linearGradient id="goldK_base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F5D061" />
+      <stop offset="100%" stop-color="#7A6018" />
+    </linearGradient>
+    <linearGradient id="arcK_focus" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#D4AF37" stop-opacity="0.3" />
+      <stop offset="50%" stop-color="#FFFDF7" />
+      <stop offset="100%" stop-color="#D4AF37" />
+    </linearGradient>
+  </defs>
+
+  
+  <!-- CONDITION HUD BADGE -->
+  <g transform="translate(20.4, 6)">
+    <rect x="0" y="0" width="79.2" height="11" rx="2" fill="#141618" stroke="#D4AF37" stroke-width="0.8" />
+    <circle cx="8" cy="5.5" r="2.2" fill="#D4AF37" />
+    <text x="14" y="8.2" fill="#FAF9F6" font-size="4.7" font-family="monospace" font-weight="bold" letter-spacing="0.3">COND: CORNER</text>
+  </g>
+
+  <!-- 5x5 BOARD FOUNDATION -->
+  <g class="board-5x5">
+    <ellipse cx="60" cy="93.4" rx="56.5" ry="16.5" fill="#0A0B0C" opacity="0.6" />
+    <polygon points="7.5,61.2 18,67 28.5,72.8 39,78.6 49.5,84.39999999999999 60,90.2 60,96.2 49.5,90.39999999999999 39,84.6 28.5,78.8 18,73 7.5,67.2" fill="#222629" />
+    <polygon points="60,90.2 70.5,84.4 81,78.6 91.5,72.8 102,67 112.5,61.2 112.5,67.2 102,73 91.5,78.8 81,84.6 70.5,90.4 60,96.2" fill="#151719" />
+      <polygon points="60,32.2 70.5,38 60,43.8 49.5,38" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+      <polygon points="70.5,38 81,43.8 70.5,49.599999999999994 60,43.8" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="81,43.800000000000004 91.5,49.6 81,55.4 70.5,49.6" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+      <polygon points="91.5,49.6 102,55.4 91.5,61.199999999999996 81,55.4" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="102,55.400000000000006 112.5,61.2 102,67 91.5,61.2" fill="#D5CDC0" stroke="#D4AF37" stroke-width="1.4" />
+      <polygon points="49.5,38 60,43.8 49.5,49.599999999999994 39,43.8" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="60,43.800000000000004 70.5,49.6 60,55.4 49.5,49.6" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+      <polygon points="70.5,49.6 81,55.4 70.5,61.199999999999996 60,55.4" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="81,55.400000000000006 91.5,61.2 81,67 70.5,61.2" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+      <polygon points="91.5,61.2 102,67 91.5,72.8 81,67" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="39,43.800000000000004 49.5,49.6 39,55.4 28.5,49.6" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+      <polygon points="49.5,49.6 60,55.4 49.5,61.199999999999996 39,55.4" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="60,55.400000000000006 70.5,61.2 60,67 49.5,61.2" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+      <polygon points="70.5,61.2 81,67 70.5,72.8 60,67" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="81,67 91.5,72.8 81,78.6 70.5,72.8" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+      <polygon points="28.5,49.6 39,55.4 28.5,61.199999999999996 18,55.4" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="39,55.400000000000006 49.5,61.2 39,67 28.5,61.2" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+      <polygon points="49.5,61.2 60,67 49.5,72.8 39,67" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="60,67 70.5,72.8 60,78.6 49.5,72.8" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+      <polygon points="70.5,72.8 81,78.6 70.5,84.39999999999999 60,78.6" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="18,55.400000000000006 28.5,61.2 18,67 7.5,61.2" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+      <polygon points="28.5,61.2 39,67 28.5,72.8 18,67" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="39,67 49.5,72.8 39,78.6 28.5,72.8" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+      <polygon points="49.5,72.8 60,78.6 49.5,84.39999999999999 39,78.6" fill="#2C3539" stroke="#141618" stroke-width="0.5" />
+      <polygon points="60,78.60000000000001 70.5,84.4 60,90.2 49.5,84.4" fill="#D5CDC0" stroke="#141618" stroke-width="0.5" />
+  </g>
+
+  
+  <g transform="translate(102, 61.2)">
+    <ellipse cx="0" cy="-5.2" rx="9.5" ry="13" fill="rgba(56, 189, 248, 0.22)" stroke="#38BDF8" stroke-width="1.2" stroke-dasharray="3 2" />
+    <ellipse cx="0" cy="-5.2" rx="6.6499999999999995" ry="9.1" fill="none" stroke="#FFFDF7" stroke-width="0.6" opacity="0.7" />
+  </g>
+
+  <!-- STANDING STAUNTON KNIGHT PIECE -->
+  
+  <g class="knight-piece" transform="translate(102, 61.2) scale(1)" opacity="1">
+    <ellipse cx="0" cy="1.0" rx="5.4" ry="2.8" fill="#0A0B0C" opacity="0.65" />
+    <ellipse cx="0" cy="0.2" rx="5.0" ry="2.75" fill="url(#goldK_base)" stroke="#16181A" stroke-width="0.6" />
+    <ellipse cx="0" cy="-0.8" rx="4.0" ry="2.2" fill="url(#goldK_focus)" stroke="#16181A" stroke-width="0.4" />
+    <ellipse cx="0" cy="-1.8" rx="3.0" ry="1.6" fill="url(#goldK_base)" />
+    <g transform="translate(0, -1.8) scale(0.10) translate(-257, -312)">
+      <path d="
+        M 212 312
+        C 212 274 224 242 240 224
+        L 202 212
+        C 194 208 192 196 200 188
+        L 232 156
+        C 240 148 252 150 260 160
+        L 272 176
+        L 282 150
+        C 286 142 296 142 300 150
+        L 308 174
+        C 322 192 330 216 330 246
+        C 330 276 314 304 302 312
+        Z
+      " fill="url(#goldK_focus)" stroke="#16181A" stroke-width="6" stroke-linejoin="round" />
+      <path d="M 232 156 C 240 148 252 150 260 160 L 272 176" fill="none" stroke="#FFFDF7" stroke-width="5" stroke-linecap="round" />
+      <circle cx="236" cy="180" r="5.5" fill="#16181A" />
+      <circle cx="234.5" cy="178.5" r="1.8" fill="#FFFDF7" />
+      <circle cx="210" cy="198" r="4.0" fill="#16181A" />
+      <path d="M 278 186 C 292 202 298 222 298 244" fill="none" stroke="#16181A" stroke-width="6" stroke-linecap="round" />
+      <path d="M 286 226 C 298 240 304 258 304 278" fill="none" stroke="#16181A" stroke-width="6" stroke-linecap="round" />
+      <path d="M 283 189 C 295 204 300 222 300 242" fill="none" stroke="#FFFDF7" stroke-width="2.5" stroke-linecap="round" opacity="0.8" />
+      <path d="M 291 229 C 301 242 306 258 306 276" fill="none" stroke="#FFFDF7" stroke-width="2.5" stroke-linecap="round" opacity="0.8" />
+    </g>
+  </g>
+</svg>
