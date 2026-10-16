@@ -4,6 +4,56 @@
 
 ---
 
+### Session: 2026-10-16 14:18
+
+#### Objective
+Execute all 4 plans of Phase 2 across 3 sequential waves (`@[.agent/workflows/execute.md] 2`): author contract test harness `scripts/verify-phase2-assets.mjs`, batch generate all 90 Minor Unit SVG vector illustrations (30 Knight, 30 Pawn, 30 Bishop) adhering strictly to the standardized 5×5 isometric board foundation, Option B palette, authentic Staunton silhouettes, and tailored vector optics, wire `<CardArt />` into `TacticalHandBar.tsx` and `DeckBuilderView.tsx`, and empirically verify deliverables via 90/90 SVG contract checks, 236 engine unit tests, full-stack typechecks, production builds, and Playwright visual UX verification.
+
+#### Accomplished
+- ✅ Executed Wave 1 (Plan 2.1):
+  - Authored contract test harness `scripts/verify-phase2-assets.mjs` verifying XML structure, `viewBox="0 0 120 120"`, 5×5 coplanar board presence, Option B palette (`#D5CDC0` & `#2C3539`), top HUD condition badge, and zero text on tiles.
+  - Built Knight vector generation engine `scripts/generate-knight-assets.mjs` and generated all 30 Knight SVGs in `public/assets/cards/knight/` with authentic Staunton warhorse profile, turned plinth base, and tailored vector optics.
+  - Committed atomically (`599a316`, `09e91f1`).
+- ✅ Executed Wave 2 (Plans 2.2 & 2.3):
+  - Built Pawn vector generation engine `scripts/generate-pawn-assets.mjs` with authentic Staunton Pawn silhouette (16px height, turned circular base, pedestal trunk, waist collar, spherical bulwark) and tailored optics; generated all 30 Pawn SVGs in `public/assets/cards/pawn/` (`9a37f8b`).
+  - Built Bishop vector generation engine `scripts/generate-bishop-assets.mjs` with authentic Staunton Bishop silhouette (18px height, turned circular base, fluted mitre with deep diagonal cleft notch and finial orb) and tailored optics; generated all 30 Bishop SVGs in `public/assets/cards/bishop/` (`ffc8682`).
+- ✅ Executed Wave 3 (Plan 2.4):
+  - Wired `CardArt` into `src/components/TacticalHandBar.tsx` (resting 38px card window; smoothly reveals 5×4 mini-board on hover/active targeting).
+  - Wired `CardArt` into `src/components/DeckBuilderView.tsx` (equipped rack slots at h-32 & library grid cards at h-24 frame), strictly preserving zero-ellipsis full rules text rendering (`eed758f`).
+  - Mapped canonical `artId` for starter deck cards in `src/engine/cardGraph.ts`.
+  - Authored and executed headless Playwright visual UX test suite `scripts/verify-phase2-ux.mjs` across desktop and mobile viewports with zero horizontal overflow (`f3a8a04`).
+- ✅ Formally Verified Phase 2:
+  - `node scripts/verify-phase2-assets.mjs`: 90 / 90 passed (0 errors).
+  - `npm test`: 236 / 236 automated unit tests passed cleanly across all 16 suites.
+  - `npm run typecheck:all`: Clean exit code 0 across React client, Pages Functions, and DO workers.
+  - `npm run build`: Production build succeeded in 1.55s.
+  - `node scripts/verify-phase2-ux.mjs`: Passed cleanly across desktop and mobile.
+  - Authored `.agent/state/phases/2/VERIFICATION.md` (verdict: PASS) and marked Phase 2 complete in `ROADMAP.md` and `STATE.md`.
+
+#### Verification
+- [x] All 90 Minor Unit vector SVG illustrations generated and present on disk in `public/assets/cards/`.
+- [x] All 90 SVGs strictly conform to 5-layer contracts and Phase 2 invariants (`verify-phase2-assets.mjs`).
+- [x] CardArt wired into `TacticalHandBar.tsx` and `DeckBuilderView.tsx` with zero layout shift.
+- [x] Zero-ellipsis rule preserved across all card components.
+- [x] Full-stack typecheck clean (`npm run typecheck:all`).
+- [x] All 236 automated unit tests pass cleanly (`npm test`).
+- [x] Production build passes cleanly (`npm run build`).
+- [x] Playwright UX visual verification passes cleanly with screenshots preserved (`verify-phase2-ux.mjs`).
+- [x] Formal verification report authored with PASS verdict (`VERIFICATION.md`).
+- [x] Roadmap updated marking Phase 2 complete.
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) at clean milestone boundary following completion, verification, and closeout of Phase 2.
+
+#### Handoff Notes
+- Working tree is clean.
+- Phase 2 (Minor Unit Vector Artwork Suite — 90 Cards: Pawn, Knight, Bishop) is 100% complete and formally verified.
+- All 90 Minor Unit SVGs are committed in `public/assets/cards/`.
+- All tests passing 100% green; full-stack typecheck 0 errors.
+- Next step upon resume: run `/resume` to restore session state, then proceed to Phase 3: Major Unit Vector Artwork Suite (90 Cards: Rook, Queen, King) via `@[.agent/workflows/discuss-phase.md] 3` or `@[.agent/workflows/plan.md] 3`.
+
+---
+
 ### Session: 2026-10-16 13:58
 
 #### Objective
