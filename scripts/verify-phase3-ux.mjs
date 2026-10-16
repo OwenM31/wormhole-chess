@@ -50,8 +50,8 @@ async function verifyPhase3UX() {
 
     const heroSubtitle = await desktopPage.textContent('.home-hero-subtitle');
     console.log(`      Hero subtitle: "${heroSubtitle?.trim()}"`);
-    if (!heroSubtitle?.includes('A collection of chess variants.')) {
-      throw new Error(`Expected subtitle "A collection of chess variants.", got "${heroSubtitle}"`);
+    if (!heroSubtitle?.includes('Home of your favorite chess variants')) {
+      throw new Error(`Expected subtitle "Home of your favorite chess variants", got "${heroSubtitle}"`);
     }
 
     // Verify Deck Builder view is active by default

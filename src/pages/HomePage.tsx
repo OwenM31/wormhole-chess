@@ -103,7 +103,7 @@ export const HomePage: React.FC = () => {
         {/* Minimalist Hero */}
         <section style={heroSectionStyle} className="home-hero">
           <h1 style={heroTitleStyle} className="home-hero-title">Wormhole Chess</h1>
-          <p style={heroSubtitleStyle} className="home-hero-subtitle">A collection of chess variants.</p>
+          <p style={heroSubtitleStyle} className="home-hero-subtitle">Home of your favorite chess variants</p>
         </section>
 
         {/* Unified Variant Stage */}
