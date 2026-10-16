@@ -1,42 +1,42 @@
 ---
-updated: 2026-10-16T06:06:00-05:00
+updated: 2026-10-16T06:36:30-05:00
 ---
 
 # Project State
 
 ## Current Position
 
-- **Phase**: 7 - Global Polish, Micro-interactions, Responsive Audit & Release
-- **Task**: Planning complete (`01-PLAN.md`–`03-PLAN.md`)
-- **Status**: Ready for execution (`/execute 7`)
+- **Phase**: 7 - Global Polish, Micro-interactions, Responsive Audit & Release (COMPLETE)
+- **Task**: Phase 7 execution complete & verified PASS; Ready for Milestone v2.0 closeout audit
+- **Status**: Milestone v2.0 Ready for Audit
 
 ## Last Session Summary
 
-1. **Phase 6 Execution (Waves 1–3 Complete & Verified)**:
-   - **Wave 1 (`01-PLAN.md`)**:
-     - Authored `Suite 14` contract tests in `scripts/verify-all-cards.ts` verifying 90 Major Unit cards, 30/30/30 anchor split, 12/12/6 energy cost curve, <=21-char names, and Major 3-cycle condition exclusions (Rook excl. Position, Queen excl. Neighbors, King excl. Threat).
-     - Imported `cardCatalogMajor90.json` and exported `CANONICAL_MAJOR_90_CARDS` and `CANONICAL_180_CARDS` in `src/engine/cardGraph.ts`.
-   - **Wave 2 (`02-PLAN.md`)**:
-     - Authored `Suite 15` test suite for Rook (`railgun_bolt`, `turret_traverse`, `siege_hurdle`, `trench_shift`), Queen (`counter_smite`, `amazon_hop`, `camel_stride`), King (`keep_garrison`, `sanctuary_hop`, `bodyguard_switch`), King-safety check filtering, King exemption from ranged capture, and Pawn rank 2–7 boundary invariants.
-     - Implemented dedicated Major Unit behavior handlers and `registerRemainingCatalogCards()` in `src/engine/cards/cardRegistry.ts` guaranteeing 100% handler registration across all 180 canonical cards.
-     - Refined `actionType` classification in `src/engine/DeckChessEngine.ts`.
-   - **Wave 3 (`03-PLAN.md`)**:
-     - Expanded `src/components/DeckBuilderView.tsx` to 180 cards and rendered all 7 piece filter buttons (`All (180)`, `Pawn (30)`, `Knight (30)`, `Bishop (30)`, `Rook (30)`, `Queen (30)`, `King (30)`).
-     - Authored and ran `scripts/verify-phase6-major-units.mjs` verifying UI filter tabs (180/30/30/30/30/30/30), board empowered move rings, and captured visual proof screenshot `phase6_major_units.png`.
-2. **Quality & Verification**:
-   - `npm test`: All 203 automated card engine tests passed cleanly (0 failed across all 15 suites).
-   - `npm run typecheck:all`: Clean (0 errors across React client, Pages Functions, and worker DOs).
-   - `npm run build`: Production build succeeded in 1.98s.
-   - `node scripts/verify-phase6-major-units.mjs`: Clean exit code 0, 0 browser errors.
-   - Authored `.agent/state/phases/6/VERIFICATION.md` (5/5 must-haves verified).
+1. **Phase 7 Plan 7.1 (Wave 1: Palette Unification & Copy Alignment)**:
+   - Unified `src/components/Navigation.tsx`, `src/pages/DashboardPage.tsx`, `src/components/MatchmakingLobby.tsx`, `src/components/HistoricalMatchViewer.tsx`, and `src/pages/PlayRoomPage.tsx` to the Authentic Wormhole Palette (`#191B1D`, `#24272A`, `#1C1E20`, `#D4AF37`, `#4C5C4C`).
+   - Aligned lobby game modes to `'Deck Builder'` and `'3D Wormhole'`.
+   - Committed `c61dacb`, `07e3ba7`, `185c5a8`.
+2. **Phase 7 Plan 7.2 (Wave 2: 3-Column TCG Ruffle Hand Stage & Audio Feedback)**:
+   - Refactored `src/components/TacticalHandBar.tsx` into Left TCG Ruffle Hand Stage with pure `⚡ ENERGY` meter (`3/3`), 2×4 portrait cards (`5:7` ratio) with horizontal overlap, fanned rotation, and animated 5×4 mini-board visual explainers on hover.
+   - Rebuilt `src/pages/DeckBuilderPage.tsx` into 3 columns: Left 356px TCG Stage, Center 512×512 square chessboard, Right 280px Moves/Chat segmented tabs with live chat form and compact actions.
+   - Integrated procedural Web Audio triggers in `src/hooks/useDeckChessGame.ts` for empowered captures (`playCapture()`) and game conclusion (victory / defeat).
+   - Committed `751e929`, `c9e36ef`, `091ef3f`.
+3. **Phase 7 Plan 7.3 (Wave 3: 3D Wormhole HUD Hardening & Multi-Viewport Playwright Audit)**:
+   - Hardened `src/pages/WormholePage.tsx` and `src/components/ChessboardScene.tsx` for mobile viewports (`maxWidth: 'calc(100vw - 2.5rem)'`, `flexWrap: 'wrap'`); removed stray per-piece `console.log`.
+   - Authored and ran `scripts/verify-phase7-polish.mjs` verifying zero horizontal overflow across 6 routes × 3 viewport classes (`375×812`, `768×1024`, `1440×900`), computed palette styles, TCG card rendering, mini-board hover preview, tab switching, and move illumination.
+   - Captured proof screenshot at `.agent/state/artifacts/screenshots/phase7_global_polish.png`.
+   - Committed `706c566`, `f60d8b7`, `c3e14d7`.
+4. **Phase 7 Verification & Closeout**:
+   - Authored `.agent/state/phases/7/VERIFICATION.md` with verdict: `PASS`.
+   - Updated `.agent/state/ROADMAP.md` marking Phase 7 `✅ Complete`. All 7 phases of Milestone v2.0 are now complete.
 
 ## In-Progress Work
 
-None. Working tree clean.
+None. All 7 phases of Milestone v2.0 are complete and verified.
 
 ## Blockers
 
-None. Ready for Phase 7.
+None.
 
 ## Context Dump
 
@@ -45,25 +45,17 @@ None. Ready for Phase 7.
 - [DECISION-015]: Phase 1 Design Direction: Variant A (Technical Density, 2-column command layout).
 - [DECISION-016]: Phase 2 Tactical Arena Architecture & Authentic Wormhole Chess Color System.
 - [DECISION-017]: Phase 3 Home Landing & Authentication Architecture: Unified Stage & Restrained Copy.
-- [DECISION-018]: Phase 4 3D Wormhole HUD Architecture: Variant A Tactical Glass HUD (edge-to-edge canvas, floating top HUD capsule, floating bottom camera dock, and collapsible right telemetry drawer).
-- [DECISION-019]: Phase 5 Deck Builder Card Graph: 6x6 Taxonomy, Symmetrical 3-Cycles, 90-Card Slice & Unified Action Model ("The Card IS the Move").
-- [DECISION-020]: Phase 7 Global Polish, 3-Column Deck Builder Stage (Left Tactical Panel with Active Loadout & Card Inspector), Palette Unification across Phase 1 components, and Release Verification Scope.
+- [DECISION-018]: Phase 4 3D Wormhole HUD Architecture: Tactical Glass HUD (floating top capsule, floating bottom camera dock, collapsible drawer).
+- [DECISION-019]: Phase 5 Deck Builder Card Graph: 6x6 Taxonomy, Symmetrical 3-Cycles, 90-Card Slice & Unified Action Model.
+- [DECISION-020]: Phase 7 Global Polish, 3-Column TCG Ruffle Hand Stage (Variant D Refined), Palette Unification, and Release Scope.
 
 ### Files of Interest
-- `src/engine/cards/cardCatalog90.json`: Canonical locked 90-card data catalog for Minor Units (30 Pawn, 30 Knight, 30 Bishop).
-- `src/engine/cards/cardCatalogMajor90.json`: Canonical locked 90-card data catalog for Major Units (30 Rook, 30 Queen, 30 King).
-- `.agent/state/phases/6/RESEARCH.md`: Phase 6 research document.
-- `.agent/state/phases/6/01-PLAN.md`–`03-PLAN.md`: Phase 6 execution plans (Waves 1–3).
-- `src/types/deckChess.ts`: 6x6 genre types and `EmpoweredMove` interface.
-- `src/engine/cardGraph.ts`: Catalog loader and validation utilities.
-- `src/engine/cards/cardRegistry.ts`: Behavior handlers and `CardUtils.getPinRay`.
-- `src/engine/DeckChessEngine.ts`: Unified `getEmpoweredMoves` and `makeEmpoweredMove`.
-- `src/components/DeckChessBoard.tsx`: Subtle standard dots and glowing gold empowered move rings with micro-tooltips.
-- `src/components/TacticalHandBar.tsx`: Hand illumination for usable cards.
-- `src/components/DeckBuilderView.tsx`: Card curator with filter tabs and genre badges.
+- `.agent/state/artifacts/screenshots/phase7_global_polish.png`: Visual proof artifact of Phase 7 Variant D Refined TCG Stage and full 512×512 chessboard.
+- `.agent/state/phases/7/VERIFICATION.md`: Verification report for Phase 7.
+- `.agent/state/ROADMAP.md`: Milestone v2.0 roadmap with all 7 phases completed.
+- `scripts/verify-phase7-polish.mjs`: Automated multi-viewport Playwright verification suite.
 
 ## Next Steps
 
-1. Plan Phase 7 (`@[.agent/workflows/plan.md] 7`): Global Polish, Micro-interactions, Responsive Audit & Release.
-2. Execute Phase 7 (`@[.agent/workflows/execute.md] 7`).
-3. Audit milestone closeout (`@[.agent/workflows/audit-milestone.md]`).
+1. Milestone v2.0 closeout audit (`@[.agent/workflows/audit-milestone.md]`).
+2. Milestone v2.0 completion & release archival (`@[.agent/workflows/complete-milestone.md]`).
