@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-16T10:02:00-05:00
+updated: 2026-10-16T10:18:00-05:00
 ---
 
 # Project State
@@ -7,9 +7,10 @@ updated: 2026-10-16T10:02:00-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Deck Builder Visual Immersion & Board Action Effects
-- **Phase**: Not started
-- **Status**: Active (resumed 2026-10-16 10:02)
-- **Roadmap Status**: Milestone v3.0 Planned; Ready for Phase 1 Planning (`@[.agent/workflows/plan.md] 1`)
+- **Phase**: 1 — Card Nomenclature Polish & Schema Finalization (All 180 Cards)
+- **Task**: Planning complete (4 plans across 3 waves)
+- **Status**: Ready for execution (`@[.agent/workflows/execute.md] 1`)
+- **Roadmap Status**: Phase 1 Planned; Ready for Execution (`@[.agent/workflows/execute.md] 1`)
 
 ## Last Session Summary
 
@@ -57,5 +58,7 @@ None.
 
 ## Next Steps
 
-1. Create Phase 1 execution plans (`@[.agent/workflows/plan.md] 1`) for Card Nomenclature Polish & Schema Finalization.
-2. Audit all 180 cards for <=21-char titles, clean condition/effect descriptions, and asset identifier mappings.
+1. Execute Phase 1 plans (`@[.agent/workflows/execute.md] 1`):
+   - Wave 1: Plan 1.1 (Schema Definition, TypeScript Contracts & Contract Test Harness).
+   - Wave 2: Plan 1.2 (Battlefield Minor Unit Catalog Polish) & Plan 1.3 (Royal Court Major Unit Catalog Polish).
+   - Wave 3: Plan 1.4 (UI Card Component Zero-Ellipsis Polish & Static Asset Directory Scaffolding).
