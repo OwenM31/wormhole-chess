@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-15T20:50:00-05:00
+updated: 2026-10-15T21:19:00-05:00
 ---
 
 # Project State
@@ -8,8 +8,9 @@ updated: 2026-10-15T20:50:00-05:00
 
 - **Milestone**: v2.0 Visual Craft & Frontend Redesign
 - **Phase**: 4 - 3D Wormhole HUD & Multiplayer PlayRoom Redesign
-- **Task**: Full surface UX sweep complete; Deck Builder left rail docked to edge on widescreen; ready for Phase 4 design research.
-- **Status**: Active (resumed 2026-10-15T20:50:00-05:00)
+- **Task**: Planning complete (Plans 4.1 & 4.2 authored across 2 waves); ready for execution.
+- **Status**: Ready for execution
+
 
 ## Last Session Summary
 
@@ -56,7 +57,7 @@ None.
 
 ## Next Steps
 
-1. Proceed to Phase 4: 3D Wormhole HUD & Multiplayer PlayRoom Redesign (`@[.agent/workflows/design-phase.md] 4 wormhole`).
-   - Research non-intrusive floating HUD aesthetics and tactical glass overlays.
-   - Align with user on candidate copy for 3D board controls, camera presets, and chess clocks.
-   - Generate 3 visual HTML prototype variants and capture 2x retina screenshots.
+1. Execute Phase 4 plans (`@[.agent/workflows/execute.md] 4`):
+   - Wave 1 (Plan 4.1): Refactor `ChessboardScene.tsx` and `WormholePage.tsx` with floating top HUD capsule, bottom camera dock, and collapsible right drawer.
+   - Wave 2 (Plan 4.2): Polish `PlayRoomPage.tsx` and `ChessClock.tsx`, and execute automated Playwright UX sweep `scripts/verify-phase4-ux.mjs`.
+
