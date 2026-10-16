@@ -1,5 +1,12 @@
 import { DeckChessEngine } from '../src/engine/DeckChessEngine';
-import { STARTER_DECK, EXPANDED_LIBRARY } from '../src/engine/cardGraph';
+import {
+  STARTER_DECK,
+  EXPANDED_LIBRARY,
+  CANONICAL_90_CARDS,
+  CANONICAL_MAJOR_90_CARDS,
+  CANONICAL_180_CARDS,
+  getCardById,
+} from '../src/engine/cardGraph';
 import { Chess } from 'chess.js';
 import cardCatalog90 from '../src/engine/cards/cardCatalog90.json';
 import cardCatalogMajor90 from '../src/engine/cards/cardCatalogMajor90.json';
@@ -600,6 +607,32 @@ console.log('\nSuite 14: Major Unit 90-Card Catalog & 180-Card Library');
   const kingSpawning = kingPosition.filter(c => c.effect_type === 'Spawning').length;
   const kingWalls = kingPosition.filter(c => c.effect_type === 'Walls & Shields').length;
   assert(kingSpawning === 5 && kingWalls === 5, 'King Position splits evenly: 5 Spawning, 5 Walls & Shields');
+
+  // Verify CANONICAL_MAJOR_90_CARDS export
+  assert(CANONICAL_MAJOR_90_CARDS.length === 90, 'CANONICAL_MAJOR_90_CARDS exports exactly 90 cards');
+
+  // Verify CANONICAL_180_CARDS export & uniqueness
+  assert(CANONICAL_180_CARDS.length === 180, 'CANONICAL_180_CARDS contains exactly 180 cards');
+  const uniqueIds = new Set(CANONICAL_180_CARDS.map(c => c.id));
+  assert(uniqueIds.size === 180, 'All 180 cards in CANONICAL_180_CARDS have unique IDs');
+
+  // Verify getCardById resolution across all 6 pieces
+  const sampleIds = [
+    'pawn_bayonet_charge',
+    'knight_cavalry_charge',
+    'bishop_piercing_ray',
+    'rook_railgun_bolt',
+    'queen_counter_smite',
+    'king_keep_garrison',
+  ];
+  let allSamplesResolved = true;
+  for (const id of sampleIds) {
+    if (!getCardById(id)) {
+      allSamplesResolved = false;
+      break;
+    }
+  }
+  assert(allSamplesResolved, 'getCardById resolves sample cards across all 6 pieces (Pawn, Knight, Bishop, Rook, Queen, King)');
 }
 
 // ==========================================

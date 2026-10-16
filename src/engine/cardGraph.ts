@@ -133,6 +133,7 @@ export const STARTER_DECK: CardDefinition[] = [
 ];
 
 import rawCatalog90 from './cards/cardCatalog90.json';
+import rawCatalogMajor90 from './cards/cardCatalogMajor90.json';
 
 /**
  * 90 Canonical Minor Unit Cards (Pawn, Knight, Bishop) adhering to 6x6 taxonomy
@@ -156,6 +157,37 @@ export const CANONICAL_90_CARDS: CardDefinition[] = (rawCatalog90 as any[]).map(
   image_description: raw.image_description,
   visualTheme: PIECE_COLOR_THEMES[raw.anchor as PieceAnchor] || PIECE_COLOR_THEMES.pawn,
 }));
+
+/**
+ * 90 Canonical Major Unit Cards (Rook, Queen, King) adhering to 6x6 taxonomy
+ */
+export const CANONICAL_MAJOR_90_CARDS: CardDefinition[] = (rawCatalogMajor90 as any[]).map((raw) => ({
+  id: raw.id,
+  name: raw.name,
+  card_name: raw.card_name,
+  piece: raw.piece,
+  anchor: raw.anchor as PieceAnchor,
+  energyCost: raw.energyCost,
+  score: raw.score,
+  condition_type: raw.condition_type,
+  condition_exact: raw.condition_exact,
+  effect_type: raw.effect_type,
+  effect_exact: raw.effect_exact,
+  conditions: raw.conditions || [],
+  effects: raw.effects || [],
+  description: raw.description,
+  card_description: raw.card_description,
+  image_description: raw.image_description,
+  visualTheme: PIECE_COLOR_THEMES[raw.anchor as PieceAnchor] || PIECE_COLOR_THEMES.rook,
+}));
+
+/**
+ * Full 180 Canonical Cards (90 Minor Units + 90 Major Units)
+ */
+export const CANONICAL_180_CARDS: CardDefinition[] = [
+  ...CANONICAL_90_CARDS,
+  ...CANONICAL_MAJOR_90_CARDS,
+];
 
 export const LEGACY_EXTRA_CARDS: CardDefinition[] = [
   {
@@ -206,7 +238,7 @@ export const LEGACY_EXTRA_CARDS: CardDefinition[] = [
 export const EXPANDED_LIBRARY: CardDefinition[] = [
   ...STARTER_DECK,
   ...LEGACY_EXTRA_CARDS,
-  ...CANONICAL_90_CARDS.filter(
+  ...CANONICAL_180_CARDS.filter(
     (c) => !STARTER_DECK.some((s) => s.id === c.id) && !LEGACY_EXTRA_CARDS.some((l) => l.id === c.id)
   ),
 ];
