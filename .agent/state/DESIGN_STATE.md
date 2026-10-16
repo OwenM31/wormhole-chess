@@ -115,14 +115,15 @@
 ## Phase 7: Global Polish, 3-Column TCG Ruffle Hand Stage & Palette Unification
 
 - **Date Approved:** 2026-10-16
-- **Selected Variant:** **Variant D: Left TCG Ruffle Hand Spread + Full 512×512 Center Board (No Bottom Card Bar)**
-- **Reference Image:** `.agent/state/artifacts/design/phase_7_approved.png`
+- **Selected Variant:** **Variant D (Refined): Pure Left TCG Ruffle Hand + Full 512×512 Center Board + Right Moves/Chat Panel**
+- **Reference Image:** `.agent/state/artifacts/design/phase_7_refined.png`
 
 ### Rationale
-- Eliminates three major sources of visual clutter and redundancy on `DeckBuilderPage.tsx`:
-  1. Removes the redundant desktop left route icon rail (`aside`).
-  2. Removes the secondary full-width sub-header bar.
-  3. Removes the redundant bottom card strip under the chessboard (`TacticalHandBar` moved into the Left Hand Stage), allowing the Center Chessboard to expand cleanly to a full `512×512px` square without vertical scroll.
-- Transforms the Left Hand Stage (`356px` on desktop) into an authentic TCG hand display: **2 rows of 4 portrait playing cards (`5:7` aspect ratio)** arranged in a tactile **ruffle spread** (`margin-left: -24px`, subtle fan rotation) with a smooth **hover pop-out reveal** (`scale(1.22) translateY(-18px) rotate(0deg)`).
-- Each portrait card follows a Pokémon/TCG layout (Header with Title & `⚡` Cost, Center Art / Animated Mini-Board Explainer Window showing the piece's move geometry, and Bottom Rules Box with `Condition ➔ Effect` tags and description), removing any need for a separate static Card Inspector box.
+- Eliminates all redundant chrome and explanatory filler on `DeckBuilderPage.tsx`:
+  1. Removes the desktop left route icon rail (`aside`), secondary full-width sub-header bar, and bottom under-board card bar.
+  2. Keeps the Left Hand Stage (`356px` on desktop) ultra-pure: **only** the `⚡ ENERGY` bar (`3/3`) at the top and the **2×4 Portrait TCG Ruffle Hand** below—no `Find Match` / `My Deck` tabs in the left column and no instructional text notes (`"7/8 IN HAND"` or `"Hover any card..."`).
+  3. Expands the Center Chessboard to a full `512×512px` square flanked only by the Opponent and Player status bars.
+  4. Adds **`Moves` | `Chat`** segmented tabs to the top of the Right Panel (`280px`) alongside the `Turn` counter, with concise bottom match actions (`Resign` · `New Game` · `My Deck`).
+- Each portrait card (`5:7` aspect ratio) follows a Pokémon/TCG layout (Header with Title & `⚡` Cost, Center Art / Animated Mini-Board Explainer Window showing the piece's move geometry, and Bottom Rules Box with `Condition ➔ Effect` tags and description) with smooth hover pop-out (`scale(1.22) translateY(-18px) rotate(0deg)`).
 - Unifies Phase 1 views (`Navigation.tsx`, `DashboardPage.tsx`, `MatchmakingLobby.tsx`, `HistoricalMatchViewer.tsx`) onto the Authentic Wormhole Palette (`#191B1D`, `#24272A`, `#1C1E20`, `#D4AF37`, `#4C5C4C`).
+

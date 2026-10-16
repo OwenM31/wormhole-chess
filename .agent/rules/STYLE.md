@@ -72,12 +72,16 @@
 ---
 
 ### 5. Deck Builder 3-Column TCG Ruffle Hand Stage (Phase 7 Directives)
-- **No Redundant Bottom Card Bar or Left Route Icon Rail**: The player's hand lives exclusively in the **Left Hand Stage (`356px` width on desktop)**, freeing the Center Stage for a full **`512×512px` square Chessboard** flanked only by the Opponent and Player status bars (`36px` height each).
+- **No Redundant Bottom Card Bar, Left Route Icon Rail, or Left Mode Tabs**:
+  - The Left Hand Stage (`356px` width on desktop) contains **only** the `⚡ ENERGY` bar (`3/3` with 3 gold pips) and the **2×4 Portrait TCG Ruffle Hand** (zero instructional text notes like `"7/8 IN HAND"` or `"Hover any card..."`).
+  - The Center Stage holds the full **`512×512px` square Chessboard** flanked only by the Opponent and Player status bars (`36px` height each).
+  - The Right Panel (`280px` width on desktop) features **`Moves` | `Chat`** segmented tabs in its top header alongside the `Turn` counter, and concise bottom match controls (`Resign` · `New Game` · `My Deck`).
 - **Portrait TCG Playing Cards (`5:7` Aspect Ratio)**:
   - Arranged in **2 rows of 4 cards** (or 1 row of 5 in 5-card mode) with a tactile **ruffle spread overlap (`margin-left: -24px`)** and subtle fan rotation (`-3deg` to `+3.5deg`).
   - Each card features a 3-part Pokémon/TCG anatomy:
-    1. **Top Header**: Card Title + Energy Cost badge (`⚡1–3`).
+    1. **Top Header**: Card Title + Energy Cost badge (`⚡1–3` or `USED`).
     2. **Center Art / Visual Explainer Window**: Displays the piece glyph by default and renders an **animated mini-board schematic** (showing the piece's condition & movement/capture targets with glowing gold rings) when hovered or active.
     3. **Bottom Rules Box**: Compact `Condition ➔ Effect` taxonomy header + concise rule description.
-- **Smooth Hover Pop-Out Reveal**: Hovering any card smoothly elevates and straightens it (`transform: translateY(-18px) scale(1.22) rotate(0deg)`, `z-index: 30`) with a warm gold border (`#D4AF37`) so the full card face and mini-board visual explainer are effortlessly readable without needing a separate Card Inspector panel.
+- **Smooth Hover Pop-Out Reveal**: Hovering any card smoothly elevates and straightens it (`transform: translateY(-18px) scale(1.22) rotate(0deg)`, `z-index: 30`) with a warm gold border (`#D4AF37`).
+
 
