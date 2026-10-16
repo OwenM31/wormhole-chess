@@ -22,25 +22,26 @@ In Phase 1, `Navigation.tsx`, `DashboardPage.tsx`, `MatchmakingLobby.tsx`, and `
 **Recommendation:**
 Migrate `Navigation.tsx`, `DashboardPage.tsx`, `MatchmakingLobby.tsx`, and `HistoricalMatchViewer.tsx` to the Authentic Wormhole Palette tokens codified in `.agent/rules/STYLE.md`. Also update legacy board header strings in `PlayRoomPage.tsx` (`'3D Wormhole Hyperbolic Arena'` ➔ `'3D Wormhole'`, `'Deck Builder Chess Board'` ➔ `'Deck Builder'`).
 
-### 2. 3-Column Tactical Stage Architecture (`DeckBuilderPage.tsx`)
+### 2. 3-Column TCG Ruffle Hand Stage Architecture (`DeckBuilderPage.tsx` & `TacticalHandBar.tsx`)
 Previously, `DeckBuilderPage.tsx` rendered:
 - Global `<Navigation />` (`52px` height)
 - A secondary full-width `<header>` (`41px` height) containing `"Deck Builder Chess"` and `"Find Match" | "My Deck"` buttons
 - A desktop left `<aside>` icon rail (`58px` width) repeating the exact same 4 links as `<Navigation />` (`Home`, `Wormhole`, `Deck Builder`, `Profile`)
-- A 2-column inner stage (`470px` board + `280px` move history = `766px`), leaving unused horizontal space on desktop screens (`1280px–1440px`).
+- A horizontal `TacticalHandBar` squeezed underneath a `470px` board.
 
 **Recommendation:**
-Implement **Option 1 (`[DECISION-020]`) — 3-Column Tactical Stage**:
-- Remove both the secondary `<header>` and the redundant `<aside>` route icon rail, reclaiming `41px` of vertical height.
-- Structure the desktop arena (`lg:flex-row`) into 3 balanced columns centered in the viewport:
-  1. **Left Tactical Panel (`w-full lg:w-[250px]`)**:
-     - Segmented Mode Switcher at top: `Find Match` (arena) | `My Deck` (180-card curator).When `My Deck` is active, a compact top bar or back trigger returns to `Find Match`.
-     - **Active Loadout (`8/8`)**: Compact list of the player's 8 equipped cards showing piece glyph, card name, energy cost (`⚡1–3`), and live status (`IN HAND`, `ACTIVE`, or `USED`). Clicking or hovering any card in the loadout (or in the bottom `TacticalHandBar`) previews it in the Card Inspector.
-     - **Card Inspector**: Displays the currently hovered or selected `CardDefinition` (piece class badge, energy cost badge, condition genre & effect genre pills, and full rule description). Defaults to the first active/playable card or a concise hint (`Select a piece or hover a card to inspect.`).
-  2. **Center Board & Hand Stage (`w-full max-w-[470px]`)**:
-     - Opponent status bar (`36px`) + `DeckChessBoard` (`470×470` max fluid square) + Player status bar (`36px`) + `TacticalHandBar` (`470px` max width).
-  3. **Right Move History & Match Controls (`w-full lg:w-[280px]`)**:
-     - Turn counter, AI difficulty selector (`easy` / `medium` / `tactical`), scrollable algebraic move & card history, and match action footer (`Resign`, `New Game`, `Find Match`).
+Implement **Variant D (Refined) (`[DECISION-020]`) — 3-Column TCG Ruffle Hand Stage**:
+- Remove the secondary `<header>`, the redundant `<aside>` route icon rail, and the bottom under-board card strip.
+- Structure the desktop arena (`lg:flex-row`) into 3 balanced columns (`596px` height) centered in the viewport:
+  1. **Left TCG Hand Stage (`w-full lg:w-[356px]`)**:
+     - Top bar: Pure `⚡ ENERGY` meter (`3/3` with 3 gold pips) — zero redundant mode tabs or `"7/8 IN HAND"` / `"Hover any card..."` text notes.
+     - **2×4 Portrait TCG Ruffle Hand (`5:7` aspect ratio, `112×160px`)**: 2 rows of 4 overlapping portrait cards (`-ml-6`, subtle fan rotation) with smooth hover pop-out (`scale(1.22) translateY(-18px) rotate(0deg)`). Each card has a Top Header (Title + `⚡` Cost), Center Art / Visual Explainer Window (displaying the piece glyph or a 5×4 mini-board schematic on hover/active), and Bottom Rules Box (`Condition ➔ Effect` + description).
+  2. **Center Board Stage (`w-full max-w-[512px]`)**:
+     - Opponent status bar (`36px`) + Full **`512×512px` square `DeckChessBoard`** + Player status bar (`36px`).
+  3. **Right Moves & Chat Panel (`w-full lg:w-[280px]`)**:
+     - Top header with **`Moves` | `Chat`** segmented tabs and `Turn {N}` badge.
+     - Scrollable algebraic move & card history (or interactive match chat panel when `Chat` is selected).
+     - Bottom match action footer: `Resign` · `New Game` · `My Deck`.
 
 ### 3. Multi-Viewport Responsive Bottlenecks & Fixes
 Audit across Mobile (`375×812`), Tablet (`768×1024`), and Desktop (`1440×900`) identified specific responsive items to harden:
