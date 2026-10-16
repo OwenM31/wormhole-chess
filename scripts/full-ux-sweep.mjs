@@ -237,10 +237,10 @@ async function runUXSweep() {
     await tabWormhole.click();
     await page.waitForTimeout(300);
     const wormholeTitle = await page.textContent('h2');
-    if (!wormholeTitle?.includes('3D Wormhole Chess')) {
+    if (!wormholeTitle?.includes('Wormhole Chess')) {
       addDefect({
         severity: 'P1',
-        title: 'Tab switch to 3D Wormhole failed to update header',
+        title: 'Tab switch to Wormhole Chess failed to update header',
         route: '/',
         details: `Got: "${wormholeTitle}"`
       });

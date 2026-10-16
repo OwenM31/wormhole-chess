@@ -50,8 +50,8 @@ async function verifyPhase3UX() {
 
     const heroSubtitle = await desktopPage.textContent('.home-hero-subtitle');
     console.log(`      Hero subtitle: "${heroSubtitle?.trim()}"`);
-    if (!heroSubtitle?.includes('Home of your favorite chess variants')) {
-      throw new Error(`Expected subtitle "Home of your favorite chess variants", got "${heroSubtitle}"`);
+    if (!heroSubtitle?.includes('Home to your favorite chess variants') && !heroSubtitle?.includes('Home of your favorite chess variants')) {
+      throw new Error(`Expected subtitle "Home to your favorite chess variants", got "${heroSubtitle}"`);
     }
 
     // Verify Deck Builder view is active by default
@@ -89,8 +89,8 @@ async function verifyPhase3UX() {
 
     const wormholeStageTitle = await desktopPage.textContent('h2');
     console.log(`      Stage title: "${wormholeStageTitle?.trim()}"`);
-    if (!wormholeStageTitle?.includes('3D Wormhole Chess')) {
-      throw new Error(`Expected "3D Wormhole Chess", got "${wormholeStageTitle}"`);
+    if (!wormholeStageTitle?.includes('Wormhole Chess')) {
+      throw new Error(`Expected "Wormhole Chess", got "${wormholeStageTitle}"`);
     }
 
     const wormholeDesc = await desktopPage.locator('text=Two 8x8 boards linked by a hole in the middle, for up to 4 players.').first();

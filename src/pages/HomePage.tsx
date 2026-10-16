@@ -119,7 +119,7 @@ export const HomePage: React.FC = () => {
             <WormholeSpacetimeIllustration width={135} height={101} className="home-hero-art" />
             <div style={heroTextGroupStyle} className="home-hero-text">
               <h1 style={heroTitleStyle} className="home-hero-title">WormholeChess</h1>
-              <p style={heroSubtitleStyle} className="home-hero-subtitle">Home of your favorite chess variants</p>
+              <p style={heroSubtitleStyle} className="home-hero-subtitle">Home to your favorite chess variants</p>
             </div>
           </div>
         </section>
@@ -155,7 +155,7 @@ export const HomePage: React.FC = () => {
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
                 <WormholeLogo size={16} badged={true} />
-                <span>3D Wormhole Chess</span>
+                <span>Wormhole Chess</span>
               </span>
               {activeTab === 'wormhole' && (
                 <span style={activeStatusPillStyle}>Active</span>
@@ -260,7 +260,7 @@ export const HomePage: React.FC = () => {
             </div>
           )}
 
-          {/* Active Tab: 3D Wormhole Chess */}
+          {/* Active Tab: Wormhole Chess */}
           {activeTab === 'wormhole' && (
             <div
               style={stageContentStyle}
@@ -271,7 +271,7 @@ export const HomePage: React.FC = () => {
             >
               <div style={stageHeaderRowStyle} className="home-stage-header-row">
                 <div>
-                  <h2 style={stageTitleStyle}>3D Wormhole Chess</h2>
+                  <h2 style={stageTitleStyle}>Wormhole Chess</h2>
                   <p style={stageDescStyle}>
                     Two 8x8 boards linked by a hole in the middle, for up to 4 players.
                   </p>
