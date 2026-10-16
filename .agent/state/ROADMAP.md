@@ -39,7 +39,7 @@ Transform Deck Builder Chess into a visually rewarding, visceral tactical experi
 ---
 
 ### Phase 2: Minor Unit Vector Artwork Suite (90 Cards: Pawn, Knight, Bishop)
-**Status:** ⬜ Not Started
+**Status**: ✅ Complete
 **Objective:** Generate, review, and integrate 90 custom vector illustration assets for Battlefield Minor Units (30 Pawn, 30 Knight, 30 Bishop) using `@create-asset.md`, rendering into card faces and interactive mini-board explainers.
 **Deliverables:**
 - 30 custom vector SVG illustrations for Pawn cards
