@@ -212,6 +212,7 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
 
                     {/* Hover/Active View: 5x4 Mini-Board Schematic */}
                     <div
+                      data-testid="tcg-mini-board"
                       className={`w-full h-[38px] rounded-[4px] bg-[#141618] border border-[rgba(212,175,55,0.4)] flex items-center justify-center p-0.5 ${
                         isSelected || isActiveForPiece ? 'flex' : 'hidden group-hover:flex'
                       }`}
