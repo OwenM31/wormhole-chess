@@ -2,6 +2,7 @@
 phase: 4
 plan: 2
 wave: 2
+depends_on: ["01"]
 ---
 
 # Plan 4.2: PlayRoom Page Polish & Empirical Playwright UX Verification

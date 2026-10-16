@@ -2,6 +2,7 @@
 phase: 4
 plan: 1
 wave: 1
+depends_on: []
 ---
 
 # Plan 4.1: 3D Wormhole HUD & Floating Camera Dock Refactor
