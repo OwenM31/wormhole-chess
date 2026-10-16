@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-16T06:36:30-05:00
+updated: 2026-10-16T08:10:00-05:00
 ---
 
 # Project State
@@ -7,32 +7,38 @@ updated: 2026-10-16T06:36:30-05:00
 ## Current Position
 
 - **Phase**: 7 - Global Polish, Micro-interactions, Responsive Audit & Release (COMPLETE)
-- **Task**: Phase 7 execution complete & verified PASS; Ready for Milestone v2.0 closeout audit
-- **Status**: Milestone v2.0 Ready for Audit
+- **Task**: Branding, Home Hero Lockup & Visual Asset Polish (COMPLETE)
+- **Status**: Paused at 2026-10-16 08:10
+- **Roadmap Status**: Milestone v2.0 Complete & Polished; Ready for Milestone Closeout Audit
 
 ## Last Session Summary
 
-1. **Phase 7 Plan 7.1 (Wave 1: Palette Unification & Copy Alignment)**:
-   - Unified `src/components/Navigation.tsx`, `src/pages/DashboardPage.tsx`, `src/components/MatchmakingLobby.tsx`, `src/components/HistoricalMatchViewer.tsx`, and `src/pages/PlayRoomPage.tsx` to the Authentic Wormhole Palette (`#191B1D`, `#24272A`, `#1C1E20`, `#D4AF37`, `#4C5C4C`).
-   - Aligned lobby game modes to `'Deck Builder'` and `'3D Wormhole'`.
-   - Committed `c61dacb`, `07e3ba7`, `185c5a8`.
-2. **Phase 7 Plan 7.2 (Wave 2: 3-Column TCG Ruffle Hand Stage & Audio Feedback)**:
-   - Refactored `src/components/TacticalHandBar.tsx` into Left TCG Ruffle Hand Stage with pure `⚡ ENERGY` meter (`3/3`), 2×4 portrait cards (`5:7` ratio) with horizontal overlap, fanned rotation, and animated 5×4 mini-board visual explainers on hover.
-   - Rebuilt `src/pages/DeckBuilderPage.tsx` into 3 columns: Left 356px TCG Stage, Center 512×512 square chessboard, Right 280px Moves/Chat segmented tabs with live chat form and compact actions.
-   - Integrated procedural Web Audio triggers in `src/hooks/useDeckChessGame.ts` for empowered captures (`playCapture()`) and game conclusion (victory / defeat).
-   - Committed `751e929`, `c9e36ef`, `091ef3f`.
-3. **Phase 7 Plan 7.3 (Wave 3: 3D Wormhole HUD Hardening & Multi-Viewport Playwright Audit)**:
-   - Hardened `src/pages/WormholePage.tsx` and `src/components/ChessboardScene.tsx` for mobile viewports (`maxWidth: 'calc(100vw - 2.5rem)'`, `flexWrap: 'wrap'`); removed stray per-piece `console.log`.
-   - Authored and ran `scripts/verify-phase7-polish.mjs` verifying zero horizontal overflow across 6 routes × 3 viewport classes (`375×812`, `768×1024`, `1440×900`), computed palette styles, TCG card rendering, mini-board hover preview, tab switching, and move illumination.
-   - Captured proof screenshot at `.agent/state/artifacts/screenshots/phase7_global_polish.png`.
-   - Committed `706c566`, `f60d8b7`, `c3e14d7`.
-4. **Phase 7 Verification & Closeout**:
-   - Authored `.agent/state/phases/7/VERIFICATION.md` with verdict: `PASS`.
-   - Updated `.agent/state/ROADMAP.md` marking Phase 7 `✅ Complete`. All 7 phases of Milestone v2.0 are now complete.
+1. **Brand & Copy Refinements**:
+   - Removed "v2.0" badge and blue `🌀` emoji from [`src/components/Navigation.tsx`](file:///C:/Users/omeye/OneDrive/Desktop/dev/repos/wormhole-chess/src/components/Navigation.tsx).
+   - Eradicated Cloudflare edge, durable objects, and d1 sync footnotes from [`src/pages/HomePage.tsx`](file:///C:/Users/omeye/OneDrive/Desktop/dev/repos/wormhole-chess/src/pages/HomePage.tsx).
+   - Eradicated "three.js/webgl" and "orbital camera" technical specs pills from the 3D Wormhole stage.
+   - Replaced `"PORTAL D4 ⇄ H5"` schematic with clean `"BOARD 1 ⇄ BOARD 2"`.
+   - Updated hero subtitle to `"Home of your favorite chess variants"`.
+   - Standardized application brand title strictly to **`"WormholeChess"`** across `HomePage.tsx`, `Navigation.tsx`, `index.html`, and verification test scripts.
+2. **Authentic Gold Brand Assets & Favicon**:
+   - Replaced legacy blue brand icons with Authentic Gold (`#D4AF37`, `#191B1D`, `#FAF9F6`) assets:
+     - `public/favicon.svg`, multi-resolution `public/favicon.ico`, `public/Wormhole Chess Icon.ico`, `public/Wormhole Chess Icon.png`, `public/logo192.png`, `public/logo512.png`.
+     - Built React component [`src/components/WormholeLogo.tsx`](file:///C:/Users/omeye/OneDrive/Desktop/dev/repos/wormhole-chess/src/components/WormholeLogo.tsx).
+3. **Asset Creation & 3D Hero Lockup (`@create-asset.md`)**:
+   - Executed asset workflow for Hero Spacetime Illustration: generated 5 stylistic variants and rendered contact sheet.
+   - User selected Variant 2 (Duotone Spacetime Wormhole) with 3D pop request.
+   - Sharpened Variant 2 with dimensional slab bevels, volumetric throat depth, and dimensional knight & king pieces.
+   - Promoted winning SVG to [`src/assets/hero-wormhole-illustration.svg`](file:///C:/Users/omeye/OneDrive/Desktop/dev/repos/wormhole-chess/src/assets/hero-wormhole-illustration.svg) and [`public/assets/hero-wormhole-illustration.svg`](file:///C:/Users/omeye/OneDrive/Desktop/dev/repos/wormhole-chess/public/assets/hero-wormhole-illustration.svg).
+   - Created React SVG component [`src/components/WormholeSpacetimeIllustration.tsx`](file:///C:/Users/omeye/OneDrive/Desktop/dev/repos/wormhole-chess/src/components/WormholeSpacetimeIllustration.tsx).
+   - Wired fuller hero lockup `<div className="home-hero-lockup">` in [`src/pages/HomePage.tsx`](file:///C:/Users/omeye/OneDrive/Desktop/dev/repos/wormhole-chess/src/pages/HomePage.tsx).
+   - Maintained dual-icon strategy: 3D illustration for Hero; compact squareish `WormholeLogo` for navbar, tab badges, and favicon.
+   - Verified zero horizontal overflow on desktop and mobile viewports with Playwright screenshots.
+   - Cleaned up scratch generation directory per Step 6 of `@create-asset.md`.
+   - Committed changes (`5a48944`).
 
 ## In-Progress Work
 
-None. All 7 phases of Milestone v2.0 are complete and verified.
+None. All requests, tests, builds, and visual assets are 100% complete and committed.
 
 ## Blockers
 
@@ -47,15 +53,20 @@ None.
 - [DECISION-017]: Phase 3 Home Landing & Authentication Architecture: Unified Stage & Restrained Copy.
 - [DECISION-018]: Phase 4 3D Wormhole HUD Architecture: Tactical Glass HUD (floating top capsule, floating bottom camera dock, collapsible drawer).
 - [DECISION-019]: Phase 5 Deck Builder Card Graph: 6x6 Taxonomy, Symmetrical 3-Cycles, 90-Card Slice & Unified Action Model.
-- [DECISION-020]: Phase 7 Global Polish, 3-Column TCG Ruffle Hand Stage (Variant D Refined), Palette Unification, and Release Scope.
+- [DECISION-020]: Phase 7 Global Polish, 3-Column TCG Ruffle Hand Stage, Palette Unification, and Release Scope.
+- [DECISION-021]: Brand Title & Dual Icon Architecture:
+  - Exact brand title: `"WormholeChess"` (single word PascalCase, no space, no hyphen).
+  - Dual icon role: 3D Isometric Spacetime Illustration (`WormholeSpacetimeIllustration.tsx`) in Hero lockup; Compact Squircle Icon (`WormholeLogo.tsx`) in Navbar, tab pills, and browser favicon.
 
 ### Files of Interest
-- `.agent/state/artifacts/screenshots/phase7_global_polish.png`: Visual proof artifact of Phase 7 Variant D Refined TCG Stage and full 512×512 chessboard.
-- `.agent/state/phases/7/VERIFICATION.md`: Verification report for Phase 7.
-- `.agent/state/ROADMAP.md`: Milestone v2.0 roadmap with all 7 phases completed.
-- `scripts/verify-phase7-polish.mjs`: Automated multi-viewport Playwright verification suite.
+- `src/components/WormholeSpacetimeIllustration.tsx`: 3D isometric dual-board wormhole spacetime hero illustration.
+- `src/components/WormholeLogo.tsx`: Compact gold brand logo icon.
+- `src/pages/HomePage.tsx`: Home landing page with fuller hero title lockup and interactive variant tabs.
+- `src/components/Navigation.tsx`: Navigation bar with compact `WormholeLogo` and `"WormholeChess"`.
+- `.agent/state/artifacts/screenshots/hero_wormholechess_desktop.png`: Desktop visual proof.
+- `.agent/state/artifacts/screenshots/hero_wormholechess_mobile.png`: Mobile visual proof.
 
 ## Next Steps
 
-1. Milestone v2.0 closeout audit (`@[.agent/workflows/audit-milestone.md]`).
-2. Milestone v2.0 completion & release archival (`@[.agent/workflows/complete-milestone.md]`).
+1. Run Milestone closeout audit (`@[.agent/workflows/audit-milestone.md]`).
+2. Run Milestone completion & release archival (`@[.agent/workflows/complete-milestone.md]`).
