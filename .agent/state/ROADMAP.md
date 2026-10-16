@@ -7,7 +7,7 @@ updated: 2026-10-15T13:04:00Z
 # Roadmap
 
 > **Current Milestone:** v2.0 Visual Craft & Frontend Redesign
-> **Current Phase:** Phase 5 - Deck Builder Card Graph & Power Taxonomy
+> **Current Phase:** Phase 6 - Global Polish, Micro-interactions, Responsive Audit & Release
 > **Status:** 🔄 In Progress
 
 ## Milestone Goal
@@ -22,7 +22,7 @@ Systematically eliminate AI-slop across all user-facing screens, establish a dis
 - [x] **Tactical Deck Builder Arena Redesign**: Balanced widescreen layout, properly proportioned 2D board, tactile hand bar, energy meter, and card curator/inspector without vertical bloating or awkward grid stretching.
 - [x] **Home Landing & Authentication Redesign**: Atmospheric dark tactical hero, distinct typography, variant showcase cards, and sleek tabbed auth modals.
 - [x] **3D Wormhole & PlayRoom HUD Redesign**: Non-intrusive floating glass HUD, move notation ticker, game clock integration, and room coordination status.
-- [x] **Zero Gameplay Regressions**: All 83 automated card engine tests (`npm test`), 3D WebGL controls, and Cloudflare multiplayer synchronization continue passing 100%.
+- [x] **Zero Gameplay Regressions**: All 140 automated card engine tests (`npm test`), 3D WebGL controls, and Cloudflare multiplayer synchronization continue passing 100%.
 
 ---
 
@@ -72,13 +72,13 @@ Systematically eliminate AI-slop across all user-facing screens, establish a dis
 ---
 
 ### Phase 5: Deck Builder Card Graph & Power Taxonomy
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 **Objective:** Systematize the compositional multi-partite card graph across all pieces (King, Queen, Rook, Bishop, Knight, Pawn). Establish clear condition genres (position, relational, tactical, status) and thematic effect genres per piece (e.g., King = spawning/reinforcements, Bishop = movement augmentation/color-shift, etc.). Balance energy tiers (1⚡, 2⚡, 3⚡) with consistent distributions across pieces, implement the expanded card registry & handlers, and verify with comprehensive engine tests and UI hand bar integration.
 **Deliverables:**
 - Condition-to-effect genre taxonomy & energy distribution matrix across piece anchors
 - Formalized card definitions and behavior handlers in `src/engine/cards/cardRegistry.ts`
-- Engine invariant verification and expanded automated unit test suite
-- `TacticalHandBar.tsx` and `DeckBuilderView.tsx` UI catalog updates
+- Engine invariant verification and expanded automated unit test suite (140 tests)
+- `TacticalHandBar.tsx` and `DeckBuilderView.tsx` UI catalog updates with 90 canonical cards and one-click execution
 
 ---
 

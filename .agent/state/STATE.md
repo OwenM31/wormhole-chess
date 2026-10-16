@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-16T03:36:00-05:00
+updated: 2026-10-16T03:37:30-05:00
 ---
 
 # Project State
@@ -7,40 +7,40 @@ updated: 2026-10-16T03:36:00-05:00
 ## Current Position
 
 - **Milestone**: v2.0 Visual Craft & Frontend Redesign
-- **Phase**: 5 - Deck Builder Card Graph & Power Taxonomy
-- **Task**: Planning complete (3 atomic plans across 3 waves authored & verified); Ready for Phase 5 Execution
-- **Status**: Paused at 2026-10-16T03:36:00-05:00
+- **Phase**: 5 - Deck Builder Card Graph & Power Taxonomy (Complete)
+- **Task**: Ready for Phase 6 (Global Polish, Micro-interactions, Responsive Audit & Release)
+- **Status**: Ready (Phase 5 verified 2026-10-16T04:00:00-05:00)
 
 ## Last Session Summary
 
-1. **Phase 5 Insertion & Taxonomy Architecture (`@[.agent/workflows/insert-phase.md]`)**:
-   - Inserted Phase 5 (Deck Builder Card Graph & Power Taxonomy) into the roadmap, renumbering Release to Phase 6.
-   - Designed a foundational 6×6 Condition-to-Effect grammar matrix: 6 Condition genres (5 concrete triggers each) and 6 Effect genres.
-   - Structured condition affinities into two symmetrical 3-cycles: Minor Units (Pawn $\leftrightarrow$ Knight $\leftrightarrow$ Bishop) and Major Units (Rook $\leftrightarrow$ King $\leftrightarrow$ Queen), with each piece specializing in 1 condition and excluding 1 condition.
-   - Established the Unified Action Model ("The Card IS the Move"): on your turn, execute either a Standard Move (0⚡) or an Empowered Card Move (1–3⚡), eliminating disconnected pre-move phases.
-2. **Canonical 90-Card Vertical Slice Authored & Locked**:
-   - Compiled 30 Pawn, 30 Knight, and 30 Bishop cards into `src/engine/cards/cardCatalog90.json`.
-   - Balanced with a 12 / 12 / 6 energy cost curve (12 at 1⚡, 12 at 2⚡, 6 at 3⚡ per piece).
-   - Enforced chess invariants (pawn rank 2–7 safety on spawns, rank 8 promotion, Manhattan distance elbow corrections, line-of-sight checks).
-   - Codified `[DECISION-019]` in `.agent/state/DECISIONS.md`.
-3. **Phase 5 Planning & Research (`@[.agent/workflows/plan.md] 5`)**:
-   - Authored `.agent/state/phases/5/RESEARCH.md`.
-   - Decomposed Phase 5 into 3 atomic plans:
-     - `01-PLAN.md` (Wave 1: Types, Taxonomy & Card Catalog Integration).
-     - `02-PLAN.md` (Wave 2: Card Behavior Handlers & Unified Move Generation).
-     - `03-PLAN.md` (Wave 3: Interactive UI Board & Loadout Curator Integration).
-   - Validated plans against all plan-checker dimensions.
-4. **Quality & Test Verification**:
-   - `npm test`: All 83 automated card engine unit tests passed cleanly.
+1. **Phase 5 Execution (Waves 1–3 Complete & Verified)**:
+   - **Wave 1 (`01-PLAN.md`)**:
+     - Authored Suite 12 contract tests in `scripts/verify-all-cards.ts` verifying 90 cards, 30/30/30 anchor split, 12/12/6 cost curve, and 3-cycle condition exclusions.
+     - Added `ConditionGenre`, `EffectGenre`, `EmpoweredMove` to `src/types/deckChess.ts`.
+     - Integrated `CANONICAL_90_CARDS` and `EXPANDED_LIBRARY` in `src/engine/cardGraph.ts`.
+   - **Wave 2 (`02-PLAN.md`)**:
+     - Authored Suite 13 test suite (43 assertions) for Camel (3,1), Zebra (3,2), Dabbaba (2,0), Bayonet forward capture, Piercing Ray slide, In-place diagonal capture under pin, Bishop step / knight-jump color flips, Sidestep, and King safety pin ray intercept invariants.
+     - Implemented 12 canonical card handlers and `CardUtils.getPinRay` in `src/engine/cards/cardRegistry.ts`.
+     - Built `getEmpoweredMoves` & `makeEmpoweredMove` in `src/engine/DeckChessEngine.ts` with simulation-based King safety, atomic energy deduction, card discard, 8th rank queen promotion, and FEN advancement.
+   - **Wave 3 (`03-PLAN.md`)**:
+     - Exposed `empoweredMoves` and `makeEmpoweredMove` in `src/hooks/useDeckChessGame.ts`.
+     - Rendered subtle standard moves (`0⚡`) and glowing gold empowered move rings (`border-2 border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.7)] animate-pulse`) with energy badges and micro-tooltips in `src/components/DeckChessBoard.tsx`.
+     - Added `activeCardIdsForPiece` prop to `src/components/TacticalHandBar.tsx` to illuminate playable hand cards.
+     - Expanded `src/components/DeckBuilderView.tsx` with 90-card curator, piece filter tabs (`All (90)`, `Pawn (30)`, `Knight (30)`, `Bishop (30)`), and condition/effect badges.
+     - Authored and ran `scripts/verify-phase5-taxonomy.mjs` verifying UI filter tabs, badge rendering, board rings, one-click execution, and captured visual proof screenshot `phase5_empowered_moves.png`.
+2. **Quality & Verification**:
+   - `npm test`: All 140 automated card engine tests passed cleanly (0 failed across all 13 suites).
    - `npm run typecheck:all`: Clean (0 errors across React client, Pages Functions, and worker DOs).
+   - `node scripts/verify-phase5-taxonomy.mjs`: Clean exit code 0.
+   - Authored `.agent/state/phases/5/VERIFICATION.md` (3/3 must-haves verified).
 
 ## In-Progress Work
 
-None. Working tree clean for application code upon commit.
+None. Phase 5 complete.
 
 ## Blockers
 
-None.
+None. Ready for Phase 6.
 
 ## Context Dump
 
