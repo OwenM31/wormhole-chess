@@ -47,18 +47,19 @@
 ### 2. Typography
 - **Primary Sans**: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif`
 - **Tabular Monospace**: `ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace` with `font-variant-numeric: tabular-nums` (mandatory for all ratings, timers, turns, and game stats).
-- **Section Headers**: `font-size: 0.75rem`, `font-weight: 600`, `letter-spacing: 0.06em`, `text-transform: uppercase`, `color: #94a3b8`
+- **Section Headers**: `font-size: 0.75rem`, `font-weight: 600`, `letter-spacing: 0.06em`, `text-transform: uppercase`, `color: #8B7E74`
 
 ---
 
 ### 3. Geometry & Surface Rhythm
 - **Corner Radii**:
   - `6px` for structural panels, play mode cards, and modals
+  - `7px` for portrait TCG playing cards (`aspect-ratio: 5 / 7`)
   - `4px` for buttons, segmented controls, status pills, and time pills
 - **Hairline Strokes**: strictly `1px solid` micro-borders for crisp technical fidelity.
 - **Layout Architecture**:
-  - Widescreen 2-column or bento distribution to eliminate excessive vertical scroll.
-  - Keep boards, tactical hand bars, and match feeds comfortably within standard viewports (1280x800).
+  - Widescreen 2-column or 3-column distribution to eliminate excessive vertical scroll.
+  - Keep boards, TCG hand stages, and match feeds comfortably within standard viewports (1280x800).
 
 ---
 
@@ -67,4 +68,16 @@
 - **Zero Obtrusive Sidebars**: The 3D canvas is edge-to-edge. Move history and controls are tucked into a sleek collapsible slide-out drawer (`290px`) that can be opened or closed on demand.
 - **Floating Camera Dock**: Anchored at bottom-center with 4px buttons and tactile keybinding badges (`[T] Top`, `[F] Flip 180°`, `[R] Rotate 90°`, `[L] Orbit Lock`, `[X] Reset`).
 - **Tactical Chess Clocks**: Tabular numerals with warm gold illumination (`#D4AF37`) for the active player's turn, cleanly integrated into top HUD capsules without giant bloated cards.
+
+---
+
+### 5. Deck Builder 3-Column TCG Ruffle Hand Stage (Phase 7 Directives)
+- **No Redundant Bottom Card Bar or Left Route Icon Rail**: The player's hand lives exclusively in the **Left Hand Stage (`356px` width on desktop)**, freeing the Center Stage for a full **`512×512px` square Chessboard** flanked only by the Opponent and Player status bars (`36px` height each).
+- **Portrait TCG Playing Cards (`5:7` Aspect Ratio)**:
+  - Arranged in **2 rows of 4 cards** (or 1 row of 5 in 5-card mode) with a tactile **ruffle spread overlap (`margin-left: -24px`)** and subtle fan rotation (`-3deg` to `+3.5deg`).
+  - Each card features a 3-part Pokémon/TCG anatomy:
+    1. **Top Header**: Card Title + Energy Cost badge (`⚡1–3`).
+    2. **Center Art / Visual Explainer Window**: Displays the piece glyph by default and renders an **animated mini-board schematic** (showing the piece's condition & movement/capture targets with glowing gold rings) when hovered or active.
+    3. **Bottom Rules Box**: Compact `Condition ➔ Effect` taxonomy header + concise rule description.
+- **Smooth Hover Pop-Out Reveal**: Hovering any card smoothly elevates and straightens it (`transform: translateY(-18px) scale(1.22) rotate(0deg)`, `z-index: 30`) with a warm gold border (`#D4AF37`) so the full card face and mini-board visual explainer are effortlessly readable without needing a separate Card Inspector panel.
 

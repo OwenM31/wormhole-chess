@@ -110,4 +110,19 @@
 3. **Multiplayer PlayRoom Cohesion**:
    - Apply the same dark glass cards, warm gold turn highlights, and tabular clock formatting to `PlayRoomPage.tsx` and `ChessClock.tsx`.
 
+---
 
+## Phase 7: Global Polish, 3-Column TCG Ruffle Hand Stage & Palette Unification
+
+- **Date Approved:** 2026-10-16
+- **Selected Variant:** **Variant D: Left TCG Ruffle Hand Spread + Full 512×512 Center Board (No Bottom Card Bar)**
+- **Reference Image:** `.agent/state/artifacts/design/phase_7_approved.png`
+
+### Rationale
+- Eliminates three major sources of visual clutter and redundancy on `DeckBuilderPage.tsx`:
+  1. Removes the redundant desktop left route icon rail (`aside`).
+  2. Removes the secondary full-width sub-header bar.
+  3. Removes the redundant bottom card strip under the chessboard (`TacticalHandBar` moved into the Left Hand Stage), allowing the Center Chessboard to expand cleanly to a full `512×512px` square without vertical scroll.
+- Transforms the Left Hand Stage (`356px` on desktop) into an authentic TCG hand display: **2 rows of 4 portrait playing cards (`5:7` aspect ratio)** arranged in a tactile **ruffle spread** (`margin-left: -24px`, subtle fan rotation) with a smooth **hover pop-out reveal** (`scale(1.22) translateY(-18px) rotate(0deg)`).
+- Each portrait card follows a Pokémon/TCG layout (Header with Title & `⚡` Cost, Center Art / Animated Mini-Board Explainer Window showing the piece's move geometry, and Bottom Rules Box with `Condition ➔ Effect` tags and description), removing any need for a separate static Card Inspector box.
+- Unifies Phase 1 views (`Navigation.tsx`, `DashboardPage.tsx`, `MatchmakingLobby.tsx`, `HistoricalMatchViewer.tsx`) onto the Authentic Wormhole Palette (`#191B1D`, `#24272A`, `#1C1E20`, `#D4AF37`, `#4C5C4C`).
