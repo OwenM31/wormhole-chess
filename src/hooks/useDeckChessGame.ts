@@ -275,6 +275,14 @@ export function useDeckChessGame({
           if (engine.inCheck()) {
             setTimeout(playCheckSound, 120);
           }
+          if (engine.isGameOver()) {
+            const winner = engine.getWinner();
+            if (winner === playerColor) {
+              playVictorySound();
+            } else if (winner && winner !== 'draw') {
+              playDefeatSound();
+            }
+          }
 
           const turnRecord: RecordedTurn = {
             turnNumber: engine.getTurnNumber(),
@@ -336,6 +344,14 @@ export function useDeckChessGame({
       if (engineRef.current.inCheck()) {
         setTimeout(playCheckSound, 120);
       }
+      if (engineRef.current.isGameOver()) {
+        const winner = engineRef.current.getWinner();
+        if (winner === playerColor) {
+          playVictorySound();
+        } else if (winner && winner !== 'draw') {
+          playDefeatSound();
+        }
+      }
 
       const actualPromotion = res.move.promotion;
       const turnRecord: RecordedTurn = {
@@ -392,6 +408,11 @@ export function useDeckChessGame({
       const currentTurn = engineRef.current.getTurn();
       if (mode === 'ai' && currentTurn !== playerColor) return false;
 
+      const targetPiece = engineRef.current.getPiece(move.to);
+      const isCapture =
+        Boolean(targetPiece && targetPiece.color !== currentTurn) ||
+        move.actionType === 'ranged_capture';
+
       const res = engineRef.current.makeEmpoweredMove(move);
       if (!res.success) {
         addLog(`Empowered move failed: ${res.error || 'Unknown error'}`, 'system');
@@ -399,8 +420,19 @@ export function useDeckChessGame({
       }
 
       playCardSound();
+      if (isCapture) {
+        setTimeout(playCaptureSound, 60);
+      }
       if (engineRef.current.inCheck()) {
         setTimeout(playCheckSound, 120);
+      }
+      if (engineRef.current.isGameOver()) {
+        const winner = engineRef.current.getWinner();
+        if (winner === playerColor) {
+          playVictorySound();
+        } else if (winner && winner !== 'draw') {
+          playDefeatSound();
+        }
       }
 
       const cardName = move.metadata?.cardName || move.cardId;
