@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-15T18:52:00-05:00
+updated: 2026-10-15T20:41:00-05:00
 ---
 
 # Project State
@@ -8,28 +8,26 @@ updated: 2026-10-15T18:52:00-05:00
 
 - **Milestone**: v2.0 Visual Craft & Frontend Redesign
 - **Phase**: 4 - 3D Wormhole HUD & Multiplayer PlayRoom Redesign
-- **Task**: Phase 3 verified complete. Ready to begin Phase 4 design research and copy alignment.
-- **Status**: Paused at 2026-10-15T18:52:00-05:00
+- **Task**: Full surface UX sweep complete; Deck Builder left rail docked to edge on widescreen; ready for Phase 4 design research.
+- **Status**: Paused at 2026-10-15T20:41:00-05:00
 
 ## Last Session Summary
 
-Phase 3 execution (`@[.agent/workflows/execute.md] 3`) completed and verified:
-1. **Wave 1 (Plan 3.1 - Home Landing Polish & Wiring)**:
-   - Polished `src/pages/HomePage.tsx` with user-approved copy ("Wormhole Chess" · "A collection of chess variants.").
-   - Wired interactive variant switcher tabs (`Deck Builder Chess` ↔ `3D Wormhole Chess`) with ARIA tab semantics and keyboard focus rings (`rgba(212, 175, 55, 0.85)`).
-   - Displayed 4 tactical sample cards (`Knight Escort` 2⚡, `Shield Wall` 1⚡, `Spatial Warp` 3⚡, `King Decree` 2⚡) with hover lift and piece-class accents.
-   - Hardened mobile responsive breakpoints (<640px) with responsive dimensional portal beam and zero horizontal scroll.
-2. **Wave 2 (Plan 3.2 - Authentication Wiring & Empirical Playwright Verification)**:
-   - Wired `src/pages/AuthPage.tsx` with segmented tabs (`Sign In`, `Register`/`Upgrade`, `Guest`), input focus states, and danger error alerts.
-   - Connected form actions to `useAuth()` with guest upgrade notice banner when `user?.isGuest`.
-   - Created automated Playwright verification suite `scripts/verify-phase3-ux.mjs` running against local Vite preview.
-   - Swept desktop (1280x800) and mobile (375x667) viewports; validated copy, tab triggers, and zero horizontal scroll; captured 5 retina screenshots in `.agent/state/artifacts/screenshots/`.
-3. **Verification**:
-   - `node scripts/verify-phase3-ux.mjs`: All assertions passed with 0 errors.
-   - Full-stack typecheck clean across client, Pages Functions, and companion worker (`npm run typecheck:all`).
+1. **Full Surface UX Sweep (`/ux-sweep`)**:
+   - Swept all 6 live routes (`/`, `/deck-builder`, `/wormhole`, `/dashboard`, `/login`, `/play/:code`) across Desktop (1280x800) and Mobile (375x667).
+   - Tested 26 interactive elements, validated modal escapability, tab toggles, and form empty-state feedback.
+   - Captured 13 retina screenshots in `.agent/state/artifacts/screenshots/`.
+   - Updated `.agent/state/DEFECTS.md` (0 active P0/P1/P2 defects; logged P3 observation for Phase 4 3D HUD redesign).
+2. **Deck Builder Widescreen Docking Fix**:
+   - Resolved user-reported defect where the left navigation rail floated ~320px inward on widescreen displays due to `max-w-7xl mx-auto` on the parent flex container.
+   - Converted container to `w-full` with `shrink-0` on `<aside>` in `src/pages/DeckBuilderPage.tsx`.
+   - Verified rail anchors flush to screen edge (`x: 0`) at 1920x1080 resolution (`deck_builder_1920.png`).
+3. **Authentication Accessibility & Alert Polish**:
+   - Added `noValidate` and `role="alert"` to `src/pages/AuthPage.tsx` for custom dark-mode validation error banners.
+4. **Verification**:
+   - Full-stack typecheck clean across client, Pages Functions, and worker (`npm run typecheck:all`).
    - All 83 automated card engine unit tests passed cleanly (`npm test`).
-   - Production build compiled cleanly in 1.30s (`npm run build`).
-   - Recorded `VERIFICATION.md` with PASS verdict.
+   - Production build compiled cleanly in 1.61s (`npm run build`).
 
 ## In-Progress Work
 
@@ -50,11 +48,11 @@ None.
 ### Files of Interest
 - `.agent/rules/STYLE.md`: Design system tokens and copy directives.
 - `.agent/state/DESIGN_STATE.md`: Cumulative log of selected design directions and continuity tokens.
-- `.agent/state/artifacts/design/phase_3_approved.png`: Approved design reference for Phase 3.
-- `.agent/state/phases/3/VERIFICATION.md`: Verification report with PASS verdict for Phase 3.
-- `src/pages/HomePage.tsx`: Polished and wired Home landing page.
-- `src/pages/AuthPage.tsx`: Wired authentication page with guest upgrade support.
-- `scripts/verify-phase3-ux.mjs`: Automated Playwright verification suite for Phase 3.
+- `.agent/state/DEFECTS.md`: UX defect ledger with latest sweep results.
+- `src/pages/DeckBuilderPage.tsx`: Deck Builder arena with edge-docked left rail.
+- `src/pages/AuthPage.tsx`: Accessible authentication page with dark-mode alert banners.
+- `scripts/full-ux-sweep.mjs`: Automated full surface UX sweep suite.
+- `.agent/state/artifacts/screenshots/deck_builder_1920.png`: 1920x1080 screenshot proving edge docking.
 
 ## Next Steps
 

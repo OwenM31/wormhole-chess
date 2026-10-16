@@ -4,6 +4,46 @@
 
 ---
 
+### Session: 2026-10-15 20:41
+
+#### Objective
+Run full application surface exploratory UX sweep (`/ux-sweep`), evaluate interface integrity and anti-slop rules, resolve user feedback on Deck Builder left navigation rail docking on widescreen displays, and verify accessibility error alert states.
+
+#### Accomplished
+- ✅ Resumed session and verified clean git state.
+- ✅ Executed automated full-surface UX sweep (`/ux-sweep`) via `scripts/full-ux-sweep.mjs`:
+  - Swept all 6 live application routes (`/`, `/deck-builder`, `/wormhole`, `/dashboard`, `/login`, `/play/:code`) across Desktop (1280x800) and Mobile (375x667).
+  - Tested 26 interactive elements, confirmed modal escapability, tab switching, form validation feedback, and zero horizontal scroll.
+  - Captured 13 retina screenshots in `.agent/state/artifacts/screenshots/`.
+  - Updated `.agent/state/DEFECTS.md` with 0 active P0/P1/P2 defects and logged a P3 observation for the upcoming Phase 4 3D Wormhole HUD redesign.
+- ✅ Resolved Deck Builder widescreen navigation rail defect:
+  - User reported: left sidebar was floating inward from the screen edge on widescreen displays.
+  - Root cause: `src/pages/DeckBuilderPage.tsx` had `max-w-7xl mx-auto` on the parent flex container, causing a 320px left void on 1920x1080 screens.
+  - Fix: Changed container to `w-full` with `shrink-0` on `<aside>` so the 58px navigation rail is anchored flush to `x = 0`.
+  - Verified bounding box via Playwright at 1920x1080: `{ x: 0, y: 95, width: 58, height: 985 }` and captured proof screenshot `.agent/state/artifacts/screenshots/deck_builder_1920.png`.
+- ✅ Improved Auth error accessibility:
+  - Added `noValidate` and `role="alert"` to `src/pages/AuthPage.tsx` so custom dark-mode validation alerts render reliably across browsers.
+- ✅ Verification:
+  - Full-stack typecheck passed cleanly (`npm run typecheck:all`).
+  - All 83 automated card engine unit tests passed cleanly (`npm test`).
+  - Production build compiled cleanly in 1.61s (`npm run build`).
+
+#### Verification
+- [x] Full-stack typecheck clean across client, Pages Functions, and worker (`npm run typecheck:all`).
+- [x] All 83 automated card engine tests pass cleanly (`npm test`).
+- [x] Production build passes cleanly in 1.61s (`npm run build`).
+- [x] Full automated UX sweep passed across all 6 routes with 13 screenshots verified.
+- [x] Playwright 1920x1080 measurement verified left rail docked at x = 0 (`deck_builder_1920.png`).
+
+#### Paused Because
+User requested session pause (`/pause`) at clean handoff point after completing the UX sweep, resolving the widescreen sidebar docking defect, and verifying full-stack type safety.
+
+#### Handoff Notes
+- Working tree clean.
+- Next up: Phase 4 (3D Wormhole HUD & Multiplayer PlayRoom Redesign) via `@[.agent/workflows/design-phase.md] 4 wormhole`.
+
+---
+
 ### Session: 2026-10-15 18:36
 
 #### Objective
