@@ -100,7 +100,7 @@ async function verifyPhase3UX() {
       throw new Error('Expected 3D Wormhole one-liner to be visible');
     }
 
-    const portalLabel = await desktopPage.locator('text=PORTAL D4 ⇄ H5').first();
+    const portalLabel = await desktopPage.locator('text=BOARD 1 ⇄ BOARD 2').first();
     const hasPortal = await portalLabel.isVisible();
     console.log(`      Portal schematic label: ${hasPortal ? '✓ VISIBLE' : '✗ NOT FOUND'}`);
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { isMuted, toggleMuted } from '../utils/soundEffects';
+import { WormholeLogo } from './WormholeLogo';
 
 export const Navigation: React.FC = () => {
   const { user, stats, logout, isLoading } = useAuth();
@@ -37,9 +38,6 @@ export const Navigation: React.FC = () => {
           }
           .nav-brand-group {
             gap: 0.5rem !important;
-          }
-          .nav-brand-badge {
-            display: none !important;
           }
           .nav-user-elo {
             display: none !important;
@@ -77,9 +75,8 @@ export const Navigation: React.FC = () => {
       `}</style>
       <div style={brandGroupStyle} className="nav-brand-group">
         <NavLink to="/" style={brandLinkStyle}>
-          <span style={{ fontSize: '1.05rem', lineHeight: 1 }}>🌀</span>
+          <WormholeLogo size={24} badged={true} />
           <span className="nav-brand-text">Wormhole Chess</span>
-          <span style={brandBadgeStyle} className="nav-brand-badge">v2.0</span>
         </NavLink>
 
         <nav style={navLinksStyle}>
@@ -193,17 +190,6 @@ const brandLinkStyle: React.CSSProperties = {
   fontWeight: 700,
   fontSize: '0.95rem',
   letterSpacing: '-0.01em',
-};
-
-const brandBadgeStyle: React.CSSProperties = {
-  fontSize: '0.7rem',
-  fontWeight: 600,
-  backgroundColor: 'rgba(212, 175, 55, 0.14)',
-  color: '#D4AF37',
-  border: '1px solid rgba(212, 175, 55, 0.35)',
-  borderRadius: '4px',
-  padding: '0.1rem 0.4rem',
-  letterSpacing: '0.02em',
 };
 
 const navLinksStyle: React.CSSProperties = {

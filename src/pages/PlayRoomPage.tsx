@@ -4,6 +4,7 @@ import Navigation from '../components/Navigation';
 import { useAuth } from '../context/AuthContext';
 import { useGameRoom } from '../hooks/useGameRoom';
 import { ChessClock } from '../components/ChessClock';
+import { WormholeLogo } from '../components/WormholeLogo';
 
 export const PlayRoomPage: React.FC = () => {
   const { code } = useParams<{ code: string }>();
@@ -88,7 +89,13 @@ export const PlayRoomPage: React.FC = () => {
               {copiedLink ? '✓ Copied' : '🔗 Share Link'}
             </button>
             <span style={styles.variantBadge}>
-              {state?.variant === 'deck_builder' ? '🃏 Deck Builder' : '🌀 3D Wormhole'}
+              {state?.variant === 'deck_builder' ? (
+                '🃏 Deck Builder'
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <WormholeLogo size={14} badged={true} /> 3D Wormhole
+                </span>
+              )}
             </span>
           </div>
 

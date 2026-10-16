@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
+import { WormholeLogo } from '../components/WormholeLogo';
 
 type VariantTab = 'deck-builder' | 'wormhole';
 
@@ -134,7 +135,10 @@ export const HomePage: React.FC = () => {
               onClick={() => setActiveTab('wormhole')}
               style={activeTab === 'wormhole' ? activeTabBtnStyle : tabBtnStyle}
             >
-              <span>🌀 3D Wormhole Chess</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+                <WormholeLogo size={16} badged={true} />
+                <span>3D Wormhole Chess</span>
+              </span>
               {activeTab === 'wormhole' && (
                 <span style={activeStatusPillStyle}>Active</span>
               )}
@@ -234,7 +238,6 @@ export const HomePage: React.FC = () => {
                 <Link to="/deck-builder" style={secondaryActionBtnStyle} className="home-btn-secondary">
                   Solo Practice
                 </Link>
-                <span style={footnoteStyle}>Cloudflare Edge • D1 Sync</span>
               </div>
             </div>
           )}
@@ -255,10 +258,6 @@ export const HomePage: React.FC = () => {
                     Two 8x8 boards linked by a hole in the middle, for up to 4 players.
                   </p>
                 </div>
-                <div style={specsPillGroupStyle}>
-                  <span style={specPillStyle}>Three.js / WebGL</span>
-                  <span style={specPillStyle}>Orbital Camera</span>
-                </div>
               </div>
 
               {/* 3D Visual Schematic */}
@@ -270,7 +269,7 @@ export const HomePage: React.FC = () => {
                   <div style={sqLightStyle} /><div style={sqDarkStyle} /><div style={sqLightStyle} /><div style={sqDarkStyle} />
                 </div>
                 <div style={portalLinkStyle}>
-                  <div style={portalLabelStyle}>PORTAL D4 ⇄ H5</div>
+                  <div style={portalLabelStyle}>BOARD 1 ⇄ BOARD 2</div>
                   <div style={portalBeamStyle} className="home-portal-beam" />
                 </div>
                 <div style={boardIsometricStyle}>
@@ -289,7 +288,6 @@ export const HomePage: React.FC = () => {
                 <Link to="/wormhole" style={secondaryActionBtnStyle} className="home-btn-secondary">
                   Solo Practice
                 </Link>
-                <span style={footnoteStyle}>Cloudflare Edge • Durable Objects</span>
               </div>
             </div>
           )}
@@ -525,28 +523,6 @@ const secondaryActionBtnStyle: React.CSSProperties = {
   textDecoration: 'none',
 };
 
-const footnoteStyle: React.CSSProperties = {
-  marginLeft: 'auto',
-  fontSize: '0.78rem',
-  color: '#8B7E74',
-  fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-};
-
-const specsPillGroupStyle: React.CSSProperties = {
-  display: 'flex',
-  gap: '0.5rem',
-};
-
-const specPillStyle: React.CSSProperties = {
-  fontSize: '0.75rem',
-  color: '#8B7E74',
-  backgroundColor: '#191B1D',
-  border: '1px solid rgba(139, 126, 116, 0.2)',
-  padding: '0.3rem 0.65rem',
-  borderRadius: '3px',
-  fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-};
-
 const wormholeVisualBoxStyle: React.CSSProperties = {
   backgroundColor: '#191B1D',
   border: '1px solid rgba(139, 126, 116, 0.25)',
@@ -590,8 +566,8 @@ const portalLabelStyle: React.CSSProperties = {
 const portalBeamStyle: React.CSSProperties = {
   width: '80px',
   height: '2px',
-  background: 'linear-gradient(90deg, #D4AF37, #A855F7)',
-  boxShadow: '0 0 10px #D4AF37',
+  background: 'linear-gradient(90deg, #D4AF37, #FAF9F6, #D4AF37)',
+  boxShadow: '0 0 10px rgba(212, 175, 55, 0.6)',
 };
 
 export default HomePage;
