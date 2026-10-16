@@ -7,7 +7,7 @@ updated: 2026-10-15T13:04:00Z
 # Roadmap
 
 > **Current Milestone:** v2.0 Visual Craft & Frontend Redesign
-> **Current Phase:** Phase 6 - Major Unit Card Graph & Royal Power Taxonomy (Rook, Queen, King)
+> **Current Phase:** Phase 7 - Global Polish, Micro-interactions, Responsive Audit & Release
 > **Status:** 🔄 In Progress
 
 ## Milestone Goal
@@ -22,8 +22,8 @@ Systematically eliminate AI-slop across all user-facing screens, establish a dis
 - [x] **Tactical Deck Builder Arena Redesign**: Balanced widescreen layout, properly proportioned 2D board, tactile hand bar, energy meter, and card curator/inspector without vertical bloating or awkward grid stretching.
 - [x] **Home Landing & Authentication Redesign**: Atmospheric dark tactical hero, distinct typography, variant showcase cards, and sleek tabbed auth modals.
 - [x] **3D Wormhole & PlayRoom HUD Redesign**: Non-intrusive floating glass HUD, move notation ticker, game clock integration, and room coordination status.
-- [ ] **Full 180-Card Canonical Graph**: Author, integrate, and test all 90 cards for Major Units (30 Rook, 30 Queen, 30 King), completing the full 180-card library across all 6 piece classes with 0 engine regressions.
-- [x] **Zero Gameplay Regressions**: All 140 automated card engine tests (`npm test`), 3D WebGL controls, and Cloudflare multiplayer synchronization continue passing 100%.
+- [x] **Full 180-Card Canonical Graph**: Author, integrate, and test all 90 cards for Major Units (30 Rook, 30 Queen, 30 King), completing the full 180-card library across all 6 piece classes with 0 engine regressions.
+- [x] **Zero Gameplay Regressions**: All 203 automated card engine tests (`npm test`), 3D WebGL controls, and Cloudflare multiplayer synchronization continue passing 100%.
 
 ---
 

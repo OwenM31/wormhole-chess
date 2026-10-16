@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-16T05:00:00-05:00
+updated: 2026-10-16T05:08:09-05:00
 ---
 
 # Project State
@@ -8,7 +8,7 @@ updated: 2026-10-16T05:00:00-05:00
 
 - **Phase**: 6 - Major Unit Card Graph & Royal Power Taxonomy (Rook, Queen, King) (completed)
 - **Task**: All tasks complete (`01-SUMMARY.md`–`03-SUMMARY.md`); Phase 6 Verified (`VERIFICATION.md`)
-- **Status**: Paused at 2026-10-16T05:01:00-05:00
+- **Status**: Active (resumed 2026-10-16T05:08:09-05:00)
 
 ## Last Session Summary
 
@@ -47,6 +47,7 @@ None. Ready for Phase 7.
 - [DECISION-017]: Phase 3 Home Landing & Authentication Architecture: Unified Stage & Restrained Copy.
 - [DECISION-018]: Phase 4 3D Wormhole HUD Architecture: Variant A Tactical Glass HUD (edge-to-edge canvas, floating top HUD capsule, floating bottom camera dock, and collapsible right telemetry drawer).
 - [DECISION-019]: Phase 5 Deck Builder Card Graph: 6x6 Taxonomy, Symmetrical 3-Cycles, 90-Card Slice & Unified Action Model ("The Card IS the Move").
+- [DECISION-020]: Phase 7 Global Polish, 3-Column Deck Builder Stage (Left Tactical Panel with Active Loadout & Card Inspector), Palette Unification across Phase 1 components, and Release Verification Scope.
 
 ### Files of Interest
 - `src/engine/cards/cardCatalog90.json`: Canonical locked 90-card data catalog for Minor Units (30 Pawn, 30 Knight, 30 Bishop).

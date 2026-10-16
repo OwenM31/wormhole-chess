@@ -458,7 +458,36 @@ Previously, tactical cards in Deck Builder Chess were a loose collection of one-
 
 ---
 
+### [DECISION-020] Phase 7 Global Polish, 3-Column Deck Builder Stage, Palette Unification & Release Scope
+
+**Date**: 2026-10-16
+**Status**: Accepted
+
+#### Context
+Prior to planning Phase 7 (Global Polish, Micro-interactions, Responsive Audit & Release), we audited cross-page continuity across all 6 live routes (`/`, `/login`, `/dashboard`, `/deck-builder`, `/wormhole`, `/play/:code`). We identified that Phase 1 components (`Navigation.tsx`, `DashboardPage.tsx`, `MatchmakingLobby.tsx`, `HistoricalMatchViewer.tsx`) still used the initial cool-slate/cyan palette (`#090a0f`, `#0e1118`, `#38bdf8`, `#10b981`) rather than the Authentic Wormhole Palette locked in Phase 2 (`#191B1D`, `#24272A`, `#1C1E20`, `#D4AF37`, `#4C5C4C`). Additionally, `DeckBuilderPage.tsx` rendered both a top `<Navigation />` bar, a secondary sub-header bar, and a redundant left icon rail repeating global route links.
+
+#### Scope
+- **Cross-Page Palette Unification**: Migrate `Navigation.tsx`, `DashboardPage.tsx`, `MatchmakingLobby.tsx`, and `HistoricalMatchViewer.tsx` onto the Authentic Wormhole Palette (`#191B1D` base, `#24272A` surface, `#1C1E20` header, `#FAF9F6` warm white, `#8B7E74` smokey taupe, `#D4AF37` warm gold, `#4C5C4C` loden green, `#AA4A44` brick red).
+- **3-Column Tactical Stage (`DeckBuilderPage.tsx`)**: Remove the redundant left route icon rail and secondary sub-header bar; introduce a functional Left Tactical Panel flanking the Center Board (`470px`) and Right Move History (`280px`) on desktop.
+- **Restrained Copy Alignment (`PlayRoomPage.tsx`)**: Replace legacy `'3D Wormhole Hyperbolic Arena'` with `'3D Wormhole'` and `'Deck Builder Chess Board'` with `'Deck Builder'` per `STYLE.md`.
+- **Multi-Viewport Responsive Hardening & Audio Polish**: Harden mobile (`375×812`), tablet (`768×1024`), and desktop (`1440×900`) viewports across all 6 routes with zero horizontal overflow, wire complete procedural audio triggers (`playCaptureSound`, `playVictorySound`, `playDefeatSound`) for empowered moves and match conclusions, and verify with a comprehensive Playwright suite and production build check.
+
+#### Approach
+1. **3-Column Tactical Stage Architecture (`DeckBuilderPage.tsx`)**:
+   - Chose: **Option 1 — 3-Column Tactical Stage** (`250px` Left Tactical Panel + `470px` Center Board & Hand Stage + `280px` Right Move History & Match Controls on desktop; cleanly stacked on tablet/mobile).
+   - Reason: Eliminates the redundant route icon rail and secondary sub-header (reclaiming vertical height) while filling left widescreen space with high-utility tactical telemetry: the `Find Match` / `My Deck` mode switcher, an **Active 8-Card Deck Tracker** (showing which loadout cards are in hand vs draw pile), and a live **Card Inspector** (displaying full card rules, condition/effect badges, and energy cost on hover/selection).
+2. **Release & Verification Strategy**:
+   - Chose: **Option A — Full UX/Responsive Sweep + Audio/Micro-interaction Polish + Multi-Viewport Playwright Suite + Production Build Verification**.
+   - Reason: Ensures 100% empirical verification across all 6 routes and 3 viewport classes alongside `npm test` (203 card tests), `npm run typecheck:all`, and `npm run build`.
+
+#### Constraints
+- Strictly adhere to the Mandatory Copy Approval Rule in `.agent/rules/STYLE.md`.
+- Preserve 100% of existing game engine invariants (203/203 unit tests passing) and responsive touch usability.
+
+---
+
 *Last updated: 2026-10-16*
+
 
 
 
