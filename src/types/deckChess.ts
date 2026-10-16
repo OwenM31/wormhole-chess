@@ -78,6 +78,23 @@ export interface CardEffect {
   param?: string | number | boolean | Record<string, any>;
 }
 
+// 6x6 Condition and Effect Grammar Matrix Genres
+export type ConditionGenre =
+  | 'Position'
+  | 'Neighbors'
+  | 'Lines'
+  | 'Threat'
+  | 'Blocked'
+  | 'Momentum';
+
+export type EffectGenre =
+  | 'New Moves'
+  | 'Jump & Leap'
+  | 'Move Others'
+  | 'Special Captures'
+  | 'Walls & Shields'
+  | 'Spawning';
+
 export interface CardVisualTheme {
   color: string;
   hex: string;
@@ -87,13 +104,36 @@ export interface CardVisualTheme {
 export interface CardDefinition {
   id: string;
   name: string;
+  card_name?: string;
+  piece?: string;
   anchor: PieceAnchor;
   energyCost: number; // 1 to 3
-  conditions: CardCondition[];
-  effects: CardEffect[];
+  score?: number;
+  condition_type?: ConditionGenre;
+  condition_exact?: string;
+  effect_type?: EffectGenre;
+  effect_exact?: string;
+  conditions?: CardCondition[];
+  effects?: CardEffect[];
   tradeoff?: GambitTradeoff;
   description: string;
+  card_description?: string;
+  image_description?: string;
   visualTheme: CardVisualTheme;
+}
+
+/**
+ * Unified Action Model ("The Card IS the Move"):
+ * An EmpoweredMove represents an atomic chess move augmented by a card.
+ */
+export interface EmpoweredMove {
+  from: string;
+  to: string;
+  cardId: string;
+  energyCost: number;
+  promotion?: string;
+  actionType: 'move' | 'in_place' | 'ranged_capture' | 'spawn' | 'wall' | 'shield';
+  metadata?: Record<string, any>;
 }
 
 export interface BoardModifier {

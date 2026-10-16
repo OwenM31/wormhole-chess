@@ -132,11 +132,32 @@ export const STARTER_DECK: CardDefinition[] = [
   },
 ];
 
+import rawCatalog90 from './cards/cardCatalog90.json';
+
 /**
- * Expanded Card Library for deck customization
+ * 90 Canonical Minor Unit Cards (Pawn, Knight, Bishop) adhering to 6x6 taxonomy
  */
-export const EXPANDED_LIBRARY: CardDefinition[] = [
-  ...STARTER_DECK,
+export const CANONICAL_90_CARDS: CardDefinition[] = (rawCatalog90 as any[]).map((raw) => ({
+  id: raw.id,
+  name: raw.name,
+  card_name: raw.card_name,
+  piece: raw.piece,
+  anchor: raw.anchor as PieceAnchor,
+  energyCost: raw.energyCost,
+  score: raw.score,
+  condition_type: raw.condition_type,
+  condition_exact: raw.condition_exact,
+  effect_type: raw.effect_type,
+  effect_exact: raw.effect_exact,
+  conditions: raw.conditions || [],
+  effects: raw.effects || [],
+  description: raw.description,
+  card_description: raw.card_description,
+  image_description: raw.image_description,
+  visualTheme: PIECE_COLOR_THEMES[raw.anchor as PieceAnchor] || PIECE_COLOR_THEMES.pawn,
+}));
+
+export const LEGACY_EXTRA_CARDS: CardDefinition[] = [
   {
     id: 'queen_aegis',
     name: "Regent's Aegis",
@@ -177,6 +198,17 @@ export const EXPANDED_LIBRARY: CardDefinition[] = [
     description: 'A knight on the rim can leap through an edge warp directly to the opposing rim file.',
     visualTheme: PIECE_COLOR_THEMES.knight,
   },
+];
+
+/**
+ * Expanded Card Library for deck customization
+ */
+export const EXPANDED_LIBRARY: CardDefinition[] = [
+  ...STARTER_DECK,
+  ...LEGACY_EXTRA_CARDS,
+  ...CANONICAL_90_CARDS.filter(
+    (c) => !STARTER_DECK.some((s) => s.id === c.id) && !LEGACY_EXTRA_CARDS.some((l) => l.id === c.id)
+  ),
 ];
 
 /**

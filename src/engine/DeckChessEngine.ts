@@ -239,7 +239,7 @@ export class DeckChessEngine {
     const currentTurn = this.getTurn();
     const opponentColor = (currentTurn === 'w' ? 'b' : 'w') as Color;
 
-    for (const cond of card.conditions) {
+    for (const cond of (card.conditions || [])) {
       switch (cond.type) {
         case 'UNMOVED': {
           if (piece.type === 'p') {
