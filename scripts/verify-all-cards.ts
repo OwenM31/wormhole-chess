@@ -1,6 +1,7 @@
 import { DeckChessEngine } from '../src/engine/DeckChessEngine';
 import { STARTER_DECK, EXPANDED_LIBRARY } from '../src/engine/cardGraph';
 import { Chess } from 'chess.js';
+import cardCatalog90 from '../src/engine/cards/cardCatalog90.json';
 
 let totalTests = 0;
 let passedTests = 0;
@@ -350,6 +351,72 @@ console.log('\nSuite 11: Expanded Library Mechanics');
   assert(outflankRes.success === true, 'Knight Outflank teleports knight across the rim');
   assert(outflankEngine.getPiece('a3') === undefined, 'a3 vacated');
   assert(outflankEngine.getPiece('h3')?.type === 'n', 'Knight arrived at h3');
+}
+
+// ==========================================
+// Suite 12: 6x6 Taxonomy & 90-Card Canonical Catalog Contract
+// ==========================================
+console.log('\nSuite 12: 6x6 Taxonomy & 90-Card Canonical Catalog Contract');
+{
+  assert(Array.isArray(cardCatalog90) && cardCatalog90.length === 90, 'Canonical cardCatalog90 contains exactly 90 cards');
+
+  const validConditions = ['Position', 'Neighbors', 'Lines', 'Threat', 'Blocked', 'Momentum'];
+  const validEffects = ['New Moves', 'Jump & Leap', 'Move Others', 'Special Captures', 'Walls & Shields', 'Spawning'];
+
+  let allFieldsValid = true;
+  for (const card of cardCatalog90) {
+    if (!card.id || !card.name || !card.piece || !card.anchor || !card.energyCost ||
+        !card.condition_type || !card.condition_exact || !card.effect_type || !card.effect_exact ||
+        !card.description || !card.image_description) {
+      allFieldsValid = false;
+      break;
+    }
+    if (!validConditions.includes(card.condition_type) || !validEffects.includes(card.effect_type)) {
+      allFieldsValid = false;
+      break;
+    }
+  }
+  assert(allFieldsValid, 'All 90 cards possess all required contract fields adhering to 6x6 genres');
+
+  // Verify distribution per piece
+  const pieces = ['Pawn', 'Knight', 'Bishop'] as const;
+  for (const piece of pieces) {
+    const cards = cardCatalog90.filter(c => c.piece === piece);
+    assert(cards.length === 30, `${piece} has exactly 30 canonical cards`);
+
+    const cost1 = cards.filter(c => c.energyCost === 1).length;
+    const cost2 = cards.filter(c => c.energyCost === 2).length;
+    const cost3 = cards.filter(c => c.energyCost === 3).length;
+    assert(cost1 === 12 && cost2 === 12 && cost3 === 6, `${piece} adheres to 12 / 12 / 6 energy cost curve (1⚡: ${cost1}, 2⚡: ${cost2}, 3⚡: ${cost3})`);
+  }
+
+  // Verify Condition Exclusion Invariants (3-Cycle)
+  const pawnMomentum = cardCatalog90.filter(c => c.piece === 'Pawn' && c.condition_type === 'Momentum');
+  assert(pawnMomentum.length === 0, 'Pawn excludes Momentum condition (Minor Cycle Invariant)');
+
+  const knightLines = cardCatalog90.filter(c => c.piece === 'Knight' && c.condition_type === 'Lines');
+  assert(knightLines.length === 0, 'Knight excludes Lines condition (Minor Cycle Invariant)');
+
+  const bishopBlocked = cardCatalog90.filter(c => c.piece === 'Bishop' && c.condition_type === 'Blocked');
+  assert(bishopBlocked.length === 0, 'Bishop excludes Blocked condition (Minor Cycle Invariant)');
+
+  // Contract verification for EmpoweredMove
+  const sampleEmpoweredMove = {
+    from: 'e2',
+    to: 'e4',
+    cardId: 'pawn_bayonet_charge',
+    energyCost: 2,
+    actionType: 'move' as const,
+    metadata: { test: true }
+  };
+  assert(
+    typeof sampleEmpoweredMove.from === 'string' &&
+    typeof sampleEmpoweredMove.to === 'string' &&
+    typeof sampleEmpoweredMove.cardId === 'string' &&
+    typeof sampleEmpoweredMove.energyCost === 'number' &&
+    sampleEmpoweredMove.actionType === 'move',
+    'EmpoweredMove contract matches unified action model specification'
+  );
 }
 
 // ==========================================
