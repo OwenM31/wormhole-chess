@@ -66,9 +66,10 @@ export const ChessClock: React.FC<ChessClockProps> = ({
         </div>
       )}
 
-      <div style={styles.clockRow}>
+      <div style={styles.clockRow} className="chess-clock-row">
         {/* White Clock */}
         <div
+          className="chess-clock-box"
           style={{
             ...styles.clockBox,
             ...(activeTurn === 'white' ? styles.clockActive : {}),
@@ -82,7 +83,7 @@ export const ChessClock: React.FC<ChessClockProps> = ({
               {whitePlayer && !whitePlayer.connected && ' (Disconnected)'}
             </span>
           </div>
-          <div style={styles.timeDisplay}>
+          <div style={styles.timeDisplay} className="chess-clock-time">
             {isUntimed ? (
               <span style={styles.untimedBadge}>Casual / Untimed</span>
             ) : (
@@ -91,10 +92,13 @@ export const ChessClock: React.FC<ChessClockProps> = ({
           </div>
         </div>
 
-        <div style={styles.vsBadge}>VS</div>
+        <div style={styles.vsBadge} className="chess-clock-vs">
+          VS
+        </div>
 
         {/* Black Clock */}
         <div
+          className="chess-clock-box"
           style={{
             ...styles.clockBox,
             ...(activeTurn === 'black' ? styles.clockActive : {}),
@@ -108,7 +112,7 @@ export const ChessClock: React.FC<ChessClockProps> = ({
               {blackPlayer && !blackPlayer.connected && ' (Disconnected)'}
             </span>
           </div>
-          <div style={styles.timeDisplay}>
+          <div style={styles.timeDisplay} className="chess-clock-time">
             {isUntimed ? (
               <span style={styles.untimedBadge}>Casual / Untimed</span>
             ) : (

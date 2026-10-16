@@ -49,9 +49,34 @@ export const PlayRoomPage: React.FC = () => {
 
   return (
     <div style={styles.pageContainer}>
+      <style>{`
+        @media (max-width: 860px) {
+          .playroom-layout {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        @media (max-width: 600px) {
+          .playroom-main {
+            padding: 0.75rem !important;
+          }
+          .chess-clock-row {
+            grid-template-columns: 1fr !important;
+            gap: 0.5rem !important;
+          }
+          .chess-clock-vs {
+            display: none !important;
+          }
+          .chess-clock-box {
+            padding: 0.6rem 0.85rem !important;
+          }
+          .chess-clock-time {
+            font-size: 1.35rem !important;
+          }
+        }
+      `}</style>
       <Navigation />
 
-      <main style={styles.main}>
+      <main style={styles.main} className="playroom-main">
         {/* TOP STATUS BAR */}
         <div style={styles.topBar}>
           <div style={styles.roomMeta}>
@@ -119,7 +144,7 @@ export const PlayRoomPage: React.FC = () => {
         />
 
         {/* MAIN GAME LAYOUT */}
-        <div style={styles.gameLayout}>
+        <div style={styles.gameLayout} className="playroom-layout">
           {/* Game Arena Board Viewport */}
           <div style={styles.arenaContainer}>
             {state?.status === 'waiting' ? (
