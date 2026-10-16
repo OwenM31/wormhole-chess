@@ -56,6 +56,68 @@ export const CardUtils = {
     }
     return squares;
   },
+
+  getPinRay(engine: DeckChessEngine, square: string): string[] | null {
+    const piece = engine.getPiece(square);
+    if (!piece) return null;
+    const turn = piece.color;
+    const oppColor = (turn === 'w' ? 'b' : 'w') as 'w' | 'b';
+    const chess = engine.getInternalChess();
+
+    // Find friendly king
+    let kingSquare: string | null = null;
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const sq = DeckChessEngine.coordsToSquare(f, r);
+        if (sq) {
+          const p = engine.getPiece(sq);
+          if (p && p.type === 'k' && p.color === turn) {
+            kingSquare = sq;
+            break;
+          }
+        }
+      }
+      if (kingSquare) break;
+    }
+    if (!kingSquare) return null;
+
+    if (chess.isAttacked(kingSquare as Square, oppColor)) {
+      return null;
+    }
+
+    // Remove piece temporarily
+    chess.remove(square as Square);
+    const kingAttacked = chess.isAttacked(kingSquare as Square, oppColor);
+    chess.put(piece, square as Square);
+
+    if (!kingAttacked) return null;
+
+    const kCoords = DeckChessEngine.squareToCoords(kingSquare);
+    const pCoords = DeckChessEngine.squareToCoords(square);
+    const df = Math.sign(pCoords.file - kCoords.file);
+    const dr = Math.sign(pCoords.rank - kCoords.rank);
+
+    const ray: string[] = [];
+    let step = 1;
+    while (true) {
+      const sq = DeckChessEngine.coordsToSquare(kCoords.file + df * step, kCoords.rank + dr * step);
+      if (!sq) break;
+      ray.push(sq);
+      if (sq === square) {
+        step++;
+        continue;
+      }
+      const p = engine.getPiece(sq);
+      if (p) {
+        if (p.color === oppColor && (p.type === 'r' || p.type === 'b' || p.type === 'q')) {
+          return ray;
+        }
+        break;
+      }
+      step++;
+    }
+    return null;
+  },
 };
 
 /**
@@ -759,6 +821,545 @@ registerCardHandler({
     chess.remove(anchorSquare as Square);
     chess.put(rook, dest as Square);
 
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 13. Pawn Bayonet Charge
+// ==========================================
+registerCardHandler({
+  cardId: 'pawn_bayonet_charge',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'p' || piece.color !== turn) return [];
+    const dir = turn === 'w' ? 1 : -1;
+    const coords = CardUtils.getCoords(anchorSquare);
+    const targetSq = CardUtils.getSquare(coords.file, coords.rank + dir);
+    if (!targetSq) return [];
+    if (engine.isSquareBlockedByBarrier(targetSq)) return [];
+    const targetPiece = engine.getPiece(targetSq);
+    if (!targetPiece || targetPiece.color === turn) return [];
+    if (engine.isSquareShielded(targetSq, targetPiece.color)) return [];
+    return [targetSq];
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Target must be an enemy piece directly in front of the pawn' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No pawn at anchor' };
+    const enemy = engine.getPiece(dest);
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    if (enemy) {
+      chess.remove(dest as Square);
+      engine.addToPlayerGraveyard(enemy.color, enemy.type);
+    }
+    const rank = parseInt(dest[1], 10);
+    const isPromotion = (piece.color === 'w' && rank === 8) || (piece.color === 'b' && rank === 1);
+    chess.put({ type: isPromotion ? 'q' : 'p', color: piece.color }, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 14. Pawn Hold the Line (In-Place Diagonal Capture)
+// ==========================================
+registerCardHandler({
+  cardId: 'pawn_hold_the_line',
+  evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
+    const pinRay = CardUtils.getPinRay(engine, anchorSquare);
+    return pinRay !== null;
+  },
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'p' || piece.color !== turn) return [];
+    const dir = turn === 'w' ? 1 : -1;
+    const coords = CardUtils.getCoords(anchorSquare);
+    const diagFiles = [coords.file - 1, coords.file + 1];
+    const targets: string[] = [];
+    for (const f of diagFiles) {
+      const sq = CardUtils.getSquare(f, coords.rank + dir);
+      if (!sq) continue;
+      if (engine.isSquareBlockedByBarrier(sq)) continue;
+      const targetPiece = engine.getPiece(sq);
+      if (targetPiece && targetPiece.color !== turn && !engine.isSquareShielded(sq, targetPiece.color)) {
+        targets.push(sq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Target must be an enemy piece on a forward-diagonal capture square' };
+    }
+    const enemy = engine.getPiece(dest);
+    if (!enemy) return { success: false, error: 'No enemy piece at target square' };
+    const chess = engine.getInternalChess();
+    chess.remove(dest as Square);
+    engine.addToPlayerGraveyard(enemy.color, enemy.type);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 15. Pawn Close the Gap (Slide Along Pin Ray)
+// ==========================================
+registerCardHandler({
+  cardId: 'pawn_close_the_gap',
+  evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
+    const pinRay = CardUtils.getPinRay(engine, anchorSquare);
+    return pinRay !== null;
+  },
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const pinRay = CardUtils.getPinRay(engine, anchorSquare);
+    if (!pinRay) return [];
+    const anchorIdx = pinRay.indexOf(anchorSquare);
+    if (anchorIdx === -1) return [];
+    const targets: string[] = [];
+    for (let i = 1; i <= 2; i++) {
+      const nextIdx = anchorIdx + i;
+      if (nextIdx >= pinRay.length) break;
+      const sq = pinRay[nextIdx];
+      if (engine.isSquareBlockedByBarrier(sq)) break;
+      if (engine.getPiece(sq)) break;
+      targets.push(sq);
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must move along pin ray onto empty square' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No pawn at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 16. Pawn Sidestep
+// ==========================================
+registerCardHandler({
+  cardId: 'pawn_sidestep',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'p' || piece.color !== turn) return [];
+    const dir = turn === 'w' ? 1 : -1;
+    const coords = CardUtils.getCoords(anchorSquare);
+    const forwardSq = CardUtils.getSquare(coords.file, coords.rank + dir);
+    if (forwardSq && !engine.getPiece(forwardSq)) {
+      return [];
+    }
+    const targets: string[] = [];
+    for (const df of [-1, 1]) {
+      const sq = CardUtils.getSquare(coords.file + df, coords.rank);
+      if (sq && !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq)) {
+        targets.push(sq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must sidestep to an empty adjacent square' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No pawn at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 17. Knight Cavalry Charge ((3,1) Camel Leap)
+// ==========================================
+registerCardHandler({
+  cardId: 'knight_cavalry_charge',
+  evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
+    const turn = engine.getTurn();
+    const startSquares = turn === 'w' ? ['b1', 'g1'] : ['b8', 'g8'];
+    return startSquares.includes(anchorSquare);
+  },
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'n' || piece.color !== turn) return [];
+    const dir = turn === 'w' ? 1 : -1;
+    const coords = CardUtils.getCoords(anchorSquare);
+    const targets: string[] = [];
+    for (const df of [-1, 1]) {
+      const sq = CardUtils.getSquare(coords.file + df, coords.rank + dir * 3);
+      if (sq && !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq)) {
+        targets.push(sq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Target must be an empty camel leap square' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No knight at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 18. Knight Spring Vault ((3,2) Zebra Leap)
+// ==========================================
+registerCardHandler({
+  cardId: 'knight_spring_vault',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'n' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const zebraDeltas = [
+      [3, 2], [3, -2], [-3, 2], [-3, -2],
+      [2, 3], [2, -3], [-2, 3], [-2, -3]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of zebraDeltas) {
+      const sq = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+      if (!sq || engine.isSquareBlockedByBarrier(sq)) continue;
+      const targetPiece = engine.getPiece(sq);
+      if (!targetPiece || (targetPiece.color !== turn && !engine.isSquareShielded(sq, targetPiece.color))) {
+        targets.push(sq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Target must be a valid zebra leap destination' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No knight at anchor' };
+    const enemy = engine.getPiece(dest);
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    if (enemy) {
+      chess.remove(dest as Square);
+      engine.addToPlayerGraveyard(enemy.color, enemy.type);
+    }
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 19. Knight Straight Lance ((2,0) Orthogonal Lunge)
+// ==========================================
+registerCardHandler({
+  cardId: 'knight_straight_lance',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'n' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const orthogonals = [
+      [0, 2], [0, -2], [2, 0], [-2, 0]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of orthogonals) {
+      const intermediateSq = CardUtils.getSquare(coords.file + df / 2, coords.rank + dr / 2);
+      if (!intermediateSq || engine.getPiece(intermediateSq) || engine.isSquareBlockedByBarrier(intermediateSq)) {
+        continue;
+      }
+      const sq = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+      if (!sq || engine.isSquareBlockedByBarrier(sq)) continue;
+      const targetPiece = engine.getPiece(sq);
+      if (!targetPiece || (targetPiece.color !== turn && !engine.isSquareShielded(sq, targetPiece.color))) {
+        targets.push(sq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Target must be a valid 2-square straight lunge destination' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No knight at anchor' };
+    const enemy = engine.getPiece(dest);
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    if (enemy) {
+      chess.remove(dest as Square);
+      engine.addToPlayerGraveyard(enemy.color, enemy.type);
+    }
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 20. Knight Ray Intercept
+// ==========================================
+registerCardHandler({
+  cardId: 'knight_ray_intercept',
+  evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
+    const pinRay = CardUtils.getPinRay(engine, anchorSquare);
+    return pinRay !== null;
+  },
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const pinRay = CardUtils.getPinRay(engine, anchorSquare);
+    if (!pinRay) return [];
+    const anchorIdx = pinRay.indexOf(anchorSquare);
+    if (anchorIdx === -1) return [];
+    const targets: string[] = [];
+    for (let i = 1; i <= 2; i++) {
+      const nextIdx = anchorIdx + i;
+      if (nextIdx >= pinRay.length) break;
+      const sq = pinRay[nextIdx];
+      if (engine.isSquareBlockedByBarrier(sq)) break;
+      const p = engine.getPiece(sq);
+      if (!p) {
+        targets.push(sq);
+      } else {
+        if (p.color !== engine.getTurn() && !engine.isSquareShielded(sq, p.color)) {
+          targets.push(sq);
+        }
+        break;
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must move along pin ray' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No knight at anchor' };
+    const enemy = engine.getPiece(dest);
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    if (enemy) {
+      chess.remove(dest as Square);
+      engine.addToPlayerGraveyard(enemy.color, enemy.type);
+    }
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 21. Bishop Piercing Ray
+// ==========================================
+registerCardHandler({
+  cardId: 'bishop_piercing_ray',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'b' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const diagonals = [
+      [1, 1], [1, -1], [-1, 1], [-1, -1]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of diagonals) {
+      let step = 1;
+      let firstEnemySq: string | null = null;
+      while (true) {
+        const sq = CardUtils.getSquare(coords.file + df * step, coords.rank + dr * step);
+        if (!sq || engine.isSquareBlockedByBarrier(sq)) break;
+        const p = engine.getPiece(sq);
+        if (!firstEnemySq) {
+          if (p) {
+            if (p.color !== turn && !engine.isSquareShielded(sq, p.color)) {
+              firstEnemySq = sq;
+            } else {
+              break;
+            }
+          }
+        } else {
+          if (p) {
+            if (p.color !== turn && !engine.isSquareShielded(sq, p.color)) {
+              targets.push(sq);
+            }
+            break;
+          }
+        }
+        step++;
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must target an enemy piece lined up behind another enemy piece' };
+    }
+    const bishop = engine.getPiece(anchorSquare);
+    if (!bishop) return { success: false, error: 'No bishop at anchor' };
+    const cFrom = CardUtils.getCoords(anchorSquare);
+    const cTo = CardUtils.getCoords(dest);
+    const df = Math.sign(cTo.file - cFrom.file);
+    const dr = Math.sign(cTo.rank - cFrom.rank);
+    let step = 1;
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+
+    while (true) {
+      const sq = CardUtils.getSquare(cFrom.file + df * step, cFrom.rank + dr * step);
+      if (!sq) break;
+      const enemy = engine.getPiece(sq);
+      if (enemy) {
+        chess.remove(sq as Square);
+        engine.addToPlayerGraveyard(enemy.color, enemy.type);
+      }
+      if (sq === dest) break;
+      step++;
+    }
+    chess.put(bishop, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 22. Bishop Aisle Step
+// ==========================================
+registerCardHandler({
+  cardId: 'bishop_aisle_step',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'b' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const orthogonals = [
+      [1, 0], [-1, 0], [0, 1], [0, -1]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of orthogonals) {
+      const sq = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+      if (sq && !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq)) {
+        targets.push(sq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must step 1 square orthogonally onto empty square' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No bishop at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 23. Bishop Color Shift
+// ==========================================
+registerCardHandler({
+  cardId: 'bishop_color_shift',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'b' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const targets: string[] = [];
+    for (const df of [-1, 1]) {
+      const stepSq = CardUtils.getSquare(coords.file + df, coords.rank);
+      if (stepSq && !engine.getPiece(stepSq) && !engine.isSquareBlockedByBarrier(stepSq)) {
+        targets.push(stepSq);
+        const stepCoords = CardUtils.getCoords(stepSq);
+        const diagonals = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+        for (const [ddf, ddr] of diagonals) {
+          const diagSq = CardUtils.getSquare(stepCoords.file + ddf, stepCoords.rank + ddr);
+          if (diagSq && !engine.getPiece(diagSq) && !engine.isSquareBlockedByBarrier(diagSq)) {
+            targets.push(diagSq);
+          }
+        }
+      }
+    }
+    return [...new Set(targets)];
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Invalid color shift destination' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No bishop at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 24. Bishop Heretic's Gambit (Knight Jump)
+// ==========================================
+registerCardHandler({
+  cardId: 'bishop_heretic_s_gambit',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'b' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const knightMoves = [
+      [2, 1], [2, -1], [-2, 1], [-2, -1],
+      [1, 2], [1, -2], [-1, 2], [-1, -2]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of knightMoves) {
+      const sq = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+      if (sq && !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq)) {
+        targets.push(sq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must make a knight jump onto empty square' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No bishop at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
     return { success: true };
   },
 });

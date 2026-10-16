@@ -9,6 +9,7 @@ import {
   PieceAnchor,
   PieceColor,
   Square,
+  EmpoweredMove,
 } from '../types/deckChess';
 import { getCardById, STARTER_DECK } from './cardGraph';
 import { getCardHandler } from './cards/cardRegistry';
@@ -707,6 +708,211 @@ export class DeckChessEngine {
     }
 
     return { success: true, move: executedMove };
+  }
+
+  // --- Unified Action Model: Empowered Card Moves ---
+
+  public getEmpoweredMoves(square?: string): EmpoweredMove[] {
+    const currentTurn = this.getTurn();
+    const hand = this.getHandForColor(currentTurn);
+    const moves: EmpoweredMove[] = [];
+
+    const squaresToCheck = square
+      ? [square]
+      : (() => {
+          const sqs: string[] = [];
+          for (let r = 0; r < 8; r++) {
+            for (let f = 0; f < 8; f++) {
+              const sq = DeckChessEngine.coordsToSquare(f, r);
+              if (sq) {
+                const p = this.getPiece(sq);
+                if (p && p.color === currentTurn) {
+                  sqs.push(sq);
+                }
+              }
+            }
+          }
+          return sqs;
+        })();
+
+    for (const sq of squaresToCheck) {
+      const piece = this.getPiece(sq);
+      if (!piece || piece.color !== currentTurn) continue;
+
+      const pieceAnchor: PieceAnchor =
+        piece.type === 'p'
+          ? 'pawn'
+          : piece.type === 'n'
+          ? 'knight'
+          : piece.type === 'b'
+          ? 'bishop'
+          : piece.type === 'r'
+          ? 'rook'
+          : piece.type === 'q'
+          ? 'queen'
+          : 'king';
+
+      for (const cardId of hand) {
+        const card = getCardById(cardId);
+        if (!card || card.anchor !== pieceAnchor) continue;
+        if (this.energy < card.energyCost) continue;
+
+        const handler = getCardHandler(cardId);
+        if (!handler) continue;
+
+        if (handler.evaluateConditions && !handler.evaluateConditions(this, sq)) {
+          continue;
+        }
+
+        const targets = handler.getTargets(this, sq);
+        for (const target of targets) {
+          let actionType: EmpoweredMove['actionType'] = 'move';
+          if (card.effect_type === 'Special Captures' && card.effect_exact?.includes('In-Place')) {
+            actionType = 'in_place';
+          } else if (card.effect_type === 'Special Captures' && card.effect_exact?.includes('Ranged')) {
+            actionType = 'ranged_capture';
+          } else if (card.effect_type === 'Spawning') {
+            actionType = 'spawn';
+          } else if (card.effect_type === 'Walls & Shields') {
+            actionType = 'wall';
+          }
+
+          // Check King Safety Simulation
+          const sim = this.clone();
+          const simHandler = getCardHandler(cardId);
+          if (simHandler) {
+            const res = simHandler.execute(sim, sq, target);
+            if (!res.success) continue;
+
+            const oppColor = (currentTurn === 'w' ? 'b' : 'w') as Color;
+            let kingSq: string | null = null;
+            for (let r = 0; r < 8; r++) {
+              for (let f = 0; f < 8; f++) {
+                const s = DeckChessEngine.coordsToSquare(f, r);
+                if (s) {
+                  const p = sim.getPiece(s);
+                  if (p && p.type === 'k' && p.color === currentTurn) {
+                    kingSq = s;
+                    break;
+                  }
+                }
+              }
+              if (kingSq) break;
+            }
+            if (kingSq && sim.getInternalChess().isAttacked(kingSq as Square, oppColor)) {
+              continue;
+            }
+          }
+
+          moves.push({
+            from: sq,
+            to: target,
+            cardId: card.id,
+            energyCost: card.energyCost,
+            actionType,
+            metadata: {
+              cardName: card.name,
+              piece: card.piece,
+              conditionGenre: card.condition_type,
+              conditionExact: card.condition_exact,
+              effectGenre: card.effect_type,
+              effectExact: card.effect_exact,
+            },
+          });
+        }
+      }
+    }
+
+    return moves;
+  }
+
+  public makeEmpoweredMove(move: EmpoweredMove): { success: boolean; error?: string } {
+    if (this.energy < move.energyCost) {
+      return { success: false, error: `Insufficient energy (need ${move.energyCost}, have ${this.energy})` };
+    }
+
+    const currentTurn = this.getTurn();
+    const hand = currentTurn === 'w' ? this.whiteHand : this.blackHand;
+    const cardIndex = hand.indexOf(move.cardId);
+    if (cardIndex === -1) {
+      return { success: false, error: 'Card not in hand' };
+    }
+
+    const handler = getCardHandler(move.cardId);
+    if (!handler) {
+      return { success: false, error: `No handler registered for card ${move.cardId}` };
+    }
+
+    const execResult = handler.execute(this, move.from, move.to);
+    if (!execResult.success) {
+      return execResult;
+    }
+
+    // Handle pawn 8th rank promotion
+    const pieceAtTo = this.getPiece(move.to);
+    if (pieceAtTo && pieceAtTo.type === 'p') {
+      const rank = parseInt(move.to[1], 10);
+      if ((pieceAtTo.color === 'w' && rank === 8) || (pieceAtTo.color === 'b' && rank === 1)) {
+        this.chess.remove(move.to as Square);
+        this.chess.put({ type: 'q', color: pieceAtTo.color }, move.to as Square);
+      }
+    }
+
+    // Deduct energy and consume card from hand
+    this.energy -= move.energyCost;
+    if (currentTurn === 'w') {
+      this.whiteHand.splice(cardIndex, 1);
+    } else {
+      this.blackHand.splice(cardIndex, 1);
+    }
+
+    // Shield migration if moved piece had active shield
+    this.activeModifiers = this.activeModifiers.map((mod) => {
+      if (mod.type === 'shield' && mod.square === move.from && mod.ownerColor === currentTurn) {
+        return { ...mod, square: move.to };
+      }
+      return mod;
+    });
+
+    // Decrement and expire active modifiers owned by current player
+    this.activeModifiers = this.activeModifiers
+      .map((m) => {
+        if (m.ownerColor === currentTurn) {
+          return { ...m, turnsRemaining: m.turnsRemaining - 1 };
+        }
+        return m;
+      })
+      .filter((m) => m.turnsRemaining > 0);
+
+    // Turn advancement in FEN
+    const fenParts = this.chess.fen().split(' ');
+    const nextTurn = currentTurn === 'w' ? 'b' : 'w';
+    fenParts[1] = nextTurn;
+    fenParts[3] = '-';
+    if (currentTurn === 'b') {
+      fenParts[5] = String(parseInt(fenParts[5] || '1', 10) + 1);
+      this.turnNumber += 1;
+    }
+    const nextFen = fenParts.join(' ');
+    this.chess.load(nextFen);
+
+    // End-of-turn reset: 3 energy restored, card window reopened
+    this.energy = 3;
+    this.cardPlayedThisTurn = false;
+
+    // Check game termination
+    if (this.chess.isCheckmate()) {
+      this.winner = currentTurn;
+      this.finishReason = 'checkmate';
+    } else if (this.chess.isStalemate()) {
+      this.winner = 'draw';
+      this.finishReason = 'stalemate';
+    } else if (this.chess.isDraw()) {
+      this.winner = 'draw';
+      this.finishReason = 'draw';
+    }
+
+    return { success: true };
   }
 
   public resign(color: PieceColor): void {
