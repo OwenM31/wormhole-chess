@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-16T04:24:00-05:00
+updated: 2026-10-16T04:45:00-05:00
 ---
 
 # Project State
@@ -7,8 +7,8 @@ updated: 2026-10-16T04:24:00-05:00
 ## Current Position
 
 - **Phase**: 6 - Major Unit Card Graph & Royal Power Taxonomy (Rook, Queen, King)
-- **Task**: Phase 6 Initialized; Ready for Planning (`@[.agent/workflows/plan.md] 6`)
-- **Status**: Active (resumed 2026-10-16T04:24:00-05:00)
+- **Task**: Phase 6 Planned (`01-PLAN.md`–`03-PLAN.md`); Ready for Execution (`@[.agent/workflows/execute.md] 6`)
+- **Status**: Active
 
 ## Last Session Summary
 
@@ -52,21 +52,20 @@ None. Ready for Phase 6.
 - [DECISION-019]: Phase 5 Deck Builder Card Graph: 6x6 Taxonomy, Symmetrical 3-Cycles, 90-Card Slice & Unified Action Model ("The Card IS the Move").
 
 ### Files of Interest
-- `src/engine/cards/cardCatalog90.json`: Canonical locked 90-card data catalog (30 Pawn, 30 Knight, 30 Bishop).
+- `src/engine/cards/cardCatalog90.json`: Canonical locked 90-card data catalog for Minor Units (30 Pawn, 30 Knight, 30 Bishop).
+- `src/engine/cards/cardCatalogMajor90.json`: Canonical locked 90-card data catalog for Major Units (30 Rook, 30 Queen, 30 King).
+- `.agent/state/phases/6/RESEARCH.md`: Phase 6 research document.
+- `.agent/state/phases/6/01-PLAN.md`–`03-PLAN.md`: Phase 6 execution plans (Waves 1–3).
 - `src/types/deckChess.ts`: 6x6 genre types and `EmpoweredMove` interface.
-- `src/engine/cardGraph.ts`: 90-card catalog loader and validation utilities.
+- `src/engine/cardGraph.ts`: Catalog loader and validation utilities.
 - `src/engine/cards/cardRegistry.ts`: Behavior handlers and `CardUtils.getPinRay`.
 - `src/engine/DeckChessEngine.ts`: Unified `getEmpoweredMoves` and `makeEmpoweredMove`.
 - `src/components/DeckChessBoard.tsx`: Subtle standard dots and glowing gold empowered move rings with micro-tooltips.
 - `src/components/TacticalHandBar.tsx`: Hand illumination for usable cards.
-- `src/components/DeckBuilderView.tsx`: 90-card curator with filter tabs and genre badges.
-- `scripts/verify-phase5-taxonomy.mjs`: Playwright verification suite for Phase 5.
-- `.agent/state/artifacts/screenshots/phase5_empowered_moves.png`: Visual evidence artifact of empowered move rings.
-- `.agent/state/phases/5/VERIFICATION.md`: Phase 5 formal verification report.
+- `src/components/DeckBuilderView.tsx`: Card curator with filter tabs and genre badges.
 
 ## Next Steps
 
-1. Plan Phase 6 (`@[.agent/workflows/plan.md] 6`): Major Unit Card Graph & Royal Power Taxonomy (Rook, Queen, King).
-2. Execute Phase 6 plans (`@[.agent/workflows/execute.md] 6`).
-3. Formally verify Phase 6 (`@[.agent/workflows/verify.md] 6`).
-4. Plan Phase 7 (`@[.agent/workflows/plan.md] 7`): Global Polish, Micro-interactions, Responsive Audit & Release.
+1. Execute Phase 6 plans (`@[.agent/workflows/execute.md] 6`).
+2. Formally verify Phase 6 (`@[.agent/workflows/verify.md] 6`).
+3. Plan Phase 7 (`@[.agent/workflows/plan.md] 7`): Global Polish, Micro-interactions, Responsive Audit & Release.
