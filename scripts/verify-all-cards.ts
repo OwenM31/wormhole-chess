@@ -1,4 +1,5 @@
 import { DeckChessEngine } from '../src/engine/DeckChessEngine';
+import { getCardHandler } from '../src/engine/cards/cardRegistry';
 import {
   STARTER_DECK,
   EXPANDED_LIBRARY,
@@ -633,6 +634,146 @@ console.log('\nSuite 14: Major Unit 90-Card Catalog & 180-Card Library');
     }
   }
   assert(allSamplesResolved, 'getCardById resolves sample cards across all 6 pieces (Pawn, Knight, Bishop, Rook, Queen, King)');
+}
+
+// ==========================================
+// Suite 15: Major Unit Handlers & Royal Invariant Suite
+// ==========================================
+console.log('\nSuite 15: Major Unit Handlers & Royal Invariant Suite');
+{
+  // 1. All 180 cards have a registered CardBehaviorHandler
+  let all180Registered = true;
+  let missingCardId = '';
+  for (const card of CANONICAL_180_CARDS) {
+    if (!getCardHandler(card.id)) {
+      all180Registered = false;
+      missingCardId = card.id;
+      break;
+    }
+  }
+  assert(all180Registered, 'All 180 canonical cards have a registered CardBehaviorHandler', missingCardId ? `Missing handler: ${missingCardId}` : undefined);
+
+  // 2. Rook: Railgun Bolt (rook_railgun_bolt) - Ranged capture along open/blocked line
+  const railgunEngine = new DeckChessEngine('4k3/8/8/8/4r3/8/4P3/4R2K w - - 0 1', ['rook_railgun_bolt']);
+  const railgunMoves = railgunEngine.getEmpoweredMoves('e1');
+  assert(railgunMoves.some(m => m.to === 'e4' && m.actionType === 'ranged_capture'), 'Railgun Bolt allows ranged capture of e4 over friendly pawn e2');
+  const execRailgun = railgunEngine.makeEmpoweredMove(railgunMoves.find(m => m.to === 'e4')!);
+  assert(execRailgun.success === true, 'Railgun Bolt executes ranged capture');
+  assert(railgunEngine.getPiece('e1')?.type === 'r', 'Rook remained at e1 (ranged strike)');
+  assert(railgunEngine.getPiece('e4') === undefined, 'Enemy rook at e4 destroyed');
+  assert(railgunEngine.getGraveyard().b.r === 1, 'Captured enemy rook added to Black graveyard');
+
+  // 3. Rook: Turret Traverse (rook_turret_traverse) - Diagonal step when orthogonally blocked
+  const turretEngine = new DeckChessEngine('4k3/8/8/8/8/4P3/3PRP2/4K3 w - - 0 1', ['rook_turret_traverse']);
+  const turretMoves = turretEngine.getEmpoweredMoves('e2');
+  const turretTargets = turretMoves.map(m => m.to);
+  assert(turretTargets.includes('d3') && turretTargets.includes('f3'), 'Turret Traverse offers diagonal steps to d3 and f3');
+  const execTurret = turretEngine.makeEmpoweredMove(turretMoves.find(m => m.to === 'd3')!);
+  assert(execTurret.success === true, 'Turret Traverse executes diagonal shift');
+  assert(turretEngine.getPiece('d3')?.type === 'r', 'Rook arrived at d3');
+
+  // 4. Rook: Siege Hurdle (rook_siege_hurdle) - Orthogonal jump over 1 blocker
+  const hurdleEngine = new DeckChessEngine('4k3/8/8/8/8/4p3/8/4R2K w - - 0 1', ['rook_siege_hurdle']);
+  const hurdleMoves = hurdleEngine.getEmpoweredMoves('e1');
+  const hurdleTargets = hurdleMoves.map(m => m.to);
+  assert(hurdleTargets.includes('e4') && hurdleTargets.includes('e5'), 'Siege Hurdle allows leap over e3 to e4 and e5');
+  const execHurdle = hurdleEngine.makeEmpoweredMove(hurdleMoves.find(m => m.to === 'e4')!);
+  assert(execHurdle.success === true, 'Siege Hurdle executes leap');
+  assert(hurdleEngine.getPiece('e4')?.type === 'r', 'Rook landed on e4');
+
+  // 5. Rook: Trench Shift (rook_trench_shift) - Swap with horizontally adjacent friendly pawn
+  const trenchEngine = new DeckChessEngine('4k3/8/8/8/8/8/4PR2/4K3 w - - 0 1', ['rook_trench_shift']);
+  const trenchMoves = trenchEngine.getEmpoweredMoves('f2');
+  assert(trenchMoves.some(m => m.to === 'e2'), 'Trench Shift targets adjacent friendly pawn at e2');
+  const execTrench = trenchEngine.makeEmpoweredMove(trenchMoves.find(m => m.to === 'e2')!);
+  assert(execTrench.success === true, 'Trench Shift executes swap');
+  assert(trenchEngine.getPiece('e2')?.type === 'r', 'Rook now at e2');
+  assert(trenchEngine.getPiece('f2')?.type === 'p', 'Pawn now at f2');
+
+  // 6. Queen: Counter Smite (queen_counter_smite) - Ranged strike on threatening minor piece
+  const smiteEngine = new DeckChessEngine('4k3/8/8/8/3n4/8/8/3QK3 w - - 0 1', ['queen_counter_smite']);
+  const smiteMoves = smiteEngine.getEmpoweredMoves('d1');
+  assert(smiteMoves.some(m => m.to === 'd4' && m.actionType === 'ranged_capture'), 'Counter Smite targets threatening knight at d4 with ranged capture');
+  const execSmite = smiteEngine.makeEmpoweredMove(smiteMoves.find(m => m.to === 'd4')!);
+  assert(execSmite.success === true, 'Counter Smite executes ranged strike');
+  assert(smiteEngine.getPiece('d1')?.type === 'q', 'Queen remained at d1');
+  assert(smiteEngine.getPiece('d4') === undefined, 'Knight at d4 destroyed');
+  assert(smiteEngine.getGraveyard().b.n === 1, 'Captured knight added to Black graveyard');
+
+  // 7. Queen: Amazon Hop (queen_amazon_hop) - Knight leap escape under threat
+  const amazonEngine = new DeckChessEngine('4k3/8/8/8/3n4/8/8/3QK3 w - - 0 1', ['queen_amazon_hop']);
+  const amazonMoves = amazonEngine.getEmpoweredMoves('d1');
+  const amazonTargets = amazonMoves.map(m => m.to);
+  assert(amazonTargets.includes('c3') && amazonTargets.includes('e3'), 'Amazon Hop offers knight jumps c3 and e3');
+  const execAmazon = amazonEngine.makeEmpoweredMove(amazonMoves.find(m => m.to === 'c3')!);
+  assert(execAmazon.success === true, 'Amazon Hop executes knight leap');
+  assert(amazonEngine.getPiece('c3')?.type === 'q', 'Queen arrived at c3');
+
+  // 8. Queen: Camel Stride (queen_camel_stride) - Extended (3,1) leap
+  const camelStrideEngine = new DeckChessEngine('4k3/8/8/8/8/8/8/3QK3 w - - 0 1', ['queen_camel_stride']);
+  const camelStrideMoves = camelStrideEngine.getEmpoweredMoves('d1');
+  const camelStrideTargets = camelStrideMoves.map(m => m.to);
+  assert(camelStrideTargets.includes('c4') && camelStrideTargets.includes('e4'), 'Camel Stride offers (3,1) leaps to c4 and e4');
+  const execCamelStride = camelStrideEngine.makeEmpoweredMove(camelStrideMoves.find(m => m.to === 'e4')!);
+  assert(execCamelStride.success === true, 'Camel Stride executes leap');
+  assert(camelStrideEngine.getPiece('e4')?.type === 'q', 'Queen arrived at e4');
+
+  // 9. King: Keep Garrison (king_keep_garrison) - Back-rank king spawns pawn on 2nd rank
+  const garrisonEngine = new DeckChessEngine('4k3/8/8/8/8/8/8/4K3 w - - 0 1', ['king_keep_garrison']);
+  const garrisonMoves = garrisonEngine.getEmpoweredMoves('e1');
+  assert(garrisonMoves.some(m => m.to === 'e2' && m.actionType === 'spawn'), 'Keep Garrison offers spawn on empty e2');
+  const execGarrison = garrisonEngine.makeEmpoweredMove(garrisonMoves.find(m => m.to === 'e2')!);
+  assert(execGarrison.success === true, 'Keep Garrison executes spawn');
+  assert(garrisonEngine.getPiece('e1')?.type === 'k', 'King remained at e1');
+  assert(garrisonEngine.getPiece('e2')?.type === 'p' && garrisonEngine.getPiece('e2')?.color === 'w', 'Pawn spawned at e2');
+
+  // 10. King: Sanctuary Hop (king_sanctuary_hop) - Jump 2 squares over blocker
+  const sanctuaryEngine = new DeckChessEngine('4k3/8/8/8/8/8/4P3/4K3 w - - 0 1', ['king_sanctuary_hop']);
+  const sanctuaryMoves = sanctuaryEngine.getEmpoweredMoves('e1');
+  assert(sanctuaryMoves.some(m => m.to === 'e3'), 'Sanctuary Hop offers jump over e2 to e3');
+  const execSanctuary = sanctuaryEngine.makeEmpoweredMove(sanctuaryMoves.find(m => m.to === 'e3')!);
+  assert(execSanctuary.success === true, 'Sanctuary Hop executes jump');
+  assert(sanctuaryEngine.getPiece('e3')?.type === 'k', 'King arrived at e3');
+
+  // 11. King: Bodyguard Switch (king_bodyguard_switch) - Swap with adjacent Rook
+  const bodyguardEngine = new DeckChessEngine('4k3/8/8/8/8/8/8/4KR2 w - - 0 1', ['king_bodyguard_switch']);
+  const bodyguardMoves = bodyguardEngine.getEmpoweredMoves('e1');
+  assert(bodyguardMoves.some(m => m.to === 'f1'), 'Bodyguard Switch offers swap with rook at f1');
+  const execBodyguard = bodyguardEngine.makeEmpoweredMove(bodyguardMoves.find(m => m.to === 'f1')!);
+  assert(execBodyguard.success === true, 'Bodyguard Switch executes swap');
+  assert(bodyguardEngine.getPiece('f1')?.type === 'k', 'King now at f1');
+  assert(bodyguardEngine.getPiece('e1')?.type === 'r', 'Rook now at e1');
+
+  // 12. Royal Check Invariant: King move destination CANNOT leave King in check
+  const checkPinEngine = new DeckChessEngine('4k3/8/8/4r3/8/8/8/4K3 w - - 0 1', ['king_sanctuary_hop']);
+  const checkPinMoves = checkPinEngine.getEmpoweredMoves('e1');
+  // All moves that land on e-file (e.g. e2, e3) must be filtered out because Black rook on e5 attacks the entire e-file
+  assert(!checkPinMoves.some(m => m.to.startsWith('e')), 'CRITICAL KING SAFETY: King empowered moves into check on e-file are strictly filtered');
+
+  // 13. King Exemption Invariant: Ranged captures and Special Captures can NEVER target an enemy King
+  const kingSnipeEngine = new DeckChessEngine('4k3/8/8/8/8/8/8/4R2K w - - 0 1', ['rook_railgun_bolt']);
+  const kingSnipeMoves = kingSnipeEngine.getEmpoweredMoves('e1');
+  assert(!kingSnipeMoves.some(m => m.to === 'e8'), 'CRITICAL INVARIANT: Ranged captures can NEVER target the enemy King');
+
+  // 14. Rank 2-7 Invariant: Major unit spawn/move effects never place a pawn on rank 1 or rank 8
+  let rank2to7Valid = true;
+  for (const card of CANONICAL_180_CARDS) {
+    if (card.effect_type === 'Spawning') {
+      const handler = getCardHandler(card.id);
+      if (handler) {
+        const dummyEngine = new DeckChessEngine('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
+        const targets = handler.getTargets(dummyEngine, 'e1');
+        for (const t of targets) {
+          const rank = parseInt(t[1], 10);
+          if (rank < 2 || rank > 7) {
+            rank2to7Valid = false;
+            break;
+          }
+        }
+      }
+    }
+  }
+  assert(rank2to7Valid, 'Pawn spawning targets for all Spawning cards are strictly between rank 2 and 7');
 }
 
 // ==========================================
