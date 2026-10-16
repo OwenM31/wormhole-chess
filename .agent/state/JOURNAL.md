@@ -4,6 +4,56 @@
 
 ---
 
+### Session: 2026-10-16 03:36
+
+#### Objective
+Design and formalize the Deck Builder Card Graph & Power Taxonomy (`@[.agent/workflows/insert-phase.md] 5`), establish a deterministic 6×6 condition-to-effect grammar matrix and two symmetrical 3-cycles, codify the Unified Action Model ("The Card IS the Move"), author and validate the 90 canonical cards for Battlefield Minor Units (Pawn, Knight, Bishop) into `src/engine/cards/cardCatalog90.json`, and decompose Phase 5 into 3 atomic execution plans across 3 waves (`@[.agent/workflows/plan.md] 5`).
+
+#### Accomplished
+- ✅ Resumed session and marked state active.
+- ✅ Executed `/insert-phase 5 "Deck Builder Card Graph & Power Taxonomy"`:
+  - Formulated the 6×6 Grammar Matrix: 6 Condition genres (Position, Neighbors, Lines, Threat, Blocked, Momentum) each with 5 concrete triggers, and 6 Effect genres (New Moves, Jump & Leap, Move Others, Special Captures, Walls & Shields, Spawning).
+  - Derived two symmetrical 3-cycles:
+    - Minor Units: Pawn (Blocked, excl. Momentum) $\rightarrow$ Knight (Momentum, excl. Lines) $\rightarrow$ Bishop (Lines, excl. Blocked).
+    - Major Units: Rook (Neighbors, excl. Position) $\rightarrow$ King (Position, excl. Threat) $\rightarrow$ Queen (Threat, excl. Neighbors).
+  - Established 30-card-per-piece architecture ($10 \text{ cards on specialty} + 20 \text{ cards on other 4 conditions} = 30 \text{ cards}$) using a balanced 12 / 12 / 6 energy cost curve.
+  - Architected the Unified Action Model ("The Card IS the Move"): on your turn, execute either a Standard Move (0⚡) or an Empowered Card Move (1–3⚡), eliminating disconnected pre-move phases.
+  - Codified `[DECISION-019]` in `.agent/state/DECISIONS.md`.
+- ✅ Authored, refined, and locked 90 canonical cards into `src/engine/cards/cardCatalog90.json`:
+  - 30 Pawn cards (resolving rank 2–7 spawn boundaries, straight forward capture promotion, King's duel checkmate logic).
+  - 30 Knight cards (incorporating Camel (3,1), Zebra (3,2), Dabbaba (2,0) fairy vectors, resolving L-path elbow geometry for Jousting Pass).
+  - 30 Bishop cards (incorporating Prism Ray piercing slide, Heretic's Gambit Knight-jump color inversion, cylindrical diagonal rim-wrap, and Cathedral Dome anti-ranged shield).
+- ✅ Executed `@plan.md 5`:
+  - Authored `.agent/state/phases/5/RESEARCH.md`.
+  - Decomposed Phase 5 into 3 atomic plans across 3 sequential waves:
+    - `01-PLAN.md` (Wave 1: Types, Taxonomy & Card Catalog Integration).
+    - `02-PLAN.md` (Wave 2: Card Behavior Handlers & Unified Move Generation).
+    - `03-PLAN.md` (Wave 3: Interactive UI Board & Loadout Curator Integration).
+  - Validated plans against all plan-checker criteria (PASS).
+- ✅ Verification:
+  - `npm test`: All 83 automated card engine unit tests passed cleanly.
+  - `npm run typecheck:all`: Clean (0 errors across React client, Pages Functions, and worker DOs).
+  - Committed plans to git (`8d4ee9e`).
+
+#### Verification
+- [x] 90 canonical cards validated and locked in `src/engine/cards/cardCatalog90.json`.
+- [x] `[DECISION-019]` recorded in `DECISIONS.md`.
+- [x] Full-stack typecheck clean (`npm run typecheck:all`).
+- [x] All 83 automated card engine tests pass cleanly (`npm test`).
+- [x] Plan checker verified Plan 5.1, 5.2, and 5.3 with PASS verdict.
+- [ ] Phase 5 plan execution pending (`/execute 5`).
+
+#### Paused Because
+User requested session pause (`/pause`) at clean milestone boundary between Phase 5 planning and Phase 5 execution.
+
+#### Handoff Notes
+- The 90-card canonical vertical slice (Pawn, Knight, Bishop) is locked at `src/engine/cards/cardCatalog90.json`.
+- All Phase 5 execution plans (`01-PLAN.md`, `02-PLAN.md`, `03-PLAN.md`) and research (`RESEARCH.md`) are committed.
+- Working tree is clean.
+- Next step upon resume: run `/resume` to restore context, then proceed with `@[.agent/workflows/execute.md] 5` to execute Wave 1.
+
+---
+
 ### Session: 2026-10-15 22:44
 
 #### Objective
