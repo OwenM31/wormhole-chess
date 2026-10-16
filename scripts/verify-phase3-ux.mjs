@@ -44,8 +44,8 @@ async function verifyPhase3UX() {
     // Verify hero copy
     const heroTitle = await desktopPage.textContent('h1');
     console.log(`      Hero title: "${heroTitle?.trim()}"`);
-    if (!heroTitle?.includes('Wormhole Chess')) {
-      throw new Error(`Expected hero "Wormhole Chess", got "${heroTitle}"`);
+    if (!heroTitle?.includes('WormholeChess') && !heroTitle?.includes('Wormhole Chess')) {
+      throw new Error(`Expected hero "WormholeChess", got "${heroTitle}"`);
     }
 
     const heroSubtitle = await desktopPage.textContent('.home-hero-subtitle');

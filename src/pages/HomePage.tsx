@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import { WormholeLogo } from '../components/WormholeLogo';
+import { WormholeSpacetimeIllustration } from '../components/WormholeSpacetimeIllustration';
 
 type VariantTab = 'deck-builder' | 'wormhole';
 
@@ -93,17 +94,34 @@ export const HomePage: React.FC = () => {
           .home-portal-beam {
             width: 2px !important;
             height: 32px !important;
-            background: linear-gradient(180deg, #D4AF37, #A855F7) !important;
+            background: linear-gradient(180deg, #D4AF37, #FAF9F6) !important;
+          }
+          .home-hero-lockup {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 1rem !important;
+          }
+          .home-hero-art {
+            width: 120px !important;
+            height: 90px !important;
+          }
+          .home-hero-title {
+            font-size: 2.2rem !important;
           }
         }
       `}</style>
       <Navigation />
 
       <main style={mainContentStyle} className="home-main">
-        {/* Minimalist Hero */}
+        {/* Fuller Hero Section with 3D Wormhole Spacetime Illustration */}
         <section style={heroSectionStyle} className="home-hero">
-          <h1 style={heroTitleStyle} className="home-hero-title">Wormhole Chess</h1>
-          <p style={heroSubtitleStyle} className="home-hero-subtitle">Home of your favorite chess variants</p>
+          <div style={heroLockupStyle} className="home-hero-lockup">
+            <WormholeSpacetimeIllustration width={135} height={101} className="home-hero-art" />
+            <div style={heroTextGroupStyle} className="home-hero-text">
+              <h1 style={heroTitleStyle} className="home-hero-title">WormholeChess</h1>
+              <p style={heroSubtitleStyle} className="home-hero-subtitle">Home of your favorite chess variants</p>
+            </div>
+          </div>
         </section>
 
         {/* Unified Variant Stage */}
@@ -327,19 +345,35 @@ const heroSectionStyle: React.CSSProperties = {
   marginTop: '0.5rem',
 };
 
+const heroLockupStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '1.75rem',
+  textAlign: 'left',
+};
+
+const heroTextGroupStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+};
+
 const heroTitleStyle: React.CSSProperties = {
   fontSize: '2.75rem',
   fontWeight: 750,
   letterSpacing: '-0.035em',
   color: '#FAF9F6',
-  margin: '0 0 0.5rem',
+  margin: '0 0 0.4rem',
+  lineHeight: 1.1,
 };
 
 const heroSubtitleStyle: React.CSSProperties = {
   fontSize: '1.05rem',
   color: '#8B7E74',
   maxWidth: '520px',
-  margin: '0 auto',
+  margin: 0,
+  lineHeight: 1.4,
 };
 
 const stageCardStyle: React.CSSProperties = {

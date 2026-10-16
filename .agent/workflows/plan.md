@@ -1,6 +1,6 @@
 ---
 description: The Strategist — Decompose requirements into executable phases in ROADMAP.md
-argument-hint: "[phase] [--research] [--skip-research] [--gaps]"
+argument-hint: "[phase] [--research] [--skip-research] [--skip-design] [--gaps] [--fix-defects]"
 ---
 
 # /plan Workflow
@@ -31,7 +31,7 @@ Create executable phase prompts (PLAN.md files) for a roadmap phase with integra
 - `--research` — Force re-research even if RESEARCH.md exists
 - `--skip-research` — Skip research entirely, go straight to planning
 - `--skip-design` — Skip UI design phase checks and proceed with standard planning
-- `--gaps` — Gap closure mode (reads VERIFICATION.md, skips research)
+- `--gaps` or `--fix-defects` — Gap closure and defect remediation mode (reads VERIFICATION.md and DEFECTS.md, skips research)
 
 **Required files:**
 - `.agent/state/SPEC.md` — Must be FINALIZED (Planning Lock)
@@ -135,9 +135,10 @@ Extract from $ARGUMENTS:
 - Phase number (integer)
 - `--research` flag
 - `--skip-research` flag
-- `--gaps` flag
+- `--skip-design` flag
+- `--gaps` or `--fix-defects` flag
 
-**If no phase number:** Detect next unplanned phase from ROADMAP.md.
+**If no phase number:** Detect next unplanned phase from ROADMAP.md (or active phase from STATE.md if in gap/defect remediation mode).
 
 ---
 
@@ -178,7 +179,7 @@ mkdir -p "$PHASE_DIR"
 
 ## 5. Handle Research
 
-**If `--gaps` flag:** Skip research (gap closure uses VERIFICATION.md).
+**If `--gaps` or `--fix-defects` flag:** Skip research (remediation plans are derived directly from VERIFICATION.md and .agent/state/DEFECTS.md).
 
 **If `--skip-research` flag:** Skip to step 6.
 
@@ -246,9 +247,12 @@ For the phase goal:
      - *Task A (Specification Tests):* Author the contract test assertions asserting exact response schemas, state transitions, rejection error codes, and invariants (initially failing/red).
      - *Task B (Implementation):* Implement the SQL migration, stored procedure, service, or API endpoint until Task A tests pass green.
      - *Drift Prevention:* Executor is explicitly forbidden from modifying test assertions to make them pass.
-4. Break into atomic tasks (2-3 per plan).
-5. Determine dependencies between tasks.
-6. Assign execution waves.
+4. **For Gap Closure & Defect Remediation (`--gaps` or `--fix-defects`):**
+   - Read failed must-haves from `VERIFICATION.md` and P0/P1 issues from `.agent/state/DEFECTS.md`.
+   - Create focused fix plans with `gap_closure: true` in YAML frontmatter targeting only the failing assertions, broken wiring, or UX defects.
+5. Break into atomic tasks (2-3 per plan).
+6. Determine dependencies between tasks.
+7. Assign execution waves.
 
 ### 6c. Write PLAN.md Files
 

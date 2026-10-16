@@ -284,6 +284,7 @@ Screenshots: .agent/state/artifacts/screenshots/
 
 /plan --fix-defects   — Generate atomic fix plans for P0 & P1 issues
 /execute --gaps-only  — Immediately execute remediation plans
+@create-asset.md      — Rapidly create missing empty-state spot illustrations or favicons flagged in DEFECTS.md
 
 ───────────────────────────────────────────────────────
 ```
@@ -296,9 +297,10 @@ Screenshots: .agent/state/artifacts/screenshots/
 ### Workflows
 | Command | Relationship |
 |---|---|
-| `/verify` | Fast phase-level acceptance criteria verification |
-| `/debug` | Deep diagnosis of a specific error found during sweep |
-| `/execute` | Run fix plans generated from defect ledger |
+| `@verify.md` | Fast phase-level acceptance criteria verification |
+| `@debug.md` | Deep diagnosis of a specific error found during sweep |
+| `@create-asset.md` | Generate missing empty-state illustrations or favicons flagged in audit |
+| `@execute.md` | Run fix plans generated from defect ledger |
 
 ### Skills
 | Skill | Purpose |

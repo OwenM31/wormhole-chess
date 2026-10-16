@@ -14,6 +14,7 @@ Create targeted plans to address gaps, technical debt, and issues identified dur
 
 Read from:
 - Latest AUDIT.md or VERIFICATION.md
+- `.agent/state/DEFECTS.md` for UX, interaction, and visual slop defects
 - TODO.md for deferred items
 - DECISIONS.md for acknowledged debt
 

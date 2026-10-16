@@ -76,7 +76,7 @@ export const Navigation: React.FC = () => {
       <div style={brandGroupStyle} className="nav-brand-group">
         <NavLink to="/" style={brandLinkStyle}>
           <WormholeLogo size={24} badged={true} />
-          <span className="nav-brand-text">Wormhole Chess</span>
+          <span className="nav-brand-text">WormholeChess</span>
         </NavLink>
 
         <nav style={navLinksStyle}>

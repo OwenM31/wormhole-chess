@@ -1,6 +1,6 @@
 ---
 description: The Engineer — Execute a specific phase with focused context
-argument-hint: "<phase-number> [--gaps-only]"
+argument-hint: "[phase-number] [--gaps-only]"
 ---
 
 # /execute Workflow
@@ -25,7 +25,7 @@ Orchestrator stays lean: discover plans, analyze dependencies, group into waves,
 </objective>
 
 <context>
-**Phase:** $ARGUMENTS (required - phase number to execute)
+**Phase:** $ARGUMENTS (optional — auto-detects active phase from STATE.md or ROADMAP.md if omitted)
 
 **Flags:**
 - `--gaps-only` — Execute only gap closure plans (created by `/verify` when issues found)
@@ -56,17 +56,35 @@ test -f ".agent/state/STATE.md"
 
 ---
 
-## 2. Validate Phase Exists
+## 2. Validate and Parse Phase
+
+Extract phase number from $ARGUMENTS or auto-detect if omitted:
 
 **PowerShell:**
 ```powershell
+if (-not $PHASE -or $PHASE -eq "--gaps-only") {
+    $state = Get-Content ".agent/state/STATE.md" -Raw -ErrorAction SilentlyContinue
+    if ($state -match "Phase\s*:\s*(\d+)") {
+        $PHASE = $matches[1]
+    } else {
+        $roadmap = Get-Content ".agent/state/ROADMAP.md" -Raw -ErrorAction SilentlyContinue
+        if ($roadmap -match "### Phase (\d+):[^\n]*\n\*\*Status\*\*:\s*⬜") {
+            $PHASE = $matches[1]
+        }
+    }
+}
 # Check phase exists in roadmap
 Select-String -Path ".agent/state/ROADMAP.md" -Pattern "Phase $PHASE:"
 ```
 
 **Bash:**
 ```bash
-# Check phase exists in roadmap
+if [ -z "$PHASE" ] || [ "$PHASE" = "--gaps-only" ]; then
+    PHASE=$(grep -oE "Phase: [0-9]+" .agent/state/STATE.md 2>/dev/null | grep -oE "[0-9]+" || echo "")
+    if [ -z "$PHASE" ]; then
+        PHASE=$(grep -m1 -B1 "Status.*⬜" .agent/state/ROADMAP.md 2>/dev/null | grep -oE "Phase [0-9]+" | grep -oE "[0-9]+" || echo "")
+    fi
+fi
 grep "Phase $PHASE:" ".agent/state/ROADMAP.md"
 ```
 

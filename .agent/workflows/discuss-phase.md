@@ -114,8 +114,9 @@ Update `.agent/state/DECISIONS.md`:
 
 ▶ NEXT
 
-/plan {N} — Create execution plans with this context
-/research-phase {N} — Deep dive on technical options
+/research-phase {N} — Deep dive on technical architecture & 5-layer contracts
+/design-phase {N}   — Research aesthetic benchmarks & prototype UI variants (if UI phase)
+/plan {N}           — Skip directly to task decomposition (if scope & architecture are already clear)
 
 ───────────────────────────────────────────────────────
 ```

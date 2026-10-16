@@ -90,6 +90,7 @@ For the target page(s), generate **3 to 5 distinctly different aesthetic variant
    - Zero AI cheerleading (*"Great job!"* or *"Oopsie daisy!"* are strictly forbidden).
 2. **The 4 Invariant Screen States:**
    - Model the view across Loading (skeleton shimmer), Success (populated data), Empty (reassuring message + CTA), and Error (3-part plain language explanation).
+   - *Need spot graphics or custom icons?* Call `@create-asset.md "<description>" --preset empty-state` (or `--preset ui-icon`) to generate 5 themed vector candidates.
 3. **Realistic Formatted Data:**
    - Formatted currency (`$1,250.00` never `$1250`), formatted dates (`Oct 15, 2026` never raw ISO strings).
 4. **Button & Touch Targets:**
@@ -221,6 +222,7 @@ Scratch artifacts cleaned up.
 |---|---|
 | `@discuss-phase.md` | Run before @design-phase to align on scope |
 | `@research-phase.md` | Run before @design-phase for technical/schema discovery |
+| `@create-asset.md` | Generate custom spot graphics, icons, or empty-state illustrations for the UI |
 | `@plan.md` | Run immediately after @design-phase to plan tasks against approved design |
 | `@ux-sweep.md` | Run after @execute to verify live implementation matches design |
 

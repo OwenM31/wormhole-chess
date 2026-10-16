@@ -109,7 +109,7 @@ async function verifyPhase1UX() {
     // Verify User-Approved Navigation Copy
     const headerText = await desktopPage.textContent('header');
     console.log('Checking Navigation copy in header...');
-    if (!headerText.includes('Wormhole Chess') || !headerText.includes('Home') || !headerText.includes('Wormhole') || !headerText.includes('Deck Builder')) {
+    if ((!headerText.includes('Wormhole Chess') && !headerText.includes('WormholeChess')) || !headerText.includes('Home') || !headerText.includes('Wormhole') || !headerText.includes('Deck Builder')) {
       throw new Error(`Navigation header does not contain approved copy: ${headerText}`);
     }
     console.log('✓ Navigation contains locked, approved copy.');

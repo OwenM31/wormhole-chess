@@ -175,7 +175,8 @@ Key findings:
 
 ▶ NEXT
 
-/plan {N} — Create plans informed by research
+/design-phase {N} — Research aesthetic benchmarks & prototype UI variants (if UI phase)
+/plan {N}         — Create execution plans informed by research (for non-visual / backend phases)
 
 ───────────────────────────────────────────────────────
 ```
