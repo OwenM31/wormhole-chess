@@ -7,7 +7,7 @@ updated: 2026-10-15T13:04:00Z
 # Roadmap
 
 > **Current Milestone:** v2.0 Visual Craft & Frontend Redesign
-> **Current Phase:** Phase 4 - 3D Wormhole HUD & Multiplayer PlayRoom Redesign
+> **Current Phase:** Phase 5 - Global Polish, Micro-interactions, Responsive Audit & Release
 > **Status:** 🔄 In Progress
 
 ## Milestone Goal
@@ -21,7 +21,7 @@ Systematically eliminate AI-slop across all user-facing screens, establish a dis
 - [x] **Player Dashboard Redesign**: Refactored player profile, combat stats, matchmaking lobby, and historical replay viewer with clean density and high craft.
 - [x] **Tactical Deck Builder Arena Redesign**: Balanced widescreen layout, properly proportioned 2D board, tactile hand bar, energy meter, and card curator/inspector without vertical bloating or awkward grid stretching.
 - [x] **Home Landing & Authentication Redesign**: Atmospheric dark tactical hero, distinct typography, variant showcase cards, and sleek tabbed auth modals.
-- [ ] **3D Wormhole & PlayRoom HUD Redesign**: Non-intrusive floating glass HUD, move notation ticker, game clock integration, and room coordination status.
+- [x] **3D Wormhole & PlayRoom HUD Redesign**: Non-intrusive floating glass HUD, move notation ticker, game clock integration, and room coordination status.
 - [x] **Zero Gameplay Regressions**: All 83 automated card engine tests (`npm test`), 3D WebGL controls, and Cloudflare multiplayer synchronization continue passing 100%.
 
 ---

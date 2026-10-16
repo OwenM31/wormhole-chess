@@ -1,42 +1,76 @@
-# Phase 4 Verification: 3D Wormhole HUD & Multiplayer PlayRoom Redesign
+---
+phase: 4
+verified_at: 2026-10-15T22:15:00-05:00
+verdict: PASS
+score: 3/3 must-haves verified
+---
 
-## Must-Haves Verification
+# Phase 4 Verification Report: 3D Wormhole HUD & Multiplayer PlayRoom Redesign
 
-### 1. Edge-to-Edge 3D Wormhole Canvas & Floating Tactical Glass HUD
-- [x] **Elimination of Clutter**: Removed the fixed 80px top header and 380px fixed right olive sidebar from `src/components/ChessboardScene.tsx`. Canvas expands to full 100vw × 100vh spatial view.
-  - *Evidence:* Canvas dimensions measured at 1280px × 800px in automated Playwright sweep without sidebar obstruction (`phase4_wormhole_desktop.png`).
-- [x] **Floating Top HUD Capsule**: Mounted unified capsule in `src/pages/WormholePage.tsx` containing `← Home`, `3D Wormhole SPATIAL` badge, reactive active turn indicator (`⚪ White to move · Turn {N}`), tabular monospace clocks (`04:57 vs 05:00`), and `🏁 Conclude Match` action button.
-  - *Evidence:* Visual screenshot `phase4_wormhole_desktop.png` and Playwright element assertions.
-- [x] **Floating Bottom Camera Dock**: Mounted dock in `src/components/ChessboardScene.tsx` with all 5 camera operations and monospace keybinding chips: `Top View [T]`, `Flip 180° [F]`, `Rotate 90° [R]`, `Orbit Lock [L]`, and `Reset [X]`.
-  - *Evidence:* Verified in headless Chrome; active gold border `#D4AF37` confirmed on orbit lock state.
-- [x] **Collapsible Telemetry Drawer**: Slide-out drawer (`290px`) triggered by right-edge tab `Moves ({count}) ◨`, housing move notation, board reset, themes modal trigger, and OrbitControls tips.
-  - *Evidence:* Verified drawer expansion, ply counter, and Camera Tips footer (`phase4_wormhole_desktop.png`).
+## Summary
+3/3 must-haves verified (100% compliance across all 3 tiers of the verification triangle)
 
-### 2. Refined ChessClock Visual States & Disconnect Alerts
-- [x] **Design Token Alignment**: 6px `#24272A` cards, `#D4AF37` warm gold active turn border and glow, and monospace tabular numbers (`fontVariantNumeric: tabular-nums`).
-- [x] **Disconnect Banner**: Clean warning banner in `src/components/ChessClock.tsx` (`⚠️ Opponent disconnected. Reconnection grace forfeit in {N}s...`) without layout shift.
-  - *Evidence:* Verified in `src/components/ChessClock.tsx` and tested in PlayRoom suite.
+## Verification Matrix
 
-### 3. Streamlined Multiplayer PlayRoom Arena Layout
-- [x] **Authentic Wormhole Palette**: Deep charcoal `#191B1D` canvas, 6px radii, and hairline taupe borders.
-- [x] **Restrained Microcopy**: Enforced zero-fluff text ("Chat", "No messages", "Send message...").
-- [x] **Responsive Mobile Stacking**: Added media query breakpoints collapsing layout to single column on viewports <860px and stacking chess clocks on viewports <600px, eliminating mobile horizontal overflow.
-  - *Evidence:* Verified in `scripts/verify-phase4-ux.mjs` (`scrollWidth === clientWidth`) and captured in `phase4_playroom_mobile.png`.
+| Must-Have Requirement | Tier 1: Test Traceability | Tier 2: Entrypoint Wiring | Tier 3: Contract & Empirical Proof | Status |
+|-----------------------|---------------------------|---------------------------|-------------------------------------|--------|
+| **1. Edge-to-Edge 3D Wormhole Canvas & Floating Tactical Glass HUD** | `scripts/verify-phase4-ux.mjs#Section 2.A-C` | Mounted in `App.tsx#L17`, rendered via `WormholePage.tsx` & `ChessboardScene.tsx` | Canvas 1280x800, zero fixed 80px/380px bars, 5 dock buttons + drawer verified (`phase4_wormhole_desktop.png`) | ✅ PASS |
+| **2. Tactical ChessClock Visual States & Disconnect Banner** | `scripts/verify-phase4-ux.mjs#Section 2.D` | Mounted in `PlayRoomPage.tsx#L143-L157` & `WormholePage.tsx#L125-L152` | Monospace tabular numerals, `#D4AF37` gold active border, zero layout shift on disconnect alert | ✅ PASS |
+| **3. Streamlined Multiplayer PlayRoom Layout & Mobile Stacking** | `scripts/verify-phase4-ux.mjs#Section 2.D & 3.B` | Route registered at `App.tsx#L20` (`/play/:code`) | Deep charcoal `#191B1D`, zero-fluff copy, zero horizontal scroll on 375px mobile (`phase4_playroom_mobile.png`) | ✅ PASS |
 
 ---
 
-## Empirical Verification Evidence
+## Detailed Must-Have Findings
 
-| Verification Step | Command / Tool | Result |
-|-------------------|----------------|--------|
-| Full-Stack Typecheck | `npm run typecheck:all` | ✅ Clean (0 errors across React client, Pages Functions, and worker) |
-| Unit Test Suite | `npm test` | ✅ 83 / 83 unit test assertions passed |
-| Production Build | `npm run build` | ✅ Clean (built in 1.18s) |
-| Headless Chrome UX Suite | `node scripts/verify-phase4-ux.mjs` | ✅ Clean (all desktop & mobile assertions passed with 0 errors) |
-| Visual Regression Screenshots | Playwright 2x Retina | ✅ 4 screenshots verified in `.agent/state/artifacts/screenshots/`: `phase4_wormhole_desktop.png`, `phase4_wormhole_mobile.png`, `phase4_playroom_desktop.png`, `phase4_playroom_mobile.png` |
+### ✅ 1. Edge-to-Edge 3D Wormhole Canvas & Floating Tactical Glass HUD
+- **Status:** PASS
+- **Tier 1 (Test Traceability):** `scripts/verify-phase4-ux.mjs` (Section 2: Desktop Viewport 1280x800). Explicit element assertions for `<canvas>`, navigation pill `← Home`, mode badge `3D Wormhole`, `SPATIAL` tag, active turn badge, `🏁 Conclude Match` button, all 5 dock buttons with keybinding badges (`[T]`, `[F]`, `[R]`, `[L]`, `[X]`), and right telemetry toggle `Moves ◨`.
+- **Tier 2 (Entrypoint Wiring):** Route registered at `src/App.tsx#L17` (`/wormhole` -> `<WormholePage />`). `WormholePage.tsx#L208` mounts `<ChessboardScene hideHeaderTitle={true} onGameStateChange={setTurnInfo} />`.
+- **Tier 3 (Contract & Proof):**
+  - Three.js canvas fills full `1280px × 800px` without obstruction from legacy 80px top header or 380px fixed green sidebar.
+  - Floating bottom camera dock verified operational with keybindings.
+  - Telemetry drawer expands cleanly showing move history and OrbitControls camera tips.
+  - Screenshot verified: `.agent/state/artifacts/screenshots/phase4_wormhole_desktop.png`.
+
+### ✅ 2. Tactical ChessClock Visual States & Disconnect Banner
+- **Status:** PASS
+- **Tier 1 (Test Traceability):** `scripts/verify-phase4-ux.mjs` (Sections 2.D & 3.B). Verified both white & black chess clock rendering, tabular monospace numerals, and turn-based color styling.
+- **Tier 2 (Entrypoint Wiring):** `ChessClock.tsx` imported and rendered in `src/pages/PlayRoomPage.tsx#L143-L157`. Tabular clocks also wired directly into `WormholePage.tsx` HUD capsule (`#L125-L152`).
+- **Tier 3 (Contract & Proof):**
+  - Complies with `.agent/rules/STYLE.md` tokens: 6px cards (`#24272A`), `#D4AF37` warm gold active player glow, and `fontVariantNumeric: 'tabular-nums'`.
+  - Disconnect banner (`⚠️ Opponent disconnected. Reconnection grace forfeit in {N}s...`) styled without vertical or horizontal layout shifts.
+
+### ✅ 3. Streamlined Multiplayer PlayRoom Layout & Mobile Stacking
+- **Status:** PASS
+- **Tier 1 (Test Traceability):** `scripts/verify-phase4-ux.mjs` (Sections 2.D & 3.B). Verified room code badge, chess clocks, arena container, zero-fluff chat copy ("Chat", "No messages", "Send message..."), and mobile overflow check (`scrollWidth === clientWidth`).
+- **Tier 2 (Entrypoint Wiring):** Route registered at `src/App.tsx#L20` (`/play/:code` -> `<PlayRoomPage />`).
+- **Tier 3 (Contract & Proof):**
+  - Background rendered with authentic `#191B1D` deep charcoal base, `#24272A` cards, and 6px border radii.
+  - Responsive stacking: On viewports <860px, `.playroom-layout` collapses to a clean single column; on viewports <600px, `.chess-clock-row` stacks vertically.
+  - Playwright mobile check (375x667) confirmed `scrollWidth = 375` and `clientWidth = 375` with 0 horizontal overflow.
+  - Screenshots verified: `.agent/state/artifacts/screenshots/phase4_playroom_desktop.png` and `phase4_playroom_mobile.png`.
+
+---
+
+## Anti-Pattern Detection Scan
+
+- Comment-based stubs (`TODO`, `FIXME`, `XXX`, `HACK`): **0 found** in modified files.
+- Placeholder text / mock dead ends: **0 found** (only standard HTML `<input placeholder="Send message..." />` verified).
+- Dead code / Unwired components: **0 detected** (all components wired into active routes in `App.tsx`).
+
+---
+
+## Empirical Verification Summary
+
+| Suite / Tool | Command | Result |
+|---|---|---|
+| Full-Stack Typecheck | `npm run typecheck:all` | ✅ Exit code 0 (0 errors across client, Pages Functions, and worker) |
+| Card Engine Unit Tests | `npm test` | ✅ 83 / 83 test assertions passed cleanly |
+| Production Build | `npm run build` | ✅ Exit code 0 (built in 1.68s) |
+| Playwright Headless UX Suite | `node scripts/verify-phase4-ux.mjs` | ✅ Exit code 0 (all desktop & mobile assertions passed cleanly) |
 
 ---
 
 ## Verdict: PASS
 
-All Phase 4 requirements and deliverables are verified, fully operational, and compliant with the design system tokens.
+All 3 Phase 4 must-haves are empirically verified with test assertions, active entrypoint wiring, and visual proof across desktop and mobile viewports.
