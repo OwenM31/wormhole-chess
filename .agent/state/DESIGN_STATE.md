@@ -87,3 +87,27 @@
 3. **Card Asset Integration**:
    - Tactical card previews should continue using authentic piece-class colors and energy costs as new card archetypes are introduced.
 
+---
+
+## Phase 4: 3D Wormhole HUD & Multiplayer PlayRoom Redesign
+
+- **Date Approved:** 2026-10-15
+- **Selected Variant:** **Variant A: Tactical Glass HUD (Floating Command Overlay)**
+- **Reference Image:** `.agent/state/artifacts/design/phase_4_approved.png`
+
+### Rationale
+- Completely liberates the 3D canvas from the clunky 380px fixed green sidebar and neon floating buttons, delivering full edge-to-edge spatial immersion.
+- Introduces floating dark glass capsules (`rgba(28, 30, 32, 0.88)` + `backdrop-filter: blur(12px)`) with hairline warm gold and taupe accents.
+- Top HUD capsule integrates `← Home`, mode pill `3D Wormhole`, Chess.com-style active turn status (`⚪ White to move · Turn 4`), and tabular chess clocks (`04:42 vs 05:00`).
+- Bottom camera dock unifies camera presets (`Top View [T]`, `Flip 180° [F]`, `Rotate 90° [R]`, `Orbit Lock [L]`, `Reset [X]`) with tactile keybinding chips.
+- Slide-out right telemetry drawer (`290px`) tucks move history and camera control hints away until summoned by the user.
+
+### Continuity Directives for Subsequent Pages (Phase 5)
+1. **Glass Overlay Consistency**:
+   - Floating gaming HUDs and overlays must use `rgba(28, 30, 32, 0.88)` with `backdrop-filter: blur(12px)` and 6px border radii.
+2. **Keyboard Shortcut Accessibility**:
+   - Display tactile monospace key chips (`[T]`, `[F]`, `[R]`, `[L]`, `[X]`) alongside interactive camera actions.
+3. **Multiplayer PlayRoom Cohesion**:
+   - Apply the same dark glass cards, warm gold turn highlights, and tabular clock formatting to `PlayRoomPage.tsx` and `ChessClock.tsx`.
+
+

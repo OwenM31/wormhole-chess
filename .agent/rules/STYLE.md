@@ -59,3 +59,12 @@
 - **Layout Architecture**:
   - Widescreen 2-column or bento distribution to eliminate excessive vertical scroll.
   - Keep boards, tactical hand bars, and match feeds comfortably within standard viewports (1280x800).
+
+---
+
+### 4. 3D Wormhole HUD & Floating Overlays (Phase 4 Directives)
+- **Floating HUD Backdrop**: `rgba(28, 30, 32, 0.88)` with `backdrop-filter: blur(12px)` and `1px solid rgba(139, 126, 116, 0.25)`.
+- **Zero Obtrusive Sidebars**: The 3D canvas is edge-to-edge. Move history and controls are tucked into a sleek collapsible slide-out drawer (`290px`) that can be opened or closed on demand.
+- **Floating Camera Dock**: Anchored at bottom-center with 4px buttons and tactile keybinding badges (`[T] Top`, `[F] Flip 180°`, `[R] Rotate 90°`, `[L] Orbit Lock`, `[X] Reset`).
+- **Tactical Chess Clocks**: Tabular numerals with warm gold illumination (`#D4AF37`) for the active player's turn, cleanly integrated into top HUD capsules without giant bloated cards.
+
