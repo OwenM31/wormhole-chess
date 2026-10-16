@@ -1,6 +1,7 @@
 import React from 'react';
 import { CardDefinition, TargetingStage } from '../types/deckChess';
 import { getCardById, PIECE_COLOR_THEMES, STARTER_DECK } from '../engine/cardGraph';
+import CardArt from './CardArt';
 
 export interface TacticalHandBarProps {
   hand: string[]; // Active card IDs remaining in hand
@@ -196,18 +197,13 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
 
                   {/* Center: Art Window / 5x4 Mini-Board Visual Explainer */}
                   <div className="w-full my-auto">
-                    {/* Default Art View: Centered Glyph */}
+                    {/* Default Art View: Centered CardArt Illustration */}
                     <div
                       className={`w-full h-[38px] rounded-[4px] bg-[#141618] border border-[rgba(139,126,116,0.2)] flex items-center justify-center relative overflow-hidden ${
                         isSelected || isActiveForPiece ? 'hidden' : 'flex group-hover:hidden'
                       }`}
                     >
-                      <span
-                        style={{ color: theme.hex }}
-                        className="text-lg font-bold opacity-80 drop-shadow-[0_0_6px_rgba(212,175,55,0.25)]"
-                      >
-                        {theme.badgeIcon}
-                      </span>
+                      <CardArt anchor={card.anchor} artId={card.artId} cardName={card.name} />
                     </div>
 
                     {/* Hover/Active View: 5x4 Mini-Board Schematic */}

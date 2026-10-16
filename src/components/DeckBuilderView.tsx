@@ -11,6 +11,7 @@ import {
 } from '../engine/cardGraph';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import CardArt from './CardArt';
 
 export interface DeckBuilderViewProps {
   initialDeck?: string[];
@@ -233,7 +234,7 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
               return (
                 <div
                   key={`empty_${idx}`}
-                  className="h-28 rounded-md border-2 border-dashed border-[rgba(139,126,116,0.2)] bg-[#141618] flex flex-col items-center justify-center p-2 text-center text-[#8B7E74]"
+                  className="h-32 rounded-md border-2 border-dashed border-[rgba(139,126,116,0.2)] bg-[#141618] flex flex-col items-center justify-center p-2 text-center text-[#8B7E74]"
                 >
                   <span className="text-xl opacity-60">+</span>
                   <span className="text-[10px] font-mono mt-1">Empty Slot</span>
@@ -248,10 +249,10 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
                 key={card.id}
                 onClick={() => toggleCard(card.id)}
                 style={{ borderColor: theme.hex }}
-                className="group relative h-28 p-2 rounded-md border-2 bg-[#1C1E20] hover:bg-[#AA4A44]/20 hover:border-[#AA4A44] transition-all cursor-pointer flex flex-col justify-between shadow-md"
+                className="group relative h-32 p-2 rounded-md border-2 bg-[#1C1E20] hover:bg-[#AA4A44]/20 hover:border-[#AA4A44] transition-all cursor-pointer flex flex-col justify-between shadow-md"
               >
                 <div className="flex items-center justify-between">
-                  <span style={{ color: theme.hex }} className="text-base font-bold">
+                  <span style={{ color: theme.hex }} className="text-sm font-bold">
                     {theme.badgeIcon}
                   </span>
                   <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40">
@@ -259,22 +260,20 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
                   </span>
                 </div>
 
-                <div className="text-center my-1">
-                  <p
-                    style={{ color: theme.hex }}
-                    className="text-[11px] font-bold leading-tight group-hover:hidden"
-                  >
-                    {card.name}
-                  </p>
-                  <p className="text-[11px] font-bold text-[#AA4A44] hidden group-hover:block">
-                    Click to Remove
-                  </p>
+                <div className="w-full h-12 my-1 rounded overflow-hidden flex items-center justify-center bg-[#141618]">
+                  <CardArt anchor={card.anchor} artId={card.artId} cardName={card.name} />
                 </div>
 
                 <div className="text-center">
-                  <span className="text-[9px] font-mono text-[#8B7E74] capitalize">
-                    {card.anchor}
-                  </span>
+                  <p
+                    style={{ color: theme.hex }}
+                    className="text-[10px] font-bold leading-tight truncate group-hover:hidden"
+                  >
+                    {card.name}
+                  </p>
+                  <p className="text-[10px] font-bold text-[#AA4A44] hidden group-hover:block">
+                    Click to Remove
+                  </p>
                 </div>
               </div>
             );
@@ -339,9 +338,14 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
                     </span>
                   </div>
 
+                  {/* Card Art Stage */}
+                  <div className="w-full h-24 my-2.5 rounded overflow-hidden border border-[rgba(139,126,116,0.2)] bg-[#141618] flex items-center justify-center">
+                    <CardArt anchor={card.anchor} artId={card.artId} cardName={card.name} />
+                  </div>
+
                   <h4
                     style={{ color: theme.hex }}
-                    className="text-sm font-bold mt-2 leading-snug"
+                    className="text-sm font-bold mt-1 leading-snug"
                   >
                     {card.name}
                   </h4>
