@@ -4,6 +4,42 @@
 
 ---
 
+### Session: 2026-10-16 09:59
+
+#### Objective
+Restore session context (`@[.agent/workflows/resume.md]`), apply user copy refinements to the home screen (adjust hero subtitle to `"Home to your favorite chess variants"` and variant label to `"Wormhole Chess"`), align verification test suites, verify full-stack type safety and tests, and pause cleanly for session handoff (`@[.agent/workflows/pause.md]`).
+
+#### Accomplished
+- ✅ Resumed session state and verified clean working tree.
+- ✅ Updated home screen copy in `src/pages/HomePage.tsx`:
+  - Hero subtitle updated from `"Home of your favorite chess variants"` to `"Home to your favorite chess variants"`.
+  - Variant tab label and section header updated from `"3D Wormhole Chess"` to `"Wormhole Chess"` (providing clean visual parity with `"Deck Builder Chess"`).
+- ✅ Aligned Playwright test assertions in `scripts/verify-phase3-ux.mjs` and `scripts/full-ux-sweep.mjs` to reflect the updated copy.
+- ✅ Quality & Empirical Proof:
+  - `npm run typecheck:all`: Clean (0 errors across React client, Pages Functions, and DO workers).
+  - `npm test`: 203 / 203 automated card engine unit tests passed cleanly.
+  - `npm run build`: Production build succeeded in 1.54s.
+  - `node scripts/verify-phase3-ux.mjs`: All assertions and screenshots passed across desktop & mobile.
+- ✅ Committed changes atomically (`192c476`).
+
+#### Verification
+- [x] Home hero subtitle updated to `"Home to your favorite chess variants"`.
+- [x] Home variant tab and header updated to `"Wormhole Chess"`.
+- [x] Full-stack typecheck clean (`npm run typecheck:all`).
+- [x] All 203 automated card engine unit tests pass cleanly (`npm test`).
+- [x] Production build passes cleanly (`npm run build`).
+- [x] Playwright UX verification suite passes cleanly (`node scripts/verify-phase3-ux.mjs`).
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) following completion of home screen copy adjustments.
+
+#### Handoff Notes
+- Working tree is clean.
+- Milestone v3.0 is initialized in `ROADMAP.md` and `STATE.md`.
+- Next step upon resume: run `/resume` to restore session state, then proceed with `@[.agent/workflows/plan.md] 1` to create execution plans for Phase 1 (Card Nomenclature Polish & Schema Finalization).
+
+---
+
 ### Session: 2026-10-16 09:20
 
 #### Objective
