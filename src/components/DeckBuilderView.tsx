@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CardDefinition, PieceAnchor } from '../types/deckChess';
 import {
   CANONICAL_90_CARDS,
+  CANONICAL_180_CARDS,
   EXPANDED_LIBRARY,
   PIECE_COLOR_THEMES,
   STARTER_DECK,
@@ -130,17 +131,20 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
     }
   };
 
-  // Filter available library using canonical 90-card catalog
-  const filteredLibrary = CANONICAL_90_CARDS.filter((card) => {
+  // Filter available library using canonical 180-card catalog
+  const filteredLibrary = CANONICAL_180_CARDS.filter((card) => {
     if (filterAnchor === 'all') return true;
     return card.anchor === filterAnchor;
   });
 
   const filterTabs = [
-    { key: 'all' as const, label: `All (${CANONICAL_90_CARDS.length})` },
-    { key: 'pawn' as const, label: `Pawn (${CANONICAL_90_CARDS.filter((c) => c.anchor === 'pawn').length})` },
-    { key: 'knight' as const, label: `Knight (${CANONICAL_90_CARDS.filter((c) => c.anchor === 'knight').length})` },
-    { key: 'bishop' as const, label: `Bishop (${CANONICAL_90_CARDS.filter((c) => c.anchor === 'bishop').length})` },
+    { key: 'all' as const, label: `All (${CANONICAL_180_CARDS.length})` },
+    { key: 'pawn' as const, label: `Pawn (${CANONICAL_180_CARDS.filter((c) => c.anchor === 'pawn').length})` },
+    { key: 'knight' as const, label: `Knight (${CANONICAL_180_CARDS.filter((c) => c.anchor === 'knight').length})` },
+    { key: 'bishop' as const, label: `Bishop (${CANONICAL_180_CARDS.filter((c) => c.anchor === 'bishop').length})` },
+    { key: 'rook' as const, label: `Rook (${CANONICAL_180_CARDS.filter((c) => c.anchor === 'rook').length})` },
+    { key: 'queen' as const, label: `Queen (${CANONICAL_180_CARDS.filter((c) => c.anchor === 'queen').length})` },
+    { key: 'king' as const, label: `King (${CANONICAL_180_CARDS.filter((c) => c.anchor === 'king').length})` },
   ];
 
   return (
@@ -289,6 +293,7 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
               <button
                 key={tab.key}
                 data-tab={tab.key}
+                data-testid={`filter-${tab.key}`}
                 onClick={() => setFilterAnchor(tab.key)}
                 className={`px-3 py-1 rounded text-xs font-semibold capitalize transition-colors cursor-pointer ${
                   filterAnchor === tab.key
