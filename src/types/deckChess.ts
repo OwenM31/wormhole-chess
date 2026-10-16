@@ -109,6 +109,7 @@ export interface CardDefinition {
   anchor: PieceAnchor;
   energyCost: number; // 1 to 3
   score?: number;
+  artId?: string;
   condition_type?: ConditionGenre;
   condition_exact?: string;
   effect_type?: EffectGenre;
