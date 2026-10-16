@@ -2,6 +2,7 @@ import { DeckChessEngine } from '../src/engine/DeckChessEngine';
 import { STARTER_DECK, EXPANDED_LIBRARY } from '../src/engine/cardGraph';
 import { Chess } from 'chess.js';
 import cardCatalog90 from '../src/engine/cards/cardCatalog90.json';
+import cardCatalogMajor90 from '../src/engine/cards/cardCatalogMajor90.json';
 
 let totalTests = 0;
 let passedTests = 0;
@@ -526,6 +527,79 @@ console.log('\nSuite 13: Unified Move Generation & Invariants');
   const execIntercept = rayPinEngine.makeEmpoweredMove(interceptMoves.find(m => m.to === 'c3')!);
   assert(execIntercept.success === true, 'Knight slid along pin ray to c3');
   assert(!rayPinEngine.inCheck(), 'Friendly King remains safe from check');
+}
+
+// ==========================================
+// Suite 14: Major Unit 90-Card Catalog & 180-Card Library
+// ==========================================
+console.log('\nSuite 14: Major Unit 90-Card Catalog & 180-Card Library');
+{
+  assert(Array.isArray(cardCatalogMajor90) && cardCatalogMajor90.length === 90, 'cardCatalogMajor90 contains exactly 90 cards');
+
+  const validConditions = ['Position', 'Neighbors', 'Lines', 'Threat', 'Blocked', 'Momentum'];
+  const validEffects = ['New Moves', 'Jump & Leap', 'Move Others', 'Special Captures', 'Walls & Shields', 'Spawning'];
+
+  let allFieldsValid = true;
+  let allNamesWithinLimit = true;
+  for (const card of cardCatalogMajor90) {
+    if (!card.id || !card.name || !card.piece || !card.anchor || !card.energyCost ||
+        !card.condition_type || !card.condition_exact || !card.effect_type || !card.effect_exact ||
+        !card.description || !card.image_description) {
+      allFieldsValid = false;
+      break;
+    }
+    if (!validConditions.includes(card.condition_type) || !validEffects.includes(card.effect_type)) {
+      allFieldsValid = false;
+      break;
+    }
+    const nameToCheck = (card as any).card_name || card.name;
+    if (nameToCheck.length > 21) {
+      allNamesWithinLimit = false;
+      break;
+    }
+  }
+  assert(allFieldsValid, 'All 90 Major Unit cards possess all required contract fields adhering to 6x6 genres');
+  assert(allNamesWithinLimit, 'All 90 Major Unit card names are 21 characters or less');
+
+  // Verify distribution per piece
+  const majorPieces = ['Rook', 'Queen', 'King'] as const;
+  for (const piece of majorPieces) {
+    const cards = cardCatalogMajor90.filter(c => c.piece === piece);
+    assert(cards.length === 30, `${piece} has exactly 30 canonical cards`);
+
+    const cost1 = cards.filter(c => c.energyCost === 1).length;
+    const cost2 = cards.filter(c => c.energyCost === 2).length;
+    const cost3 = cards.filter(c => c.energyCost === 3).length;
+    assert(cost1 === 12 && cost2 === 12 && cost3 === 6, `${piece} adheres to 12 / 12 / 6 energy cost curve (1⚡: ${cost1}, 2⚡: ${cost2}, 3⚡: ${cost3})`);
+  }
+
+  // Verify Condition Exclusion and Specialization Invariants (Major Units 3-Cycle)
+  // Rook (Excludes Position, Good at Neighbors: Walls & Shields + Move Others)
+  const rookPos = cardCatalogMajor90.filter(c => c.piece === 'Rook' && c.condition_type === 'Position');
+  assert(rookPos.length === 0, 'Rook excludes Position condition (Major Cycle Invariant)');
+  const rookNeighbors = cardCatalogMajor90.filter(c => c.piece === 'Rook' && c.condition_type === 'Neighbors');
+  assert(rookNeighbors.length === 10, 'Rook specializes in Neighbors (10 cards)');
+  const rookWalls = rookNeighbors.filter(c => c.effect_type === 'Walls & Shields').length;
+  const rookMoveOthers = rookNeighbors.filter(c => c.effect_type === 'Move Others').length;
+  assert(rookWalls === 5 && rookMoveOthers === 5, 'Rook Neighbors splits evenly: 5 Walls & Shields, 5 Move Others');
+
+  // Queen (Excludes Neighbors, Good at Threat: Special Captures + Jump & Leap)
+  const queenNeighbors = cardCatalogMajor90.filter(c => c.piece === 'Queen' && c.condition_type === 'Neighbors');
+  assert(queenNeighbors.length === 0, 'Queen excludes Neighbors condition (Major Cycle Invariant)');
+  const queenThreat = cardCatalogMajor90.filter(c => c.piece === 'Queen' && c.condition_type === 'Threat');
+  assert(queenThreat.length === 10, 'Queen specializes in Threat (10 cards)');
+  const queenSpecialCaptures = queenThreat.filter(c => c.effect_type === 'Special Captures').length;
+  const queenJumpLeap = queenThreat.filter(c => c.effect_type === 'Jump & Leap').length;
+  assert(queenSpecialCaptures === 5 && queenJumpLeap === 5, 'Queen Threat splits evenly: 5 Special Captures, 5 Jump & Leap');
+
+  // King (Excludes Threat, Good at Position: Spawning + Walls & Shields)
+  const kingThreat = cardCatalogMajor90.filter(c => c.piece === 'King' && c.condition_type === 'Threat');
+  assert(kingThreat.length === 0, 'King excludes Threat condition (Major Cycle Invariant)');
+  const kingPosition = cardCatalogMajor90.filter(c => c.piece === 'King' && c.condition_type === 'Position');
+  assert(kingPosition.length === 10, 'King specializes in Position (10 cards)');
+  const kingSpawning = kingPosition.filter(c => c.effect_type === 'Spawning').length;
+  const kingWalls = kingPosition.filter(c => c.effect_type === 'Walls & Shields').length;
+  assert(kingSpawning === 5 && kingWalls === 5, 'King Position splits evenly: 5 Spawning, 5 Walls & Shields');
 }
 
 // ==========================================
