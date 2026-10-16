@@ -216,7 +216,7 @@ const containerStyle: React.CSSProperties = {
   width: '100vw',
   height: '100vh',
   overflow: 'hidden',
-  backgroundColor: '#090A0F',
+  backgroundColor: '#191B1D',
 };
 
 const overlayNavStyle: React.CSSProperties = {
@@ -228,6 +228,8 @@ const overlayNavStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '0.65rem',
   flexWrap: 'wrap',
+  maxWidth: 'calc(100vw - 2.5rem)',
+  boxSizing: 'border-box',
   padding: '6px 10px',
   backgroundColor: 'rgba(28, 30, 32, 0.88)',
   backdropFilter: 'blur(14px)',

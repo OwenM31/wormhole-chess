@@ -2294,8 +2294,6 @@ const ChessboardScene: React.FC<ChessboardSceneProps> = ({
               let piece = getPieceFromId(id);
               const isSelected = selectedPiece === id;
 
-              console.log("player " + player + ": " + color + " " + piece);
-
               const props = {
                 id,
                 player,
@@ -2371,6 +2369,10 @@ const ChessboardScene: React.FC<ChessboardSceneProps> = ({
           zIndex: 50,
           display: "flex",
           alignItems: "center",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          maxWidth: "calc(100vw - 1.5rem)",
+          boxSizing: "border-box",
           gap: "6px",
           padding: "6px 8px",
           backgroundColor: "rgba(28, 30, 32, 0.88)",
