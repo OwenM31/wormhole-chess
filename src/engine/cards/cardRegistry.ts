@@ -7,7 +7,7 @@ import {
   PieceAnchor,
 } from '../../types/deckChess';
 import { DeckChessEngine } from '../DeckChessEngine';
-import { getCardById } from '../cardGraph';
+import { getCardById, CANONICAL_180_CARDS } from '../cardGraph';
 
 export interface CardBehaviorHandler {
   cardId: string;
@@ -1363,3 +1363,797 @@ registerCardHandler({
     return { success: true };
   },
 });
+
+// ==========================================
+// 25. Rook Railgun Bolt (rook_railgun_bolt)
+// ==========================================
+registerCardHandler({
+  cardId: 'rook_railgun_bolt',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'r' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const directions = [
+      [1, 0], [-1, 0], [0, 1], [0, -1]
+    ];
+    const targets: string[] = [];
+
+    for (const [df, dr] of directions) {
+      let step = 1;
+      let blockers = 0;
+      while (true) {
+        const sq = CardUtils.getSquare(coords.file + df * step, coords.rank + dr * step);
+        if (!sq) break;
+        const p = engine.getPiece(sq);
+        if (p) {
+          if (blockers === 0) {
+            blockers++;
+          } else {
+            // Second piece encountered
+            if (p.color !== turn && p.type !== 'k' && !engine.isSquareShielded(sq, p.color)) {
+              targets.push(sq);
+            }
+            break;
+          }
+        }
+        step++;
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must target an enemy piece lined up behind 1 blocker' };
+    }
+    const enemy = engine.getPiece(dest);
+    if (enemy && enemy.type !== 'k') {
+      const chess = engine.getInternalChess();
+      chess.remove(dest as Square);
+      engine.addToPlayerGraveyard(enemy.color, enemy.type);
+    }
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 26. Rook Counter Battery (rook_counter_battery)
+// ==========================================
+registerCardHandler({
+  cardId: 'rook_counter_battery',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'r' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const directions = [
+      [1, 0], [-1, 0], [0, 1], [0, -1]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of directions) {
+      let step = 1;
+      while (true) {
+        const sq = CardUtils.getSquare(coords.file + df * step, coords.rank + dr * step);
+        if (!sq) break;
+        const p = engine.getPiece(sq);
+        if (p) {
+          if (p.color !== turn && p.type === 'r' && !engine.isSquareShielded(sq, p.color)) {
+            targets.push(sq);
+          }
+          break;
+        }
+        step++;
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must target an aligned enemy Rook' };
+    }
+    const enemy = engine.getPiece(dest);
+    if (enemy && enemy.type !== 'k') {
+      const chess = engine.getInternalChess();
+      chess.remove(dest as Square);
+      engine.addToPlayerGraveyard(enemy.color, enemy.type);
+    }
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 27. Rook Turret Traverse (rook_turret_traverse)
+// ==========================================
+registerCardHandler({
+  cardId: 'rook_turret_traverse',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'r' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const diagonals = [
+      [1, 1], [1, -1], [-1, 1], [-1, -1]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of diagonals) {
+      const sq = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+      if (sq && !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq)) {
+        targets.push(sq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must step 1 diagonal square onto empty square' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No rook at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 28. Rook Siege Hurdle (rook_siege_hurdle)
+// ==========================================
+registerCardHandler({
+  cardId: 'rook_siege_hurdle',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'r' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const directions = [
+      [1, 0], [-1, 0], [0, 1], [0, -1]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of directions) {
+      let sawBlocker = false;
+      for (let step = 1; step <= 4; step++) {
+        const sq = CardUtils.getSquare(coords.file + df * step, coords.rank + dr * step);
+        if (!sq) break;
+        const p = engine.getPiece(sq);
+        if (!sawBlocker) {
+          if (p) sawBlocker = true;
+        } else {
+          if (!p && !engine.isSquareBlockedByBarrier(sq)) {
+            targets.push(sq);
+          } else {
+            break;
+          }
+        }
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must leap over 1 blocker onto empty square' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No rook at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 29. Rook Trench Shift (rook_trench_shift)
+// ==========================================
+registerCardHandler({
+  cardId: 'rook_trench_shift',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'r' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const targets: string[] = [];
+    for (const df of [-1, 1]) {
+      const sq = CardUtils.getSquare(coords.file + df, coords.rank);
+      if (sq) {
+        const p = engine.getPiece(sq);
+        if (p && p.color === turn && p.type === 'p') {
+          targets.push(sq);
+        }
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must target an adjacent friendly pawn' };
+    }
+    const rook = engine.getPiece(anchorSquare);
+    const pawn = engine.getPiece(dest);
+    if (!rook || !pawn) return { success: false, error: 'Pieces missing for Trench Shift' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.remove(dest as Square);
+    chess.put(rook, dest as Square);
+    chess.put(pawn, anchorSquare as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 30. Queen Counter Smite (queen_counter_smite)
+// ==========================================
+registerCardHandler({
+  cardId: 'queen_counter_smite',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'q' || piece.color !== turn) return [];
+    const targets: string[] = [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const dist = Math.max(Math.abs(f - coords.file), Math.abs(r - coords.rank));
+        if (dist >= 1 && dist <= 4) {
+          const sq = CardUtils.getSquare(f, r);
+          if (sq) {
+            const p = engine.getPiece(sq);
+            if (p && p.color !== turn && (p.type === 'n' || p.type === 'b') && !engine.isSquareShielded(sq, p.color)) {
+              targets.push(sq);
+            }
+          }
+        }
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must target an enemy minor piece in range' };
+    }
+    const enemy = engine.getPiece(dest);
+    if (enemy && enemy.type !== 'k') {
+      const chess = engine.getInternalChess();
+      chess.remove(dest as Square);
+      engine.addToPlayerGraveyard(enemy.color, enemy.type);
+    }
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 31. Queen Apex Skewer (queen_apex_skewer)
+// ==========================================
+registerCardHandler({
+  cardId: 'queen_apex_skewer',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'q' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const directions = [
+      [1, 0], [-1, 0], [0, 1], [0, -1],
+      [1, 1], [1, -1], [-1, 1], [-1, -1]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of directions) {
+      let step = 1;
+      let blockers = 0;
+      while (true) {
+        const sq = CardUtils.getSquare(coords.file + df * step, coords.rank + dr * step);
+        if (!sq) break;
+        const p = engine.getPiece(sq);
+        if (p) {
+          if (blockers === 0) {
+            blockers++;
+          } else {
+            if (p.color !== turn && p.type !== 'k' && !engine.isSquareShielded(sq, p.color)) {
+              targets.push(sq);
+            }
+            break;
+          }
+        }
+        step++;
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must target lined-up enemy piece' };
+    }
+    const enemy = engine.getPiece(dest);
+    if (enemy && enemy.type !== 'k') {
+      const chess = engine.getInternalChess();
+      chess.remove(dest as Square);
+      engine.addToPlayerGraveyard(enemy.color, enemy.type);
+    }
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 32. Queen Phase Evasion (queen_phase_evasion)
+// ==========================================
+registerCardHandler({
+  cardId: 'queen_phase_evasion',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'q' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const directions = [
+      [1, 0], [-1, 0], [0, 1], [0, -1],
+      [1, 1], [1, -1], [-1, 1], [-1, -1]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of directions) {
+      let sawBlocker = false;
+      for (let step = 1; step <= 3; step++) {
+        const sq = CardUtils.getSquare(coords.file + df * step, coords.rank + dr * step);
+        if (!sq) break;
+        const p = engine.getPiece(sq);
+        if (!sawBlocker) {
+          if (p) sawBlocker = true;
+        } else {
+          if (!p && !engine.isSquareBlockedByBarrier(sq)) {
+            targets.push(sq);
+          } else {
+            break;
+          }
+        }
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must phase-jump over 1 piece onto empty square' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No queen at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 33. Queen Amazon Hop (queen_amazon_hop)
+// ==========================================
+registerCardHandler({
+  cardId: 'queen_amazon_hop',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'q' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const knightMoves = [
+      [2, 1], [2, -1], [-2, 1], [-2, -1],
+      [1, 2], [1, -2], [-1, 2], [-1, -2]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of knightMoves) {
+      const sq = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+      if (sq && !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq)) {
+        targets.push(sq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must make a knight leap onto empty square' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No queen at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 34. Queen Camel Stride (queen_camel_stride)
+// ==========================================
+registerCardHandler({
+  cardId: 'queen_camel_stride',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'q' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const camelMoves = [
+      [3, 1], [3, -1], [-3, 1], [-3, -1],
+      [1, 3], [1, -3], [-1, 3], [-1, -3]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of camelMoves) {
+      const sq = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+      if (sq && !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq)) {
+        targets.push(sq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must make a camel leap onto empty square' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No queen at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 35. King Keep Garrison (king_keep_garrison)
+// ==========================================
+registerCardHandler({
+  cardId: 'king_keep_garrison',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'k' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const homeRank = turn === 'w' ? 0 : 7;
+    const spawnRank = turn === 'w' ? 1 : 6;
+    if (coords.rank !== homeRank) return [];
+
+    const targets: string[] = [];
+    for (const df of [-1, 0, 1]) {
+      const sq = CardUtils.getSquare(coords.file + df, spawnRank);
+      if (sq && !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq) && CardUtils.isValidPawnSquare(sq)) {
+        targets.push(sq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must spawn on empty home 2nd rank square in front of King' };
+    }
+    const turn = engine.getTurn();
+    const chess = engine.getInternalChess();
+    chess.put({ type: 'p', color: turn }, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 36. King Sanctuary Hop (king_sanctuary_hop)
+// ==========================================
+registerCardHandler({
+  cardId: 'king_sanctuary_hop',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'k' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const hops = [
+      [2, 0], [-2, 0], [0, 2], [0, -2],
+      [2, 2], [2, -2], [-2, 2], [-2, -2]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of hops) {
+      const midSq = CardUtils.getSquare(coords.file + df / 2, coords.rank + dr / 2);
+      const destSq = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+      if (midSq && destSq && engine.getPiece(midSq) && !engine.getPiece(destSq) && !engine.isSquareBlockedByBarrier(destSq)) {
+        targets.push(destSq);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must hop 2 squares over a piece to an empty square' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No king at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 37. King Royal Stride (king_royal_stride)
+// ==========================================
+registerCardHandler({
+  cardId: 'king_royal_stride',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'k' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const strides = [
+      [2, 0], [-2, 0], [0, 2], [0, -2]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of strides) {
+      const step1 = CardUtils.getSquare(coords.file + df / 2, coords.rank + dr / 2);
+      const step2 = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+      if (step1 && step2 && !engine.getPiece(step1) && !engine.getPiece(step2) && !engine.isSquareBlockedByBarrier(step1) && !engine.isSquareBlockedByBarrier(step2)) {
+        targets.push(step2);
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must step 2 squares orthogonally along open path' };
+    }
+    const piece = engine.getPiece(anchorSquare);
+    if (!piece) return { success: false, error: 'No king at anchor' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.put(piece, dest as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 38. King Bodyguard Switch (king_bodyguard_switch)
+// ==========================================
+registerCardHandler({
+  cardId: 'king_bodyguard_switch',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'k' || piece.color !== turn) return [];
+    return CardUtils.getAdjacentSquares(anchorSquare, true).filter((sq) => {
+      const p = engine.getPiece(sq);
+      return p && p.color === turn && (p.type === 'r' || p.type === 'n' || p.type === 'b');
+    });
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must switch with adjacent friendly officer' };
+    }
+    const king = engine.getPiece(anchorSquare);
+    const officer = engine.getPiece(dest);
+    if (!king || !officer) return { success: false, error: 'Missing pieces for bodyguard switch' };
+    const chess = engine.getInternalChess();
+    chess.remove(anchorSquare as Square);
+    chess.remove(dest as Square);
+    chess.put(king, dest as Square);
+    chess.put(officer, anchorSquare as Square);
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 39. King Royal Judgement (king_royal_judgement)
+// ==========================================
+registerCardHandler({
+  cardId: 'king_royal_judgement',
+  getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    const piece = engine.getPiece(anchorSquare);
+    const turn = engine.getTurn();
+    if (!piece || piece.type !== 'k' || piece.color !== turn) return [];
+    const coords = CardUtils.getCoords(anchorSquare);
+    const directions = [
+      [1, 0], [-1, 0], [0, 1], [0, -1]
+    ];
+    const targets: string[] = [];
+    for (const [df, dr] of directions) {
+      for (let step = 1; step <= 3; step++) {
+        const sq = CardUtils.getSquare(coords.file + df * step, coords.rank + dr * step);
+        if (!sq) break;
+        const p = engine.getPiece(sq);
+        if (p) {
+          if (p.color !== turn && p.type !== 'k' && !engine.isSquareShielded(sq, p.color)) {
+            targets.push(sq);
+          }
+          break;
+        }
+      }
+    }
+    return targets;
+  },
+  execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+    const targets = this.getTargets(engine, anchorSquare);
+    const dest = targetSquare || targets[0];
+    if (!dest || !targets.includes(dest)) {
+      return { success: false, error: 'Must target enemy piece in range' };
+    }
+    const enemy = engine.getPiece(dest);
+    if (enemy && enemy.type !== 'k') {
+      const chess = engine.getInternalChess();
+      chess.remove(dest as Square);
+      engine.addToPlayerGraveyard(enemy.color, enemy.type);
+    }
+    return { success: true };
+  },
+});
+
+// ==========================================
+// 40. Generic Catalog Fallback Registry
+// Ensures all 180 canonical cards have a valid registered handler
+// ==========================================
+function registerRemainingCatalogCards(): void {
+  for (const card of CANONICAL_180_CARDS) {
+    if (getCardHandler(card.id)) continue;
+
+    registerCardHandler({
+      cardId: card.id,
+      getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+        const piece = engine.getPiece(anchorSquare);
+        const turn = engine.getTurn();
+        if (!piece || piece.color !== turn) return [];
+
+        const coords = CardUtils.getCoords(anchorSquare);
+
+        if (card.effect_type === 'Spawning') {
+          // Pawn spawning strictly on rank 2-7
+          const spawnRank = turn === 'w' ? 1 : 6;
+          const targets: string[] = [];
+          for (let df = -1; df <= 1; df++) {
+            const sq = CardUtils.getSquare(coords.file + df, spawnRank);
+            if (sq && !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq) && CardUtils.isValidPawnSquare(sq)) {
+              targets.push(sq);
+            }
+          }
+          return targets;
+        }
+
+        if (card.effect_type === 'Special Captures') {
+          // Scan in all 8 directions for first enemy piece (never King!)
+          const dirs = [
+            [1, 0], [-1, 0], [0, 1], [0, -1],
+            [1, 1], [1, -1], [-1, 1], [-1, -1]
+          ];
+          const targets: string[] = [];
+          for (const [df, dr] of dirs) {
+            for (let step = 1; step <= 3; step++) {
+              const sq = CardUtils.getSquare(coords.file + df * step, coords.rank + dr * step);
+              if (!sq) break;
+              const p = engine.getPiece(sq);
+              if (p) {
+                if (p.color !== turn && p.type !== 'k' && !engine.isSquareShielded(sq, p.color)) {
+                  targets.push(sq);
+                }
+                break;
+              }
+            }
+          }
+          return targets;
+        }
+
+        if (card.effect_type === 'Move Others') {
+          return CardUtils.getAdjacentSquares(anchorSquare, true).filter((sq) => {
+            const p = engine.getPiece(sq);
+            return p && p.color === turn && p.type !== 'k';
+          });
+        }
+
+        if (card.effect_type === 'Walls & Shields') {
+          return CardUtils.getAdjacentSquares(anchorSquare, true).filter((sq) => {
+            const p = engine.getPiece(sq);
+            return (p && p.color === turn) || (!p && !engine.isSquareBlockedByBarrier(sq));
+          });
+        }
+
+        // Default New Moves / Jump & Leap
+        const steps = [
+          [1, 0], [-1, 0], [0, 1], [0, -1],
+          [1, 1], [1, -1], [-1, 1], [-1, -1]
+        ];
+        const targets: string[] = [];
+        for (const [df, dr] of steps) {
+          const sq = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+          if (sq && !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq)) {
+            targets.push(sq);
+          }
+        }
+        return targets;
+      },
+      execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string): { success: boolean; error?: string } {
+        const targets = this.getTargets(engine, anchorSquare);
+        const dest = targetSquare || targets[0];
+        if (!dest || !targets.includes(dest)) {
+          return { success: false, error: `Invalid target for ${card.name}` };
+        }
+
+        const chess = engine.getInternalChess();
+        const piece = engine.getPiece(anchorSquare);
+        if (!piece) return { success: false, error: 'No piece at anchor' };
+
+        if (card.effect_type === 'Spawning') {
+          if (!CardUtils.isValidPawnSquare(dest)) {
+            return { success: false, error: 'Pawn cannot be spawned on rank 1 or 8' };
+          }
+          chess.put({ type: 'p', color: piece.color }, dest as Square);
+          return { success: true };
+        }
+
+        if (card.effect_type === 'Special Captures') {
+          const enemy = engine.getPiece(dest);
+          if (enemy && enemy.type !== 'k') {
+            chess.remove(dest as Square);
+            engine.addToPlayerGraveyard(enemy.color, enemy.type);
+            if (!card.effect_exact?.includes('In-Place') && !card.effect_exact?.includes('Ranged')) {
+              chess.remove(anchorSquare as Square);
+              chess.put(piece, dest as Square);
+            }
+          }
+          return { success: true };
+        }
+
+        if (card.effect_type === 'Move Others') {
+          const other = engine.getPiece(dest);
+          if (other) {
+            chess.remove(anchorSquare as Square);
+            chess.remove(dest as Square);
+            chess.put(piece, dest as Square);
+            chess.put(other, anchorSquare as Square);
+          }
+          return { success: true };
+        }
+
+        if (card.effect_type === 'Walls & Shields') {
+          const other = engine.getPiece(dest);
+          if (other) {
+            engine.addModifier({
+              id: `shield_${Date.now()}_${Math.random()}`,
+              type: 'shield',
+              square: dest,
+              ownerColor: piece.color,
+              turnsRemaining: 2,
+            });
+          } else {
+            engine.addModifier({
+              id: `barrier_${Date.now()}_${Math.random()}`,
+              type: 'barrier',
+              square: dest,
+              ownerColor: piece.color,
+              turnsRemaining: 2,
+            });
+          }
+          return { success: true };
+        }
+
+        // New Moves / Jump & Leap
+        chess.remove(anchorSquare as Square);
+        chess.put(piece, dest as Square);
+        return { success: true };
+      },
+    });
+  }
+}
+
+registerRemainingCatalogCards();

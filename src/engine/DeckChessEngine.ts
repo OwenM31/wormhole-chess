@@ -767,10 +767,16 @@ export class DeckChessEngine {
         const targets = handler.getTargets(this, sq);
         for (const target of targets) {
           let actionType: EmpoweredMove['actionType'] = 'move';
-          if (card.effect_type === 'Special Captures' && card.effect_exact?.includes('In-Place')) {
-            actionType = 'in_place';
-          } else if (card.effect_type === 'Special Captures' && card.effect_exact?.includes('Ranged')) {
+          if (
+            card.effect_type === 'Special Captures' &&
+            (card.effect_exact?.includes('Ranged') ||
+              card.effect_exact?.includes('Snipe') ||
+              card.effect_exact?.includes('Cannon Strike') ||
+              card.effect_exact?.includes('Bolt'))
+          ) {
             actionType = 'ranged_capture';
+          } else if (card.effect_type === 'Special Captures' && card.effect_exact?.includes('In-Place')) {
+            actionType = 'in_place';
           } else if (card.effect_type === 'Spawning') {
             actionType = 'spawn';
           } else if (card.effect_type === 'Walls & Shields') {
