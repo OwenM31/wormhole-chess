@@ -51,6 +51,7 @@ export const PIECE_COLOR_THEMES: Record<
 export const STARTER_DECK: CardDefinition[] = [
   {
     id: 'pawn_vanguard',
+    artId: 'pawn_vanguard_tow',
     name: 'Vanguard Advance',
     anchor: 'pawn',
     energyCost: 1,
@@ -61,6 +62,7 @@ export const STARTER_DECK: CardDefinition[] = [
   },
   {
     id: 'pawn_scuttle',
+    artId: 'pawn_tactical_retreat',
     name: 'Abandon Ship',
     anchor: 'pawn',
     energyCost: 1,
@@ -71,6 +73,7 @@ export const STARTER_DECK: CardDefinition[] = [
   },
   {
     id: 'knight_escort',
+    artId: 'knight_saddle_carry',
     name: 'Cavalry Escort',
     anchor: 'knight',
     energyCost: 2,
@@ -81,6 +84,7 @@ export const STARTER_DECK: CardDefinition[] = [
   },
   {
     id: 'knight_swap',
+    artId: 'knight_stable_swap',
     name: 'Dislocation Swap',
     anchor: 'knight',
     energyCost: 2,
@@ -92,6 +96,7 @@ export const STARTER_DECK: CardDefinition[] = [
   },
   {
     id: 'bishop_pierce',
+    artId: 'bishop_piercing_ray',
     name: 'Prism Ray',
     anchor: 'bishop',
     energyCost: 3,
@@ -102,6 +107,7 @@ export const STARTER_DECK: CardDefinition[] = [
   },
   {
     id: 'bishop_invert',
+    artId: 'bishop_color_shift',
     name: 'Color Inversion',
     anchor: 'bishop',
     energyCost: 2,
