@@ -79,7 +79,7 @@ export const DashboardPage: React.FC = () => {
       <div style={containerStyle}>
         <Navigation />
         <main style={{ ...mainContentStyle, textAlign: 'center', paddingTop: '6rem' }}>
-          <p style={{ color: '#94a3b8' }}>Loading profile...</p>
+          <p style={{ color: '#8B7E74' }}>Loading profile...</p>
         </main>
       </div>
     );
@@ -237,10 +237,10 @@ export const DashboardPage: React.FC = () => {
               </div>
             ) : filteredMatches.length === 0 ? (
               <div style={{ padding: '2.5rem 1.5rem', textAlign: 'center', color: '#94a3b8' }}>
-                <p style={{ margin: '0 0 0.5rem', fontWeight: 600, color: '#f8fafc' }}>
+                <p style={{ margin: '0 0 0.5rem', fontWeight: 600, color: '#FAF9F6' }}>
                   No match records found.
                 </p>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#8B7E74' }}>
                   Play a match in either mode to record move history and replay data.
                 </p>
               </div>
@@ -323,7 +323,7 @@ export const DashboardPage: React.FC = () => {
 
             {user.isGuest && (
               <div style={guestNoticeBoxStyle}>
-                <p style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+                <p style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', color: '#8B7E74', lineHeight: 1.4 }}>
                   Playing as guest. Create an account to sync stats across devices.
                 </p>
                 <Link to="/register" style={btnCreateAccountStyle}>
@@ -337,7 +337,7 @@ export const DashboardPage: React.FC = () => {
           <div style={statsGridStyle}>
             <div style={statBoxStyle}>
               <div style={statLabelStyle}>Rating</div>
-              <div style={{ ...statNumberStyle, color: '#38bdf8' }}>{eloRating}</div>
+              <div style={{ ...statNumberStyle, color: '#D4AF37' }}>{eloRating}</div>
             </div>
             <div style={statBoxStyle}>
               <div style={statLabelStyle}>Matches</div>
@@ -345,7 +345,7 @@ export const DashboardPage: React.FC = () => {
             </div>
             <div style={statBoxStyle}>
               <div style={statLabelStyle}>Win Rate</div>
-              <div style={{ ...statNumberStyle, color: '#4ade80' }}>{winRate}%</div>
+              <div style={{ ...statNumberStyle, color: '#FAF9F6' }}>{winRate}%</div>
             </div>
             <div style={statBoxStyle}>
               <div style={statLabelStyle}>Record</div>
@@ -380,8 +380,8 @@ export const DashboardPage: React.FC = () => {
 /* Styles adhering to locked tokens */
 const containerStyle: React.CSSProperties = {
   minHeight: '100vh',
-  backgroundColor: '#090a0f',
-  color: '#e2e8f0',
+  backgroundColor: '#191B1D',
+  color: '#FAF9F6',
   display: 'flex',
   flexDirection: 'column',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
@@ -405,15 +405,16 @@ const gridContainerStyle: React.CSSProperties = {
 };
 
 const panelStyle: React.CSSProperties = {
-  backgroundColor: '#0e1118',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
+  backgroundColor: '#24272A',
+  border: '1px solid rgba(139, 126, 116, 0.2)',
   borderRadius: '6px',
   overflow: 'hidden',
 };
 
 const panelHeaderStyle: React.CSSProperties = {
   padding: '0.85rem 1.15rem',
-  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+  backgroundColor: '#1C1E20',
+  borderBottom: '1px solid rgba(139, 126, 116, 0.16)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
@@ -426,7 +427,7 @@ const panelTitleStyle: React.CSSProperties = {
   fontWeight: 600,
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
-  color: '#94a3b8',
+  color: '#8B7E74',
 };
 
 const playGridStyle: React.CSSProperties = {
@@ -434,8 +435,8 @@ const playGridStyle: React.CSSProperties = {
 };
 
 const playCardStyle: React.CSSProperties = {
-  backgroundColor: '#0e1118',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
+  backgroundColor: '#24272A',
+  border: '1px solid rgba(139, 126, 116, 0.2)',
   borderRadius: '6px',
   padding: '1.25rem',
   display: 'flex',
@@ -458,21 +459,21 @@ const modeTagStyle: React.CSSProperties = {
   letterSpacing: '0.05em',
   padding: '0.15rem 0.45rem',
   borderRadius: '3px',
-  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  color: '#94a3b8',
-  border: '1px solid rgba(255, 255, 255, 0.07)',
+  backgroundColor: '#1C1E20',
+  color: '#8B7E74',
+  border: '1px solid rgba(139, 126, 116, 0.2)',
 };
 
 const playTitleStyle: React.CSSProperties = {
   fontSize: '1.05rem',
   fontWeight: 600,
-  color: '#f8fafc',
+  color: '#FAF9F6',
   margin: '0.35rem 0 0.35rem',
 };
 
 const playDescStyle: React.CSSProperties = {
   fontSize: '0.85rem',
-  color: '#94a3b8',
+  color: '#8B7E74',
   lineHeight: 1.45,
   margin: 0,
 };
@@ -481,8 +482,9 @@ const btnPlayPrimaryStyle: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  backgroundColor: '#2563eb',
-  color: '#ffffff',
+  backgroundColor: '#4C5C4C',
+  border: '1px solid rgba(76, 92, 76, 0.6)',
+  color: '#FAF9F6',
   textDecoration: 'none',
   fontSize: '0.85rem',
   fontWeight: 500,
@@ -495,20 +497,21 @@ const btnPlayPurpleStyle: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  backgroundColor: '#7c3aed',
-  color: '#ffffff',
+  backgroundColor: '#282B2E',
+  border: '1px solid rgba(212, 175, 55, 0.35)',
+  color: '#FAF9F6',
   textDecoration: 'none',
   fontSize: '0.85rem',
   fontWeight: 500,
   padding: '0.55rem 1rem',
   borderRadius: '4px',
-  transition: 'background-color 0.15s ease',
+  transition: 'background-color 0.15s ease, border-color 0.15s ease',
 };
 
 const filterBtnStyle: React.CSSProperties = {
   background: 'transparent',
   border: 'none',
-  color: '#94a3b8',
+  color: '#8B7E74',
   fontSize: '0.75rem',
   fontWeight: 500,
   padding: '0.25rem 0.65rem',
@@ -518,8 +521,9 @@ const filterBtnStyle: React.CSSProperties = {
 
 const activeFilterBtnStyle: React.CSSProperties = {
   ...filterBtnStyle,
-  background: 'rgba(255, 255, 255, 0.08)',
-  color: '#f8fafc',
+  background: '#1C1E20',
+  color: '#FAF9F6',
+  border: '1px solid rgba(212, 175, 55, 0.35)',
 };
 
 const matchRowStyle: React.CSSProperties = {
@@ -527,7 +531,7 @@ const matchRowStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: '0.75rem 1.15rem',
-  borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+  borderBottom: '1px solid rgba(139, 126, 116, 0.12)',
 };
 
 const matchMetaLeftStyle: React.CSSProperties = {
@@ -539,20 +543,20 @@ const matchMetaLeftStyle: React.CSSProperties = {
 const matchVariantStyle: React.CSSProperties = {
   fontSize: '0.85rem',
   fontWeight: 600,
-  color: '#f1f5f9',
+  color: '#FAF9F6',
 };
 
 const matchOpponentStyle: React.CSSProperties = {
   fontSize: '0.8rem',
-  color: '#94a3b8',
+  color: '#8B7E74',
 };
 
 const badgeWinStyle: React.CSSProperties = {
   fontSize: '0.7rem',
   fontWeight: 600,
-  color: '#4ade80',
-  backgroundColor: 'rgba(74, 222, 128, 0.1)',
-  border: '1px solid rgba(74, 222, 128, 0.25)',
+  color: '#FAF9F6',
+  backgroundColor: '#4C5C4C',
+  border: '1px solid rgba(76, 92, 76, 0.6)',
   borderRadius: '3px',
   padding: '0.15rem 0.45rem',
 };
@@ -560,9 +564,9 @@ const badgeWinStyle: React.CSSProperties = {
 const badgeLossStyle: React.CSSProperties = {
   fontSize: '0.7rem',
   fontWeight: 600,
-  color: '#f87171',
-  backgroundColor: 'rgba(248, 113, 113, 0.1)',
-  border: '1px solid rgba(248, 113, 113, 0.25)',
+  color: '#FAF9F6',
+  backgroundColor: '#AA4A44',
+  border: '1px solid rgba(170, 74, 68, 0.6)',
   borderRadius: '3px',
   padding: '0.15rem 0.45rem',
 };
@@ -570,9 +574,9 @@ const badgeLossStyle: React.CSSProperties = {
 const badgeDrawStyle: React.CSSProperties = {
   fontSize: '0.7rem',
   fontWeight: 600,
-  color: '#94a3b8',
-  backgroundColor: 'rgba(255, 255, 255, 0.06)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
+  color: '#8B7E74',
+  backgroundColor: 'rgba(139, 126, 116, 0.12)',
+  border: '1px solid rgba(139, 126, 116, 0.2)',
   borderRadius: '3px',
   padding: '0.15rem 0.45rem',
 };
@@ -585,15 +589,15 @@ const matchMetaRightStyle: React.CSSProperties = {
 
 const matchTimeStyle: React.CSSProperties = {
   fontSize: '0.75rem',
-  color: '#64748b',
+  color: '#6E665E',
   fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
   fontVariantNumeric: 'tabular-nums',
 };
 
 const btnReplayStyle: React.CSSProperties = {
-  background: 'transparent',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  color: '#cbd5e1',
+  background: '#1C1E20',
+  border: '1px solid rgba(139, 126, 116, 0.25)',
+  color: '#FAF9F6',
   fontSize: '0.75rem',
   padding: '0.25rem 0.65rem',
   borderRadius: '3px',
@@ -603,8 +607,8 @@ const btnReplayStyle: React.CSSProperties = {
 
 /* Right Column Styles */
 const profileCardStyle: React.CSSProperties = {
-  backgroundColor: '#0e1118',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
+  backgroundColor: '#24272A',
+  border: '1px solid rgba(139, 126, 116, 0.2)',
   borderRadius: '6px',
   padding: '1.25rem',
 };
@@ -619,25 +623,25 @@ const avatarCircleStyle: React.CSSProperties = {
   width: '44px',
   height: '44px',
   borderRadius: '6px',
-  backgroundColor: '#171b26',
-  border: '1px solid rgba(56, 189, 248, 0.2)',
+  backgroundColor: '#1C1E20',
+  border: '1px solid rgba(212, 175, 55, 0.35)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   fontWeight: 600,
   fontSize: '0.95rem',
-  color: '#38bdf8',
+  color: '#D4AF37',
 };
 
 const profileNameStyle: React.CSSProperties = {
   fontSize: '1rem',
   fontWeight: 600,
-  color: '#f8fafc',
+  color: '#FAF9F6',
 };
 
 const profileMetaStyle: React.CSSProperties = {
   fontSize: '0.75rem',
-  color: '#64748b',
+  color: '#8B7E74',
   marginTop: '0.15rem',
 };
 
@@ -646,9 +650,9 @@ const memberBadgeStyle: React.CSSProperties = {
   fontSize: '0.65rem',
   fontWeight: 600,
   textTransform: 'uppercase',
-  color: '#38bdf8',
-  backgroundColor: 'rgba(56, 189, 248, 0.08)',
-  border: '1px solid rgba(56, 189, 248, 0.2)',
+  color: '#D4AF37',
+  backgroundColor: 'rgba(212, 175, 55, 0.14)',
+  border: '1px solid rgba(212, 175, 55, 0.3)',
   borderRadius: '3px',
   padding: '0.1rem 0.4rem',
   marginLeft: '0.4rem',
@@ -659,9 +663,9 @@ const guestBadgeStyle: React.CSSProperties = {
   fontSize: '0.65rem',
   fontWeight: 600,
   textTransform: 'uppercase',
-  color: '#d29922',
-  backgroundColor: 'rgba(210, 153, 34, 0.1)',
-  border: '1px solid rgba(210, 153, 34, 0.25)',
+  color: '#8B7E74',
+  backgroundColor: 'rgba(139, 126, 116, 0.14)',
+  border: '1px solid rgba(139, 126, 116, 0.25)',
   borderRadius: '3px',
   padding: '0.1rem 0.4rem',
   marginLeft: '0.4rem',
@@ -670,8 +674,8 @@ const guestBadgeStyle: React.CSSProperties = {
 const guestNoticeBoxStyle: React.CSSProperties = {
   marginTop: '1rem',
   padding: '0.75rem',
-  backgroundColor: 'rgba(37, 99, 235, 0.08)',
-  border: '1px solid rgba(37, 99, 235, 0.2)',
+  backgroundColor: 'rgba(212, 175, 55, 0.08)',
+  border: '1px solid rgba(212, 175, 55, 0.2)',
   borderRadius: '4px',
 };
 
@@ -680,7 +684,7 @@ const btnCreateAccountStyle: React.CSSProperties = {
   textDecoration: 'none',
   fontSize: '0.75rem',
   fontWeight: 600,
-  color: '#38bdf8',
+  color: '#D4AF37',
 };
 
 const statsGridStyle: React.CSSProperties = {
@@ -690,8 +694,8 @@ const statsGridStyle: React.CSSProperties = {
 };
 
 const statBoxStyle: React.CSSProperties = {
-  backgroundColor: '#0e1118',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
+  backgroundColor: '#24272A',
+  border: '1px solid rgba(139, 126, 116, 0.2)',
   borderRadius: '6px',
   padding: '0.85rem 1rem',
 };
@@ -701,22 +705,22 @@ const statLabelStyle: React.CSSProperties = {
   fontWeight: 600,
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
-  color: '#64748b',
+  color: '#8B7E74',
   marginBottom: '0.35rem',
 };
 
 const statNumberStyle: React.CSSProperties = {
   fontSize: '1.4rem',
   fontWeight: 700,
-  color: '#f8fafc',
+  color: '#FAF9F6',
   lineHeight: 1.1,
   fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
   fontVariantNumeric: 'tabular-nums',
 };
 
 const loadoutBoxStyle: React.CSSProperties = {
-  backgroundColor: '#090a0f',
-  border: '1px dashed rgba(255, 255, 255, 0.1)',
+  backgroundColor: '#1C1E20',
+  border: '1px dashed rgba(139, 126, 116, 0.25)',
   borderRadius: '6px',
   padding: '1rem',
   textAlign: 'center',
@@ -725,13 +729,13 @@ const loadoutBoxStyle: React.CSSProperties = {
 const loadoutTitleStyle: React.CSSProperties = {
   fontSize: '0.8rem',
   fontWeight: 600,
-  color: '#cbd5e1',
+  color: '#FAF9F6',
   marginBottom: '0.25rem',
 };
 
 const loadoutDescStyle: React.CSSProperties = {
   fontSize: '0.75rem',
-  color: '#64748b',
+  color: '#8B7E74',
   marginBottom: '0.75rem',
 };
 
@@ -740,17 +744,17 @@ const btnManageDeckStyle: React.CSSProperties = {
   textDecoration: 'none',
   fontSize: '0.75rem',
   fontWeight: 500,
-  color: '#94a3b8',
-  backgroundColor: '#141722',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
+  color: '#FAF9F6',
+  backgroundColor: '#24272A',
+  border: '1px solid rgba(212, 175, 55, 0.35)',
   padding: '0.35rem 0.75rem',
   borderRadius: '4px',
   transition: 'all 0.15s ease',
 };
 
 const authPromptCardStyle: React.CSSProperties = {
-  backgroundColor: '#0e1118',
-  border: '1px solid rgba(255, 255, 255, 0.08)',
+  backgroundColor: '#24272A',
+  border: '1px solid rgba(139, 126, 116, 0.2)',
   borderRadius: '6px',
   padding: '3rem 2rem',
   maxWidth: '480px',
@@ -761,21 +765,22 @@ const titleStyle: React.CSSProperties = {
   fontSize: '1.5rem',
   fontWeight: 700,
   margin: '0 0 0.5rem',
-  color: '#f8fafc',
+  color: '#FAF9F6',
 };
 
 const descriptionStyle: React.CSSProperties = {
   fontSize: '0.9rem',
   lineHeight: 1.5,
-  color: '#94a3b8',
+  color: '#8B7E74',
   margin: '0 0 1.25rem',
 };
 
 const primaryBtnStyle: React.CSSProperties = {
   display: 'inline-block',
   textDecoration: 'none',
-  backgroundColor: '#10b981',
-  color: '#042f2e',
+  backgroundColor: '#4C5C4C',
+  color: '#FAF9F6',
+  border: '1px solid rgba(76, 92, 76, 0.6)',
   padding: '0.55rem 1.15rem',
   borderRadius: '4px',
   fontSize: '0.85rem',
@@ -785,9 +790,9 @@ const primaryBtnStyle: React.CSSProperties = {
 const secondaryBtnStyle: React.CSSProperties = {
   display: 'inline-block',
   textDecoration: 'none',
-  backgroundColor: '#141722',
-  color: '#cbd5e1',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
+  backgroundColor: '#1C1E20',
+  color: '#FAF9F6',
+  border: '1px solid rgba(139, 126, 116, 0.25)',
   padding: '0.55rem 1.15rem',
   borderRadius: '4px',
   fontSize: '0.85rem',

@@ -166,9 +166,9 @@ const navContainerStyle: React.CSSProperties = {
   justifyContent: 'space-between',
   padding: '0 1.5rem',
   height: '52px',
-  backgroundColor: '#0c0e14',
-  borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-  color: '#e2e8f0',
+  backgroundColor: '#1C1E20',
+  borderBottom: '1px solid rgba(139, 126, 116, 0.2)',
+  color: '#FAF9F6',
   boxSizing: 'border-box',
   position: 'sticky',
   top: 0,
@@ -189,7 +189,7 @@ const brandLinkStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '0.5rem',
   textDecoration: 'none',
-  color: '#f8fafc',
+  color: '#FAF9F6',
   fontWeight: 700,
   fontSize: '0.95rem',
   letterSpacing: '-0.01em',
@@ -198,9 +198,9 @@ const brandLinkStyle: React.CSSProperties = {
 const brandBadgeStyle: React.CSSProperties = {
   fontSize: '0.7rem',
   fontWeight: 600,
-  backgroundColor: 'rgba(56, 189, 248, 0.12)',
-  color: '#38bdf8',
-  border: '1px solid rgba(56, 189, 248, 0.25)',
+  backgroundColor: 'rgba(212, 175, 55, 0.14)',
+  color: '#D4AF37',
+  border: '1px solid rgba(212, 175, 55, 0.35)',
   borderRadius: '4px',
   padding: '0.1rem 0.4rem',
   letterSpacing: '0.02em',
@@ -214,18 +214,20 @@ const navLinksStyle: React.CSSProperties = {
 
 const linkStyle: React.CSSProperties = {
   textDecoration: 'none',
-  color: '#94a3b8',
+  color: '#8B7E74',
   fontSize: '0.85rem',
   fontWeight: 500,
   padding: '0.35rem 0.75rem',
   borderRadius: '4px',
   transition: 'all 0.15s ease',
+  border: '1px solid transparent',
 };
 
 const activeLinkStyle: React.CSSProperties = {
   ...linkStyle,
-  color: '#f8fafc',
-  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  color: '#FAF9F6',
+  backgroundColor: '#24272A',
+  border: '1px solid rgba(212, 175, 55, 0.35)',
 };
 
 const authContainerStyle: React.CSSProperties = {
@@ -235,7 +237,7 @@ const authContainerStyle: React.CSSProperties = {
 };
 
 const loadingTextStyle: React.CSSProperties = {
-  color: '#64748b',
+  color: '#8B7E74',
   fontSize: '0.8rem',
 };
 
@@ -250,9 +252,9 @@ const userPillLinkStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '0.5rem',
   textDecoration: 'none',
-  color: '#f1f5f9',
-  backgroundColor: 'rgba(255, 255, 255, 0.05)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
+  color: '#FAF9F6',
+  backgroundColor: '#24272A',
+  border: '1px solid rgba(139, 126, 116, 0.25)',
   padding: '0.35rem 0.75rem',
   borderRadius: '4px',
   fontSize: '0.8rem',
@@ -267,9 +269,9 @@ const monoTextStyle: React.CSSProperties = {
 
 const guestChipStyle: React.CSSProperties = {
   fontSize: '0.65rem',
-  backgroundColor: 'rgba(210, 153, 34, 0.15)',
-  color: '#d29922',
-  border: '1px solid rgba(210, 153, 34, 0.3)',
+  backgroundColor: 'rgba(212, 175, 55, 0.14)',
+  color: '#D4AF37',
+  border: '1px solid rgba(212, 175, 55, 0.3)',
   borderRadius: '3px',
   padding: '0.05rem 0.35rem',
   fontWeight: 600,
@@ -279,19 +281,21 @@ const guestChipStyle: React.CSSProperties = {
 
 const createAccountBtnStyle: React.CSSProperties = {
   textDecoration: 'none',
-  color: '#f8fafc',
-  backgroundColor: '#2563eb',
+  color: '#FAF9F6',
+  backgroundColor: '#24272A',
+  border: '1px solid rgba(212, 175, 55, 0.35)',
   padding: '0.35rem 0.75rem',
   borderRadius: '4px',
   fontSize: '0.8rem',
   fontWeight: 500,
-  transition: 'background-color 0.15s ease',
+  transition: 'background-color 0.15s ease, border-color 0.15s ease',
 };
 
 const signInButtonStyle: React.CSSProperties = {
   textDecoration: 'none',
-  color: '#ffffff',
-  backgroundColor: '#10b981',
+  color: '#FAF9F6',
+  backgroundColor: '#4C5C4C',
+  border: '1px solid rgba(76, 92, 76, 0.6)',
   padding: '0.4rem 0.85rem',
   borderRadius: '4px',
   fontSize: '0.85rem',
@@ -302,7 +306,7 @@ const signInButtonStyle: React.CSSProperties = {
 const signOutButtonStyle: React.CSSProperties = {
   background: 'transparent',
   border: 'none',
-  color: '#94a3b8',
+  color: '#8B7E74',
   padding: '0.35rem 0.5rem',
   borderRadius: '4px',
   fontSize: '0.8rem',
@@ -311,10 +315,10 @@ const signOutButtonStyle: React.CSSProperties = {
 };
 
 const soundToggleButtonStyle: React.CSSProperties = {
-  background: 'transparent',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
+  background: '#24272A',
+  border: '1px solid rgba(139, 126, 116, 0.25)',
   borderRadius: '4px',
-  color: '#94a3b8',
+  color: '#8B7E74',
   fontSize: '0.85rem',
   width: '32px',
   height: '32px',
