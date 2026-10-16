@@ -11,6 +11,7 @@ import {
 import { Chess } from 'chess.js';
 import cardCatalog90 from '../src/engine/cards/cardCatalog90.json';
 import cardCatalogMajor90 from '../src/engine/cards/cardCatalogMajor90.json';
+import { PieceAnchor } from '../src/types/deckChess';
 
 let totalTests = 0;
 let passedTests = 0;
@@ -774,6 +775,144 @@ console.log('\nSuite 15: Major Unit Handlers & Royal Invariant Suite');
     }
   }
   assert(rank2to7Valid, 'Pawn spawning targets for all Spawning cards are strictly between rank 2 and 7');
+}
+
+// ==========================================
+// Suite 16: Phase 1 Schema, Length & Zero-Ellipsis Contract Verification
+// ==========================================
+console.log('Suite 16: Phase 1 Schema, Length & Zero-Ellipsis Contract Verification');
+{
+  assert(CANONICAL_180_CARDS.length === 180, 'Exactly 180 cards across CANONICAL_180_CARDS');
+  assert(CANONICAL_90_CARDS.length === 90, 'cardCatalog90 exports exactly 90 Minor Unit cards');
+  assert(CANONICAL_MAJOR_90_CARDS.length === 90, 'cardCatalogMajor90 exports exactly 90 Major Unit cards');
+
+  const curlyQuotesRegex = /[\u2018\u2019\u201C\u201D]/;
+
+  // Minor Units checks
+  let minorSchemaValid = true;
+  let minorArtIdMatch = true;
+  let minorNamesValid = true;
+  let minorDescValid = true;
+  let minorNoEllipses = true;
+  let minorTypographyValid = true;
+
+  for (const card of CANONICAL_90_CARDS) {
+    if (
+      !card.id ||
+      !card.name ||
+      !card.anchor ||
+      !card.energyCost ||
+      !card.condition_type ||
+      !card.condition_exact ||
+      !card.effect_type ||
+      !card.effect_exact ||
+      !card.description ||
+      !card.image_description ||
+      !card.artId
+    ) {
+      minorSchemaValid = false;
+    }
+    if (card.artId !== card.id) minorArtIdMatch = false;
+    if (card.name.length > 21) minorNamesValid = false;
+    if (card.description.length > 120) minorDescValid = false;
+    if (card.name.includes('...') || card.description.includes('...')) minorNoEllipses = false;
+    if (
+      curlyQuotesRegex.test(card.name) ||
+      curlyQuotesRegex.test(card.description) ||
+      card.name.includes('  ') ||
+      card.description.includes('  ') ||
+      card.name.trim() !== card.name ||
+      card.description.trim() !== card.description
+    ) {
+      minorTypographyValid = false;
+    }
+  }
+
+  assert(minorSchemaValid, 'Minor Units: Complete non-empty contract schema and artId');
+  assert(minorArtIdMatch, 'Minor Units: artId matches card.id across all 90 cards');
+  assert(minorNamesValid, 'Minor Units: Card titles are <= 21 characters');
+  assert(minorDescValid, 'Minor Units: Card descriptions are <= 120 characters');
+  assert(minorNoEllipses, 'Minor Units: Zero-Ellipsis Rule (no ellipses in names or descriptions)');
+  assert(minorTypographyValid, 'Minor Units: Clean typography (no curly quotes, double spaces, or trailing spaces)');
+
+  // Major Units checks
+  let majorSchemaValid = true;
+  let majorArtIdMatch = true;
+  let majorNamesValid = true;
+  let majorDescValid = true;
+  let majorNoEllipses = true;
+  let majorTypographyValid = true;
+
+  for (const card of CANONICAL_MAJOR_90_CARDS) {
+    if (
+      !card.id ||
+      !card.name ||
+      !card.anchor ||
+      !card.energyCost ||
+      !card.condition_type ||
+      !card.condition_exact ||
+      !card.effect_type ||
+      !card.effect_exact ||
+      !card.description ||
+      !card.image_description ||
+      !card.artId
+    ) {
+      majorSchemaValid = false;
+    }
+    if (card.artId !== card.id) majorArtIdMatch = false;
+    if (card.name.length > 21) majorNamesValid = false;
+    if (card.description.length > 120) majorDescValid = false;
+    if (card.name.includes('...') || card.description.includes('...')) majorNoEllipses = false;
+    if (
+      curlyQuotesRegex.test(card.name) ||
+      curlyQuotesRegex.test(card.description) ||
+      card.name.includes('  ') ||
+      card.description.includes('  ') ||
+      card.name.trim() !== card.name ||
+      card.description.trim() !== card.description
+    ) {
+      majorTypographyValid = false;
+    }
+  }
+
+  assert(majorSchemaValid, 'Major Units: Complete non-empty contract schema and artId');
+  assert(majorArtIdMatch, 'Major Units: artId matches card.id across all 90 cards');
+  assert(majorNamesValid, 'Major Units: Card titles are <= 21 characters');
+  assert(majorDescValid, 'Major Units: Card descriptions are <= 120 characters');
+  assert(majorNoEllipses, 'Major Units: Zero-Ellipsis Rule (no ellipses in names or descriptions)');
+  assert(majorTypographyValid, 'Major Units: Clean typography (no curly quotes, double spaces, or trailing spaces)');
+
+  // All 180 Unified Checks
+  const pieces: PieceAnchor[] = ['pawn', 'knight', 'bishop', 'rook', 'queen', 'king'];
+  for (const piece of pieces) {
+    const cards = CANONICAL_180_CARDS.filter((c) => c.anchor === piece);
+    assert(cards.length === 30, `${piece} has exactly 30 cards`);
+
+    const cost1 = cards.filter((c) => c.energyCost === 1).length;
+    const cost2 = cards.filter((c) => c.energyCost === 2).length;
+    const cost3 = cards.filter((c) => c.energyCost === 3).length;
+    assert(
+      cost1 === 12 && cost2 === 12 && cost3 === 6,
+      `${piece} adheres to 12 / 12 / 6 energy cost curve (1⚡: ${cost1}, 2⚡: ${cost2}, 3⚡: ${cost3})`
+    );
+  }
+
+  // 3-Cycle Condition Exclusions
+  const exclusions: Record<PieceAnchor, string> = {
+    pawn: 'Momentum',
+    knight: 'Lines',
+    bishop: 'Blocked',
+    rook: 'Position',
+    queen: 'Neighbors',
+    king: 'Threat',
+  };
+
+  for (const piece of pieces) {
+    const excludedGenre = exclusions[piece];
+    const cards = CANONICAL_180_CARDS.filter((c) => c.anchor === piece);
+    const hasExcluded = cards.some((c) => c.condition_type === excludedGenre);
+    assert(!hasExcluded, `${piece} strictly excludes ${excludedGenre} condition genre`);
+  }
 }
 
 // ==========================================
