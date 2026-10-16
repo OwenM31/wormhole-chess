@@ -48,6 +48,10 @@ Bridge the gap between architectural research and task planning by establishing 
 
 ## 2. Niche Benchmark & Aesthetic Research
 
+> [!IMPORTANT]
+> **Skill Activation: frontend-designer**
+> Read and apply `.agent/skills/frontend-designer/SKILL.md`. Ground visual and UX decisions in real-world benchmarks: extract 7 dimensions (including Zero-Fluff copy voice and 4-state patterns) before generating prototype variants.
+
 1. **Identify the Product Niche:**
    - Determine the aesthetic posture (e.g. high-end edtech, technical dev tool, fintech operations, modern SaaS).
 
@@ -56,13 +60,17 @@ Bridge the gap between architectural research and task planning by establishing 
      - [Awwwards](https://www.awwwards.com) / [Land-book](https://land-book.com) (marketing, storytelling, layout hierarchy)
      - [Refs.gallery](https://refs.gallery) / [Mobbin](https://mobbin.com) (real-world web applications, data density, settings, dashboards)
      - Direct benchmark products (Linear, Stripe, Vercel, Raycast, Apple, Notion)
-   - Identify 3–5 specific aesthetic features to incorporate (e.g. "subtle 1px border cards with inner glows", "tabular data with monospace figures", "warm stone neutral background with jade accents").
+   - Identify 5–7 specific benchmark features across visual styling, microcopy, and states:
+     - **Visual Aesthetic:** 1px borders, subtle drop shadows, typography scale, surface card elevation.
+     - **Microcopy Voice:** Terse scannable nouns, verb-first buttons, zero conversational fluff.
+     - **4-State Patterns:** Empty state illustration/CTA, skeleton shimmer grid, 3-part error banners.
 
 3. **Document Benchmark Findings:**
-   - Summarize the aesthetic direction in chat:
+   - Summarize the aesthetic and UX direction in chat:
      - **Typography:** Font pairing, display weights, letter-spacing.
      - **Palette:** Neutral scale, primary surface tint, brand accent.
      - **Surface Rhythm:** Corner radius, border treatment, spacing density.
+     - **Microcopy & Voice:** Terse, scannable nouns; action-verb buttons (no AI cheerleading).
 
 ---
 
@@ -75,7 +83,17 @@ For the target page(s), generate **3 to 5 distinctly different aesthetic variant
 - **Variant C (e.g. Modern Humanist):** Rounded cards (10-12px), warm neutral background, soft pill badges, friendly empty states.
 - **Variant D / E (if applicable):** Split-pane preview layout, floating control docks, or high-contrast accent themes.
 
-Ensure prototypes include realistic copy and formatted data (e.g., "$1,250.00" instead of "$1250", "Oct 15, 2026" instead of ISO strings).
+### Required Prototype Invariants (Skill: frontend-designer)
+1. **Zero-Fluff Microcopy:**
+   - Single or dual-word scannable headers (*"Payroll"*, *"Students"* — never conversational sentences).
+   - Strict action-verb button syntax (*"Approve Statement"*, *"Export CSV"* — never *"Click here to proceed"*).
+   - Zero AI cheerleading (*"Great job!"* or *"Oopsie daisy!"* are strictly forbidden).
+2. **The 4 Invariant Screen States:**
+   - Model the view across Loading (skeleton shimmer), Success (populated data), Empty (reassuring message + CTA), and Error (3-part plain language explanation).
+3. **Realistic Formatted Data:**
+   - Formatted currency (`$1,250.00` never `$1250`), formatted dates (`Oct 15, 2026` never raw ISO strings).
+4. **Button & Touch Targets:**
+   - Interactive targets minimum 44×44px hit areas on mobile viewports.
 
 ---
 
@@ -154,8 +172,14 @@ Once the user selects the winning variant (e.g. Variant B):
 
 3. **Promote Winning Prototype to Presentational UI Shell:**
    - Promote the winning visual layout into the target feature component path (e.g. `apps/web/src/pages/{feature}/{Page}.tsx`).
+   - Structure the component to accept clean, decoupled 4-state props:
+     - `isLoading?: boolean` (renders duration-matched skeleton shimmer or inline spinner)
+     - `isEmpty?: boolean` (renders reassuring empty state illustration with primary CTA)
+     - `error?: Error | string | null` (renders 3-part plain language error alert)
+     - `data?: T` (renders the populated data view)
+     - Action handlers (e.g. `onApprove`, `onExport`, `onRetry`)
    - Keep the component visually complete with mock props so it compiles cleanly.
-   - This UI Shell becomes the concrete visual foundation that `@plan.md` and `@execute.md` will wire to real API queries, mutations, and business logic.
+   - This UI Shell becomes the concrete visual foundation that `@plan.md` and `@execute.md` will wire to real API queries, mutations, and business logic without touching the approved styling.
 
 4. **Execute Rigorous Cleanup**:
    - Keep the reference image of the winner: rename `.agent/state/artifacts/design/variant_b.png` to `.agent/state/artifacts/design/phase_{N}_approved.png`.

@@ -99,6 +99,26 @@ researched_at: {date}
 ### {Topic 2}
 ...
 
+## Technical Architecture & Contracts
+
+> [!IMPORTANT]
+> **Skill Activation: data-architect**
+> If this phase touches databases, schemas, state transitions, financial calculations, or API contracts, read and apply `.agent/skills/data-architect/SKILL.md`. Formulate the 5-layer contract alignment table, state transition matrix, and immutable system invariants below before marking research complete.
+
+### 5-Layer Contract Alignment
+| Domain Concept | SQL DDL / Storage | Shared TypeScript | Runtime Validation (Zod) | API Request/Response DTO | Form / Client State |
+|---|---|---|---|---|---|
+| {Concept} | {SQL type} | {TS type} | {Zod schema} | {DTO field} | {UI display} |
+
+### State Transition Matrix
+| Current State | Event: {Action 1} | Event: {Action 2} | Event: {Action 3} |
+|---|---|---|---|
+| {State A} | ➔ {Next State} | 400 {Error Code} | 400 {Error Code} |
+
+### Immutable System Invariants
+1. {Rule 1}: {Enforcement mechanism (e.g. database trigger, unique index, session context)}
+2. {Rule 2}: {Enforcement mechanism}
+
 ## Decisions Made
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
@@ -121,6 +141,7 @@ researched_at: {date}
 
 ## Ready for Planning
 - [x] Questions answered
+- [x] Contracts and invariants specified
 - [x] Approach selected
 - [x] Dependencies identified
 ```
@@ -160,3 +181,21 @@ Key findings:
 ```
 
 </process>
+
+<related>
+## Related
+
+### Workflows
+| Command | Relationship |
+|---|---|
+| `@discuss-phase.md` | Run before @research-phase to align on scope and business decisions |
+| `@design-phase.md` | Run after @research-phase if the phase has UI/frontend deliverables |
+| `@plan.md` | Run after @research-phase to decompose work into atomic execution plans |
+
+### Skills
+| Skill | Purpose |
+|---|---|
+| `data-architect` | Formulates 5-layer contracts, state transition matrices, and system invariants |
+| `context-fetch` | Efficient targeted search for documentation and library APIs |
+| `web-search` | Authoritative documentation lookup |
+</related>

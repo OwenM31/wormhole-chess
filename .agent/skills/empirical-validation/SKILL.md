@@ -15,7 +15,7 @@ description: Requires proof before marking work complete — no "trust me, it wo
 
 | Change Type | Required Validation | Tool |
 |-------------|---------------------|------|
-| **UI Changes** | Screenshot showing expected visual state | `browser_subagent` |
+| **UI Changes** | Screenshot showing expected visual state & 0 dead clicks | `playwright-cli` / browser tools |
 | **API Endpoints** | Command showing correct response | `run_command` |
 | **Build/Config** | Successful build or test output | `run_command` |
 | **Data Changes** | Query showing expected data state | `run_command` |
@@ -85,6 +85,7 @@ Never use these as justification for completion:
 This skill integrates with:
 - `/verify` — Primary workflow using this skill
 - `/execute` — Must validate before marking tasks complete
+- `/ux-sweep` — Exploratory visual & interaction sweeps
 - `PROJECT_RULES.md` — Empirical Validation enforcement
 
 ## Failure Handling

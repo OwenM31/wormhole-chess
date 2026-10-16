@@ -41,8 +41,8 @@ CORE EXECUTION
 @design-phase.md [N]       Research aesthetic benchmarks & generate 3-5 UI variants for user selection
 @plan.md [N]               Decompose phase N into atomic, wave-sequenced plans (2-3 tasks max)
 @execute.md [N]            Execute wave-by-wave with atomic task verification & commits
-@verify.md [N]             Validate phase deliverables against SPEC.md with empirical proof
-@ux-sweep.md [route]       Exploratory UX sweep: dead buttons, broken wiring, visual AI-slop
+@verify.md [N]             Validate phase deliverables against SPEC.md with 3-tier proof
+@ux-sweep.md [route] [--audit] Exploratory UX sweep & spec conformance audit (dead buttons, slop)
 @debug.md [issue]          Systematic 3-strike debugging with fresh subagent contexts
 @map.md                    Analyze existing codebase architecture → ARCHITECTURE.md
 
@@ -109,9 +109,11 @@ ARCHITECTURE & REASONING SKILLS
 ───────────────────────────────
 .agent/
 ├── workflows/   Callable playbooks (@plan.md, @execute.md, etc.)
-├── skills/      11 autonomous reasoning protocols (progressive disclosure):
-│                empirical-validation, debugger, verifier, codebase-mapper,
-│                planner, executor, plan-checker, token-budget, etc.
+├── skills/      16 autonomous reasoning protocols (progressive disclosure):
+│                • Planning & Execution: planner, plan-checker, executor, empirical-validation
+│                • Quality & UX: verifier, ux-sweeper, playwright-cli, debugger
+│                • Systems & Contracts: data-architect, test-engineer, frontend-designer, codebase-mapper
+│                • Context Hygiene: context-fetch, context-compressor, token-budget, context-health-monitor
 ├── harness/     Static rules (PROJECT_RULES.md, STYLE.md, templates, scripts)
 └── state/       Runtime memory (SPEC.md, ROADMAP.md, STATE.md, phases/)
 

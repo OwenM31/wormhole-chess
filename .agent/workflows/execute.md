@@ -159,9 +159,15 @@ For each wave in order:
 ### 6a. Execute Plans in Wave
 For each plan in the current wave:
 
-1. **Load plan context** — Read only the PLAN.md file
+1. **Load plan context** — Read the PLAN.md file and load targeted references from its `<context>` block:
+   - If `<context>` links to `RESEARCH.md`, extract the specific contract alignment table, state transition matrix, and invariants relevant to the current task.
+   - If `<context>` links to `STYLE.md` or `DESIGN_STATE.md`, load the required design tokens.
 2. **Context efficiency** — Follow `context-fetch` discipline: search before reading files. For files >100 lines, extract targeted sections or use outline mode (`context-compressor`) instead of loading full files.
 3. **Execute tasks** — Follow `<task>` blocks in order:
+   > [!IMPORTANT]
+   > **Skill Activation: test-engineer & data-architect**
+   > - **Contract-First Invariant:** If implementing logic against an existing specification test suite, your goal is to make all assertions pass green. **You are strictly forbidden from modifying test assertions to force a pass.** If a test fails, the implementation must be corrected.
+   > - **5-Layer Contract Parity:** Ensure types, Zod schemas, DTOs, and database mutations strictly honor the precision invariants (e.g. integer cents, basis points) and state transition rules defined in `RESEARCH.md`.
    - **For UI tasks:** If an approved presentational UI shell component was established by `@design-phase` (e.g. `src/pages/.../View.tsx`), do NOT rewrite styling or layout from scratch. Preserve the approved design tokens, cards, and structure; wire real data hooks, state management, and event mutations into the existing shell.
 4. **Verify each task** — Run `<verify>` commands
 5. **Commit per task:**
@@ -249,18 +255,21 @@ Output based on status:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- HARNESS ► PHASE {N} COMPLETE ✓
+ HARNESS ► PHASE {N} EXECUTION COMPLETE ✓
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 {X} plans executed
-Goal verified ✓
+Wave tasks complete.
 
 ───────────────────────────────────────────────────────
 
 ▶ Next Up
-Phase {N+1}: {Name}
 
-/plan {N+1}  — create execution plans
+/verify {N}    — validate deliverables against SPEC.md with 3-tier proof
+@ux-sweep.md   — (if UI deliverables) exploratory dead-button & anti-slop sweep
+
+Or proceed to next phase:
+/plan {N+1}    — create execution plans for Phase {N+1}
 /execute {N+1} — execute directly (if plans exist)
 
 ───────────────────────────────────────────────────────
@@ -270,10 +279,18 @@ Phase {N+1}: {Name}
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- HARNESS ► MILESTONE COMPLETE 🎉
+ HARNESS ► ALL PHASES EXECUTED 🎉
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-All phases completed and verified.
+All phase plans completed.
+
+───────────────────────────────────────────────────────
+
+▶ Next Up (Milestone Closeout)
+
+@verify.md {N}         — final phase verification audit
+@audit-milestone.md    — cross-phase deliverable audit & full UX sweep
+@complete-milestone.md — tag git release and archive milestone
 
 ───────────────────────────────────────────────────────
 ```
@@ -317,6 +334,8 @@ Gap closure plans created.
 | Skill | Purpose |
 |-------|---------|
 | `executor` | Detailed execution protocol |
+| `test-engineer` | Enforces contract-first TDD assertions without modification |
+| `data-architect` | Formulates contracts, state transition matrices, and system invariants |
 | `ux-sweeper` | Exploratory UX inspection & anti-slop heuristics |
 | `playwright-cli` | Headless browser automation & interaction driver |
 | `context-fetch` | Search-first file access |

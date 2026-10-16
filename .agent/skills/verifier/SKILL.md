@@ -216,19 +216,18 @@ Select-String -Path "src/**/*.ts" -Pattern "console\.log" -Context 2
 
 ---
 
-### Step 8: Identify Human Verification Needs
+### Step 8: Autonomous UX Sweep vs. True Human Checkpoints
 
-Some things can't be verified programmatically:
+> [!TIP]
+> **Automated Visual & Interaction Sweeps:**
+> Visual appearance, mobile layout blowout, and interactive user flows no longer require blind human manual testing. Run `@ux-sweep.md [route]` with `playwright-cli` to autonomously exercise buttons, capture screenshots, and detect visual AI-slop.
 
-**Always needs human:**
-- Visual appearance (does it look right?)
-- User flow completion
-- Real-time behavior (WebSocket, SSE)
-- External service integration
-- Performance feel
-- Error message clarity
+**Reserve Human Checkpoints Only For:**
+- Real third-party external integrations (live Stripe webhooks, physical SMS OTPs)
+- Production OAuth credential approvals
+- Subjective business brand alignment
 
-**Format:**
+**Format for True Human Checkpoints:**
 ```markdown
 ### 1. {Test Name}
 **Test:** {What to do}

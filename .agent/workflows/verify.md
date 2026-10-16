@@ -31,6 +31,8 @@ The verifier checks the CODEBASE, not SUMMARY claims.
 - `.agent/state/SPEC.md` — Original requirements
 - `.agent/state/ROADMAP.md` — Phase definition with must-haves
 - `.agent/state/phases/{phase}/*-SUMMARY.md` — What was implemented
+- `.agent/state/phases/{phase}/*-RESEARCH.md` or `.agent/state/ARCHITECTURE.md` — 5-layer contracts and precision invariants
+- `.agent/state/phases/{phase}/UI_SHELL_SPEC.md` — Visual & UI shell specifications (if UI phase)
 </context>
 
 <process>
@@ -41,6 +43,8 @@ Read:
 - Phase definition from `.agent/state/ROADMAP.md`
 - Original requirements from `.agent/state/SPEC.md`
 - All SUMMARY.md files from `.agent/state/phases/{phase}/`
+- Technical contracts and state transition matrices from `RESEARCH.md` or `ARCHITECTURE.md`
+- UI Shell specs and design decisions (if UI deliverables were produced)
 
 ---
 
@@ -50,48 +54,56 @@ From the phase definition, identify **must-haves** — requirements that MUST be
 
 ```markdown
 ### Must-Haves for Phase {N}
-1. {Requirement 1} — How to verify
-2. {Requirement 2} — How to verify
-3. {Requirement 3} — How to verify
+1. {Requirement 1} — Acceptance criteria
+2. {Requirement 2} — Acceptance criteria
+3. {Requirement 3} — Acceptance criteria
 ```
 
 ---
 
-## 3. Verify Each Must-Have
+## 3. Verify Each Must-Have (The 3-Tier Verification Triangle)
 
-For each must-have:
+> [!IMPORTANT]
+> **Skill Activation: verifier, test-engineer, data-architect**
+> Read and apply `.agent/skills/verifier/SKILL.md` (for wiring and evidence), `.agent/skills/test-engineer/SKILL.md` (for requirement-to-test traceability), and `.agent/skills/data-architect/SKILL.md` (for 5-layer contract parity).
 
-### 3a. Determine Verification Method
+For each must-have, apply the **3-Tier Verification Triangle**:
 
-| Type | Method | Evidence |
-|------|--------|----------|
-| API/Backend | Run curl or test command | Command output |
-| UI / Frontend | Run @ux-sweep.md [route] or browser tool | Screenshot & defect ledger |
-| Build | Run build command | Success output |
-| Tests | Run test suite | Test results |
-| File exists | Check filesystem | File listing |
-| Code behavior | Run specific scenario | Output |
-
-### 3b. Execute Verification
-
-Run the verification command/action.
-
-> [!TIP]
-> **For Frontend & UI Phases:**
-> Synthetic unit/mock tests can pass even when buttons are dead or layouts are broken. Run `@ux-sweep.md [route]` to perform an exploratory sweep, test interactive states, and check for visual AI-slop before marking UI must-haves verified.
-
-// turbo
-```bash
-# Example: Run tests
-npm test
+```
+           ▲  Tier 1: Requirement-to-Test Traceability
+          / \  (Named test assertions; no blanket "npm test passed")
+         /   \
+        /     \
+       / Tier 2 \  Tier 2: Entrypoint & Integration Wiring
+      /  Wiring  \ (Mounted in routes.tsx, server.ts, migrations; no orphaned dead code)
+     /────────────\
+    / Tier 3: Proof \  Tier 3: Contract Parity & Empirical Proof
+   /──────────────────\ (5-layer schema checks, @ux-sweep for UI, real terminal logs)
 ```
 
-### 3c. Record Evidence
+### Tier 1: Requirement-to-Test Traceability
+- A blanket "all tests pass" (`npm test` or `pytest`) is necessary but **never sufficient** on its own.
+- Every must-have requirement must explicitly map to a named test suite, test file, or test case authored during the phase (created via `test-engineer`).
+- Inspect the test file: verify that test assertions explicitly test the business rule or edge invariant, not mock trivialities.
+- If a must-have is verified via an explicit CLI/API verification command rather than a unit test, document the exact command and payload.
 
-For each must-have, record:
-- **Status:** PASS / FAIL
-- **Evidence:** Command output, screenshot path, etc.
-- **Notes:** Any observations
+### Tier 2: Entrypoint & Integration Wiring (Anti-Dead-Code)
+- Verify that newly created components, controllers, routes, models, or migrations are actually imported and wired into the application's runtime entrypoints:
+  - **Frontend / UI:** Is the component imported and mounted in `routes.tsx`, `App.tsx`, or rendered by an active parent view?
+  - **Backend / API:** Is the controller / endpoint registered in the Express / FastAPI / Nest router or server entrypoint (`server.ts`, `app.ts`)?
+  - **Database:** Are SQL migrations tracked, ordered, and registered in the migration pipeline?
+  - **State / Stores:** Are context providers / state stores mounted in the root application tree?
+- *Rule:* If a file exists on disk but has zero inbound references from active entrypoints, it is flagged as an **UNWIRED_DEAD_CODE** defect.
+
+### Tier 3: Contract Parity & Empirical Proof
+- **Contract & Precision Check:**
+  - Verify compliance with architectural invariants established in `RESEARCH.md` / `ARCHITECTURE.md` (e.g. integer cents, basis points, 5-layer schema types, state transition rules).
+- **Frontend / UI Deliverables:**
+  - Synthetic unit/mock tests can pass even when buttons are dead or layouts are broken.
+  - Run `@ux-sweep.md [route]` to perform an exploratory sweep, test interactive states, and check for visual AI-slop before marking UI must-haves verified.
+- **Empirical Evidence Capture:**
+  - Run the verification commands and capture real stdout, exit codes, or screenshot filepaths.
+  - Never accept synthetic or speculative claims.
 
 ---
 
@@ -111,20 +123,32 @@ verdict: PASS | FAIL | PARTIAL
 ## Summary
 {X}/{Y} must-haves verified
 
-## Must-Haves
+## Verification Matrix
+
+| Must-Have Requirement | Tier 1: Test Traceability | Tier 2: Entrypoint Wiring | Tier 3: Contract & Empirical Proof | Status |
+|-----------------------|---------------------------|---------------------------|-------------------------------------|--------|
+| {Requirement 1} | `tests/.../name.test.ts` | Imported in `routes.tsx` | Exit 0, integer cents verified | ✅ PASS |
+| {Requirement 2} | `tests/.../view.test.ts` | Mounted in `App.tsx` | @ux-sweep: 0 dead clicks, mobile OK | ✅ PASS |
+| {Requirement 3} | Missing test case | Not imported in entrypoint | Unwired stub detected | ❌ FAIL |
+
+## Detailed Must-Have Findings
 
 ### ✅ {Must-have 1}
-**Status:** PASS
-**Evidence:** 
+- **Status:** PASS
+- **Tier 1 (Test Traceability):** `tests/unit/payroll.test.ts#calculates_net_pay_in_cents` (PASS)
+- **Tier 2 (Entrypoint Wiring):** Route registered at `apps/web/src/routes.tsx#L45`
+- **Tier 3 (Contract & Proof):**
 ```
-{command output or description}
+$ npm test -- -t "calculates_net_pay_in_cents"
+PASS tests/unit/payroll.test.ts (1 passed, 0 failed)
 ```
 
 ### ❌ {Must-have 2}
-**Status:** FAIL
-**Reason:** {why it failed}
-**Expected:** {what should happen}
-**Actual:** {what happened}
+- **Status:** FAIL
+- **Reason:** {why it failed}
+- **Expected:** {what should happen}
+- **Actual:** {what happened}
+- **Evidence:** {command output or screenshot path}
 
 ## Verdict
 {PASS | FAIL | PARTIAL}
@@ -263,7 +287,9 @@ Never accept these as verification:
 ### Skills
 | Skill | Purpose |
 |-------|---------|
-| `verifier` | Detailed verification methodology |
+| `verifier` | Detailed verification methodology & 3-tier triangle |
+| `test-engineer` | Verifies requirement-to-test traceability & assertions |
+| `data-architect` | Verifies 5-layer schema and precision invariant parity |
 | `ux-sweeper` | Exploratory UX inspection & anti-slop heuristics |
 | `playwright-cli` | Headless browser automation & interaction driver |
 | `empirical-validation` | Evidence requirements |

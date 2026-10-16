@@ -7,7 +7,7 @@ updated: 2026-10-15T13:04:00Z
 # Roadmap
 
 > **Current Milestone:** v2.0 Visual Craft & Frontend Redesign
-> **Current Phase:** Phase 5 - Global Polish, Micro-interactions, Responsive Audit & Release
+> **Current Phase:** Phase 5 - Deck Builder Card Graph & Power Taxonomy
 > **Status:** 🔄 In Progress
 
 ## Milestone Goal
@@ -71,7 +71,18 @@ Systematically eliminate AI-slop across all user-facing screens, establish a dis
 
 ---
 
-### Phase 5: Global Polish, Micro-interactions, Responsive Audit & Release
+### Phase 5: Deck Builder Card Graph & Power Taxonomy
+**Status:** ⬜ Not Started
+**Objective:** Systematize the compositional multi-partite card graph across all pieces (King, Queen, Rook, Bishop, Knight, Pawn). Establish clear condition genres (position, relational, tactical, status) and thematic effect genres per piece (e.g., King = spawning/reinforcements, Bishop = movement augmentation/color-shift, etc.). Balance energy tiers (1⚡, 2⚡, 3⚡) with consistent distributions across pieces, implement the expanded card registry & handlers, and verify with comprehensive engine tests and UI hand bar integration.
+**Deliverables:**
+- Condition-to-effect genre taxonomy & energy distribution matrix across piece anchors
+- Formalized card definitions and behavior handlers in `src/engine/cards/cardRegistry.ts`
+- Engine invariant verification and expanded automated unit test suite
+- `TacticalHandBar.tsx` and `DeckBuilderView.tsx` UI catalog updates
+
+---
+
+### Phase 6: Global Polish, Micro-interactions, Responsive Audit & Release
 **Status:** ⬜ Not Started
 **Objective:** Conduct cross-page continuity audits, verify mobile and tablet responsive behaviors, add subtle micro-interactions/audio feedback, and deploy the updated frontend to Cloudflare Pages.
 **Deliverables:**
