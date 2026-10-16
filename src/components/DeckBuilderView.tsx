@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CardDefinition, PieceAnchor } from '../types/deckChess';
 import {
+  CANONICAL_90_CARDS,
   EXPANDED_LIBRARY,
   PIECE_COLOR_THEMES,
   STARTER_DECK,
@@ -129,20 +130,17 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
     }
   };
 
-  // Filter available library
-  const filteredLibrary = EXPANDED_LIBRARY.filter((card) => {
+  // Filter available library using canonical 90-card catalog
+  const filteredLibrary = CANONICAL_90_CARDS.filter((card) => {
     if (filterAnchor === 'all') return true;
     return card.anchor === filterAnchor;
   });
 
-  const anchors: (PieceAnchor | 'all')[] = [
-    'all',
-    'pawn',
-    'knight',
-    'bishop',
-    'rook',
-    'queen',
-    'king',
+  const filterTabs = [
+    { key: 'all' as const, label: `All (${CANONICAL_90_CARDS.length})` },
+    { key: 'pawn' as const, label: `Pawn (${CANONICAL_90_CARDS.filter((c) => c.anchor === 'pawn').length})` },
+    { key: 'knight' as const, label: `Knight (${CANONICAL_90_CARDS.filter((c) => c.anchor === 'knight').length})` },
+    { key: 'bishop' as const, label: `Bishop (${CANONICAL_90_CARDS.filter((c) => c.anchor === 'bishop').length})` },
   ];
 
   return (
@@ -287,17 +285,18 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
             Card Library
           </h3>
           <div className="flex flex-wrap gap-1.5">
-            {anchors.map((anchor) => (
+            {filterTabs.map((tab) => (
               <button
-                key={anchor}
-                onClick={() => setFilterAnchor(anchor)}
+                key={tab.key}
+                data-tab={tab.key}
+                onClick={() => setFilterAnchor(tab.key)}
                 className={`px-3 py-1 rounded text-xs font-semibold capitalize transition-colors cursor-pointer ${
-                  filterAnchor === anchor
+                  filterAnchor === tab.key
                     ? 'bg-[#D4AF37] text-[#141618] font-bold'
                     : 'bg-[#24272A] text-[#8B7E74] hover:text-[#FAF9F6] border border-[rgba(139,126,116,0.2)]'
                 }`}
               >
-                {anchor}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -345,6 +344,19 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
                   <p className="text-xs text-[#FAF9F6]/90 mt-1.5 leading-relaxed">
                     {card.description}
                   </p>
+
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {card.condition_type && (
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#8B7E74]/25 text-[#FAF9F6]/80 border border-[#8B7E74]/30">
+                        {card.condition_type}
+                      </span>
+                    )}
+                    {card.effect_type && (
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#3C493F]/40 text-[#D4AF37] border border-[#D4AF37]/30">
+                        {card.effect_type}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-3 pt-2.5 border-t border-[rgba(139,126,116,0.2)] flex items-center justify-between">
