@@ -4,6 +4,55 @@
 
 ---
 
+### Session: 2026-10-16 13:58
+
+#### Objective
+Execute Phase 2 design phase (`@[.agent/workflows/design-phase.md] 2`) and planning phase (`@[.agent/workflows/plan.md] 2`) for Milestone v3.0 Phase 2: Minor Unit Vector Artwork Suite (90 Cards: Pawn, Knight, Bishop). Iterate on visual baseline with the user, establish standardized coplanar 5×5 isometric board geometry, design authentic Staunton piece silhouette, author decoupled `<CardArt />` component, decompose Phase 2 into atomic execution plans, and pause work cleanly for handoff.
+
+#### Accomplished
+- ✅ Executed `discuss-phase.md 2` & `research-phase.md 2`:
+  - Formulated 5-layer contracts, state transitions, piece visual motifs, and system invariants.
+  - Recorded `[DECISION-024]` in `DECISIONS.md` and authored `.agent/state/phases/2/RESEARCH.md`.
+- ✅ Iterated & Finalized Phase 2 Design Baseline with User:
+  - Addressed user feedback by adopting a single-image iteration discipline (`Knight: Cavalry Charge`).
+  - Solved floating/stepped square visual defects by establishing a standardized, 100% mathematically coplanar 5×5 isometric board foundation ($W=10.5, H=5.8, X_0=60, Y_0=38, dz=6$) with strict alternating parity `(c + r) % 2 === 0` and Option B palette (Alabaster Ivory `#D5CDC0` & Dark Obsidian Slate `#2C3539`).
+  - Redrew Knight piece silhouette using authentic brand Staunton warhorse profile (50% FIDE base-to-tile ratio, $rx=5.0, ry=2.75$, height 17px) centered squarely on origin tile $(3, 2)$ leaping to target tile $(1, 2)$ over center $(2, 2)$, which was explicitly approved by user (Option 1).
+  - Eliminated raw text on tiles; implemented pure vector optics (high 3D parabolic leap arcs, ground file guides, glowing landing reticle with impact chevron) and top HUD condition badge (`COND: 2 SQUARES CLEAR`).
+  - Saved approved reference image `.agent/state/artifacts/design/phase_2_approved.png`.
+  - Generated canonical production SVG asset `public/assets/cards/knight/knight_cavalry_charge.svg`.
+  - Authored decoupled presentational component `src/components/CardArt.tsx` with zero layout shift and piece theme glyph fallback; verified clean typecheck (`npx tsc --noEmit`).
+  - Updated design tokens and rules in `STYLE.md` (Section 7) and `DESIGN_STATE.md`.
+- ✅ Executed `plan.md 2`:
+  - Decomposed Phase 2 into 4 atomic plans across 3 waves:
+    - `01-PLAN.md` (Wave 1): Plan 2.1 — Contract Test Harness (`scripts/verify-phase2-assets.mjs`) & Knight Vector Artwork Suite (30 Cards).
+    - `02-PLAN.md` (Wave 2): Plan 2.2 — Pawn Vector Artwork Suite (30 Cards).
+    - `03-PLAN.md` (Wave 2): Plan 2.3 — Bishop Vector Artwork Suite (30 Cards).
+    - `04-PLAN.md` (Wave 3): Plan 2.4 — UI Component Integration in `TacticalHandBar.tsx` and `DeckBuilderView.tsx`, Full Contract Audit, and Multi-Viewport Visual Verification.
+  - Verified plans against all 6 dimensions of `plan-checker` (PASS with 0 blockers).
+  - Committed design assets and execution plans to git (`2d86f09`).
+
+#### Verification
+- [x] Standardized 5×5 isometric board geometry and Option B palette codified in `STYLE.md` and `DESIGN_STATE.md`.
+- [x] Canonical golden SVG asset generated at `public/assets/cards/knight/knight_cavalry_charge.svg`.
+- [x] Presentational `CardArt.tsx` component typechecks cleanly (`npx tsc --noEmit`).
+- [x] Phase 2 decomposed into 4 atomic plans with 2 tasks each (`01-PLAN.md` to `04-PLAN.md`).
+- [x] Plan checker verified 0 blockers across all 4 plans.
+- [x] Working tree clean and all artifacts committed to git.
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) at clean milestone boundary between Phase 2 planning and Phase 2 execution.
+
+#### Handoff Notes
+- Working tree is clean.
+- All Phase 2 research, decisions, style rules, approved visual assets, and execution plans are committed.
+- When resuming, run `/resume` to restore context.
+- Proceed directly to execution via `@[.agent/workflows/execute.md] 2`:
+  - Wave 1: Plan 2.1 (Contract test harness `scripts/verify-phase2-assets.mjs` & 30 Knight vector assets).
+  - Wave 2: Plan 2.2 (30 Pawn vector assets) & Plan 2.3 (30 Bishop vector assets).
+  - Wave 3: Plan 2.4 (UI component integration in `TacticalHandBar.tsx` and `DeckBuilderView.tsx` & full contract audit).
+
+---
+
 ### Session: 2026-10-16 11:45
 
 #### Objective

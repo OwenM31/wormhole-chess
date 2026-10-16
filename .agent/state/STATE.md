@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-16T13:56:00-05:00
+updated: 2026-10-16T13:58:00-05:00
 ---
 
 # Project State
@@ -8,22 +8,28 @@ updated: 2026-10-16T13:56:00-05:00
 
 - **Milestone**: v3.0 Deck Builder Visual Immersion & Board Action Effects
 - **Phase**: 2 — Minor Unit Vector Artwork Suite (90 Cards: Pawn, Knight, Bishop)
-- **Task**: Planning complete (4 plans, 8 tasks across 3 waves)
-- **Status**: Ready for execution
+- **Task**: Planning complete; ready for execution
+- **Status**: Paused at 2026-10-16 13:58
 - **Roadmap Status**: Phase 2 Planned; Ready for Execution (`@[.agent/workflows/execute.md] 2`)
 
 ## Last Session Summary
-Phase 2 design phase completed and approved by user:
-- Standardized 5×5 coplanar isometric board foundation established (Option B Ivory `#D5CDC0` & Obsidian Slate `#2C3539`, strict parity, 3D perimeter slab).
-- Staunton Knight silhouette with turned plinth base (50% FIDE base-to-tile ratio, $rx=5.0, ry=2.75$, height 17px) centered squarely on origin tile $(3, 2)$ leaping to target tile $(1, 2)$ approved by user (Option 1).
-- Pure vector move optics (3D parabolic ballistic arcs, ground file guides, glowing landing reticles) with zero text on tiles.
-- Canonical golden SVG asset generated at `public/assets/cards/knight/knight_cavalry_charge.svg`.
-- Decoupled `<CardArt />` component authored and typechecked in `src/components/CardArt.tsx`.
-- Planning complete: 4 execution plans authored across 3 waves (Plan 2.1 Knight suite & test harness, Plan 2.2 Pawn suite, Plan 2.3 Bishop suite, Plan 2.4 UI integration & contract audit).
+Phase 2 design and planning completed:
+- Executed `discuss-phase.md 2` and `research-phase.md 2`: formulated 5-layer contracts, state transitions, and invariants.
+- Executed `design-phase.md 2` with user feedback:
+  - Iterated single-card discipline on `Knight: Cavalry Charge`.
+  - Established standardized 5×5 coplanar isometric board foundation (Option B Ivory `#D5CDC0` & Obsidian Slate `#2C3539`, strict parity, 3D perimeter slab) to eliminate stepped/floating tile bugs.
+  - Authored authentic Staunton Knight silhouette with turned plinth base (50% FIDE base-to-tile ratio, $rx=5.0, ry=2.75$, height 17px) centered squarely on origin tile $(3, 2)$ leaping to target tile $(1, 2)$ approved by user (Option 1).
+  - Eliminated raw text on chessboard tiles, implementing pure vector optics (high 3D parabolic arcs, ground file guides, glowing landing reticle with impact chevron) and top HUD condition badge (`COND: 2 SQUARES CLEAR`).
+  - Authored golden SVG asset `public/assets/cards/knight/knight_cavalry_charge.svg` and approved reference image `.agent/state/artifacts/design/phase_2_approved.png`.
+  - Authored decoupled presentational component `src/components/CardArt.tsx` with zero layout shift and graceful piece theme glyph fallback.
+- Executed `plan.md 2`:
+  - Authored 4 execution plans across 3 waves (`01-PLAN.md` to `04-PLAN.md`): Plan 2.1 (Contract test harness & 30 Knight assets), Plan 2.2 (30 Pawn assets), Plan 2.3 (30 Bishop assets), Plan 2.4 (UI component integration in TacticalHandBar/DeckBuilderView, full audit, and Playwright verification).
+  - Validated against plan-checker criteria (PASS with 0 blockers).
+  - Committed design assets and execution plans to git (`2d86f09`).
 
 ## In-Progress Work
 
-None. Phase 2 plans verified and ready for execution.
+None. Working tree is clean and all Phase 2 plans are verified and ready for execution.
 
 ## Blockers
 
@@ -46,6 +52,11 @@ None.
   - No flowery or metaphorical language; replace fantasy titles with direct tactical names.
   - Schema normalized: add `artId`, clean duplicates, preserve immutable card `id`s for engine handler stability.
   - Static vector assets in `public/assets/cards/{piece}/{artId}.svg`.
+- [DECISION-024]: Phase 2 Minor Unit Vector Artwork Suite Architecture & Design Directives:
+  - Standardized 5×5 coplanar board foundation ($W=10.5, H=5.8, X_0=60, Y_0=38, dz=6$) with Option B palette (`#D5CDC0` light, `#2C3539` dark, strict parity).
+  - Staunton Knight silhouette with turned circular plinth base, 50% FIDE base-to-tile ratio ($rx=5.0, ry=2.75$), height 17px, centered squarely on origin tile $(3, 2)$ leaping to target tile $(1, 2)$ over center $(2, 2)$ (Option 1).
+  - Pure vector optics (high 3D parabolic leap arcs, ground file guides, glowing landing reticle with impact chevron). Zero text stamped on tiles. Top HUD condition badge (`COND: 2 SQUARES CLEAR`).
+  - Decoupled presentational component `CardArt.tsx` with error fallback to piece theme glyph.
 
 ### Files of Interest
 - `.agent/state/phases/1/RESEARCH.md`: Phase 1 research, 5-layer contracts, state transitions, and invariants.
