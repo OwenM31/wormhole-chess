@@ -84,7 +84,7 @@ Systematically eliminate AI-slop across all user-facing screens, establish a dis
 ---
 
 ### Phase 6: Major Unit Card Graph & Royal Power Taxonomy (Rook, Queen, King)
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 **Objective:** Author, validate, and integrate the 90 canonical cards for the Royal Court Major Units (30 Rook, 30 Queen, 30 King) into the catalog, completing the 180-card library under the 6×6 condition-to-effect grammar matrix and symmetrical Major 3-cycle (Rook: Good at Neighbors, excl. Position; King: Good at Position, excl. Threat; Queen: Good at Threat, excl. Neighbors). Implement Major Unit behavior handlers and invariant checks in `cardRegistry.ts` / `DeckChessEngine.ts`, expand `DeckBuilderView.tsx` filter tabs to all 6 piece classes (`All (180)`, `Pawn (30)`, `Knight (30)`, `Bishop (30)`, `Rook (30)`, `Queen (30)`, `King (30)`), and verify with contract tests and headless Playwright suite.
 **Deliverables:**
 - 90 canonical Major Unit cards (30 Rook, 30 Queen, 30 King) in `src/engine/cards/cardCatalog180.json` (or updated catalog) with 12/12/6 energy cost curve
