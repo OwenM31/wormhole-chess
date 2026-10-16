@@ -163,8 +163,8 @@ export const PlayRoomPage: React.FC = () => {
                 <div style={styles.boardHeader}>
                   <span style={styles.boardTitle}>
                     {state?.variant === 'deck_builder'
-                      ? 'Deck Builder Chess Board'
-                      : '3D Wormhole Hyperbolic Arena'}
+                      ? 'Deck Builder'
+                      : '3D Wormhole'}
                   </span>
                   <span style={styles.turnIndicator}>
                     Turn {state?.turnNumber} • {state?.activeTurn === 'white' ? '⚪ White' : '⚫ Black'} to Move

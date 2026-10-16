@@ -98,6 +98,19 @@ export const HistoricalMatchViewer: React.FC<HistoricalMatchViewerProps> = ({
 
   return (
     <div style={styles.overlay}>
+      <style>{`
+        @media (max-width: 860px) {
+          .replay-modal-body {
+            flex-direction: column !important;
+            padding: 0.85rem !important;
+            gap: 1rem !important;
+          }
+          .replay-sidebar {
+            width: 100% !important;
+            max-height: 240px !important;
+          }
+        }
+      `}</style>
       <div style={styles.modal}>
         {/* Header Bar */}
         <div style={styles.header}>
@@ -117,12 +130,12 @@ export const HistoricalMatchViewer: React.FC<HistoricalMatchViewerProps> = ({
               </span>
             </div>
             <div style={styles.metaRow}>
-              <span>White: <strong style={{ color: '#f8fafc' }}>{match.whiteUsername || 'Player 1'}</strong></span>
-              <span style={{ color: '#64748b' }}>vs</span>
-              <span>Black: <strong style={{ color: '#f8fafc' }}>{match.blackUsername || 'Player 2 / AI'}</strong></span>
+              <span>White: <strong style={{ color: '#FAF9F6' }}>{match.whiteUsername || 'Player 1'}</strong></span>
+              <span style={{ color: '#8B7E74' }}>vs</span>
+              <span>Black: <strong style={{ color: '#FAF9F6' }}>{match.blackUsername || 'Player 2 / AI'}</strong></span>
               {match.startedAt && (
                 <>
-                  <span style={{ color: '#64748b' }}>·</span>
+                  <span style={{ color: '#8B7E74' }}>·</span>
                   <span style={styles.dateText}>{formatDate(match.startedAt)}</span>
                 </>
               )}
@@ -139,7 +152,7 @@ export const HistoricalMatchViewer: React.FC<HistoricalMatchViewerProps> = ({
         </div>
 
         {/* Content Body: Board + Sidebar */}
-        <div style={styles.body}>
+        <div style={styles.body} className="replay-modal-body">
           {/* Left Column: Board & Controls */}
           <div style={styles.boardColumn}>
             {/* Tactical Card Annotation Banner */}
@@ -249,7 +262,7 @@ export const HistoricalMatchViewer: React.FC<HistoricalMatchViewerProps> = ({
           </div>
 
           {/* Right Column: Move List Sidebar */}
-          <div style={styles.sidebar}>
+          <div style={styles.sidebar} className="replay-sidebar">
             <div style={styles.sidebarHeader}>
               <span style={styles.sidebarTitle}>Move History</span>
               <span style={styles.sidebarCount}>
@@ -336,25 +349,25 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '1rem',
-    backgroundColor: 'rgba(9, 10, 15, 0.85)',
-    backdropFilter: 'blur(8px)',
+    backgroundColor: 'rgba(25, 27, 29, 0.88)',
+    backdropFilter: 'blur(10px)',
   },
   modal: {
-    backgroundColor: '#0e1118',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#24272A',
+    border: '1px solid rgba(139, 126, 116, 0.2)',
     borderRadius: '6px',
     width: '100%',
     maxWidth: '1040px',
     maxHeight: '90vh',
     display: 'flex',
     flexDirection: 'column',
-    boxShadow: '0 24px 48px rgba(0, 0, 0, 0.6)',
+    boxShadow: '0 24px 48px rgba(0, 0, 0, 0.7)',
     overflow: 'hidden',
   },
   header: {
     padding: '0.85rem 1.15rem',
-    backgroundColor: '#0c0e14',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+    backgroundColor: '#1C1E20',
+    borderBottom: '1px solid rgba(139, 126, 116, 0.16)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -372,7 +385,7 @@ const styles: Record<string, React.CSSProperties> = {
   title: {
     fontSize: '0.95rem',
     fontWeight: 600,
-    color: '#f8fafc',
+    color: '#FAF9F6',
     margin: 0,
   },
   variantBadge: {
@@ -382,9 +395,9 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '0.05em',
     padding: '0.15rem 0.45rem',
     borderRadius: '3px',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    color: '#94a3b8',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    backgroundColor: 'rgba(139, 126, 116, 0.12)',
+    color: '#8B7E74',
+    border: '1px solid rgba(139, 126, 116, 0.2)',
   },
   resultBadge: {
     fontSize: '0.65rem',
@@ -394,23 +407,23 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '3px',
   },
   badgeWin: {
-    color: '#4ade80',
-    backgroundColor: 'rgba(74, 222, 128, 0.1)',
-    border: '1px solid rgba(74, 222, 128, 0.25)',
+    color: '#FAF9F6',
+    backgroundColor: '#4C5C4C',
+    border: '1px solid rgba(76, 92, 76, 0.6)',
   },
   badgeLoss: {
-    color: '#f87171',
-    backgroundColor: 'rgba(248, 113, 113, 0.1)',
-    border: '1px solid rgba(248, 113, 113, 0.25)',
+    color: '#FAF9F6',
+    backgroundColor: '#AA4A44',
+    border: '1px solid rgba(170, 74, 68, 0.6)',
   },
   badgeDraw: {
-    color: '#94a3b8',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    color: '#8B7E74',
+    backgroundColor: 'rgba(139, 126, 116, 0.12)',
+    border: '1px solid rgba(139, 126, 116, 0.2)',
   },
   metaRow: {
     fontSize: '0.75rem',
-    color: '#94a3b8',
+    color: '#8B7E74',
     display: 'flex',
     alignItems: 'center',
     gap: '0.45rem',
@@ -418,12 +431,12 @@ const styles: Record<string, React.CSSProperties> = {
   dateText: {
     fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
     fontVariantNumeric: 'tabular-nums',
-    color: '#64748b',
+    color: '#6E665E',
   },
   closeBtn: {
     background: 'transparent',
     border: 'none',
-    color: '#94a3b8',
+    color: '#8B7E74',
     fontSize: '1rem',
     padding: '0.35rem 0.65rem',
     borderRadius: '4px',
@@ -471,7 +484,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
-    color: '#f8fafc',
+    color: '#FAF9F6',
   },
   energyTag: {
     fontSize: '0.65rem',
@@ -482,17 +495,17 @@ const styles: Record<string, React.CSSProperties> = {
   },
   cardDesc: {
     fontSize: '0.7rem',
-    color: '#cbd5e1',
+    color: '#8B7E74',
     margin: '0.15rem 0 0',
   },
   anchorBadge: {
     fontSize: '0.7rem',
     fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
-    color: '#94a3b8',
-    backgroundColor: '#090a0f',
+    color: '#8B7E74',
+    backgroundColor: '#1C1E20',
     padding: '0.2rem 0.45rem',
     borderRadius: '3px',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    border: '1px solid rgba(139, 126, 116, 0.2)',
   },
   boardFrame: {
     width: '100%',
@@ -505,8 +518,8 @@ const styles: Record<string, React.CSSProperties> = {
   toolbar: {
     width: '100%',
     maxWidth: '460px',
-    backgroundColor: '#0c0e14',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#1C1E20',
+    border: '1px solid rgba(139, 126, 116, 0.2)',
     borderRadius: '4px',
     padding: '0.45rem 0.75rem',
     display: 'flex',
@@ -518,7 +531,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '0.75rem',
     fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
     fontVariantNumeric: 'tabular-nums',
-    color: '#94a3b8',
+    color: '#8B7E74',
     fontWeight: 500,
   },
   controlButtons: {
@@ -528,48 +541,48 @@ const styles: Record<string, React.CSSProperties> = {
   },
   toolBtn: {
     padding: '0.3rem 0.55rem',
-    backgroundColor: '#171b26',
-    border: '1px solid rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#282B2E',
+    border: '1px solid rgba(139, 126, 116, 0.25)',
     borderRadius: '4px',
-    color: '#f8fafc',
+    color: '#FAF9F6',
     fontSize: '0.75rem',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
   },
   toolBtnDisabled: {
     padding: '0.3rem 0.55rem',
-    backgroundColor: '#0e1118',
-    border: '1px solid rgba(255, 255, 255, 0.04)',
+    backgroundColor: '#1C1E20',
+    border: '1px solid rgba(139, 126, 116, 0.12)',
     borderRadius: '4px',
-    color: '#64748b',
+    color: '#6E665E',
     fontSize: '0.75rem',
     cursor: 'not-allowed',
     opacity: 0.5,
   },
   toolBtnPlay: {
     padding: '0.3rem 0.75rem',
-    backgroundColor: '#2563eb',
-    border: 'none',
+    backgroundColor: '#4C5C4C',
+    border: '1px solid rgba(76, 92, 76, 0.6)',
     borderRadius: '4px',
-    color: '#ffffff',
+    color: '#FAF9F6',
     fontSize: '0.75rem',
     fontWeight: 600,
     cursor: 'pointer',
   },
   toolBtnPause: {
     padding: '0.3rem 0.75rem',
-    backgroundColor: '#10b981',
-    border: 'none',
+    backgroundColor: '#282B2E',
+    border: '1px solid rgba(212, 175, 55, 0.35)',
     borderRadius: '4px',
-    color: '#ffffff',
+    color: '#FAF9F6',
     fontSize: '0.75rem',
     fontWeight: 600,
     cursor: 'pointer',
   },
   sidebar: {
     width: '280px',
-    backgroundColor: '#090a0f',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
+    backgroundColor: '#1C1E20',
+    border: '1px solid rgba(139, 126, 116, 0.2)',
     borderRadius: '6px',
     padding: '0.85rem',
     display: 'flex',
@@ -582,25 +595,25 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingBottom: '0.45rem',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+    borderBottom: '1px solid rgba(139, 126, 116, 0.16)',
   },
   sidebarTitle: {
     fontSize: '0.7rem',
     fontWeight: 600,
     textTransform: 'uppercase',
     letterSpacing: '0.06em',
-    color: '#94a3b8',
+    color: '#8B7E74',
   },
   sidebarCount: {
     fontSize: '0.7rem',
     fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
     fontVariantNumeric: 'tabular-nums',
-    color: '#64748b',
+    color: '#6E665E',
   },
   emptyNotice: {
     textAlign: 'center',
     padding: '2rem 1rem',
-    color: '#64748b',
+    color: '#8B7E74',
     fontSize: '0.75rem',
   },
   moveList: {
@@ -615,9 +628,9 @@ const styles: Record<string, React.CSSProperties> = {
   moveRow: {
     padding: '0.45rem 0.65rem',
     borderRadius: '4px',
-    backgroundColor: '#0e1118',
-    border: '1px solid rgba(255, 255, 255, 0.04)',
-    color: '#94a3b8',
+    backgroundColor: '#24272A',
+    border: '1px solid rgba(139, 126, 116, 0.12)',
+    color: '#8B7E74',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -626,26 +639,26 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'all 0.15s ease',
   },
   moveRowActive: {
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    borderColor: 'rgba(56, 189, 248, 0.35)',
-    color: '#38bdf8',
+    backgroundColor: 'rgba(212, 175, 55, 0.14)',
+    borderColor: 'rgba(212, 175, 55, 0.45)',
+    color: '#D4AF37',
   },
   moveInitTag: {
     fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
     fontSize: '0.65rem',
-    color: '#64748b',
+    color: '#6E665E',
   },
   moveItem: {
     padding: '0.5rem 0.65rem',
     borderRadius: '4px',
-    backgroundColor: '#0e1118',
-    border: '1px solid rgba(255, 255, 255, 0.04)',
+    backgroundColor: '#24272A',
+    border: '1px solid rgba(139, 126, 116, 0.12)',
     cursor: 'pointer',
     transition: 'all 0.15s ease',
   },
   moveItemActive: {
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    backgroundColor: 'rgba(212, 175, 55, 0.14)',
+    borderColor: 'rgba(212, 175, 55, 0.45)',
   },
   moveItemTop: {
     display: 'flex',
@@ -657,7 +670,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
     fontVariantNumeric: 'tabular-nums',
     fontSize: '0.7rem',
-    color: '#64748b',
+    color: '#8B7E74',
     fontWeight: 600,
   },
   playerBadge: {
@@ -667,13 +680,13 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '3px',
   },
   playerWhite: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    color: '#e2e8f0',
+    backgroundColor: 'rgba(250, 249, 246, 0.1)',
+    color: '#FAF9F6',
   },
   playerBlack: {
-    backgroundColor: 'rgba(124, 58, 237, 0.15)',
-    color: '#c084fc',
-    border: '1px solid rgba(124, 58, 237, 0.25)',
+    backgroundColor: 'rgba(168, 85, 247, 0.15)',
+    color: '#FAF9F6',
+    border: '1px solid rgba(168, 85, 247, 0.3)',
   },
   cardPlayRow: {
     display: 'flex',
@@ -681,7 +694,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '0.35rem',
     fontSize: '0.7rem',
     fontWeight: 600,
-    color: '#4ade80',
+    color: '#FAF9F6',
     marginBottom: '0.2rem',
   },
   moveNotationRow: {
@@ -689,7 +702,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontVariantNumeric: 'tabular-nums',
     fontWeight: 600,
     fontSize: '0.75rem',
-    color: '#38bdf8',
+    color: '#D4AF37',
   },
 };
 
