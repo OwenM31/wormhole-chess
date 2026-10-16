@@ -84,4 +84,8 @@
     3. **Bottom Rules Box**: Compact `Condition ➔ Effect` taxonomy header + concise rule description.
 - **Smooth Hover Pop-Out Reveal**: Hovering any card smoothly elevates and straightens it (`transform: translateY(-18px) scale(1.22) rotate(0deg)`, `z-index: 30`) with a warm gold border (`#D4AF37`).
 
+---
 
+### 6. Card Rules & Nomenclature Directives (Milestone v3.0)
+- **Zero-Ellipsis Rule**: NEVER allow text on screen to be truncated or cut off with an ellipsis (`...` or `text-overflow: ellipsis` or `line-clamp`). All card titles and rules notes must be authored to fit completely and cleanly within their allocated card containers across all viewport sizes.
+- **Direct Tactical Language**: No flowery, melodramatic, or overly metaphorical filler. Move and card names must be direct, evocative, and punchy. Rules descriptions must state concrete piece actions directly (e.g. `[Pin] Capture adjacent diagonal enemy in-place without moving.`).

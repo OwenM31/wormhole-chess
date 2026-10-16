@@ -486,8 +486,73 @@ Prior to planning Phase 7 (Global Polish, Micro-interactions, Responsive Audit &
 
 ---
 
+### [DECISION-021] Brand Title & Dual Icon Architecture
+
+**Date**: 2026-10-16
+**Status**: Accepted
+
+#### Context
+Branding was previously inconsistent across navigation, home page hero, and browser tabs, using various permutations ("Wormhole Chess", "Wormhole-Chess", "v2.0" badges, and generic blue emojis).
+
+#### Decision
+1. Standardize exact brand title strictly to **"WormholeChess"** (single word, PascalCase, no space, no hyphen).
+2. Establish a Dual Icon Architecture:
+   - **Hero Visual Anchor**: 3D Isometric Spacetime Illustration (`WormholeSpacetimeIllustration.tsx`) positioned in the primary hero lockup on `HomePage.tsx`.
+   - **Compact Brand Mark**: Flat gold Squircle Icon (`WormholeLogo.tsx`) used for Navigation, browser favicon (`favicon.svg`, `favicon.ico`), and tab pills.
+
+#### Consequences
+- Eradicates disjointed logos and version tags.
+- Establishes a cohesive identity across desktop and mobile entry points.
+
+---
+
+### [DECISION-022] Home Copy & Variant Nomenclature Refinement
+
+**Date**: 2026-10-16
+**Status**: Accepted
+
+#### Context
+Following Milestone v2.0 closeout, the user requested refining the hero subtitle and variant tab nomenclature on the home page for crisp, natural English phrasing and clean visual balance between variants.
+
+#### Decision
+1. Update hero subtitle from `"Home of your favorite chess variants"` to **`"Home to your favorite chess variants"`**.
+2. Simplify the 3D variant tab name and section header from `"3D Wormhole Chess"` to **`"Wormhole Chess"`**, achieving clean parallel parity with `"Deck Builder Chess"`.
+
+#### Consequences
+- Eliminates awkward prepositioning and excessive adjectives.
+- Aligned automated Playwright test suites (`verify-phase3-ux.mjs`, `full-ux-sweep.mjs`).
+
+---
+
+### [DECISION-023] Phase 1 Card Nomenclature, Zero-Ellipsis Rule Constraints & Static Vector Asset Pipeline
+
+**Date**: 2026-10-16
+**Status**: Accepted
+
+#### Context
+Prior to authoring task plans for Phase 1 (Card Nomenclature Polish & Schema Finalization), we discussed constraints regarding card text rendering, nomenclature tone, schema structure, and asset storage for the upcoming 180 vector illustrations (Phases 2 & 3).
+
+#### Decision
+1. **Zero-Ellipsis Rule & Anti-Truncation Policy**:
+   - No text on screen may be truncated or cut off with an ellipsis (`...` or `text-overflow: ellipsis` or `line-clamp-2`).
+   - All card rule notes must be brief, crisp, and self-contained so they render completely within card boundaries across desktop and mobile screens.
+2. **Direct Tactical Language (No Flowery or Metaphorical Fluff)**:
+   - Eradicate flowery, melodramatic, or overly metaphorical prose.
+   - Use direct, evocative tactical language that directly describes the piece action (e.g. "Shield Wall", "Flank March", "Sniper Shot", "Railgun Bolt", "In-Place Capture").
+   - Review and rename any vague or generic move titles to be direct and immediate.
+3. **Schema Normalization**:
+   - Clean up duplicate fields in `cardCatalog90.json` and `cardCatalogMajor90.json`: consolidate `card_name` into `name`, and `card_description` into `description`.
+   - Add explicit `artId` field (e.g. `pawn_hold_the_line`) matching the SVG file identifier.
+   - Keep card `id` values strictly immutable to preserve bindings in `cardRegistry.ts` and ensure zero engine regression.
+4. **Static Vector Asset Architecture**:
+   - In Phases 2 & 3, card vector SVGs will be stored under `public/assets/cards/{piece}/{artId}.svg`.
+   - Implement a lightweight `<CardArt />` component for rendering and caching, ensuring zero bundle bloat in the main JavaScript chunk.
+
+#### Consequences
+- Prevents UI overflow and broken visual layouts.
+- Guarantees immediate tactical readability during fast-paced play.
+- Provides a clean schema and testable contract for Phases 2 & 3 asset creation.
+
+---
+
 *Last updated: 2026-10-16*
-
-
-
-
