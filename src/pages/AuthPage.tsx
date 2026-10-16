@@ -217,7 +217,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
           </div>
 
           {displayError && (
-            <div style={errorAlertStyle}>
+            <div style={errorAlertStyle} role="alert" className="auth-error-banner">
               <span>⚠️</span>
               <span>{displayError}</span>
             </div>
@@ -227,6 +227,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
           {activeTab === 'login' && (
             <form
               onSubmit={handleLoginSubmit}
+              noValidate
               style={formStyle}
               role="tabpanel"
               id="auth-panel-login"
@@ -274,6 +275,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ mode = 'login' }) => {
           {activeTab === 'register' && (
             <form
               onSubmit={handleRegisterSubmit}
+              noValidate
               style={formStyle}
               role="tabpanel"
               id="auth-panel-register"

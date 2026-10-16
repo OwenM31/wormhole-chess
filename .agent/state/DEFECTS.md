@@ -1,62 +1,59 @@
 # UX Defect Ledger
 
-**Latest Sweep Date:** 2026-10-15 03:41
-**Scope:** All Live Routes (`/`, `/login`, `/register`, `/dashboard`, `/deck-builder`, `/wormhole`, `/play/:code`)
-**Target Environment:** `https://wormhole-chess.com`
-**Total Inspected:** 6 routes, 9 interactive elements
+**Latest Sweep Date:** 2026-10-15 19:19
+**Scope:** All Application Surface Routes (`/`, `/login`, `/register`, `/dashboard`, `/deck-builder`, `/wormhole`, `/play/:code`)
+**Target Environment:** Local Full-Stack Preview (`http://localhost:4173`)
+**Total Inspected:** 6 routes, 26 interactive elements, 13 retina screenshots (Desktop 1280x800 and Mobile 375x667)
 **Active Defects:** 0 (P0: 0, P1: 0, P2: 0, P3: 0)
 **Historical Defects Resolved:** 4/4 (100% resolved in Plans 5.4 & 5.5)
 
 ---
 
-## Defects
+## Active Defects
+
+None. All 6 surface routes rendered cleanly with zero console runtime crashes, zero horizontal overflows (`scrollWidth === clientWidth`), verified form validation alerts, active tab toggles, and modal escapability.
+
+---
+
+## Planned Visual Polish Observations (Scoped to Upcoming Phases)
+
+### [OBS-001] 3D Wormhole Controls Overlay & Action Bar Visual Craft
+- **Severity:** P3 (Planned Phase 4 Redesign Scope)
+- **Route:** `/wormhole`
+- **Observed:** The 3D camera controls (`180° (F)`, `Rotate 90° (R)`, `Reset Orientation (X)`) render as legacy light gray rectangular buttons sitting against the 3D board canvas border, and the top-left action buttons mix bright blue and dark gray styles.
+- **Planned Action:** Fully addressed in upcoming **Phase 4: 3D Wormhole HUD & Multiplayer PlayRoom Redesign** (`@[.agent/workflows/design-phase.md] 4 wormhole`), which introduces floating tactical glass HUD overlays, unified camera presets, and design token alignment.
+- **Evidence:** `.agent/state/artifacts/screenshots/sweep_03_wormhole_desktop.png`
+
+---
+
+## Historical Resolved Defects
 
 ### [DEF-001] Deck Builder Chess visual layout collapsed and pieces overflowing due to missing Tailwind CSS compiler
 - **Severity:** P0 (Blocker)
+- **Status:** Resolved in Plan 5.4
 - **Route:** `/deck-builder`
-- **Actor Role:** Any player (Guest or Registered)
-- **Element:** Chessboard (`DeckChessBoard`), Tactical Hand (`TacticalHandBar`), Sub-header, and Deck Forge (`DeckBuilderView`)
-- **Observed Behavior:** Components in the Deck Builder experience were constructed using Tailwind CSS utility classes (`grid`, `flex`, `w-[520px]`, `w-4/5`, `max-w-4xl`, etc.). However, Tailwind CSS is not installed or configured in Vite. Consequently, the 8x8 chessboard fails to form a grid, SVG pieces have no width constraints and blow up to fill the viewport, and control buttons render as default unstyled browser buttons.
-- **Expected Behavior:** Chessboard should render as an 8x8 grid with sharp piece SVGs, the 8-card tactical hand should display aligned cards with glowing energy counters, and action buttons should match the platform's dark theme design system.
-- **Evidence:** `.agent/state/artifacts/screenshots/deck_builder_desktop.png`
-- **Suspect File(s):** `package.json`, `vite.config.ts`, `src/index.css`, `src/pages/DeckBuilderPage.tsx`, `src/components/DeckChessBoard.tsx`
-- **Suggested Fix:** Install `@tailwindcss/vite` (or `tailwindcss`), configure the plugin in `vite.config.ts`, and import Tailwind in `src/index.css` so that utility classes compile properly into the production bundle.
+- **Resolution:** Configured `@tailwindcss/vite` and `tailwindcss` in `vite.config.ts` and `src/index.css`. Constrained chessboard squares and piece SVGs.
 
 ---
 
 ### [DEF-002] 3D Wormhole Chess Header title text overlapped and clipped by floating navigation buttons
 - **Severity:** P2 (UX / State Glitch)
+- **Status:** Resolved in Plan 5.5
 - **Route:** `/wormhole`
-- **Actor Role:** Any player
-- **Element:** Top-left return and conclude overlay buttons
-- **Observed Behavior:** The floating header overlay bar containing `← Home`, `3D Wormhole Chess`, and `🏁 Conclude Match` is positioned over the underlying Three.js canvas title, causing partially cut-off text (`n... ... s`) to leak behind the overlay buttons.
-- **Expected Behavior:** Overlay controls should have dedicated top spacing or the underlying Three.js scene header should be hidden when wrapped inside `WormholePage`.
-- **Evidence:** `.agent/state/artifacts/screenshots/wormhole_desktop.png`
-- **Suspect File(s):** `src/pages/WormholePage.tsx`, `src/components/ChessboardScene.tsx`
-- **Suggested Fix:** Add a CSS rule or prop to `ChessboardScene` to suppress the duplicate canvas title when mounted inside `WormholePage`.
+- **Resolution:** Added `hideHeaderTitle` prop to `ChessboardScene.tsx` when mounted in `WormholePage`.
 
 ---
 
 ### [DEF-003] Home page displays "In Development (2D)" badge and "Explore Rules & Preview →" for Deck Builder Chess
 - **Severity:** P3 (Visual Polish / Slop)
+- **Status:** Resolved in Plan 5.5 & Phase 3
 - **Route:** `/`
-- **Actor Role:** Public visitor
-- **Element:** Deck Builder Chess variant card (`src/pages/HomePage.tsx#L48-L58`)
-- **Observed Behavior:** The variant card displays an amber badge `In Development (2D)` and a dark gray secondary button `Explore Rules & Preview →`, despite Phase 4 & Phase 5 completion where Deck Builder Chess was fully delivered with AI, custom decks, and multiplayer.
-- **Expected Behavior:** Card should display a green `Playable (2D)` badge and blue primary button `Launch Deck Builder Chess →`.
-- **Evidence:** `.agent/state/artifacts/screenshots/home_desktop.png`
-- **Suspect File(s):** `src/pages/HomePage.tsx#L48-L58`
-- **Suggested Fix:** Change badge to `statusTagLiveStyle` ("Playable (2D)") and button to `primaryButtonActionStyle` ("Play Deck Builder Chess →").
+- **Resolution:** Redesigned Home landing page with unified interactive variant switcher tabs and live playable action buttons.
 
 ---
 
 ### [DEF-004] Deck Builder Subheader displays raw phase milestone label "2D Phase 4"
 - **Severity:** P3 (Visual Polish / Slop)
+- **Status:** Resolved in Plan 5.4 & Phase 2
 - **Route:** `/deck-builder`
-- **Actor Role:** Any player
-- **Element:** Subheader badge in `src/pages/DeckBuilderPage.tsx#L80`
-- **Observed Behavior:** The subheader displays `Deck Builder Chess` with a badge reading `2D Phase 4`. To an end user, exposing internal engineering sprint numbers is confusing and resembles development scaffolding.
-- **Expected Behavior:** Should display player-facing text like `Tactical 2D` or `Card Variant`.
-- **Evidence:** `.agent/state/artifacts/screenshots/deck_builder_desktop.png`
-- **Suspect File(s):** `src/pages/DeckBuilderPage.tsx#L80`
-- **Suggested Fix:** Change badge text from `2D Phase 4` to `Tactical 2D`.
+- **Resolution:** Updated subheader to player-facing copy "Tactical 2D".
