@@ -9,6 +9,7 @@ import {
   Graveyard,
   PieceColor,
   TargetingStage,
+  EmpoweredMove,
 } from '../types/deckChess';
 import { DeckChessEngine, DeckChessEngineState } from '../engine/DeckChessEngine';
 import { computeBestTurn } from '../engine/DeckChessAI';
@@ -82,6 +83,7 @@ export function useDeckChessGame({
   // Chess move selection state
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [legalMovesForSelected, setLegalMovesForSelected] = useState<string[]>([]);
+  const [empoweredMovesForSelected, setEmpoweredMovesForSelected] = useState<EmpoweredMove[]>([]);
 
   // Combat log
   const [combatLog, setCombatLog] = useState<CombatLogEntry[]>([
@@ -134,6 +136,7 @@ export function useDeckChessGame({
   const clearPieceSelection = useCallback(() => {
     setSelectedSquare(null);
     setLegalMovesForSelected([]);
+    setEmpoweredMovesForSelected([]);
   }, []);
 
   // Card selection trigger from tactical hand bar
@@ -382,6 +385,76 @@ export function useDeckChessGame({
     ]
   );
 
+  // Execute unified empowered card move
+  const makeEmpoweredMove = useCallback(
+    (move: EmpoweredMove) => {
+      if (gameState.isGameOver || isAiThinking) return false;
+      const currentTurn = engineRef.current.getTurn();
+      if (mode === 'ai' && currentTurn !== playerColor) return false;
+
+      const res = engineRef.current.makeEmpoweredMove(move);
+      if (!res.success) {
+        addLog(`Empowered move failed: ${res.error || 'Unknown error'}`, 'system');
+        return false;
+      }
+
+      playCardSound();
+      if (engineRef.current.inCheck()) {
+        setTimeout(playCheckSound, 120);
+      }
+
+      const cardName = move.metadata?.cardName || move.cardId;
+      addLog(
+        `${currentTurn === 'w' ? 'White' : 'Black'} empowered [${cardName}] ➔ ${move.to} (${move.energyCost}⚡)`,
+        'card',
+        currentTurn
+      );
+
+      const turnRecord: RecordedTurn = {
+        turnNumber: engineRef.current.getTurnNumber(),
+        player: currentTurn,
+        chessMove: { from: move.from, to: move.to },
+        cardAction: { cardId: move.cardId, anchorSquare: move.from, targetSquare: move.to },
+        fenAfter: engineRef.current.getFen(),
+        combatText: `${currentTurn === 'w' ? 'White' : 'Black'} played [${cardName}] (${move.energyCost}⚡)`,
+        timestamp: Date.now(),
+      };
+      lastCardActionRef.current = null;
+      setRecordedTurns((prev) => [...prev, turnRecord]);
+
+      clearPieceSelection();
+      syncState();
+
+      if (onTurnComplete) {
+        const payload: DeckChessTurnPayload = {
+          turnNumber: engineRef.current.getTurnNumber(),
+          playerColor: currentTurn,
+          chessMove: { from: move.from, to: move.to },
+          resultingFen: engineRef.current.getFen(),
+          activeModifiers: engineRef.current.getActiveModifiers(),
+        };
+        onTurnComplete(payload);
+      }
+
+      if (mode === 'ai' && !engineRef.current.isGameOver()) {
+        setTimeout(triggerAiTurn, 100);
+      }
+
+      return true;
+    },
+    [
+      gameState.isGameOver,
+      isAiThinking,
+      mode,
+      playerColor,
+      addLog,
+      clearPieceSelection,
+      syncState,
+      onTurnComplete,
+      triggerAiTurn,
+    ]
+  );
+
   // Square click coordinator (handles card targeting and piece moves)
   const handleSquareClick = useCallback(
     (square: string) => {
@@ -459,6 +532,8 @@ export function useDeckChessGame({
             .getLegalMoves(square)
             .map((m) => m.to);
           setLegalMovesForSelected(legalDestinations);
+          const empowered = engineRef.current.getEmpoweredMoves(square);
+          setEmpoweredMovesForSelected(empowered);
         }
         return;
       }
@@ -469,7 +544,14 @@ export function useDeckChessGame({
         return;
       }
 
-      // If clicking a destination in legal moves, execute move!
+      // Check if clicking an empowered move destination (Glowing Gold Ring)
+      const matchingEmpowered = empoweredMovesForSelected.find((m) => m.to === square);
+      if (matchingEmpowered) {
+        makeEmpoweredMove(matchingEmpowered);
+        return;
+      }
+
+      // If clicking a destination in legal standard moves, execute standard move!
       if (legalMovesForSelected.includes(square)) {
         makeMove(selectedSquare, square);
         return;
@@ -483,6 +565,8 @@ export function useDeckChessGame({
           .getLegalMoves(square)
           .map((m) => m.to);
         setLegalMovesForSelected(legalDestinations);
+        const empowered = engineRef.current.getEmpoweredMoves(square);
+        setEmpoweredMovesForSelected(empowered);
         return;
       }
 
@@ -500,12 +584,14 @@ export function useDeckChessGame({
       selectedTargetSquare,
       selectedSquare,
       legalMovesForSelected,
+      empoweredMovesForSelected,
       mode,
       playerColor,
       cancelCardSelection,
       executeCard,
       clearPieceSelection,
       makeMove,
+      makeEmpoweredMove,
     ]
   );
 
@@ -687,6 +773,7 @@ export function useDeckChessGame({
     validTargetSquares,
     selectedSquare,
     legalMovesForSelected,
+    empoweredMoves: empoweredMovesForSelected,
 
     // Combat Log & Match Records
     combatLog,
@@ -697,6 +784,7 @@ export function useDeckChessGame({
     selectCard,
     cancelCardSelection,
     makeMove,
+    makeEmpoweredMove,
     applyRemoteTurn,
     resetGame,
     resign,

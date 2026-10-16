@@ -1,11 +1,11 @@
-import React from 'react';
-import { BoardModifier, PieceColor, Square } from '../types/deckChess';
+import { BoardModifier, PieceColor, Square, EmpoweredMove } from '../types/deckChess';
 
 export interface DeckChessBoardProps {
   fen: string;
   orientation?: PieceColor;
   selectedSquare?: string | null;
   legalMoves?: string[];
+  empoweredMoves?: EmpoweredMove[];
   validAnchorSquares?: string[];
   validTargetSquares?: string[];
   activeModifiers?: BoardModifier[];
@@ -142,6 +142,7 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
   orientation = 'w',
   selectedSquare,
   legalMoves = [],
+  empoweredMoves = [],
   validAnchorSquares = [],
   validTargetSquares = [],
   activeModifiers = [],
@@ -202,6 +203,7 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
             // Active highlights
             const isSelected = selectedSquare === squareName;
             const isLegalMove = legalMoves.includes(squareName);
+            const empoweredMove = empoweredMoves.find((m) => m.to === squareName);
             const isValidAnchor = validAnchorSquares.includes(squareName);
             const isValidTarget = validTargetSquares.includes(squareName);
 
@@ -221,7 +223,7 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                 key={squareName}
                 data-square={squareName}
                 onClick={() => onSquareClick(squareName)}
-                className="relative flex items-center justify-center transition-[filter,background-color] duration-150 cursor-pointer hover:brightness-110 aspect-square"
+                className="relative flex items-center justify-center transition-[filter,background-color] duration-150 cursor-pointer hover:brightness-110 aspect-square group"
                 style={{ backgroundColor: squareBg, aspectRatio: '1 / 1' }}
               >
                 {/* Coordinate labels */}
@@ -256,16 +258,42 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                   <div className="absolute inset-0 border-2 border-[#A855F7] bg-[#A855F7]/35 animate-pulse rounded-sm pointer-events-none z-10" />
                 )}
 
-                {/* Legal Move Indicator */}
-                {isLegalMove && (
+                {/* Standard Legal Move Indicator (0⚡) */}
+                {isLegalMove && !empoweredMove && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                     {piece ? (
                       // Capture ring
-                      <div className="w-4/5 h-4/5 rounded-full border-4 border-[#AA4A44]/85 animate-pulse" />
+                      <div className="w-4/5 h-4/5 rounded-full border-2 border-[#AA4A44]/85 flex items-center justify-center">
+                        <span className="text-[8px] font-mono font-bold text-[#AA4A44]">0⚡</span>
+                      </div>
                     ) : (
-                      // Empty move dot
-                      <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[#D4AF37]/90 shadow-[0_0_8px_#D4AF37]" />
+                      // Empty move subtle dot
+                      <div className="w-3.5 h-3.5 rounded-full bg-[#FAF9F6]/60 shadow-sm flex items-center justify-center" />
                     )}
+                  </div>
+                )}
+
+                {/* Empowered Card Move Indicator (Glowing Gold Ring) */}
+                {empoweredMove && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-25">
+                    <div className="w-4/5 h-4/5 rounded-full border-2 border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.7)] animate-pulse flex items-center justify-center bg-[#D4AF37]/20">
+                      <span className="text-[9px] font-mono font-bold text-[#D4AF37] px-1 py-0.2 bg-[#191B1D]/90 rounded border border-[#D4AF37]/40 shadow-sm">
+                        {empoweredMove.energyCost}⚡
+                      </span>
+                    </div>
+
+                    {/* Micro-Tooltip on hover */}
+                    <div className="hidden group-hover:flex absolute bottom-[108%] left-1/2 -translate-x-1/2 w-48 p-2 bg-[#141618] border border-[#D4AF37] rounded shadow-2xl z-50 flex-col gap-0.5 text-left pointer-events-none backdrop-blur-md">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-[#D4AF37]">
+                        <span className="truncate">{empoweredMove.metadata?.cardName || empoweredMove.cardId}</span>
+                        <span className="text-[10px] px-1 bg-[#D4AF37]/20 rounded font-mono ml-1">{empoweredMove.energyCost}⚡</span>
+                      </div>
+                      {empoweredMove.metadata?.effectExact && (
+                        <span className="text-[9px] font-mono text-[#8B7E74]">
+                          {empoweredMove.metadata.effectGenre} · {empoweredMove.metadata.effectExact}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
 

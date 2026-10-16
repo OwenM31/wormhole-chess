@@ -10,6 +10,7 @@ export interface TacticalHandBarProps {
   isMyTurn: boolean;
   selectedCard: CardDefinition | null;
   targetingStage: TargetingStage;
+  activeCardIdsForPiece?: string[]; // Cards in hand currently usable for selected piece
   onSelectCard: (cardId: string) => void;
   onCancelTargeting: () => void;
 }
@@ -22,6 +23,7 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
   isMyTurn,
   selectedCard,
   targetingStage,
+  activeCardIdsForPiece = [],
   onSelectCard,
   onCancelTargeting,
 }) => {
@@ -118,6 +120,7 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
           const isSelected = selectedCard?.id === cardId;
           const canAfford = energy >= card.energyCost;
           const isPlayable = isMyTurn && isAvailable && !hasPlayedCardThisTurn && canAfford;
+          const isActiveForPiece = activeCardIdsForPiece.includes(cardId);
           const theme = PIECE_COLOR_THEMES[card.anchor] || PIECE_COLOR_THEMES.pawn;
 
           return (
@@ -133,6 +136,8 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
               className={`group relative rounded p-1 flex flex-col justify-between items-center transition-all duration-200 select-none ${
                 isSelected
                   ? 'flex-[2.6] bg-[#282B2E] border-2 border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.3)] -translate-y-1 z-20 cursor-pointer'
+                  : isActiveForPiece
+                  ? 'flex-1 min-w-[38px] hover:flex-[2.6] bg-[#282B2E] border-2 border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.6)] ring-1 ring-[#D4AF37] animate-pulse -translate-y-0.5 z-15 cursor-pointer'
                   : isPlayable
                   ? 'flex-1 min-w-[38px] hover:flex-[2.6] bg-[#1C1E20] hover:bg-[#282B2E] border border-[rgba(139,126,116,0.2)] hover:border-[#D4AF37] hover:-translate-y-1 hover:shadow-lg hover:z-20 cursor-pointer'
                   : !isAvailable

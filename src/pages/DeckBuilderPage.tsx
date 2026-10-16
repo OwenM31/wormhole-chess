@@ -251,6 +251,7 @@ export const DeckBuilderPage: React.FC = () => {
                     orientation={playerColor}
                     selectedSquare={game.selectedSquare}
                     legalMoves={game.legalMovesForSelected}
+                    empoweredMoves={game.empoweredMoves}
                     validAnchorSquares={game.validAnchorSquares}
                     validTargetSquares={game.validTargetSquares}
                     activeModifiers={game.activeModifiers}
@@ -347,6 +348,7 @@ export const DeckBuilderPage: React.FC = () => {
                     isMyTurn={isMyTurn}
                     selectedCard={game.selectedCard}
                     targetingStage={game.targetingStage}
+                    activeCardIdsForPiece={game.empoweredMoves?.map((m) => m.cardId)}
                     onSelectCard={game.selectCard}
                     onCancelTargeting={game.cancelCardSelection}
                   />
