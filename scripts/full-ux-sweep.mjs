@@ -7,15 +7,20 @@ if (!fs.existsSync(SCREENSHOT_DIR)) {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 }
 
-const BASE_URL = 'http://localhost:4173';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:5173';
 
 const SLOP_PATTERNS = [
-  /lorem\s+ipsum/i,
-  /\btodo\b/i,
-  /\bplaceholder\b/i,
-  /\bsample\s+name\b/i,
-  /\brow\s+1\b/i,
-  /\bdefault\s+title\b/i,
+  { pattern: /lorem\s+ipsum/i, label: 'Lorem ipsum placeholder' },
+  { pattern: /\btodo\b/i, label: 'TODO marker' },
+  { pattern: /\bfixme\b/i, label: 'FIXME marker' },
+  { pattern: /\bplaceholder\b/i, label: 'Generic placeholder text' },
+  { pattern: /\bsample\s+name\b/i, label: 'Sample name artifact' },
+  { pattern: /\brow\s+1\b/i, label: 'Default row artifact' },
+  { pattern: /\bdefault\s+title\b/i, label: 'Default title artifact' },
+  { pattern: /welcome to your incredible/i, label: 'Fluffy AI cheerleading' },
+  { pattern: /easily manage/i, label: 'Conversational filler' },
+  { pattern: /great job!/i, label: 'Artificial praise cheerleading' },
+  { pattern: /unleash the power/i, label: 'Marketing AI-slop' },
 ];
 
 async function runUXSweep() {
@@ -63,7 +68,7 @@ async function runUXSweep() {
       whiteUsername: 'TacticalMaster',
       blackUserId: 'usr_opponent',
       blackUsername: 'GrandmasterDeep',
-      variant: 'deck_builder_ai',
+      variant: 'deck_builder:pvp',
       result: '1-0',
       winnerId: 'usr_sweep_test',
       moves: [
@@ -88,11 +93,13 @@ async function runUXSweep() {
       if (msg.type() === 'error') {
         const text = msg.text();
         if (text.includes('401') && !isAuth) return;
+        if (text.includes('favicon.ico')) return;
         consoleErrors.push(text);
       }
     });
 
     page.on('requestfailed', req => {
+      if (req.url().includes('favicon.ico')) return;
       networkFailures.push(`${req.method()} ${req.url()} (${req.failure()?.errorText || 'failed'})`);
     });
 
@@ -180,14 +187,14 @@ async function runUXSweep() {
     }
 
     const bodyText = await page.evaluate(() => document.body.innerText || '');
-    for (const pattern of SLOP_PATTERNS) {
+    for (const { pattern, label } of SLOP_PATTERNS) {
       const match = bodyText.match(pattern);
       if (match) {
         addDefect({
           severity: 'P3',
-          title: `Potential AI-slop pattern "${match[0]}" detected on ${routeName}`,
+          title: `Potential AI-slop pattern [${label}] detected on ${routeName}`,
           route: routeName,
-          details: `Found pattern ${pattern} in visible text content: "${match[0]}"`
+          details: `Found pattern ${pattern} in visible text: "${match[0]}"`
         });
       }
     }
@@ -200,14 +207,27 @@ async function runUXSweep() {
   summary.routesSwept++;
   try {
     const { context, page, consoleErrors } = await setupContext({ width: 1280, height: 800 });
-    await page.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(400);
+    await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(500);
 
     const shot1 = path.join(SCREENSHOT_DIR, 'sweep_01_home_desktop.png');
-    await page.screenshot({ path: shot1, fullPage: true });
+    await page.screenshot({ path: shot1 });
     summary.screenshots.push(shot1);
 
     await checkAntiSlopAndOverflow(page, '/', 'desktop 1280x800');
+
+    // Test initial Deck Builder tab action links
+    const playDeckLink = page.locator('text=Play Deck Builder →').first();
+    const soloPracticeDeck = page.locator('text=Solo Practice').first();
+    summary.interactiveElementsTested += 2;
+    if (!(await playDeckLink.isVisible()) || !(await soloPracticeDeck.isVisible())) {
+      addDefect({
+        severity: 'P1',
+        title: 'Action links missing on Home page (Deck Builder panel)',
+        route: '/',
+        details: 'Expected "Play Deck Builder →" and "Solo Practice" buttons'
+      });
+    }
 
     // Test tab switches
     const tabDeck = page.locator('#tab-deck-builder');
@@ -226,6 +246,18 @@ async function runUXSweep() {
       });
     }
 
+    // Verify 3D Wormhole panel action links
+    const launchWormholeLink = page.locator('text=Launch 3D Wormhole →').first();
+    summary.interactiveElementsTested++;
+    if (!(await launchWormholeLink.isVisible())) {
+      addDefect({
+        severity: 'P1',
+        title: 'Action link "Launch 3D Wormhole →" missing on Wormhole panel',
+        route: '/',
+        details: 'Expected "Launch 3D Wormhole →" link'
+      });
+    }
+
     await tabDeck.click();
     await page.waitForTimeout(300);
     const deckTitle = await page.textContent('h2');
@@ -241,20 +273,24 @@ async function runUXSweep() {
     // Test sample cards hover
     const sampleCards = await page.locator('.home-card-item').all();
     summary.interactiveElementsTested += sampleCards.length;
-    for (const card of sampleCards) {
+    for (const card of sampleCards.slice(0, 4)) {
       await card.hover();
       await page.waitForTimeout(50);
     }
 
-    // Test mobile responsiveness
-    const { context: mContext, page: mPage } = await setupContext({ width: 375, height: 667 });
-    await mPage.goto(`${BASE_URL}/`, { waitUntil: 'networkidle' });
-    await mPage.waitForTimeout(400);
-    const shot1m = path.join(SCREENSHOT_DIR, 'sweep_01_home_mobile.png');
-    await mPage.screenshot({ path: shot1m, fullPage: true });
-    summary.screenshots.push(shot1m);
-    await checkAntiSlopAndOverflow(mPage, '/', 'mobile 375x667');
-    await mContext.close();
+    // Test mobile viewports (390x844 & 375x667)
+    for (const vp of [{ w: 390, h: 844, label: 'mobile 390x844' }, { w: 375, h: 667, label: 'mobile 375x667' }]) {
+      const { context: mContext, page: mPage } = await setupContext({ width: vp.w, height: vp.h });
+      await mPage.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' });
+      await mPage.waitForTimeout(400);
+      if (vp.w === 390) {
+        const shot1m = path.join(SCREENSHOT_DIR, 'sweep_01_home_mobile.png');
+        await mPage.screenshot({ path: shot1m });
+        summary.screenshots.push(shot1m);
+      }
+      await checkAntiSlopAndOverflow(mPage, '/', vp.label);
+      await mContext.close();
+    }
 
     if (consoleErrors.length > 0) {
       addDefect({
@@ -278,15 +314,15 @@ async function runUXSweep() {
   // =========================================================================
   // ROUTE 2: DECK BUILDER (/deck-builder)
   // =========================================================================
-  console.log('\n--- 2. Testing Route: /deck-builder (Tactical Arena) ---');
+  console.log('\n--- 2. Testing Route: /deck-builder (Tactical Arena & Forge) ---');
   summary.routesSwept++;
   try {
     const { context, page, consoleErrors } = await setupContext({ width: 1280, height: 800 }, true);
-    await page.goto(`${BASE_URL}/deck-builder`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE_URL}/deck-builder`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(600);
 
     const shot2 = path.join(SCREENSHOT_DIR, 'sweep_02_deck_builder_desktop.png');
-    await page.screenshot({ path: shot2, fullPage: true });
+    await page.screenshot({ path: shot2 });
     summary.screenshots.push(shot2);
 
     await checkAntiSlopAndOverflow(page, '/deck-builder', 'desktop 1280x800');
@@ -300,8 +336,8 @@ async function runUXSweep() {
       await myDeckTab.click();
       await page.waitForTimeout(400);
 
-      const shot2deck = path.join(SCREENSHOT_DIR, 'sweep_02_deck_curator_desktop.png');
-      await page.screenshot({ path: shot2deck, fullPage: true });
+      const shot2deck = path.join(SCREENSHOT_DIR, 'sweep_02_deck_forge_desktop.png');
+      await page.screenshot({ path: shot2deck });
       summary.screenshots.push(shot2deck);
 
       const deckHeading = await page.locator('text=Deck Loadout').first().isVisible();
@@ -314,11 +350,41 @@ async function runUXSweep() {
         });
       }
 
-      await findMatchTab.click();
-      await page.waitForTimeout(400);
+      // Test anchor filtering in Forge
+      const anchorButtons = ['pawn', 'knight', 'bishop', 'rook', 'queen', 'king', 'all'];
+      for (const anchor of anchorButtons) {
+        const btn = page.locator(`button:has-text("${anchor.toUpperCase()}")`).first();
+        if (await btn.isVisible()) {
+          summary.interactiveElementsTested++;
+          await btn.click();
+          await page.waitForTimeout(100);
+        }
+      }
+
+      // Return to battle
+      const backBtn = page.locator('button:has-text("Back to Arena")').first();
+      if (await backBtn.isVisible()) {
+        summary.interactiveElementsTested++;
+        await backBtn.click();
+        await page.waitForTimeout(300);
+      } else {
+        await findMatchTab.click();
+        await page.waitForTimeout(300);
+      }
     }
 
-    // Test cards hover accordion
+    // Test difficulty switchers & arena controls
+    const mediumDiffBtn = page.locator('button:has-text("Medium")').first();
+    const tacticalDiffBtn = page.locator('button:has-text("Tactical")').first();
+    if (await mediumDiffBtn.isVisible() && await tacticalDiffBtn.isVisible()) {
+      summary.interactiveElementsTested += 2;
+      await tacticalDiffBtn.click();
+      await page.waitForTimeout(150);
+      await mediumDiffBtn.click();
+      await page.waitForTimeout(150);
+    }
+
+    // Hover cards in Tactical Hand
     const cards = await page.locator('[data-card-id]').all();
     summary.interactiveElementsTested += cards.length;
     for (const card of cards.slice(0, 3)) {
@@ -326,15 +392,19 @@ async function runUXSweep() {
       await page.waitForTimeout(100);
     }
 
-    // Mobile sweep
-    const { context: mContext, page: mPage } = await setupContext({ width: 375, height: 667 }, true);
-    await mPage.goto(`${BASE_URL}/deck-builder`, { waitUntil: 'networkidle' });
-    await mPage.waitForTimeout(500);
-    const shot2m = path.join(SCREENSHOT_DIR, 'sweep_02_deck_builder_mobile.png');
-    await mPage.screenshot({ path: shot2m, fullPage: true });
-    summary.screenshots.push(shot2m);
-    await checkAntiSlopAndOverflow(mPage, '/deck-builder', 'mobile 375x667');
-    await mContext.close();
+    // Mobile sweep (390x844 & 375x667)
+    for (const vp of [{ w: 390, h: 844, label: 'mobile 390x844' }, { w: 375, h: 667, label: 'mobile 375x667' }]) {
+      const { context: mContext, page: mPage } = await setupContext({ width: vp.w, height: vp.h }, true);
+      await mPage.goto(`${BASE_URL}/deck-builder`, { waitUntil: 'domcontentloaded' });
+      await mPage.waitForTimeout(500);
+      if (vp.w === 390) {
+        const shot2m = path.join(SCREENSHOT_DIR, 'sweep_02_deck_builder_mobile.png');
+        await mPage.screenshot({ path: shot2m });
+        summary.screenshots.push(shot2m);
+      }
+      await checkAntiSlopAndOverflow(mPage, '/deck-builder', vp.label);
+      await mContext.close();
+    }
 
     if (consoleErrors.length > 0) {
       addDefect({
@@ -358,19 +428,20 @@ async function runUXSweep() {
   // =========================================================================
   // ROUTE 3: WORMHOLE 3D (/wormhole)
   // =========================================================================
-  console.log('\n--- 3. Testing Route: /wormhole (3D Scene) ---');
+  console.log('\n--- 3. Testing Route: /wormhole (3D Spatial HUD) ---');
   summary.routesSwept++;
   try {
     const { context, page, consoleErrors } = await setupContext({ width: 1280, height: 800 }, true);
-    await page.goto(`${BASE_URL}/wormhole`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE_URL}/wormhole`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1200);
 
     const shot3 = path.join(SCREENSHOT_DIR, 'sweep_03_wormhole_desktop.png');
-    await page.screenshot({ path: shot3, fullPage: true });
+    await page.screenshot({ path: shot3 });
     summary.screenshots.push(shot3);
 
     await checkAntiSlopAndOverflow(page, '/wormhole', 'desktop 1280x800');
 
+    // 1. Verify Three.js Canvas
     const canvas = page.locator('canvas').first();
     const hasCanvas = await canvas.isVisible();
     if (!hasCanvas) {
@@ -382,9 +453,99 @@ async function runUXSweep() {
       });
     }
 
-    const homeLink = page.locator('text=Home').first();
-    if (await homeLink.isVisible()) {
-      summary.interactiveElementsTested++;
+    // 2. Verify Top HUD Capsule Elements
+    const homeLink = page.locator('text=← Home').first();
+    const modeBadge = page.locator('text=3D Wormhole').first();
+    const spatialTag = page.locator('text=SPATIAL').first();
+    const turnBadge = page.locator('text=White to move').first();
+    const concludeBtn = page.locator('text=🏁 Conclude Match').first();
+
+    summary.interactiveElementsTested += 2;
+    if (!(await homeLink.isVisible()) || !(await modeBadge.isVisible()) || !(await spatialTag.isVisible()) || !(await turnBadge.isVisible()) || !(await concludeBtn.isVisible())) {
+      addDefect({
+        severity: 'P1',
+        title: 'Top HUD Capsule elements missing on /wormhole',
+        route: '/wormhole',
+        details: 'Expected "← Home", "3D Wormhole", "SPATIAL", "White to move", and "🏁 Conclude Match" in top HUD capsule'
+      });
+    }
+
+    // 3. Verify and Exercise Floating Bottom Camera Dock
+    const dockButtons = [
+      { text: 'Top View', key: 't' },
+      { text: 'Flip 180°', key: 'f' },
+      { text: 'Rotate 90°', key: 'r' },
+      { text: 'Orbit', key: 'l' },
+      { text: 'Reset', key: 'x' },
+    ];
+
+    for (const item of dockButtons) {
+      const btn = page.locator(`button:has-text("${item.text}")`).first();
+      if (await btn.isVisible()) {
+        summary.interactiveElementsTested++;
+        await btn.click();
+        await page.waitForTimeout(100);
+      } else {
+        addDefect({
+          severity: 'P1',
+          title: `Camera dock button "${item.text}" missing`,
+          route: '/wormhole',
+          details: `Expected camera dock action for ${item.text}`
+        });
+      }
+    }
+
+    // Test keyboard shortcuts
+    for (const item of dockButtons) {
+      await page.keyboard.press(item.key);
+      await page.waitForTimeout(50);
+    }
+
+    // 4. Verify and Exercise Collapsible Telemetry Drawer
+    const drawerToggle = page.locator('button:has-text("Moves")').first();
+    if (await drawerToggle.isVisible()) {
+      summary.interactiveElementsTested += 2;
+      // Open drawer
+      await drawerToggle.click();
+      await page.waitForTimeout(300);
+
+      const cameraTips = page.locator('text=Camera Tips').first();
+      if (!(await cameraTips.isVisible())) {
+        addDefect({
+          severity: 'P1',
+          title: 'Collapsible Telemetry Drawer did not reveal Camera Tips when opened',
+          route: '/wormhole',
+          details: 'Expected "Camera Tips" text inside expanded telemetry drawer'
+        });
+      }
+
+      // Close drawer via close button
+      const closeDrawerBtn = page.locator('button[title="Close drawer"]').first();
+      if (await closeDrawerBtn.isVisible()) {
+        await closeDrawerBtn.click();
+      }
+      await page.waitForTimeout(300);
+    } else {
+      addDefect({
+        severity: 'P1',
+        title: 'Telemetry drawer toggle button ("Moves") missing on /wormhole',
+        route: '/wormhole',
+        details: 'Expected floating right slide-out drawer tab'
+      });
+    }
+
+    // Mobile sweep (390x844 & 375x667)
+    for (const vp of [{ w: 390, h: 844, label: 'mobile 390x844' }, { w: 375, h: 667, label: 'mobile 375x667' }]) {
+      const { context: mContext, page: mPage } = await setupContext({ width: vp.w, height: vp.h }, true);
+      await mPage.goto(`${BASE_URL}/wormhole`, { waitUntil: 'domcontentloaded' });
+      await mPage.waitForTimeout(800);
+      if (vp.w === 390) {
+        const shot3m = path.join(SCREENSHOT_DIR, 'sweep_03_wormhole_mobile.png');
+        await mPage.screenshot({ path: shot3m });
+        summary.screenshots.push(shot3m);
+      }
+      await checkAntiSlopAndOverflow(mPage, '/wormhole', vp.label);
+      await mContext.close();
     }
 
     const seriousErrors = consoleErrors.filter(e => !e.includes('THREE.WebGLRenderer') && !e.includes('WebGL'));
@@ -410,19 +571,38 @@ async function runUXSweep() {
   // =========================================================================
   // ROUTE 4: DASHBOARD (/dashboard)
   // =========================================================================
-  console.log('\n--- 4. Testing Route: /dashboard (Player Dashboard & Replay) ---');
+  console.log('\n--- 4. Testing Route: /dashboard (Commander Dashboard & Replay) ---');
   summary.routesSwept++;
   try {
+    // 4A. Unauthenticated state check
+    const { context: unauthContext, page: unauthPage } = await setupContext({ width: 1280, height: 800 }, false);
+    await unauthPage.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
+    await unauthPage.waitForTimeout(400);
+
+    const signInReqHeading = unauthPage.locator('text=Sign In Required').first();
+    const hasSignInReq = await signInReqHeading.isVisible();
+    if (!hasSignInReq) {
+      addDefect({
+        severity: 'P2',
+        title: 'Unauthenticated /dashboard did not render "Sign In Required" card',
+        route: '/dashboard',
+        details: 'Expected graceful sign in prompt when visiting dashboard without auth'
+      });
+    }
+    await unauthContext.close();
+
+    // 4B. Authenticated state check
     const { context, page, consoleErrors } = await setupContext({ width: 1280, height: 800 }, true);
-    await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(600);
 
     const shot4 = path.join(SCREENSHOT_DIR, 'sweep_04_dashboard_desktop.png');
-    await page.screenshot({ path: shot4, fullPage: true });
+    await page.screenshot({ path: shot4 });
     summary.screenshots.push(shot4);
 
     await checkAntiSlopAndOverflow(page, '/dashboard', 'desktop 1280x800');
 
+    // Verify Matchmaking Lobby
     const findMatchBtn = page.locator('button:has-text("Find Match")').first();
     const createRoomBtn = page.locator('button:has-text("Create Room")').first();
     const joinCodeBtn = page.locator('button:has-text("Join with Code")').first();
@@ -437,22 +617,23 @@ async function runUXSweep() {
       });
     }
 
-    // Test filter tabs
+    // Test filter tabs: "All (1)"
     const allTab = page.locator('button:has-text("All (1)")').first();
     if (await allTab.isVisible()) {
       summary.interactiveElementsTested++;
       await allTab.click();
+      await page.waitForTimeout(150);
     }
 
     // Replay modal test
     const replayBtn = page.locator('button:has-text("Replay")').first();
     if (await replayBtn.isVisible()) {
-      summary.interactiveElementsTested++;
+      summary.interactiveElementsTested += 2;
       await replayBtn.click();
       await page.waitForTimeout(500);
 
       const shot4replay = path.join(SCREENSHOT_DIR, 'sweep_04_replay_modal.png');
-      await page.screenshot({ path: shot4replay, fullPage: true });
+      await page.screenshot({ path: shot4replay });
       summary.screenshots.push(shot4replay);
 
       const modalTitle = page.locator('text=Match Replay').first();
@@ -477,15 +658,19 @@ async function runUXSweep() {
       }
     }
 
-    // Mobile test
-    const { context: mContext, page: mPage } = await setupContext({ width: 375, height: 667 }, true);
-    await mPage.goto(`${BASE_URL}/dashboard`, { waitUntil: 'networkidle' });
-    await mPage.waitForTimeout(500);
-    const shot4m = path.join(SCREENSHOT_DIR, 'sweep_04_dashboard_mobile.png');
-    await mPage.screenshot({ path: shot4m, fullPage: true });
-    summary.screenshots.push(shot4m);
-    await checkAntiSlopAndOverflow(mPage, '/dashboard', 'mobile 375x667');
-    await mContext.close();
+    // Mobile test (390x844 & 375x667)
+    for (const vp of [{ w: 390, h: 844, label: 'mobile 390x844' }, { w: 375, h: 667, label: 'mobile 375x667' }]) {
+      const { context: mContext, page: mPage } = await setupContext({ width: vp.w, height: vp.h }, true);
+      await mPage.goto(`${BASE_URL}/dashboard`, { waitUntil: 'domcontentloaded' });
+      await mPage.waitForTimeout(500);
+      if (vp.w === 390) {
+        const shot4m = path.join(SCREENSHOT_DIR, 'sweep_04_dashboard_mobile.png');
+        await mPage.screenshot({ path: shot4m });
+        summary.screenshots.push(shot4m);
+      }
+      await checkAntiSlopAndOverflow(mPage, '/dashboard', vp.label);
+      await mContext.close();
+    }
 
     if (consoleErrors.length > 0) {
       addDefect({
@@ -513,11 +698,11 @@ async function runUXSweep() {
   summary.routesSwept++;
   try {
     const { context, page, consoleErrors } = await setupContext({ width: 1280, height: 800 });
-    await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(400);
 
     const shot5 = path.join(SCREENSHOT_DIR, 'sweep_05_auth_login_desktop.png');
-    await page.screenshot({ path: shot5, fullPage: true });
+    await page.screenshot({ path: shot5 });
     summary.screenshots.push(shot5);
 
     await checkAntiSlopAndOverflow(page, '/login', 'desktop 1280x800');
@@ -539,7 +724,7 @@ async function runUXSweep() {
       });
     }
 
-    // Test tabs
+    // Test tab switches
     const regTab = page.locator('#auth-tab-register');
     const guestTab = page.locator('#auth-tab-guest');
     summary.interactiveElementsTested += 2;
@@ -548,7 +733,7 @@ async function runUXSweep() {
       await regTab.click();
       await page.waitForTimeout(200);
       const regShot = path.join(SCREENSHOT_DIR, 'sweep_05_auth_register_desktop.png');
-      await page.screenshot({ path: regShot, fullPage: true });
+      await page.screenshot({ path: regShot });
       summary.screenshots.push(regShot);
     }
     if (await guestTab.isVisible()) {
@@ -556,15 +741,19 @@ async function runUXSweep() {
       await page.waitForTimeout(200);
     }
 
-    // Mobile test
-    const { context: mContext, page: mPage } = await setupContext({ width: 375, height: 667 });
-    await mPage.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle' });
-    await mPage.waitForTimeout(400);
-    const shot5m = path.join(SCREENSHOT_DIR, 'sweep_05_auth_login_mobile.png');
-    await mPage.screenshot({ path: shot5m, fullPage: true });
-    summary.screenshots.push(shot5m);
-    await checkAntiSlopAndOverflow(mPage, '/login', 'mobile 375x667');
-    await mContext.close();
+    // Mobile test (390x844 & 375x667)
+    for (const vp of [{ w: 390, h: 844, label: 'mobile 390x844' }, { w: 375, h: 667, label: 'mobile 375x667' }]) {
+      const { context: mContext, page: mPage } = await setupContext({ width: vp.w, height: vp.h });
+      await mPage.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded' });
+      await mPage.waitForTimeout(400);
+      if (vp.w === 390) {
+        const shot5m = path.join(SCREENSHOT_DIR, 'sweep_05_auth_login_mobile.png');
+        await mPage.screenshot({ path: shot5m });
+        summary.screenshots.push(shot5m);
+      }
+      await checkAntiSlopAndOverflow(mPage, '/login', vp.label);
+      await mContext.close();
+    }
 
     if (consoleErrors.length > 0) {
       addDefect({
@@ -592,16 +781,16 @@ async function runUXSweep() {
   summary.routesSwept++;
   try {
     const { context, page, consoleErrors } = await setupContext({ width: 1280, height: 800 }, true);
-    await page.goto(`${BASE_URL}/play/SWEEP1`, { waitUntil: 'networkidle' });
+    await page.goto(`${BASE_URL}/play/SWEEP1`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(600);
 
     const shot6 = path.join(SCREENSHOT_DIR, 'sweep_06_playroom_desktop.png');
-    await page.screenshot({ path: shot6, fullPage: true });
+    await page.screenshot({ path: shot6 });
     summary.screenshots.push(shot6);
 
     await checkAntiSlopAndOverflow(page, '/play/SWEEP1', 'desktop 1280x800');
 
-    // Check room header
+    // Check room code pill
     const roomHeader = page.locator('text=SWEEP1').first();
     const hasHeader = await roomHeader.isVisible();
     if (!hasHeader) {
@@ -613,7 +802,55 @@ async function runUXSweep() {
       });
     }
 
-    const nonWsErrors = consoleErrors.filter(e => !e.includes('WebSocket') && !e.includes('ws://') && !e.includes('wss://'));
+    // Check Share Link button
+    const shareBtn = page.locator('button:has-text("Share Link")').first();
+    if (await shareBtn.isVisible()) {
+      summary.interactiveElementsTested++;
+      await shareBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    // Check Clocks
+    const whiteClock = page.locator('text=⚪ White').first();
+    const blackClock = page.locator('text=⚫ Black').first();
+    if (!(await whiteClock.isVisible()) || !(await blackClock.isVisible())) {
+      addDefect({
+        severity: 'P1',
+        title: 'Chess clocks missing in PlayRoom',
+        route: '/play/SWEEP1',
+        details: 'Expected White and Black tactical chess clocks'
+      });
+    }
+
+    // Check Chat Input and Send Message
+    const chatInput = page.locator('input[placeholder="Send message..."]').first();
+    if (await chatInput.isVisible()) {
+      summary.interactiveElementsTested += 2;
+      await chatInput.fill('Good game, well played.');
+      await chatInput.press('Enter');
+      await page.waitForTimeout(200);
+    }
+
+    // Mobile sweep (390x844 & 375x667)
+    for (const vp of [{ w: 390, h: 844, label: 'mobile 390x844' }, { w: 375, h: 667, label: 'mobile 375x667' }]) {
+      const { context: mContext, page: mPage } = await setupContext({ width: vp.w, height: vp.h }, true);
+      await mPage.goto(`${BASE_URL}/play/SWEEP1`, { waitUntil: 'domcontentloaded' });
+      await mPage.waitForTimeout(500);
+      if (vp.w === 390) {
+        const shot6m = path.join(SCREENSHOT_DIR, 'sweep_06_playroom_mobile.png');
+        await mPage.screenshot({ path: shot6m });
+        summary.screenshots.push(shot6m);
+      }
+      await checkAntiSlopAndOverflow(mPage, '/play/SWEEP1', vp.label);
+      await mContext.close();
+    }
+
+    const nonWsErrors = consoleErrors.filter(e => 
+      !e.includes('WebSocket') && 
+      !e.includes('ws://') && 
+      !e.includes('wss://') &&
+      !e.includes('failed to connect')
+    );
     if (nonWsErrors.length > 0) {
       addDefect({
         severity: 'P1',

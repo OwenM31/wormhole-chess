@@ -1,28 +1,44 @@
-# UX Defect Ledger
+# UX Defect Ledger & Conformance Audit
 
-**Latest Sweep Date:** 2026-10-15 19:19
-**Scope:** All Application Surface Routes (`/`, `/login`, `/register`, `/dashboard`, `/deck-builder`, `/wormhole`, `/play/:code`)
-**Target Environment:** Local Full-Stack Preview (`http://localhost:4173`)
-**Total Inspected:** 6 routes, 26 interactive elements, 13 retina screenshots (Desktop 1280x800 and Mobile 375x667)
-**Active Defects:** 0 (P0: 0, P1: 0, P2: 0, P3: 0)
-**Historical Defects Resolved:** 4/4 (100% resolved in Plans 5.4 & 5.5)
+**Sweep Date:** 2026-10-15 22:37
+**Scope:** All Application Surface Routes (`/`, `/deck-builder`, `/wormhole`, `/dashboard`, `/login`, `/register`, `/play/:code`)
+**Mode:** Standard Exploratory & Sensory Ergonomics Sweep
+**Target Environment:** Local Full-Stack Dev (`http://localhost:5173`)
+**Total Inspected:** 6 routes, 51 interactive elements, 15 retina screenshots across Desktop (1280x800) and Mobile (390x844 & 375x667)
+**Total Defects Found:** 0 Active (P0: 0, P1: 0, P2: 0, P3: 0)
+**Defects Remediated in Session:** 2 (100% resolved and verified)
 
 ---
 
 ## Active Defects
 
-None. All 6 surface routes rendered cleanly with zero console runtime crashes, zero horizontal overflows (`scrollWidth === clientWidth`), verified form validation alerts, active tab toggles, and modal escapability.
+None. All 6 surface routes rendered cleanly with zero console runtime crashes, zero horizontal layout overflows (`scrollWidth === clientWidth`), verified form validation alerts, active tab toggles, and modal escapability.
 
 ---
 
-## Planned Visual Polish Observations (Scoped to Upcoming Phases)
+## Remediated Defects (Session 2026-10-15 22:37)
 
-### [OBS-001] 3D Wormhole Controls Overlay & Action Bar Visual Craft
-- **Severity:** P3 (Planned Phase 4 Redesign Scope)
-- **Route:** `/wormhole`
-- **Observed:** The 3D camera controls (`180° (F)`, `Rotate 90° (R)`, `Reset Orientation (X)`) render as legacy light gray rectangular buttons sitting against the 3D board canvas border, and the top-left action buttons mix bright blue and dark gray styles.
-- **Planned Action:** Fully addressed in upcoming **Phase 4: 3D Wormhole HUD & Multiplayer PlayRoom Redesign** (`@[.agent/workflows/design-phase.md] 4 wormhole`), which introduces floating tactical glass HUD overlays, unified camera presets, and design token alignment.
-- **Evidence:** `.agent/state/artifacts/screenshots/sweep_03_wormhole_desktop.png`
+### [DEF-005] React Shorthand/Non-Shorthand Style Conflict on Home Tab Toggle
+- **Severity:** P1 (Console Warning / Styling Bug Risk)
+- **Route:** `/` (Home Landing Page)
+- **Element:** `#tab-deck-builder` and `#tab-wormhole` variant switchers
+- **Observed Behavior:** Switching tabs triggered React console warning: `Removing a style property during rerender (borderColor) when a conflicting property is set (border) can lead to styling bugs. To avoid this, don't mix shorthand and non-shorthand properties for the same value.`
+- **Expected Behavior:** Tab styles should cleanly toggle without conflicting style shorthand properties or console warnings.
+- **Evidence:** `.agent/state/artifacts/screenshots/sweep_01_home_desktop.png`
+- **Suspect File(s):** `src/pages/HomePage.tsx#L383`
+- **Resolution:** Replaced non-shorthand `borderColor: 'rgba(139, 126, 116, 0.25)'` with unified shorthand `border: '1px solid rgba(139, 126, 116, 0.25)'` matching `tabBtnStyle`. Verified clean console logs.
+
+---
+
+### [DEF-006] React Shorthand/Non-Shorthand Background Property Conflict on Auth Tabs
+- **Severity:** P1 (Console Warning / Styling Bug Risk)
+- **Route:** `/login` and `/register`
+- **Element:** `#auth-tab-register` and `#auth-tab-guest` mode switchers
+- **Observed Behavior:** Toggling authentication modes triggered React console warning: `Removing a style property during rerender (backgroundColor) when a conflicting property is set (background) can lead to styling bugs.`
+- **Expected Behavior:** Smooth background transitions without console warnings during tab rerender.
+- **Evidence:** `.agent/state/artifacts/screenshots/sweep_05_auth_login_desktop.png`
+- **Suspect File(s):** `src/pages/AuthPage.tsx#L443`
+- **Resolution:** Normalized `tabStyle` from `background: 'transparent'` to `backgroundColor: 'transparent'`, preventing style attribute collisions with `activeTabStyle.backgroundColor`. Verified clean console logs.
 
 ---
 

@@ -440,7 +440,7 @@ const tabContainerStyle: React.CSSProperties = {
 
 const tabStyle: React.CSSProperties = {
   flex: 1,
-  background: 'transparent',
+  backgroundColor: 'transparent',
   border: 'none',
   color: '#8B7E74',
   padding: '0.45rem 0.25rem',

@@ -380,7 +380,7 @@ const activeTabBtnStyle: React.CSSProperties = {
   ...tabBtnStyle,
   backgroundColor: '#24272A',
   color: '#FAF9F6',
-  borderColor: 'rgba(139, 126, 116, 0.25)',
+  border: '1px solid rgba(139, 126, 116, 0.25)',
 };
 
 const activeStatusPillStyle: React.CSSProperties = {

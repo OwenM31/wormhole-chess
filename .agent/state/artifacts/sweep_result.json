@@ -1,20 +1,22 @@
 {
   "routesSwept": 6,
-  "interactiveElementsTested": 26,
+  "interactiveElementsTested": 51,
   "defects": [],
   "screenshots": [
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_01_home_desktop.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_01_home_mobile.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_02_deck_builder_desktop.png",
-    "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_02_deck_curator_desktop.png",
+    "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_02_deck_forge_desktop.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_02_deck_builder_mobile.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_03_wormhole_desktop.png",
+    "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_03_wormhole_mobile.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_04_dashboard_desktop.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_04_replay_modal.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_04_dashboard_mobile.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_05_auth_login_desktop.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_05_auth_register_desktop.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_05_auth_login_mobile.png",
-    "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_06_playroom_desktop.png"
+    "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_06_playroom_desktop.png",
+    "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_06_playroom_mobile.png"
   ]
 }
