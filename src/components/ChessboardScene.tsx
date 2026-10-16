@@ -548,10 +548,16 @@ const ORIGINAL_ORIENTATION = new THREE.Quaternion(); // identity quaternion
 
 export interface ChessboardSceneProps {
   hideHeaderTitle?: boolean;
+  onGameStateChange?: (state: {
+    currentPlayer: 1 | 2 | 3 | 4;
+    turnCount: number;
+    moveCount: number;
+  }) => void;
 }
 
 const ChessboardScene: React.FC<ChessboardSceneProps> = ({
   hideHeaderTitle = false,
+  onGameStateChange,
 }) => {
   // Handles the colors for the UI buttons in scene
   const [toggle180, setToggle180] = useState(false);
@@ -2088,28 +2094,39 @@ const ChessboardScene: React.FC<ChessboardSceneProps> = ({
     requestAnimationFrame(animate); 
   }, [isRotating]);
 
+  const handleTopView = useCallback(() => {
+    if (!controlsRef.current) return;
+    setPolarLocked(false);
+    animateTo({ polar: 0.05, azimuth: 0 }, 0.5);
+  }, [animateTo]);
+
   const resetBoardOrientation = useCallback(() => {
-    if (!boardRef.current) return;
+    if (boardRef.current) {
+      const startQuaternion = boardRef.current.quaternion.clone();
+      const endQuaternion = ORIGINAL_ORIENTATION.clone();
+      const duration = 0.5; // seconds
+      let startTime: number | null = null;
 
-    const startQuaternion = boardRef.current.quaternion.clone();
-    const endQuaternion = ORIGINAL_ORIENTATION.clone();
-    const duration = 0.5; // seconds
-    let startTime: number | null = null;
+      const animate = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const elapsed = (timestamp - startTime) / 1000;
+        const t = Math.min(elapsed / duration, 1);
 
-    const animate = (timestamp: number) => {
-      if (!startTime) startTime = timestamp;
-      const elapsed = (timestamp - startTime) / 1000;
-      const t = Math.min(elapsed / duration, 1);
+        const current = startQuaternion.clone();
+        current.slerp(endQuaternion, t);
+        boardRef.current!.quaternion.copy(current);
 
-      const current = startQuaternion.clone();
-      current.slerp(endQuaternion, t);
-      boardRef.current!.quaternion.copy(current);
+        if (t < 1) requestAnimationFrame(animate);
+      };
 
-      if (t < 1) requestAnimationFrame(animate);
-    };
-
-    requestAnimationFrame(animate);
-  }, []);
+      requestAnimationFrame(animate);
+    }
+    setQuarterRotationCount(0);
+    setToggle180(false);
+    if (controlsRef.current) {
+      animateTo({ azimuth: 0, polar: Math.PI / 2 }, 0.5);
+    }
+  }, [animateTo]);
 
   const [themePopupOpen, setThemePopupOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -2151,11 +2168,18 @@ const ChessboardScene: React.FC<ChessboardSceneProps> = ({
     3: "#006400",
     4: "#c19a6b",
   });
-  const [activeColorPicker, setActiveColorPicker] = useState<number | null>(
-    null
-  );
-
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [boardViewMode] = useState(0);
+
+  useEffect(() => {
+    if (onGameStateChange) {
+      onGameStateChange({
+        currentPlayer,
+        turnCount: Math.floor(moveHistory.length / 2) + 1,
+        moveCount: moveHistory.length,
+      });
+    }
+  }, [currentPlayer, moveHistory.length, onGameStateChange]);
 
   // ========== HOTKEYS ==========
   useEffect(() => {
@@ -2169,16 +2193,19 @@ const ChessboardScene: React.FC<ChessboardSceneProps> = ({
       }
 
       switch (event.key.toLowerCase()) {
+        case "t":
+          handleTopView();
+          break;
         case "f":
           handleFlip180();
           break;
         case "l":
           handlePolarLock();
           break;
-        case "r": // new hotkey
+        case "r":
           rotateBoard90();
           break;
-        case "o": // new hotkey to reset orientation
+        case "x":
           resetBoardOrientation();
           break;
         default:
@@ -2186,770 +2213,564 @@ const ChessboardScene: React.FC<ChessboardSceneProps> = ({
       }
     };
 
-    // Add event listener
     window.addEventListener("keydown", handleKeyPress);
-
-    // Cleanup function to remove listener when component unmounts
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
     };
-  }, [handleFlip180, handlePolarLock, rotateBoard90, resetBoardOrientation]); // Dependencies - remake listener if these functions change
+  }, [handleTopView, handleFlip180, handlePolarLock, rotateBoard90, resetBoardOrientation]);
+
+  const dockBtnStyle = (active = false): React.CSSProperties => ({
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "6px 10px",
+    backgroundColor: active ? "rgba(212, 175, 55, 0.15)" : "transparent",
+    color: active ? "#D4AF37" : "#FAF9F6",
+    border: active ? "1px solid #D4AF37" : "1px solid transparent",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "0.8rem",
+    fontWeight: 600,
+    transition: "all 0.15s ease",
+  });
+
+  const keyBadgeStyle: React.CSSProperties = {
+    fontFamily: "ui-monospace, monospace",
+    fontSize: "0.7rem",
+    fontWeight: 700,
+    padding: "1px 4px",
+    borderRadius: "3px",
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    color: "#8B7E74",
+    border: "1px solid rgba(139, 126, 116, 0.3)",
+  };
 
   return (
     <div
       style={{
-        width: "100vw",
-        height: "100vh",
-        display: "flex",
-        backgroundColor: COLORS.smokeyTaupe,
-        fontFamily: "'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        width: "100%",
+        height: "100%",
+        position: "relative",
+        overflow: "hidden",
+        backgroundColor: "#090A0F",
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
-      {/* Header */}
+      {/* Full-viewport Three.js Canvas */}
+      <Canvas
+        camera={{ position: [0, 0, 300], fov: 50, near: 0.1, far: 1000 }}
+        style={{ width: "100%", height: "100%" }}
+      >
+        {selectedOption !== null && (
+          <Environment
+            preset={
+              OPTIONS[selectedOption].split(" ")[0].toLowerCase() as Env
+            }
+          />
+        )}
+
+        <ambientLight intensity={0.5} />
+        <directionalLight position={[10, 10, 10]} intensity={1} />
+
+        <Suspense fallback={null}>
+          <group ref={boardRef}>
+            <ChessboardModel />
+
+            {boardSquares.map((square) => (
+              <BoardSquare
+                key={square.key}
+                position={square.position}
+                notation={square.notation}
+                onSquareClick={handleSquareClick}
+                isHighlighted={isHighlightedSquare(square.notation)}
+                isPentagonal={square.isPentagonal}
+              />
+            ))}
+
+            {Object.entries(piecePositions).map(([id, notation]) => {
+              const player = getPlayerFromPieceId(id);
+              const color = playerColors[player];
+              const pos = chessToWorld(notation);
+              let piece = getPieceFromId(id);
+              const isSelected = selectedPiece === id;
+
+              console.log("player " + player + ": " + color + " " + piece);
+
+              const props = {
+                id,
+                player,
+                color,
+                type: piece,
+                position: pos,
+                notation,
+                isSelected,
+                capturedPiece,
+                onClick: handlePieceClick,
+              };
+
+              switch (piece) {
+                case "pawn":
+                  return <Pawn key={id} {...props} />;
+                case "knight":
+                  return <Knight key={id} {...props} />;
+                case "bishop":
+                  return <Bishop key={id} {...props} />;
+                case "rook":
+                  return <Rook key={id} {...props} />;
+                case "queen":
+                  return <Queen key={id} {...props} />;
+                case "king":
+                  return <King key={id} {...props} />;
+                default:
+                  return null;
+              }
+            })}
+
+            {Object.entries(pawnPositions).map(([id, info]) => {
+              const player = getPlayerFromPieceId(id);
+              const color = playerColors[player];
+              const isSelected = selectedPiece === id;
+              const props = {
+                id: id,
+                player: getPlayerFromPieceId(id),
+                color,
+                type: "pawn",
+                position: chessToWorld(info.position),
+                notation: info.position,
+                isSelected,
+                capturedPiece,
+                onClick: handlePieceClick,
+              };
+              return <Pawn key={id} {...props} />;
+            })}
+          </group>
+        </Suspense>
+
+        <OrbitControls
+          ref={controlsRef}
+          target={[0, 0, 0]}
+          enableZoom={true}
+          enablePan={true}
+          enableRotate={boardViewMode === 0}
+          minPolarAngle={
+            polarLocked && boardViewMode === 0 ? Math.PI / 2 : 0
+          }
+          maxPolarAngle={
+            polarLocked && boardViewMode === 0 ? Math.PI / 2 : 2 * Math.PI
+          }
+        />
+      </Canvas>
+
+      {/* Floating Bottom Camera Control Dock */}
       <div
         style={{
           position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "80px",
-          backgroundColor: COLORS.charcoal,
+          bottom: "24px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 50,
           display: "flex",
           alignItems: "center",
-          padding: "0 40px",
-          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.5)",
-          zIndex: 10,
-          justifyContent: "space-between",
+          gap: "6px",
+          padding: "6px 8px",
+          backgroundColor: "rgba(28, 30, 32, 0.88)",
+          backdropFilter: "blur(14px)",
+          border: "1px solid rgba(139, 126, 116, 0.25)",
+          borderRadius: "6px",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.45)",
         }}
       >
-        {!hideHeaderTitle ? (
-          <h1
-            style={{
-              color: COLORS.warmWhite,
-              fontSize: "2rem",
-              fontWeight: "700",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Wormhole Chess
-            <span
-              style={{
-                color: COLORS.lodenGreenLight,
-                fontSize: "1rem",
-                marginLeft: "15px",
-                fontWeight: "400",
-              }}
-            ></span>
-          </h1>
-        ) : (
-          <div style={{ flex: 1 }} />
-        )}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          {/* Mode Switch */}
+        <button
+          onClick={handleTopView}
+          style={dockBtnStyle()}
+          title="Top-down camera view (T)"
+        >
+          <span>Top View</span>
+          <span style={keyBadgeStyle}>T</span>
+        </button>
+
+        <button
+          onClick={handleFlip180}
+          style={dockBtnStyle(toggle180)}
+          title="Flip camera 180 degrees (F)"
+        >
+          <span>Flip 180°</span>
+          <span style={keyBadgeStyle}>F</span>
+        </button>
+
+        <button
+          onClick={rotateBoard90}
+          style={dockBtnStyle()}
+          title="Rotate board 90 degrees (R)"
+        >
+          <span>Rotate 90°</span>
+          <span style={keyBadgeStyle}>R</span>
+        </button>
+
+        <button
+          onClick={handlePolarLock}
+          style={dockBtnStyle(polarLocked)}
+          title="Lock camera to horizontal plane (L)"
+        >
+          <span>{polarLocked ? "Orbit Lock 🔒" : "Orbit Free 🔓"}</span>
+          <span style={keyBadgeStyle}>L</span>
+        </button>
+
+        <button
+          onClick={resetBoardOrientation}
+          style={dockBtnStyle()}
+          title="Reset board orientation and camera (X)"
+        >
+          <span>Reset</span>
+          <span style={keyBadgeStyle}>X</span>
+        </button>
+      </div>
+
+      {/* Collapsible Right Telemetry Drawer Toggle (when closed) */}
+      {!drawerOpen && (
+        <button
+          onClick={() => setDrawerOpen(true)}
+          style={{
+            position: "absolute",
+            top: "80px",
+            right: 0,
+            zIndex: 60,
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 12px 8px 14px",
+            backgroundColor: "rgba(28, 30, 32, 0.9)",
+            backdropFilter: "blur(14px)",
+            color: "#FAF9F6",
+            border: "1px solid rgba(139, 126, 116, 0.25)",
+            borderRight: "none",
+            borderRadius: "6px 0 0 6px",
+            cursor: "pointer",
+            boxShadow: "-4px 4px 16px rgba(0, 0, 0, 0.4)",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+          }}
+          title="Expand telemetry and moves drawer"
+        >
+          <span>Moves ({moveHistory.length})</span>
+          <span style={{ color: "#D4AF37", fontSize: "1rem" }}>◨</span>
+        </button>
+      )}
+
+      {/* Collapsible Right Telemetry Drawer (when open) */}
+      {drawerOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: "290px",
+            maxWidth: "85vw",
+            zIndex: 60,
+            backgroundColor: "rgba(28, 30, 32, 0.95)",
+            backdropFilter: "blur(16px)",
+            borderLeft: "1px solid rgba(139, 126, 116, 0.25)",
+            boxShadow: "-8px 0 32px rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            flexDirection: "column",
+            padding: "16px",
+            gap: "12px",
+          }}
+        >
+          {/* Drawer Header */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              backgroundColor: COLORS.charcoal,
-              borderRadius: "12px",
-              padding: "12px 18px",
-              color: COLORS.warmWhite,
-              fontWeight: "600",
-              boxShadow: "inset 0 1px 3px rgba(0,0,0,0.4)",
+              borderBottom: "1px solid rgba(139, 126, 116, 0.2)",
+              paddingBottom: "10px",
             }}
           >
-            <span
-              style={{
-                display: "inline-block",
-                width: "150px", // enough for both labels
-                textAlign: "left",
-              }}
-            >
-              {sandboxMode ? "Sandbox Mode" : "Competitive Mode"}
-            </span>
-            <label
-              style={{
-                position: "relative",
-                display: "inline-block",
-                width: "50px",
-                height: "26px",
-                margin: "12px",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={sandboxMode}
-                onChange={(e) => setSandboxMode(e.target.checked)}
-                style={{ display: "none" }}
-              />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ color: "#FAF9F6", fontWeight: 700, fontSize: "1rem" }}>
+                Moves
+              </span>
               <span
                 style={{
-                  position: "absolute",
-                  cursor: "pointer",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  backgroundColor: sandboxMode
-                    ? COLORS.lodenGreenLight
-                    : COLORS.charcoalLight,
-                  borderRadius: "26px",
-                  transition: "0.3s",
+                  fontSize: "0.75rem",
+                  padding: "1px 6px",
+                  borderRadius: "4px",
+                  backgroundColor: "rgba(212, 175, 55, 0.15)",
+                  color: "#D4AF37",
+                  fontFamily: "ui-monospace, monospace",
+                  fontWeight: 600,
                 }}
-              />
-              <span
-                style={{
-                  position: "absolute",
-                  top: "3px",
-                  left: sandboxMode ? "26px" : "3px",
-                  width: "20px",
-                  height: "20px",
-                  borderRadius: "50%",
-                  backgroundColor: COLORS.warmWhite,
-                  transition: "0.3s",
-                }}
-              />
-            </label>
+              >
+                {moveHistory.length} plies
+              </span>
+            </div>
+            <button
+              onClick={() => setDrawerOpen(false)}
+              style={{
+                backgroundColor: "transparent",
+                border: "none",
+                color: "#8B7E74",
+                cursor: "pointer",
+                fontSize: "1.1rem",
+                padding: "4px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title="Collapse drawer"
+            >
+              ✕
+            </button>
           </div>
-          {/* Reset Game */}
+
+          {/* Quick Utility Actions */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              width: "100%",
+              gap: "8px",
             }}
           >
-            {/* Reset Game Button */}
             <button
               onClick={handleResetGame}
               style={{
-                padding: "8px 16px",
-                borderRadius: "8px",
-                backgroundColor: COLORS.lodenGreen,
-                color: COLORS.warmWhite,
+                flex: 1,
+                padding: "6px 8px",
+                borderRadius: "4px",
+                backgroundColor: "#24272A",
+                color: "#FAF9F6",
+                fontSize: "0.75rem",
                 fontWeight: 600,
-                border: "none",
+                border: "1px solid rgba(139, 126, 116, 0.3)",
                 cursor: "pointer",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                transition: "0.2s",
-              }}
-              onMouseEnter={(e) => {
-                (e.target as HTMLButtonElement).style.backgroundColor =
-                  COLORS.lodenGreenLight;
-              }}
-              onMouseLeave={(e) => {
-                (e.target as HTMLButtonElement).style.backgroundColor =
-                  COLORS.lodenGreen;
               }}
             >
-              RESET GAME
+              Reset Board
+            </button>
+            <button
+              onClick={() => setThemePopupOpen((prev) => !prev)}
+              style={{
+                flex: 1,
+                padding: "6px 8px",
+                borderRadius: "4px",
+                backgroundColor: "#24272A",
+                color: "#FAF9F6",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                border: "1px solid rgba(139, 126, 116, 0.3)",
+                cursor: "pointer",
+              }}
+            >
+              Themes
+            </button>
+            <button
+              onClick={() => setSandboxMode((prev) => !prev)}
+              style={{
+                flex: 1,
+                padding: "6px 8px",
+                borderRadius: "4px",
+                backgroundColor: sandboxMode ? "rgba(76, 92, 76, 0.4)" : "#24272A",
+                color: sandboxMode ? "#FAF9F6" : "#8B7E74",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                border: sandboxMode
+                  ? "1px solid rgba(76, 92, 76, 0.6)"
+                  : "1px solid rgba(139, 126, 116, 0.3)",
+                cursor: "pointer",
+              }}
+              title="Toggle Sandbox Mode"
+            >
+              {sandboxMode ? "Sandbox ✓" : "Standard"}
             </button>
           </div>
-        </div>
-      </div>
 
-      {/* Main Content Area */}
-      <div
-        style={{
-          flex: 1,
-          display: "flex",
-          marginTop: "80px",
-        }}
-      >
-        {/* Canvas Container */}
-        <div
-          style={{
-            flex: 1,
-            position: "relative",
-            backgroundColor: COLORS.charcoalLight,
-            borderRight: `1px solid ${COLORS.lodenGreenDark}`,
-          }}
-        >
-          {/* Left-Side Players Menu Toggle */}
+          {/* Scrollable Move History */}
           <div
             style={{
-              position: "absolute",
-              top: "20px",
-              left: "20px",
-              zIndex: 10,
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              backgroundColor: "rgba(20, 22, 24, 0.6)",
+              borderRadius: "6px",
+              padding: "10px",
+              border: "1px solid rgba(139, 126, 116, 0.15)",
             }}
           >
-            <button
-              onClick={() => setPlayersMenuOpen((prev) => !prev)}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "0 8px 8px 0",
-                backgroundColor: COLORS.lodenGreen,
-                color: COLORS.warmWhite,
-                cursor: "pointer",
-                border: "none",
-                fontFamily: "Segoe UI",
-                fontWeight: "300",
-              }}
-            >
-              Players ⚡
-            </button>
-          </div>
-          {playersMenuOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "60px", // below toggle
-                left: "20px",
-                backgroundColor: COLORS.charcoal,
-                borderRadius: "12px",
-                boxShadow: "2px 2px 12px rgba(0,0,0,0.4)",
-                padding: "20px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "15px",
-                zIndex: 999,
-                minWidth: "220px",
-              }}
-            >
-              {/* Header with Reset */}
+            {moveHistory.length === 0 ? (
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  color: "#8B7E74",
+                  fontSize: "0.8rem",
+                  fontStyle: "italic",
+                  textAlign: "center",
+                  marginTop: "24px",
                 }}
               >
-                <h3
-                  style={{
-                    color: COLORS.warmWhite,
-                    margin: 0,
-                    fontSize: "1.2rem",
-                  }}
-                >
-                  Players
-                </h3>
-                <button
-                  onClick={() => setPlayerColors(DEFAULT_PLAYER_COLORS)}
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    backgroundColor: COLORS.lodenGreen,
-                    color: COLORS.warmWhite,
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: "0.9rem",
-                  }}
-                >
-                  Reset
-                </button>
+                No moves recorded yet
               </div>
-
-              {/* Player slots (always show 4 slots) */}
-              {[1, 2, 3, 4].map((slotNumber) => {
-                const player = players.find((p) => p.id === slotNumber);
-
-                if (!player) {
-                  // Empty slot - show add button
-                  return (
-                    <div
-                      key={`slot-${slotNumber}`}
-                      onClick={() => {
-                        setPlayers((prev) => [...prev, { id: slotNumber }]);
-
-                        // add default color for that slot
-                        setPlayerColors((prev) => ({
-                          ...prev,
-                          [slotNumber]: DEFAULT_PLAYER_COLORS[slotNumber],
-                        }));
-
-                        // restore pieces for the new player
-                        setPiecePositions((prev) => ({
-                          ...prev,
-                          ...getDefaultPiecePositionsForPlayer(slotNumber),
-                        }));
-                        setPawnPositions((prev) => ({
-                          ...prev,
-                          ...getDefaultPawnPositionsForPlayer(slotNumber),
-                        }));
-                      }}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: "12px",
-                        border: `2px dashed ${COLORS.lodenGreenLight}`,
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        backgroundColor: "transparent",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          COLORS.charcoalLight;
-                        e.currentTarget.style.borderColor = COLORS.lodenGreen;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.borderColor =
-                          COLORS.lodenGreenLight;
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: COLORS.lodenGreenLight,
-                          fontSize: "1.5rem",
-                          fontWeight: "300",
-                        }}
-                      >
-                        +
-                      </span>
-                    </div>
-                  );
-                }
-
-                // Occupied slot - show player controls
-                return (
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {moveHistory.map((move, idx) => (
                   <div
-                    key={player.id}
+                    key={idx}
                     style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      backgroundColor: idx % 2 === 0 ? "rgba(255, 255, 255, 0.03)" : "transparent",
+                      fontSize: "0.8rem",
+                      fontFamily: "ui-monospace, monospace",
                     }}
                   >
-                    <span style={{ color: COLORS.warmWhite, fontWeight: 600 }}>
-                      Player {slotNumber}
+                    <span style={{ color: "#8B7E74", width: "24px" }}>
+                      {move.moveNumber}.
                     </span>
-
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      {/* Color box */}
-                      <div
-                        onClick={() =>
-                          setActiveColorPicker(
-                            activeColorPicker === player.id ? null : player.id
-                          )
-                        }
+                    <span style={{ color: "#FAF9F6", flex: 1, textAlign: "left", marginLeft: "6px" }}>
+                      {move.isCastling
+                        ? move.to.startsWith("g")
+                          ? "O-O"
+                          : "O-O-O"
+                        : `${move.from} → ${move.to}`}
+                    </span>
+                    {move.isWormholeMove && (
+                      <span
                         style={{
-                          width: "24px",
-                          height: "24px",
-                          backgroundColor: playerColors[player.id],
-                          borderRadius: "4px",
-                          border: "1px solid #ccc",
-                          cursor: "pointer",
+                          fontSize: "0.7rem",
+                          color: "#D4AF37",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "2px",
                         }}
-                      />
-
-                      {/* Cycle color button */}
-                      <button
-                        onClick={() => {
-                          const colorsArray = Object.values(
-                            DEFAULT_PLAYER_COLORS
-                          );
-                          const currentColor =
-                            playerColors[player.id] ?? colorsArray[0];
-                          const currentColorIndex =
-                            colorsArray.indexOf(currentColor);
-                          const nextColor =
-                            colorsArray[
-                              (currentColorIndex + 1) % colorsArray.length
-                            ];
-                          setPlayerColors((prev) => ({
-                            ...prev,
-                            [player.id]: nextColor,
-                          }));
-                        }}
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          cursor: "pointer",
-                          color: COLORS.lodenGreenLight,
-                        }}
+                        title="Wormhole traversal"
                       >
-                        🔄
-                      </button>
-
-                      {/* Remove player button */}
-                      <button
-                        onClick={() => {
-                          // Remove player but keep their slot
-                          setPlayers((prev) =>
-                            prev.filter((p) => p.id !== player.id)
-                          );
-
-                          // Remove their pieces
-                          setPiecePositions((prev) =>
-                            Object.fromEntries(
-                              Object.entries(prev).filter(
-                                ([id]) => getPlayerFromPieceId(id) !== player.id
-                              )
-                            )
-                          );
-                          setPawnPositions((prev) => {
-                            const filtered: typeof prev = {};
-                            Object.entries(prev).forEach(([id, info]) => {
-                              if (getPlayerFromPieceId(id) !== player.id)
-                                filtered[id] = info;
-                            });
-                            return filtered;
-                          });
-                        }}
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          cursor: "pointer",
-                          color: COLORS.red,
-                        }}
-                      >
-                        ❌
-                      </button>
-                    </div>
-
-                    {/* Color picker */}
-                    {activeColorPicker === player.id && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "30px",
-                          left: "100%",
-                          transform: "translateX(-50%)",
-                          zIndex: 1000,
-                          backgroundColor: COLORS.charcoal,
-                          padding: "8px",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                        }}
-                      >
-                        <PlayerColorPicker
-                          color={playerColors[player.id]}
-                          onChange={(color) =>
-                            setPlayerColors((prev) => ({
-                              ...prev,
-                              [player.id]: color,
-                            }))
-                          }
-                        />
-                      </div>
+                        🌀
+                      </span>
                     )}
                   </div>
-                );
-              })}
-            </div>
-          )}
-          {/* Top-Right Lock */}
-          <div
-            style={{
-              position: "absolute",
-              top: "20px",
-              right: "20px",
-              zIndex: 10,
-            }}
-          >
-            <button
-              onClick={handlePolarLock}
-              style={{
-                padding: "8px 12px",
-                borderRadius: "8px",
-                backgroundColor: polarLocked ? "green" : "gray",
-                color: "white",
-                fontFamily: "Segoe UI",
-                fontWeight: "300",
-              }}
-            >
-              {polarLocked ? "Horizontal Lock 🔒" : "Free Orbit 🔓"} (L)
-            </button>
-          </div>
-          {/* Bottom-Right 180 Flip */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: "20px",
-              right: "20px",
-              zIndex: 10,
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                bottom: "20px",
-                right: "20px",
-                zIndex: 10,
-                whiteSpace: "nowrap", // prevent button text from wrapping
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-end",
-              }}
-            >
-              <button
-                onClick={handleFlip180}
-                style={{
-                  display: "inline-block",
-                  width: "fit-content",
-                  textAlign: "right",
-                  marginBottom: "8px",
-                  fontFamily: "Segoe UI",
-                  fontWeight: "300",
-                  backgroundColor: toggle180 ? COLORS.gold : "gray",
-                }}
-              >
-                180° 🔄 (F)
-              </button>
-              <button
-                onClick={rotateBoard90}
-                style={{
-                  display: "inline-block",
-                  marginBottom: "8px",
-                  width: "auto",
-                  textAlign: "right",
-                  fontFamily: "Segoe UI",
-                  fontWeight: "300",
-                  color: (quarterRotation % 4 === 0) ? "black" : (quarterRotation % 2 === 0) ? "white" : "black",
-                  backgroundColor: (toggle180) ? ((quarterRotation % 4 === 0) ? "green" : (quarterRotation % 2 === 0) ? COLORS.gold : COLORS.lodenGreenLight) : ((quarterRotation % 4 === 0) ? "white" : (quarterRotation % 2 === 0) ? "black" : "gray"),
-                }}
-              >
-                Rotate 90° ⟳ (R)
-              </button>
-
-              <button
-                onClick={resetBoardOrientation}
-                style={{
-                  display: "inline-block",
-                  marginBottom: "8px",
-                  width: "auto",
-                  textAlign: "right",
-                  fontFamily: "Segoe UI",
-                  fontWeight: "300",
-                  backgroundColor: "gray",
-                }}
-              >
-                Reset Orientation ⬜ (X)
-              </button>
-            </div>
-          </div>
-          <Canvas
-            camera={{ position: [0, 0, 300], fov: 50, near: 0.1, far: 1000 }}
-            style={{ width: "100%", height: "100%" }}
-          >
-            {selectedOption !== null && (
-              <Environment
-                preset={
-                  OPTIONS[selectedOption].split(" ")[0].toLowerCase() as Env
-                }
-              />
-            )}
-
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[10, 10, 10]} intensity={1} />
-
-            <Suspense fallback={null}>
-              <group ref={boardRef}>
-                <ChessboardModel />
-
-                {boardSquares.map((square) => (
-                  <BoardSquare
-                    key={square.key}
-                    position={square.position}
-                    notation={square.notation}
-                    onSquareClick={handleSquareClick}
-                    isHighlighted={isHighlightedSquare(square.notation)}
-                    isPentagonal={square.isPentagonal}
-                  />
-                ))}
-
-                {Object.entries(piecePositions).map(([id, notation]) => {
-                  const player = getPlayerFromPieceId(id);
-                  const color = playerColors[player];
-                  const pos = chessToWorld(notation);
-                  let piece = getPieceFromId(id);
-                  const isSelected = selectedPiece === id;
-
-                  console.log("player " + player + ": " + color + " " + piece);
-
-                  const props = {
-                    id,
-                    player,
-                    color,
-                    type: piece,
-                    position: pos,
-                    notation,
-                    isSelected,
-                    capturedPiece,
-                    onClick: handlePieceClick,
-                  };
-
-                  switch (piece) {
-                    case "pawn":
-                      return <Pawn key={id} {...props} />;
-                    case "knight":
-                      return <Knight key={id} {...props} />;
-                    case "bishop":
-                      return <Bishop key={id} {...props} />;
-                    case "rook":
-                      return <Rook key={id} {...props} />;
-                    case "queen":
-                      return <Queen key={id} {...props} />;
-                    case "king":
-                      return <King key={id} {...props} />;
-                    default:
-                      return null;
-                  }
-                })}
-
-                {Object.entries(pawnPositions).map(([id, info]) => {
-                  const player = getPlayerFromPieceId(id);
-                  const color = playerColors[player];
-                  const isSelected = selectedPiece === id;
-                  const props = {
-                    id: id,
-                    player: getPlayerFromPieceId(id),
-                    color,
-                    type: "pawn",
-                    position: chessToWorld(info.position),
-                    notation: info.position,
-                    isSelected,
-                    capturedPiece,
-                    onClick: handlePieceClick,
-                  };
-                  return <Pawn key={id} {...props} />;
-                })}
-              </group>
-            </Suspense>
-
-            <OrbitControls
-              ref={controlsRef}
-              target={[0, 0, 0]}
-              enableZoom={true}
-              enablePan={true}
-              enableRotate={boardViewMode === 0} // Disable rotation in board view mode
-              minPolarAngle={
-                polarLocked && boardViewMode === 0 ? Math.PI / 2 : 0
-              }
-              maxPolarAngle={
-                polarLocked && boardViewMode === 0 ? Math.PI / 2 : 2 * Math.PI
-              }
-            />
-          </Canvas>
-          {themePopupOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                backgroundColor: COLORS.charcoal,
-                borderRadius: "12px",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-                padding: "20px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
-                zIndex: 999, // ensures it's on top of Canvas
-              }}
-            >
-              <h3
-                style={{
-                  color: COLORS.warmWhite,
-                  fontSize: "1.2rem",
-                  marginBottom: "8px",
-                  textAlign: "center",
-                }}
-              >
-                Choose Theme
-              </h3>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)", // 2 columns
-                  gap: "10px 12px", // row gap, column gap
-                }}
-              >
-                {OPTIONS.map((option, i) => (
-                  <button
-                    key={i}
-                    onClick={
-                      () => setSelectedOption((prev) => (prev === i ? null : i)) // toggle
-                    }
-                    style={{
-                      padding: "10px 14px",
-                      borderRadius: "8px",
-                      border: "none",
-                      cursor: "pointer",
-                      backgroundColor:
-                        i === selectedOption
-                          ? COLORS.lodenGreenLight
-                          : COLORS.charcoalLight,
-                      color: COLORS.warmWhite,
-                      fontWeight: i === selectedOption ? "700" : "500",
-                      transition: "background 0.2s",
-                    }}
-                  >
-                    {option}
-                  </button>
                 ))}
               </div>
-
-              <button
-                onClick={() => {
-                  setThemePopupOpen(!themePopupOpen);
-                }}
-                style={{
-                  marginTop: "10px",
-                  padding: "8px",
-                  borderRadius: "8px",
-                  border: "none",
-                  backgroundColor: COLORS.lodenGreenDark,
-                  color: COLORS.warmWhite,
-                  cursor: "pointer",
-                }}
-              >
-                Close
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Right Sidebar */}
-        <div
-          style={{
-            width: "380px",
-            backgroundColor: COLORS.lodenGreenDark,
-            padding: "30px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "20px",
-            overflowY: "auto",
-          }}
-        >
-          <button
-            onClick={() => setThemePopupOpen(!themePopupOpen)}
-            style={{
-              backgroundColor: COLORS.lodenGreen,
-              color: COLORS.warmWhite,
-              border: "none",
-              borderRadius: "8px",
-              padding: "10px",
-              cursor: "pointer",
-              fontWeight: "600",
-            }}
-          >
-            Open Themes
-          </button>
-          <GameInfo
-            selectedPiece={selectedPiece}
-            currentPlayer={currentPlayer}
-            sandboxMode={sandboxMode}
-          />
-
-          <div style={{ flex: 1, minHeight: 0 }}>
-            <MoveLog moves={moveHistory} />
+            )}
           </div>
 
-          <ControlsInfo />
+          {/* Footer: Camera Tips */}
+          <div
+            style={{
+              borderTop: "1px solid rgba(139, 126, 116, 0.2)",
+              paddingTop: "10px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "0.7rem",
+                fontWeight: 700,
+                color: "#8B7E74",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                marginBottom: "2px",
+              }}
+            >
+              Camera Tips
+            </div>
+            <div style={{ fontSize: "0.75rem", color: "#FAF9F6", display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "#8B7E74" }}>Left Drag</span>
+              <span>Orbit view</span>
+            </div>
+            <div style={{ fontSize: "0.75rem", color: "#FAF9F6", display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "#8B7E74" }}>Right Drag</span>
+              <span>Pan camera</span>
+            </div>
+            <div style={{ fontSize: "0.75rem", color: "#FAF9F6", display: "flex", justifyContent: "space-between" }}>
+              <span style={{ color: "#8B7E74" }}>Scroll</span>
+              <span>Zoom in / out</span>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Theme Selection Modal */}
+      {themePopupOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "#24272A",
+            border: "1px solid rgba(139, 126, 116, 0.3)",
+            borderRadius: "6px",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.7)",
+            padding: "20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            zIndex: 1100,
+            width: "320px",
+          }}
+        >
+          <h3
+            style={{
+              color: "#FAF9F6",
+              fontSize: "1.05rem",
+              margin: 0,
+              fontWeight: 700,
+              textAlign: "center",
+            }}
+          >
+            Environment Theme
+          </h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "8px",
+            }}
+          >
+            {OPTIONS.map((option, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedOption((prev) => (prev === i ? null : i))}
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: "4px",
+                  border: i === selectedOption ? "1px solid #D4AF37" : "1px solid rgba(139, 126, 116, 0.25)",
+                  cursor: "pointer",
+                  backgroundColor: i === selectedOption ? "rgba(212, 175, 55, 0.15)" : "#1C1E20",
+                  color: i === selectedOption ? "#D4AF37" : "#FAF9F6",
+                  fontWeight: i === selectedOption ? 700 : 500,
+                  fontSize: "0.8rem",
+                  transition: "all 0.15s",
+                }}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setThemePopupOpen(false)}
+            style={{
+              marginTop: "6px",
+              padding: "8px",
+              borderRadius: "4px",
+              border: "none",
+              backgroundColor: "#4C5C4C",
+              color: "#FAF9F6",
+              cursor: "pointer",
+              fontWeight: 600,
+              fontSize: "0.85rem",
+            }}
+          >
+            Close
+          </button>
+        </div>
+      )}
     </div>
   );
 };
