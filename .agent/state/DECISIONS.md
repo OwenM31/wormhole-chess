@@ -583,44 +583,51 @@ Phase 2 requires generating, reviewing, and integrating 90 bespoke vector illust
 
 ---
 
-### [DECISION-025] Milestone v3.0 Strategic Pivot: PvZ-Style Campaign Progression, 36-Card (2,1,1,1,1,0) First-Release Curation & 180-Puzzle Grandmaster Trials
+### [DECISION-025] Milestone v3.0 Strategic Pivot: PvZ2-Style Parallel World Key Campaign, 36-Card Pyramid Curation & Multi-Copy / PvP Mastery Architecture
 
 **Date**: 2026-10-18
 **Status**: Accepted
 
 #### Context
-Following completion of Phase 1 (180-card nomenclature polish) and Phase 2 (90 Minor Unit SVG assets), the user directed a strategic shift from pure asset batch-generation to core gameplay content, card-by-card mechanical curation, and a *Plants vs. Zombies*-inspired campaign progression loop where players solve sequences of 5 themed tactical chess puzzles to unlock each card for their deck.
+Following completion of Phase 1 (180-card nomenclature polish) and Phase 2 (90 Minor Unit SVG assets), the user directed a strategic shift from pure asset batch-generation to core gameplay content, card-by-card mechanical curation, and a *Plants vs. Zombies 2*-inspired parallel campaign progression loop where players explore branching Worlds via World Keys and solve tactical challenges to unlock cards.
 
 #### Decision
 1. **Pivot Milestone v3.0 Scope**:
    - Preserve Phases 1 & 2 as completed foundational phases in Milestone v3.0.
-   - Replace Phases 3–6 of Milestone v3.0 with the Campaign Storyboard, One-by-One 36-Card Mechanical Audit, Puzzle Engine & Progression UI, and the 180-Puzzle Campaign Suite (deferring remaining uncurated card art and board animation FX to v4.0).
-2. **First-Release 36-Card Roster & `(2, 1, 1, 1, 1, 0)` Condition Matrix**:
-   - Scope the First Release to **6 curated cards per piece class** ($6 \times 6 = 36$ total cards), reviewed one-by-one to ensure 100% bespoke, mechanically sound engine handlers in `cardRegistry.ts`.
-   - Maintain exact structural symmetry with the 30-card `(10, 5, 5, 5, 5, 0)` taxonomy by dividing by 5:
-     - **2 cards** on the piece's **Specialty Condition**
-     - **1 card** on each of the piece's **4 Secondary Conditions**
-     - **0 cards** on the piece's **Excluded Condition**
-   - Simultaneously aim for **1 card per Effect Genre** (`New Moves`, `Jump & Leap`, `Move Others`, `Special Captures`, `Walls & Shields`, `Spawning`) across each piece's 6-card suite.
-   - Future expansions naturally unlock the remaining 144 catalog cards in four subsequent `(2, 1, 1, 1, 1, 0)` tiers (Tiers II–V).
-3. **PvZ-Style 5-Puzzle Unlock Loop (36 Cards × 5 Puzzles = 180 Puzzles)**:
-   - Every unlockable card is earned by clearing a **5-puzzle themed gauntlet** following a structured pedagogical cadence:
-     1. *Demonstration ("See It")*: Solve an immediate 1-turn tactical puzzle using only the featured card.
-     2. *Condition Trigger ("Set It Up")*: Make a preparatory chess move to satisfy the card's specific condition (`Blocked`, `Momentum`, `Lines`, `Neighbors`, `Threat`, `Position`), then trigger the card.
-     3. *Defensive Counter / Escape*: Use the card to break a check, rescue a pinned unit, or shatter an enemy fortress.
-     4. *Tactical Combo*: Combine the featured card with a previously unlocked card within the 3⚡ energy budget.
-     5. *Mastery Trial / Mini-Boss*: Defeat a themed tactical position against the House Grandmaster to permanently claim the card.
-4. **Extensible Narrative Framework — "The Grandmaster Trials (Order of the Six Houses)"**:
-   - Players progress through 6 Grandmaster Houses (Pawn Trench Bulwark, Knight Outrider Stirrup, Bishop Prism Synod, Rook Iron Bastion, Queen Crimson Regency, King Sovereign Throne).
-   - Built-in narrative extensibility for future puzzle packs:
-     - **Higher Mastery Circuits (Tiers II–V)**: Returning to each Grandmaster House for Adept, Master, and Apex trials to unlock future 36-card waves.
-     - **Cross-House Conclaves**: Dual-piece coalition gauntlets (e.g., *Pawn + Rook Siege*, *Knight + Bishop Crusade*) combining mechanics from two Houses.
-     - **Spacetime Rift Commissions**: Rotating anomaly challenges and experimental rulesets.
+   - Replace Phases 3–6 of Milestone v3.0 with the Campaign Storyboard, One-by-One 36-Card Mechanical Audit, Puzzle/Challenge Engine & Progression UI, and the 7-World Campaign Suite (deferring remaining uncurated card art and board animation FX to v4.0).
+2. **First-Release 36-Card Piece-Abundance Pyramid (`8, 7, 7, 6, 4, 4`)**:
+   - Avoid flat symmetry across piece classes in favor of a **36-Card Pyramid** matching chessboard piece abundance:
+     - **Pawns**: **8 Cards**
+     - **Knights**: **7 Cards**
+     - **Bishops**: **7 Cards**
+     - **Rooks**: **6 Cards**
+     - **Queens**: **4 Cards**
+     - **Kings**: **4 Cards**
+     - **Total**: **36 Cards** for Release 1, reviewed one-by-one to ensure 100% bespoke engine handlers in `cardRegistry.ts`.
+3. **Asymmetric 7-World Parallel Progression & World Key Atlas (Open-Ended for Worlds 8+)**:
+   - After a guided opening (first 2–3 missions in World 1), players earn **World Keys** partway through and at the end of Worlds, allowing them to unlock and play multiple Worlds in **parallel**:
+     - **World 1 (7 Cards + 1 Key)**: `P → P → P → K → B → P → K → R + [World Key]` (`3P, 2K, 1B, 1R`).
+     - **World 2 (4 Cards + 2 Keys)**: `K → R → [World Key] → B → R → [World Key]` (`1K, 1B, 2R`).
+     - **World 3 (5 Cards + 2 Keys)**: `B → P → R → [World Key] → K → Q#1 + [World Key]` (`1P, 1K, 1B, 1R, 1Q` — introduces first Queen card at finale).
+     - **World 4 (5 Cards + 2 Keys)**: `K → [World Key] → P → R → B → Kg#1 + [World Key]` (`1P, 1K, 1B, 1R, 1Kg` — introduces first King card at finale).
+     - **World 5 (5 Cards + 1 Key)**: `P → B → Q#2 → [World Key] → K → Kg#2` (`1P, 1K, 1B, 1Q, 1Kg`).
+     - **World 6 (5 Cards + 1 Key)**: `B → P → Kg#3 → [World Key] → R → Q#3` (`1P, 1B, 1R, 1Q, 1Kg`).
+     - **World 7 (5 Cards + 1 Key → World 8+)**: `K → P → B → Q#4 → Kg#4 + [World Key]` (`1P, 1K, 1B, 1Q, 1Kg`).
+   - Keep the narrative and map open-ended so future updates seamlessly add **Worlds 8, 9, 10+** onto the same Atlas.
+4. **Deck Copy Rules — Multi-Copy Campaign vs. PvP Mastery Unlocks**:
+   - **Campaign / Solo Mode**: Players may bring **multiple copies of the same unlocked card (as many as they want)** in their hand.
+   - **PvP Mode**: Players are limited to **1 copy** of each unlocked card initially, and can complete repeatable **PvP Mastery Challenges** (achieving card-specific actions in PvP matches) to unlock additional copies for PvP loadouts.
+5. **Level & Board Scale Architecture (All Main Levels = Bring Your Own Hand)**:
+   - **Card Award Practice Drills (4×4 or 5×5 Boards)**: Immediately when a card is unlocked, 1–2 quick mini-puzzles on a 4×4 or 5×5 board demonstrate how to set up its Condition and fire its Effect in practice.
+   - **Standard Path Missions (5×5, 6×6, or Focused 8×8 Boards)**: All main levels let the player bring their own hand of unlocked cards:
+     - **Locked & Loaded**: Pre-fills 1 hand slot with 1 copy of the upcoming locked card while the player builds the rest of their hand around it.
+     - **Objective Modes**: VIP Escort, Wave/Reinforcement Survival, Fortress Breaker, and Target Assassination alongside tactical checkmate setups.
+   - **Gatekeeper Challenges (Full 8×8 Game-Like Setups)**: Guarding World Keys and World Finales; deep, genuine full-board tactical positions.
 
 #### Consequences
-- Focuses engineering and design effort on the 36 highest-impact cards first, guaranteeing 100% bespoke mechanics and zero generic fallback handlers in the First Release.
-- Gives players a compelling single-player progression hook (180 structured tactical puzzles) that teaches the 6×6 condition-to-effect grammar organically rather than overwhelming new players with 180 cards upfront.
-- Reduces immediate Major Unit artwork scope from 90 SVGs to the 18 curated Major Unit cards needed for Release 1.
+- Focuses engineering and design effort on 36 curated cards (`8P, 7K, 7B, 6R, 4Q, 4Kg`), guaranteeing 100% bespoke mechanics and zero generic fallback handlers in Release 1.
+- Reduces immediate Major Unit artwork scope from 90 SVGs to the **14 curated Major Unit cards** (`6 Rook, 4 Queen, 4 King`) needed for Release 1.
+- Eliminates single-piece monotony and rigid 1-line puzzle frustration by making all campaign missions reactive to the player's custom multi-copy hand across parallel Worlds.
 
 ---
 

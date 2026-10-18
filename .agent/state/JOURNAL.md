@@ -4,6 +4,56 @@
 
 ---
 
+### Session: 2026-10-18 11:05
+
+#### Objective
+Resume session context (`@[.agent/workflows/resume.md]`), pivot Milestone v3.0 from pure asset generation to a *Plants vs. Zombies 2*-inspired **Parallel World Key Campaign & 36-Card Pyramid Curation** (`[DECISION-025]`), establish the 7-World asymmetric card & World Key progression, lock the Multi-Copy Campaign vs. PvP Mastery Copy rules and 3-Scale Level Architecture, begin the one-by-one card curation starting with the 8 Pawn candidates, and pause cleanly (`@[.agent/workflows/pause.md]`).
+
+#### Accomplished
+- ✅ Resumed session context and verified clean repository state.
+- ✅ Pivoted Milestone v3.0 in `ROADMAP.md`, `STATE.md`, and `DECISIONS.md` (`[DECISION-025]`):
+  - **36-Card Piece-Abundance Pyramid**: Locked First-Release card counts to match chess board presence: **8 Pawns, 7 Knights, 7 Bishops, 6 Rooks, 4 Queens, 4 Kings** (`= 36 Cards total`).
+  - **Asymmetric 7-World Parallel Progression & World Key Atlas (Open-Ended for Worlds 8+)**:
+    - **World 1 (7 Cards + 1 Key)**: `P → P → P → K → B → P → K → R + [World Key]` (`3P, 2K, 1B, 1R`). First 2–3 missions automatic/guided.
+    - **World 2 (4 Cards + 2 Keys)**: `K → R → [World Key] → B → R → [World Key]` (`1K, 1B, 2R`).
+    - **World 3 (5 Cards + 2 Keys)**: `B → P → R → [World Key] → K → Q#1 + [World Key]` (`1P, 1K, 1B, 1R, 1Q` — introduces first Queen card at finale).
+    - **World 4 (5 Cards + 2 Keys)**: `K → [World Key] → P → R → B → Kg#1 + [World Key]` (`1P, 1K, 1B, 1R, 1Kg` — introduces first King card at finale).
+    - **World 5 (5 Cards + 1 Key)**: `P → B → Q#2 → [World Key] → K → Kg#2` (`1P, 1K, 1B, 1Q, 1Kg`).
+    - **World 6 (5 Cards + 1 Key)**: `B → P → Kg#3 → [World Key] → R → Q#3` (`1P, 1B, 1R, 1Q, 1Kg`).
+    - **World 7 (5 Cards + 1 Key → World 8+)**: `K → P → B → Q#4 → Kg#4 + [World Key]` (`1P, 1K, 1B, 1Q, 1Kg` — leaves Atlas open for future Worlds 8, 9, 10+).
+  - **Multi-Copy Campaign vs. PvP Mastery Rules**:
+    - **Campaign Mode**: Players can bring unlimited copies of any unlocked card in their hand.
+    - **PvP Mode**: Players start with 1 copy of each unlocked card and complete repeatable **PvP Mastery Challenges** (card-specific actions in PvP) to unlock extra copies.
+  - **3-Scale Level Architecture (All Main Levels = Bring Your Own Hand)**:
+    1. **Card Award Practice Drills (4×4 or 5×5 Boards)**: 1–2 quick mini-puzzles immediately upon unlocking a card to teach its Condition + Effect in practice.
+    2. **Standard Path Missions (5×5, 6×6, or 8×8 Boards)**: Bring-Your-Own-Hand levels featuring *Locked & Loaded* (1 slot pre-filled with 1 copy of the upcoming locked card; player builds the rest of their hand around it) and *Objective Modes* (*VIP Escort, Wave Survival, Fortress Breaker, Target Assassination*).
+    3. **Gatekeeper Challenges (Full 8×8 Game-Like Setups)**: Deep, genuine full-board tactical puzzles guarding World Keys and World Finales.
+- ✅ Initiated Phase 3 One-by-One Card Review (Batch 1 — 8 Pawn Candidates):
+  - Presented top 8 Pawn candidates (`Sidestep`, `Bayonet Charge`, `Call Reserves`, `Trench Barricade`, `Vanguard Tow`, `Catapult Launch`, `Hold the Line`, `Sniper Shot`) mapped to Worlds 1–7.
+
+#### Verification
+- [x] Milestone v3.0 pivot and `[DECISION-025]` recorded in `ROADMAP.md`, `STATE.md`, and `DECISIONS.md`.
+- [x] 36-Card Pyramid (`8P, 7K, 7B, 6R, 4Q, 4Kg`) and 7-World Parallel World Key sequence verified to sum to 36 cards.
+- [ ] Complete one-by-one review of the 36 cards across all 6 piece classes (`8P, 7K, 7B, 6R, 4Q, 4Kg`).
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) after locking the 36-Card Pyramid, 7-World Parallel Atlas, Multi-Copy / PvP Mastery rules, and 3-Scale Level Architecture, right as we presented the 8 Pawn candidates for review.
+
+#### Handoff Notes
+- Working tree is clean and all state files are committed.
+- Upon resume (`/resume`), pick up directly with the **8 Pawn Candidates** review:
+  1. **P1**: `Sidestep` (`pawn_sidestep`, 2⚡) — World 1 Unlock #1
+  2. **P2**: `Bayonet Charge` (`pawn_bayonet_charge`, 2⚡) — World 1 Unlock #2
+  3. **P3**: `Call Reserves` (`pawn_call_reserves`, 2⚡) — World 1 Unlock #3
+  4. **P4**: `Trench Barricade` (`pawn_trench_barricade`, 1⚡) — World 1/3
+  5. **P5**: `Vanguard Tow` (`pawn_vanguard_tow`, 2⚡) — World 3
+  6. **P6**: `Catapult Launch` (`pawn_catapult_launch`, 2⚡) — World 4
+  7. **P7**: `Hold the Line` (`pawn_hold_the_line`, 2⚡) — World 5
+  8. **P8**: `Sniper Shot` (`pawn_sniper_shot`, 3⚡) — World 6/7
+- After locking the 8 Pawn cards, proceed through the **7 Knight**, **7 Bishop**, **6 Rook**, **4 Queen**, and **4 King** candidates and finalize `STORYBOARD.md`.
+
+---
+
 ### Session: 2026-10-16 14:18
 
 #### Objective
