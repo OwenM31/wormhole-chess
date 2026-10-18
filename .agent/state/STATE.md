@@ -1,16 +1,16 @@
 ---
-updated: 2026-10-16T14:18:00-05:00
+updated: 2026-10-18T09:43:00-05:00
 ---
 
 # Project State
 
 ## Current Position
 
-- **Milestone**: v3.0 Deck Builder Visual Immersion & Board Action Effects
-- **Phase**: 2 — Minor Unit Vector Artwork Suite (90 Cards: Pawn, Knight, Bishop) (completed)
-- **Task**: Phase 2 verified complete; ready for Phase 3 planning
-- **Status**: Paused at 2026-10-16 14:18
-- **Roadmap Status**: Phase 2 Complete; Ready for Phase 3 (`@[.agent/workflows/plan.md] 3`)
+- **Milestone**: v3.0 Tactical Campaign, 36-Card Curation & Grandmaster Trials
+- **Phase**: 3 — Campaign Storyboard & One-by-One 36-Card Roster Curation (`2,1,1,1,1,0` Matrix) (not started)
+- **Task**: Milestone v3.0 pivoted to PvZ-style Campaign & 36-Card Curation (`[DECISION-025]`); ready for Phase 3 storyboarding and card-by-card review
+- **Status**: Active (resumed 2026-10-18 09:09)
+- **Roadmap Status**: Phases 1–2 Complete; Ready for Phase 3 (`@[.agent/workflows/discuss-phase.md] 3` or `@[.agent/workflows/plan.md] 3`)
 
 ## Last Session Summary
 Phase 2 executed and verified successfully:
@@ -26,7 +26,7 @@ Phase 2 executed and verified successfully:
 
 ## In-Progress Work
 
-None. Working tree is clean and Phase 2 is formally verified.
+None. Milestone v3.0 roadmap pivoted cleanly per `[DECISION-025]`.
 
 ## Blockers
 
@@ -44,32 +44,25 @@ None.
 - [DECISION-020]: Phase 7 Global Polish, 3-Column TCG Ruffle Hand Stage, Palette Unification, and Release Scope.
 - [DECISION-021]: Brand Title & Dual Icon Architecture ("WormholeChess" PascalCase + dual icon roles).
 - [DECISION-022]: Home Copy & Variant Nomenclature Refinement ("Home to your favorite chess variants" + "Wormhole Chess").
-- [DECISION-023]: Phase 1 Card Nomenclature, Zero-Ellipsis Rule Constraints & Static Vector Asset Pipeline:
-  - Zero text truncation or ellipsis (`...`) on screen; rules text condensed to direct formulas ($\le 120$ chars).
-  - No flowery or metaphorical language; replace fantasy titles with direct tactical names.
-  - Schema normalized: add `artId`, clean duplicates, preserve immutable card `id`s for engine handler stability.
-  - Static vector assets in `public/assets/cards/{piece}/{artId}.svg`.
-- [DECISION-024]: Phase 2 Minor Unit Vector Artwork Suite Architecture & Design Directives:
-  - Standardized 5×5 coplanar board foundation ($W=10.5, H=5.8, X_0=60, Y_0=38, dz=6$) with Option B palette (`#D5CDC0` light, `#2C3539` dark, strict parity).
-  - Staunton Knight silhouette with turned circular plinth base, 50% FIDE base-to-tile ratio ($rx=5.0, ry=2.75$), height 17px, centered squarely on origin tile $(3, 2)$ leaping to target tile $(1, 2)$ over center $(2, 2)$ (Option 1).
-  - Pure vector optics (high 3D parabolic leap arcs, ground file guides, glowing landing reticle with impact chevron). Zero text stamped on tiles. Top HUD condition badge (`COND: 2 SQUARES CLEAR`).
-  - Decoupled presentational component `CardArt.tsx` with error fallback to piece theme glyph.
+- [DECISION-023]: Phase 1 Card Nomenclature, Zero-Ellipsis Rule Constraints & Static Vector Asset Pipeline.
+- [DECISION-024]: Phase 2 Minor Unit Vector Artwork Suite Architecture & Design Directives.
+- [DECISION-025]: Milestone v3.0 Strategic Pivot: PvZ-Style Campaign Progression, 36-Card `(2, 1, 1, 1, 1, 0)` First-Release Curation & 180-Puzzle Grandmaster Trials:
+  - Scope First Release to 6 curated cards per piece ($6 \times 6 = 36$ cards total), adhering to the `(2, 1, 1, 1, 1, 0)` condition distribution (2 Specialty, 1 on each of 4 Secondary, 0 Excluded) and 1 card per Effect Genre.
+  - Ensure 100% bespoke engine handlers in `cardRegistry.ts` for all 36 cards (zero generic fallbacks).
+  - Unlock each card via a 5-puzzle tactical gauntlet ($36 \times 5 = 180$ puzzles) across 6 Grandmaster Houses ("The Grandmaster Trials"), with narrative extensibility for Tiers II–V seasonal expansions, Cross-House Conclaves, and Rift Anomaly puzzles.
 
 ### Files of Interest
-- `.agent/state/phases/1/RESEARCH.md`: Phase 1 research, 5-layer contracts, state transitions, and invariants.
-- `.agent/state/phases/1/VERIFICATION.md`: Formal verification audit report (verdict: PASS).
-- `src/engine/cards/cardCatalog90.json`: 90 Minor Unit cards (Pawn, Knight, Bishop) with artId and zero-ellipsis formulas.
-- `src/engine/cards/cardCatalogMajor90.json`: 90 Major Unit cards (Rook, Queen, King) with artId and zero-ellipsis formulas.
-- `src/types/deckChess.ts`: CardDefinition interface with `artId`.
-- `src/engine/cardGraph.ts`: Canonical card arrays and loadout helpers mapping `artId`.
+- `.agent/state/ROADMAP.md`: Pivoted Milestone v3.0 roadmap (Phases 3–6: Storyboard & 36-Card Curation, Puzzle Engine & UI, Acts I–III 90 Puzzles, Acts IV–VI 90 Puzzles).
+- `.agent/state/DECISIONS.md`: Architectural decision ledger including `[DECISION-025]`.
+- `src/engine/cards/cardCatalog90.json`: 90 Minor Unit cards (Pawn, Knight, Bishop) with `artId` and zero-ellipsis formulas.
+- `src/engine/cards/cardCatalogMajor90.json`: 90 Major Unit cards (Rook, Queen, King) with `artId` and zero-ellipsis formulas.
+- `src/engine/cards/cardRegistry.ts`: Modular card behavior handlers (39 bespoke handlers currently; to be audited for the 36 First-Release cards).
+- `src/engine/cardGraph.ts`: Canonical card arrays and loadout helpers.
 - `scripts/verify-all-cards.ts`: Automated card engine and contract test suite (all 16 suites / 236 tests passing).
-- `scripts/verify-phase1-contracts.mjs`: Formal contract audit script (33 assertions passing).
-- `src/components/TacticalHandBar.tsx`: Left TCG hand stage (zero line-clamp).
-- `src/components/DeckBuilderView.tsx`: Deck builder curator and card library grid (zero line-clamp).
-- `public/assets/cards/`: Scaffolded static vector asset directories.
+- `src/components/TacticalHandBar.tsx`: Left TCG hand stage.
+- `src/components/DeckBuilderView.tsx`: Deck builder curator and card library grid.
 
 ## Next Steps
 
-1. Proceed to Phase 3: Major Unit Vector Artwork Suite (90 Cards: Rook, Queen, King).
-2. Run `@[.agent/workflows/discuss-phase.md] 3` to establish the Major Unit visual design baseline (Rook tower battlements, Queen coronet / ray burst, King imperial cross / crown).
-3. Author and execute execution plans for Phase 3 (`@[.agent/workflows/plan.md] 3`).
+1. Proceed to Phase 3: Campaign Storyboard & One-by-One 36-Card Roster Curation (`2,1,1,1,1,0` Matrix).
+2. Run `@[.agent/workflows/discuss-phase.md] 3` or `@[.agent/workflows/plan.md] 3` to begin the one-by-one card curation and storyboard lock across the 6 Grandmaster Houses.
