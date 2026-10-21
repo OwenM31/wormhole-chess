@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import {
   BoardModifier,
   CardDefinition,
@@ -12,7 +12,7 @@ import {
   EmpoweredMove,
 } from '../types/deckChess';
 import { DeckChessEngine, DeckChessEngineState } from '../engine/DeckChessEngine';
-import { computeBestTurn } from '../engine/DeckChessAI';
+import { computeBestTurn, evaluateBoard } from '../engine/DeckChessAI';
 import { getCardById } from '../engine/cardGraph';
 import { api } from '../services/api';
 import {
@@ -72,7 +72,13 @@ export function useDeckChessGame({
   // AI thinking state
   const [isAiThinking, setIsAiThinking] = useState(false);
 
-  // Card targeting state
+  // Card targeting & selection state
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+  const [disambiguationCandidates, setDisambiguationCandidates] = useState<EmpoweredMove[] | null>(null);
+  const [pendingCardMove, setPendingCardMove] = useState<EmpoweredMove[] | null | any>(null);
+
+  // Legacy targeting state preserved for backwards compatibility
   const [selectedCard, setSelectedCard] = useState<CardDefinition | null>(null);
   const [targetingStage, setTargetingStage] = useState<TargetingStage>('none');
   const [selectedAnchorSquare, setSelectedAnchorSquare] = useState<string | null>(null);
@@ -89,7 +95,7 @@ export function useDeckChessGame({
   const [combatLog, setCombatLog] = useState<CombatLogEntry[]>([
     {
       id: `sys_start_${Date.now()}`,
-      text: 'Game initialized. 3 Energy restored per turn. Standard rules apply.',
+      text: 'Game initialized. 36-Card Tactical Engine active. Standard chess moves execute immediately; card moves require confirmation.',
       timestamp: Date.now(),
       type: 'system',
     },
@@ -122,60 +128,105 @@ export function useDeckChessGame({
     []
   );
 
-  // Cancel any card targeting in progress
-  const cancelCardSelection = useCallback(() => {
-    setSelectedCard(null);
-    setTargetingStage('none');
-    setSelectedAnchorSquare(null);
-    setSelectedTargetSquare(null);
-    setValidAnchorSquares([]);
-    setValidTargetSquares([]);
-  }, []);
-
-  // Clear chess piece selection
+  // Clear piece selection
   const clearPieceSelection = useCallback(() => {
     setSelectedSquare(null);
     setLegalMovesForSelected([]);
     setEmpoweredMovesForSelected([]);
   }, []);
 
-  // Card selection trigger from tactical hand bar
-  const selectCard = useCallback(
+  // Cancel any pending card move or selection
+  const cancelPendingCardMove = useCallback(() => {
+    setPendingCardMove(null);
+    setDisambiguationCandidates(null);
+    setSelectedCardId(null);
+    setSelectedCard(null);
+    setTargetingStage('none');
+    clearPieceSelection();
+  }, [clearPieceSelection]);
+
+  // Cancel card selection (legacy alias)
+  const cancelCardSelection = useCallback(() => {
+    cancelPendingCardMove();
+    setSelectedAnchorSquare(null);
+    setSelectedTargetSquare(null);
+    setValidAnchorSquares([]);
+    setValidTargetSquares([]);
+  }, [cancelPendingCardMove]);
+
+  // Active cards in hand applicable for the currently selected piece
+  const activeCardIdsForPiece = useMemo(() => {
+    if (!selectedSquare) {
+      return selectedCardId ? [selectedCardId] : [];
+    }
+    const pieceEmpowered = engineRef.current.getEmpoweredMoves(selectedSquare);
+    const set = new Set(pieceEmpowered.map((m) => m.cardId));
+    if (selectedCardId && set.has(selectedCardId)) {
+      return [selectedCardId];
+    }
+    return Array.from(set);
+  }, [selectedSquare, selectedCardId, gameState.fen]);
+
+  // Card selection from tactical hand bar (Card-First Flow)
+  const selectCardFromHand = useCallback(
     (cardId: string) => {
       if (gameState.isGameOver || isAiThinking) return;
-
-      // In AI mode, prevent playing during AI turn
       if (mode === 'ai' && gameState.turn !== playerColor) return;
 
       // If clicking same card, cancel selection
-      if (selectedCard?.id === cardId) {
-        cancelCardSelection();
+      if (selectedCardId === cardId) {
+        cancelPendingCardMove();
         return;
       }
 
-      // Deselect any chess piece
-      clearPieceSelection();
+      setPendingCardMove(null);
+      setDisambiguationCandidates(null);
 
       const card = getCardById(cardId);
       if (!card) return;
 
-      if (!engineRef.current.canPlayCard(cardId)) {
-        addLog(`Cannot play [${card.name}]: conditions or energy requirement not met.`, 'system');
+      const currentTurn = engineRef.current.getTurn();
+      const hand = engineRef.current.getHandForColor(currentTurn);
+      if (!hand.includes(cardId)) {
+        addLog(`Card [${card.name}] is not in hand.`, 'system');
         return;
       }
 
-      const anchors = engineRef.current.getValidAnchorsForCard(cardId);
-      if (anchors.length === 0) {
-        addLog(`No valid anchor piece on board for [${card.name}].`, 'system');
+      // Check all empowered moves on the board for this card
+      const allCardMoves = engineRef.current
+        .getEmpoweredMoves()
+        .filter((m) => m.cardId === cardId);
+
+      if (allCardMoves.length === 0) {
+        addLog(`No valid tactical targets on board for [${card.name}].`, 'system');
+        cancelPendingCardMove();
         return;
       }
 
+      setSelectedCardId(cardId);
       setSelectedCard(card);
-      setTargetingStage('pick_anchor');
-      setValidAnchorSquares(anchors);
-      setSelectedAnchorSquare(null);
-      setSelectedTargetSquare(null);
-      setValidTargetSquares([]);
+
+      // If there is exactly 1 unique move outcome and no disambiguation needed, jump straight to outcome preview!
+      if (allCardMoves.length === 1 && !allCardMoves[0].extraSquare) {
+        setPendingCardMove(allCardMoves[0]);
+        setSelectedSquare(allCardMoves[0].from);
+        setEmpoweredMovesForSelected(allCardMoves);
+        return;
+      }
+
+      // If all candidate moves originate from a single piece on the board, auto-focus that piece!
+      const uniqueFromSquares = Array.from(new Set(allCardMoves.map((m) => m.from)));
+      if (uniqueFromSquares.length === 1) {
+        const singleAnchor = uniqueFromSquares[0];
+        setSelectedSquare(singleAnchor);
+        const legalStandard = engineRef.current.getLegalMoves(singleAnchor).map((m) => m.to);
+        setLegalMovesForSelected(legalStandard);
+        setEmpoweredMovesForSelected(allCardMoves);
+      } else {
+        // Multiple candidate pieces on the board
+        clearPieceSelection();
+        setEmpoweredMovesForSelected(allCardMoves);
+      }
     },
     [
       gameState.isGameOver,
@@ -183,55 +234,14 @@ export function useDeckChessGame({
       isAiThinking,
       mode,
       playerColor,
-      selectedCard,
-      cancelCardSelection,
+      selectedCardId,
+      cancelPendingCardMove,
       clearPieceSelection,
       addLog,
     ]
   );
 
-  // Execute card activation helper
-  const executeCard = useCallback(
-    (
-      cardId: string,
-      anchorSquare: string,
-      targetSquare?: string,
-      extraSquare?: string
-    ) => {
-      const card = getCardById(cardId);
-      const activeColor = engineRef.current.getTurn();
-      const res = engineRef.current.activateCard(
-        cardId,
-        anchorSquare,
-        targetSquare,
-        extraSquare
-      );
-
-      if (!res.success) {
-        addLog(`Card failed: ${res.error}`, 'system');
-        cancelCardSelection();
-        return false;
-      }
-
-      playCardSound();
-      lastCardActionRef.current = { cardId, anchorSquare, targetSquare, extraSquare };
-
-      const cardName = card ? card.name : cardId;
-      const targetStr = targetSquare ? ` ➔ ${targetSquare}` : '';
-      addLog(
-        `${activeColor === 'w' ? 'White' : 'Black'} played [${cardName}] on ${anchorSquare}${targetStr}`,
-        'card',
-        activeColor
-      );
-
-      cancelCardSelection();
-      syncState();
-      return true;
-    },
-    [addLog, cancelCardSelection, syncState]
-  );
-
-  // Trigger AI turn execution
+  // Trigger AI turn execution (with Card-Aware 36-Playbook evaluation)
   const triggerAiTurn = useCallback(() => {
     if (gameState.isGameOver) return;
     const aiColor = playerColor === 'w' ? 'b' : 'w';
@@ -246,9 +256,75 @@ export function useDeckChessGame({
           return;
         }
 
+        // 1. Evaluate tactical 36-Playbook empowered moves
+        const empoweredMoves = engine.getEmpoweredMoves();
+        const currentScore = evaluateBoard(engine, aiColor);
+        let bestEmpowered: EmpoweredMove | null = null;
+        let bestEmpoweredGain = 0;
+
+        if (aiDifficulty !== 'easy' && empoweredMoves.length > 0) {
+          for (const emp of empoweredMoves) {
+            const sim = engine.clone();
+            const res = sim.makeEmpoweredMove(emp);
+            if (res.success && !sim.isCheckmate()) {
+              const evalAfter = evaluateBoard(sim, aiColor);
+              const gain = evalAfter - currentScore;
+              if (gain > bestEmpoweredGain && gain >= 30) {
+                bestEmpoweredGain = gain;
+                bestEmpowered = emp;
+              }
+            }
+          }
+        }
+
+        // 2. If a favorable empowered card move is found, execute it!
+        if (bestEmpowered && bestEmpoweredGain >= 30) {
+          const empRes = engine.makeEmpoweredMove(bestEmpowered);
+          if (empRes.success) {
+            playCardSound();
+            const cardName = bestEmpowered.metadata?.cardName || bestEmpowered.cardId;
+            addLog(
+              `AI Bot played [${cardName}] ➔ ${bestEmpowered.to}`,
+              'card',
+              aiColor
+            );
+
+            if (engine.inCheck()) {
+              setTimeout(playCheckSound, 120);
+            }
+            if (engine.isGameOver()) {
+              const winner = engine.getWinner();
+              if (winner === playerColor) {
+                playVictorySound();
+              } else if (winner && winner !== 'draw') {
+                playDefeatSound();
+              }
+            }
+
+            const turnRecord: RecordedTurn = {
+              turnNumber: engine.getTurnNumber(),
+              player: aiColor,
+              chessMove: { from: bestEmpowered.from, to: bestEmpowered.to },
+              cardAction: {
+                cardId: bestEmpowered.cardId,
+                anchorSquare: bestEmpowered.from,
+                targetSquare: bestEmpowered.to,
+                extraSquare: bestEmpowered.extraSquare,
+              },
+              fenAfter: engine.getFen(),
+              combatText: `AI Bot played [${cardName}] ➔ ${bestEmpowered.to}`,
+              timestamp: Date.now(),
+            };
+            setRecordedTurns((prev) => [...prev, turnRecord]);
+            syncState();
+            setIsAiThinking(false);
+            return;
+          }
+        }
+
+        // 3. Otherwise compute standard chess move via Minimax
         const decision = computeBestTurn(engine, aiColor, aiDifficulty);
 
-        // 1. Play card if chosen
         if (decision.cardToPlay) {
           const { cardId, anchorSquare, targetSquare, extraSquare } = decision.cardToPlay;
           const cardDef = getCardById(cardId);
@@ -261,7 +337,6 @@ export function useDeckChessGame({
           );
         }
 
-        // 2. Execute chess move
         const moveRes = engine.makeMove(decision.move);
         if (moveRes.success && moveRes.move) {
           const moveDesc = moveRes.move.san || `${decision.move.from}-${decision.move.to}`;
@@ -312,16 +387,13 @@ export function useDeckChessGame({
     }, 400);
   }, [gameState.isGameOver, playerColor, aiDifficulty, addLog, syncState]);
 
-  // Execute standard chess move
+  // Execute standard chess move (immediate on click, no confirmation prompt)
   const makeMove = useCallback(
     (from: string, to: string, promotion?: string) => {
       if (gameState.isGameOver || isAiThinking) return false;
 
       const currentTurn = engineRef.current.getTurn();
-
       if (mode === 'ai' && currentTurn !== playerColor) return false;
-
-      const lastPlayedCard = engineRef.current.hasPlayedCardThisTurn();
 
       const res = engineRef.current.makeMove({ from, to, promotion });
       if (!res.success || !res.move) {
@@ -366,10 +438,9 @@ export function useDeckChessGame({
       lastCardActionRef.current = null;
       setRecordedTurns((prev) => [...prev, turnRecord]);
 
-      clearPieceSelection();
+      cancelPendingCardMove();
       syncState();
 
-      // Notify external consumer (e.g. WebSocket multiplayer)
       if (onTurnComplete) {
         const payload: DeckChessTurnPayload = {
           turnNumber: engineRef.current.getTurnNumber(),
@@ -381,7 +452,6 @@ export function useDeckChessGame({
         onTurnComplete(payload);
       }
 
-      // If playing AI, queue bot turn
       if (mode === 'ai' && !engineRef.current.isGameOver()) {
         setTimeout(triggerAiTurn, 100);
       }
@@ -394,178 +464,150 @@ export function useDeckChessGame({
       mode,
       playerColor,
       addLog,
-      clearPieceSelection,
+      cancelPendingCardMove,
       syncState,
       onTurnComplete,
       triggerAiTurn,
     ]
   );
 
-  // Execute unified empowered card move
-  const makeEmpoweredMove = useCallback(
-    (move: EmpoweredMove) => {
-      if (gameState.isGameOver || isAiThinking) return false;
-      const currentTurn = engineRef.current.getTurn();
-      if (mode === 'ai' && currentTurn !== playerColor) return false;
+  // Confirm pending card move (executed when Big Green Check ✓ is clicked)
+  const confirmPendingCardMove = useCallback(() => {
+    if (!pendingCardMove) return false;
+    if (gameState.isGameOver || isAiThinking) return false;
+    const currentTurn = engineRef.current.getTurn();
+    if (mode === 'ai' && currentTurn !== playerColor) return false;
 
-      const targetPiece = engineRef.current.getPiece(move.to);
-      const isCapture =
-        Boolean(targetPiece && targetPiece.color !== currentTurn) ||
-        move.actionType === 'ranged_capture';
+    const move: EmpoweredMove = pendingCardMove;
+    const targetPiece = engineRef.current.getPiece(move.to);
+    const isCapture =
+      Boolean(targetPiece && targetPiece.color !== currentTurn) ||
+      move.actionType === 'ranged_capture';
 
-      const res = engineRef.current.makeEmpoweredMove(move);
-      if (!res.success) {
-        addLog(`Empowered move failed: ${res.error || 'Unknown error'}`, 'system');
-        return false;
+    const res = engineRef.current.makeEmpoweredMove(move);
+    if (!res.success) {
+      addLog(`Card move failed: ${res.error || 'Unknown error'}`, 'system');
+      cancelPendingCardMove();
+      return false;
+    }
+
+    playCardSound();
+    if (isCapture) {
+      setTimeout(playCaptureSound, 60);
+    }
+    if (engineRef.current.inCheck()) {
+      setTimeout(playCheckSound, 120);
+    }
+    if (engineRef.current.isGameOver()) {
+      const winner = engineRef.current.getWinner();
+      if (winner === playerColor) {
+        playVictorySound();
+      } else if (winner && winner !== 'draw') {
+        playDefeatSound();
       }
+    }
 
-      playCardSound();
-      if (isCapture) {
-        setTimeout(playCaptureSound, 60);
-      }
-      if (engineRef.current.inCheck()) {
-        setTimeout(playCheckSound, 120);
-      }
-      if (engineRef.current.isGameOver()) {
-        const winner = engineRef.current.getWinner();
-        if (winner === playerColor) {
-          playVictorySound();
-        } else if (winner && winner !== 'draw') {
-          playDefeatSound();
-        }
-      }
+    const cardName = move.metadata?.cardName || move.cardId;
+    addLog(
+      `${currentTurn === 'w' ? 'White' : 'Black'} played [${cardName}] ➔ ${move.to}`,
+      'card',
+      currentTurn
+    );
 
-      const cardName = move.metadata?.cardName || move.cardId;
-      addLog(
-        `${currentTurn === 'w' ? 'White' : 'Black'} empowered [${cardName}] ➔ ${move.to} (${move.energyCost}⚡)`,
-        'card',
-        currentTurn
-      );
+    const turnRecord: RecordedTurn = {
+      turnNumber: engineRef.current.getTurnNumber(),
+      player: currentTurn,
+      chessMove: { from: move.from, to: move.to },
+      cardAction: {
+        cardId: move.cardId,
+        anchorSquare: move.from,
+        targetSquare: move.to,
+        extraSquare: move.extraSquare,
+      },
+      fenAfter: engineRef.current.getFen(),
+      combatText: `${currentTurn === 'w' ? 'White' : 'Black'} played [${cardName}] ➔ ${move.to}`,
+      timestamp: Date.now(),
+    };
+    lastCardActionRef.current = null;
+    setRecordedTurns((prev) => [...prev, turnRecord]);
 
-      const turnRecord: RecordedTurn = {
+    cancelPendingCardMove();
+    syncState();
+
+    if (onTurnComplete) {
+      const payload: DeckChessTurnPayload = {
         turnNumber: engineRef.current.getTurnNumber(),
-        player: currentTurn,
+        playerColor: currentTurn,
         chessMove: { from: move.from, to: move.to },
-        cardAction: { cardId: move.cardId, anchorSquare: move.from, targetSquare: move.to },
-        fenAfter: engineRef.current.getFen(),
-        combatText: `${currentTurn === 'w' ? 'White' : 'Black'} played [${cardName}] (${move.energyCost}⚡)`,
-        timestamp: Date.now(),
+        cardAction: {
+          cardId: move.cardId,
+          anchorSquare: move.from,
+          targetSquare: move.to,
+          extraSquare: move.extraSquare,
+        },
+        resultingFen: engineRef.current.getFen(),
+        activeModifiers: engineRef.current.getActiveModifiers(),
       };
-      lastCardActionRef.current = null;
-      setRecordedTurns((prev) => [...prev, turnRecord]);
+      onTurnComplete(payload);
+    }
 
-      clearPieceSelection();
-      syncState();
+    if (mode === 'ai' && !engineRef.current.isGameOver()) {
+      setTimeout(triggerAiTurn, 100);
+    }
 
-      if (onTurnComplete) {
-        const payload: DeckChessTurnPayload = {
-          turnNumber: engineRef.current.getTurnNumber(),
-          playerColor: currentTurn,
-          chessMove: { from: move.from, to: move.to },
-          resultingFen: engineRef.current.getFen(),
-          activeModifiers: engineRef.current.getActiveModifiers(),
-        };
-        onTurnComplete(payload);
-      }
+    return true;
+  }, [
+    pendingCardMove,
+    gameState.isGameOver,
+    isAiThinking,
+    mode,
+    playerColor,
+    addLog,
+    cancelPendingCardMove,
+    syncState,
+    onTurnComplete,
+    triggerAiTurn,
+  ]);
 
-      if (mode === 'ai' && !engineRef.current.isGameOver()) {
-        setTimeout(triggerAiTurn, 100);
-      }
-
-      return true;
-    },
-    [
-      gameState.isGameOver,
-      isAiThinking,
-      mode,
-      playerColor,
-      addLog,
-      clearPieceSelection,
-      syncState,
-      onTurnComplete,
-      triggerAiTurn,
-    ]
-  );
-
-  // Square click coordinator (handles card targeting and piece moves)
+  // Square click coordinator (Piece-First & Card-First & Disambiguation)
   const handleSquareClick = useCallback(
     (square: string) => {
       if (gameState.isGameOver || isAiThinking) return;
+      const activeTurn = engineRef.current.getTurn();
+      if (mode === 'ai' && activeTurn !== playerColor) return;
 
-      // --- Mode: Card Targeting Active ---
-      if (selectedCard) {
-        if (targetingStage === 'pick_anchor') {
-          if (!validAnchorSquares.includes(square)) {
-            // Click outside valid anchors: deselect card
-            cancelCardSelection();
-            return;
-          }
-
-          const targets = engineRef.current.getValidTargetsForCard(selectedCard.id, square);
-
-          if (targets.length === 0) {
-            // Immediate card execution (e.g. pawn_scuttle, bishop_invert with 1 auto choice)
-            executeCard(selectedCard.id, square);
-          } else {
-            setSelectedAnchorSquare(square);
-            setTargetingStage('pick_target');
-            setValidTargetSquares(targets);
-          }
+      // 1. If currently in Disambiguation state, check if clicked square is one of the candidates' extraSquare
+      if (disambiguationCandidates && disambiguationCandidates.length > 0) {
+        const candidate = disambiguationCandidates.find((c) => c.extraSquare === square);
+        if (candidate) {
+          setPendingCardMove(candidate);
+          setDisambiguationCandidates(null);
           return;
         }
-
-        if (targetingStage === 'pick_target') {
-          if (!validTargetSquares.includes(square)) {
-            cancelCardSelection();
-            return;
-          }
-
-          // Check if card needs secondary target step (e.g. knight_escort)
-          if (selectedAnchorSquare) {
-            const secondaryTargets = engineRef.current.getSecondaryTargetsForCard(
-              selectedCard.id,
-              selectedAnchorSquare,
-              square
-            );
-            if (secondaryTargets.length > 0) {
-              setSelectedTargetSquare(square);
-              setTargetingStage('pick_secondary');
-              setValidTargetSquares(secondaryTargets);
-              return;
-            }
-
-            executeCard(selectedCard.id, selectedAnchorSquare, square);
-          }
-          return;
-        }
-
-        if (targetingStage === 'pick_secondary') {
-          if (selectedAnchorSquare && selectedTargetSquare && validTargetSquares.includes(square)) {
-            executeCard(selectedCard.id, selectedAnchorSquare, selectedTargetSquare, square);
-          } else {
-            cancelCardSelection();
-          }
-          return;
-        }
-
+        // Clicking outside candidate cancels disambiguation
+        setDisambiguationCandidates(null);
         return;
       }
 
-      // --- Mode: Chess Piece Selection / Move ---
-      const activeTurn = engineRef.current.getTurn();
+      // 2. If a card outcome is already pending confirmation, clicking a square does not accidentally commit
+      if (pendingCardMove) {
+        return;
+      }
 
-      if (mode === 'ai' && activeTurn !== playerColor) return;
-
+      // 3. Piece-First / Card-First Selection Logic
       if (!selectedSquare) {
         const piece = engineRef.current.getPiece(square);
         if (piece && piece.color === activeTurn) {
           setSelectedSquare(square);
-          const legalDestinations = engineRef.current
-            .getLegalMoves(square)
-            .map((m) => m.to);
-          setLegalMovesForSelected(legalDestinations);
-          const empowered = engineRef.current.getEmpoweredMoves(square);
-          setEmpoweredMovesForSelected(empowered);
+          const legalStandard = engineRef.current.getLegalMoves(square).map((m) => m.to);
+          setLegalMovesForSelected(legalStandard);
+
+          const pieceEmpowered = engineRef.current.getEmpoweredMoves(square);
+          if (selectedCardId) {
+            setEmpoweredMovesForSelected(pieceEmpowered.filter((m) => m.cardId === selectedCardId));
+          } else {
+            setEmpoweredMovesForSelected(pieceEmpowered);
+          }
         }
         return;
       }
@@ -573,57 +615,63 @@ export function useDeckChessGame({
       // Clicking currently selected piece deselects it
       if (selectedSquare === square) {
         clearPieceSelection();
+        setSelectedCardId(null);
         return;
       }
 
-      // Check if clicking an empowered move destination (Glowing Gold Ring)
-      const matchingEmpowered = empoweredMovesForSelected.find((m) => m.to === square);
-      if (matchingEmpowered) {
-        makeEmpoweredMove(matchingEmpowered);
+      // 4. Check if clicking an empowered move destination
+      const matchingEmpowered = empoweredMovesForSelected.filter((m) => m.to === square);
+      if (matchingEmpowered.length > 0) {
+        if (matchingEmpowered.length === 1 && !matchingEmpowered[0].disambiguationPrompt) {
+          // Transition directly to Live Outcome Preview + Bottom Confirmation Bar
+          setPendingCardMove(matchingEmpowered[0]);
+          return;
+        }
+
+        // Multiple candidates or prompt required -> enter Disambiguation state
+        setDisambiguationCandidates(matchingEmpowered);
         return;
       }
 
-      // If clicking a destination in legal standard moves, execute standard move!
+      // 5. Check if clicking a standard legal move destination (instant execution)
       if (legalMovesForSelected.includes(square)) {
         makeMove(selectedSquare, square);
         return;
       }
 
-      // Clicking another friendly piece switches selection
+      // 6. Clicking another friendly piece switches selection
       const clickedPiece = engineRef.current.getPiece(square);
       if (clickedPiece && clickedPiece.color === activeTurn) {
         setSelectedSquare(square);
-        const legalDestinations = engineRef.current
-          .getLegalMoves(square)
-          .map((m) => m.to);
-        setLegalMovesForSelected(legalDestinations);
-        const empowered = engineRef.current.getEmpoweredMoves(square);
-        setEmpoweredMovesForSelected(empowered);
+        const legalStandard = engineRef.current.getLegalMoves(square).map((m) => m.to);
+        setLegalMovesForSelected(legalStandard);
+
+        const pieceEmpowered = engineRef.current.getEmpoweredMoves(square);
+        if (selectedCardId) {
+          setEmpoweredMovesForSelected(pieceEmpowered.filter((m) => m.cardId === selectedCardId));
+        } else {
+          setEmpoweredMovesForSelected(pieceEmpowered);
+        }
         return;
       }
 
       // Clicking empty/illegal square clears selection
       clearPieceSelection();
+      setSelectedCardId(null);
     },
     [
       gameState.isGameOver,
       isAiThinking,
-      selectedCard,
-      targetingStage,
-      validAnchorSquares,
-      validTargetSquares,
-      selectedAnchorSquare,
-      selectedTargetSquare,
-      selectedSquare,
-      legalMovesForSelected,
-      empoweredMovesForSelected,
       mode,
       playerColor,
-      cancelCardSelection,
-      executeCard,
+      disambiguationCandidates,
+      pendingCardMove,
+      selectedSquare,
+      selectedCardId,
+      empoweredMovesForSelected,
+      legalMovesForSelected,
       clearPieceSelection,
       makeMove,
-      makeEmpoweredMove,
     ]
   );
 
@@ -674,19 +722,17 @@ export function useDeckChessGame({
         setRecordedTurns((prev) => [...prev, turnRecord]);
       }
 
-      clearPieceSelection();
-      cancelCardSelection();
+      cancelPendingCardMove();
       syncState();
     },
-    [addLog, clearPieceSelection, cancelCardSelection, syncState]
+    [addLog, cancelPendingCardMove, syncState]
   );
 
   // Reset or initialize new match
   const resetGame = useCallback(
     (newWhiteDeck?: string[], newBlackDeck?: string[]) => {
       engineRef.current = new DeckChessEngine(undefined, newWhiteDeck, newBlackDeck);
-      clearPieceSelection();
-      cancelCardSelection();
+      cancelPendingCardMove();
       setIsAiThinking(false);
       gameStartedAtRef.current = Date.now();
       hasRecordedRef.current = false;
@@ -702,7 +748,7 @@ export function useDeckChessGame({
       ]);
       syncState();
     },
-    [clearPieceSelection, cancelCardSelection, syncState]
+    [cancelPendingCardMove, syncState]
   );
 
   // Resign match
@@ -798,6 +844,11 @@ export function useDeckChessGame({
 
     // Selection & Targeting State
     selectedCard,
+    selectedCardId,
+    hoveredCardId,
+    setHoveredCard: setHoveredCardId,
+    disambiguationCandidates,
+    pendingCardMove,
     targetingStage,
     selectedAnchorSquare,
     selectedTargetSquare,
@@ -806,6 +857,7 @@ export function useDeckChessGame({
     selectedSquare,
     legalMovesForSelected,
     empoweredMoves: empoweredMovesForSelected,
+    activeCardIdsForPiece,
 
     // Combat Log & Match Records
     combatLog,
@@ -813,10 +865,13 @@ export function useDeckChessGame({
 
     // Actions
     handleSquareClick,
-    selectCard,
+    selectCard: selectCardFromHand,
+    selectCardFromHand,
+    confirmPendingCardMove,
+    cancelPendingCardMove,
     cancelCardSelection,
     makeMove,
-    makeEmpoweredMove,
+    makeEmpoweredMove: confirmPendingCardMove,
     applyRemoteTurn,
     resetGame,
     resign,

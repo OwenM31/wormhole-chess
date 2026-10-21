@@ -1,23 +1,31 @@
 import React from 'react';
-import { CardDefinition, TargetingStage } from '../types/deckChess';
-import { getCardById, PIECE_COLOR_THEMES, STARTER_DECK } from '../engine/cardGraph';
+import { CardDefinition, TargetingStage, EmpoweredMove } from '../types/deckChess';
+import { getCardById } from '../engine/cardGraph';
+import { CANONICAL_36_CARDS, PIECE_COLOR_THEMES } from '../engine/cards/releaseRoster36';
 import CardArt from './CardArt';
 
 export interface TacticalHandBarProps {
   hand: string[]; // Active card IDs remaining in hand
-  initialDeck?: string[]; // All 8 cards originally in deck to show consumed status
-  energy: number;
-  hasPlayedCardThisTurn: boolean;
+  initialDeck?: string[]; // All cards originally in hand to show consumed status
+  energy?: number;
+  hasPlayedCardThisTurn?: boolean;
   isMyTurn: boolean;
-  selectedCard: CardDefinition | null;
-  targetingStage: TargetingStage;
+  selectedCard?: CardDefinition | null;
+  selectedCardId?: string | null;
+  hoveredCardId?: string | null;
+  targetingStage?: TargetingStage;
   activeCardIdsForPiece?: string[]; // Cards in hand currently usable for selected piece
   onSelectCard: (cardId: string) => void;
-  onCancelTargeting: () => void;
+  onHoverCard?: (cardId: string | null) => void;
+  onCancelTargeting?: () => void;
+  pendingCardMove?: EmpoweredMove | null;
+  selectedSquare?: string | null;
 }
 
+const CARD_MAP = new Map(CANONICAL_36_CARDS.map((c) => [c.id, c]));
+
 const getMiniBoardTargets = (card: CardDefinition): { r: number; c: number }[] => {
-  const effect = card.effect_type?.toLowerCase() || '';
+  const effect = card.effect_type?.toLowerCase() || card.effectText?.toLowerCase() || '';
   const anchor = card.anchor;
 
   if (effect.includes('jump') || anchor === 'knight') {
@@ -40,77 +48,69 @@ const getMiniBoardTargets = (card: CardDefinition): { r: number; c: number }[] =
 
 export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
   hand,
-  initialDeck = STARTER_DECK.map((c) => c.id),
-  energy,
-  hasPlayedCardThisTurn,
+  initialDeck = [],
+  energy = 0,
+  hasPlayedCardThisTurn = false,
   isMyTurn,
   selectedCard,
+  selectedCardId,
+  hoveredCardId,
   targetingStage,
   activeCardIdsForPiece = [],
   onSelectCard,
+  onHoverCard,
   onCancelTargeting,
+  pendingCardMove,
+  selectedSquare,
 }) => {
-  // Render guidance banner text depending on stage
-  let stageGuidance = '';
-  if (selectedCard) {
-    if (targetingStage === 'pick_anchor') {
-      stageGuidance = `Select ${selectedCard.anchor.toUpperCase()}`;
-    } else if (targetingStage === 'pick_target') {
-      stageGuidance = `Select Target`;
-    } else if (targetingStage === 'pick_secondary') {
-      stageGuidance = `Select Destination`;
-    }
-  }
+  // If initialDeck is not provided, use current hand as baseline
+  const deckCards = initialDeck.length > 0 ? initialDeck : hand;
 
   const rows =
-    initialDeck.length <= 5
-      ? [initialDeck]
-      : [initialDeck.slice(0, 4), initialDeck.slice(4, 8)];
+    deckCards.length <= 4
+      ? [deckCards]
+      : [deckCards.slice(0, 4), deckCards.slice(4, 8)];
+
+  const activeCardId = selectedCardId || selectedCard?.id || null;
 
   return (
-    <div className="w-full h-full flex flex-col justify-between bg-[#1C1E20] border border-[rgba(139,126,116,0.2)] rounded-md p-3 shadow-xl select-none gap-3">
-      {/* 1. Pure Top Energy Header Bar */}
+    <div
+      data-testid="tactical-hand-bar"
+      className="w-full h-full flex flex-col justify-between bg-[#1C1E20] border border-[rgba(139,126,116,0.2)] rounded-md p-3 shadow-xl select-none gap-3"
+    >
+      {/* 1. Tactical Header Bar (Zero Energy Pips) */}
       <div className="w-full flex items-center justify-between px-2.5 py-2 bg-[#24272A] border border-[rgba(139,126,116,0.2)] rounded">
-        {/* 3-Cell Energy Meter */}
-        <div className="flex items-center gap-2.5">
-          <span className="text-[#D4AF37] font-bold text-xs font-mono tracking-wider flex items-center gap-1">
-            ⚡ ENERGY
+        <div className="flex items-center gap-2">
+          <span className="text-[#FAF9F6] font-bold text-xs font-mono tracking-wider flex items-center gap-1.5">
+            <span style={{ color: '#D4AF37' }}>⚔️</span> TACTICAL HAND
           </span>
-          <div className="flex gap-1.5 items-center">
-            {[1, 2, 3].map((cell) => {
-              const isFilled = cell <= energy;
-              return (
-                <div
-                  key={cell}
-                  className={`w-5 h-3 rounded-sm transition-all duration-300 border ${
-                    isFilled
-                      ? 'bg-[#D4AF37] border-[#bf9b30] shadow-[0_0_8px_rgba(212,175,55,0.6)]'
-                      : 'bg-[#191B1D] border-[rgba(139,126,116,0.2)]'
-                  }`}
-                />
-              );
-            })}
-          </div>
-          <span className="text-xs font-mono font-bold text-[#FAF9F6] tabular-nums">
-            {energy}/3
+          <span className="text-[11px] font-mono font-bold text-[#D4AF37]">
+            ({hand.length} CARDS)
           </span>
         </div>
 
         {/* Right Status / Cancel Button */}
         <div className="flex items-center gap-2">
-          {selectedCard ? (
+          {pendingCardMove ? (
+            <div className="flex items-center gap-1.5 bg-[#3C493F] border border-[#D4AF37] px-2 py-0.5 rounded text-[11px]">
+              <span className="text-[#D4AF37] font-bold">✓ Outcome Preview Active</span>
+            </div>
+          ) : activeCardId ? (
             <div className="flex items-center gap-1.5 bg-[#191B1D] border border-[#D4AF37]/60 px-2 py-0.5 rounded text-[11px] animate-pulse">
-              <span className="text-[#D4AF37] font-medium">🎯 {stageGuidance}</span>
-              <button
-                onClick={onCancelTargeting}
-                className="px-1.5 py-0.5 bg-[#AA4A44] hover:bg-[#883934] text-[#FAF9F6] rounded text-[9px] font-bold transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
+              <span className="text-[#D4AF37] font-medium">🎯 Card Active</span>
+              {onCancelTargeting && (
+                <button
+                  type="button"
+                  onClick={onCancelTargeting}
+                  className="px-1.5 py-0.5 bg-[#AA4A44] hover:bg-[#883934] text-[#FAF9F6] rounded text-[9px] font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           ) : hasPlayedCardThisTurn ? (
             <span className="text-[10px] font-mono text-[#D4AF37] font-medium">
-              Card used · Make move
+              Card played this turn
             </span>
           ) : null}
         </div>
@@ -121,15 +121,20 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
         {rows.map((rowCards, rowIdx) => (
           <div key={rowIdx} className="flex items-center justify-center w-full px-2">
             {rowCards.map((cardId, cardIdx) => {
-              const card = getCardById(cardId);
+              const card = CARD_MAP.get(cardId) || getCardById(cardId);
               if (!card) return null;
 
               const isAvailable = hand.includes(cardId);
-              const isSelected = selectedCard?.id === cardId;
-              const canAfford = energy >= card.energyCost;
-              const isPlayable = isMyTurn && isAvailable && !hasPlayedCardThisTurn && canAfford;
+              const isSelected = activeCardId === cardId;
+              const isHovered = hoveredCardId === cardId;
               const isActiveForPiece = activeCardIdsForPiece.includes(cardId);
-              const theme = PIECE_COLOR_THEMES[card.anchor] || PIECE_COLOR_THEMES.pawn;
+              const isPieceSelected = Boolean(selectedSquare);
+              const isDimmed = isPieceSelected && !isActiveForPiece && !isSelected;
+
+              const theme =
+                card.visualTheme ||
+                PIECE_COLOR_THEMES[card.anchor] ||
+                PIECE_COLOR_THEMES.pawn;
               const targets = getMiniBoardTargets(card);
 
               // Fan rotation
@@ -142,64 +147,81 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
                   ? 'rotate-1'
                   : 'rotate-2';
 
-              const conditionLabel = card.condition_type || 'TACTICAL';
-              const effectLabel = card.effect_type || 'MOVE';
+              const conditionLabel = card.conditionText
+                ? card.conditionText.split('.')[0]
+                : card.condition_type || 'TACTICAL';
+              const effectLabel = card.effectText
+                ? card.effectText.split('.')[0]
+                : card.effect_type || 'EFFECT';
 
               return (
                 <div
-                  key={cardId}
+                  key={`${cardId}-${cardIdx}`}
                   data-card-id={cardId}
+                  data-testid={`hand-card-${cardId}`}
                   onClick={() => {
-                    if (isPlayable || isSelected) {
+                    if (isAvailable || isSelected) {
                       onSelectCard(cardId);
                     }
                   }}
-                  title={`${card.name} (${card.energyCost} Energy)\n${card.description}`}
-                  className={`group relative tcg-card w-[78px] h-[112px] sm:w-[82px] sm:h-[118px] rounded-[7px] p-1.5 flex flex-col justify-between transition-all duration-200 select-none ${
+                  onMouseEnter={() => {
+                    if (onHoverCard) onHoverCard(cardId);
+                  }}
+                  onMouseLeave={() => {
+                    if (onHoverCard) onHoverCard(null);
+                  }}
+                  title={`${card.code ? `[${card.code}] ` : ''}${card.name}\n${card.description || card.effectText}`}
+                  style={{
+                    borderColor: isSelected
+                      ? '#D4AF37'
+                      : isActiveForPiece
+                      ? '#D4AF37'
+                      : theme.hex,
+                  }}
+                  className={`group relative tcg-card w-[78px] h-[116px] sm:w-[84px] sm:h-[122px] rounded-[7px] p-1.5 flex flex-col justify-between transition-all duration-200 select-none ${
                     cardIdx > 0 ? '-ml-3.5 sm:-ml-4' : 'ml-0'
                   } ${
                     isSelected
-                      ? `z-30 -translate-y-3 scale-[1.18] rotate-0 bg-[#282B2E] border-2 border-[#D4AF37] shadow-[0_12px_24px_rgba(0,0,0,0.8),0_0_12px_rgba(212,175,55,0.5)] cursor-pointer`
+                      ? `z-30 -translate-y-3 scale-[1.18] rotate-0 bg-[#282B2E] border-2 shadow-[0_12px_24px_rgba(0,0,0,0.8),0_0_12px_rgba(212,175,55,0.6)] cursor-pointer`
                       : isActiveForPiece
-                      ? `z-20 -translate-y-1.5 scale-[1.08] rotate-0 bg-[#282B2E] border-2 border-[#D4AF37] shadow-[0_8px_16px_rgba(0,0,0,0.7),0_0_10px_rgba(212,175,55,0.5)] animate-pulse cursor-pointer`
-                      : isPlayable
-                      ? `${fanRotation} bg-[#24272A] border border-[rgba(139,126,116,0.25)] hover:border-[#D4AF37] hover:-translate-y-3.5 hover:scale-[1.18] hover:rotate-0 hover:z-30 hover:shadow-[0_12px_24px_rgba(0,0,0,0.8),0_0_10px_rgba(212,175,55,0.4)] cursor-pointer`
-                      : !isAvailable
-                      ? `${fanRotation} bg-[#141618] opacity-25 border border-dashed border-[rgba(139,126,116,0.2)] cursor-not-allowed`
-                      : `${fanRotation} bg-[#24272A] opacity-60 border border-[rgba(139,126,116,0.18)] hover:opacity-100 hover:-translate-y-2 hover:scale-[1.06] hover:rotate-0 hover:z-20 cursor-not-allowed`
+                      ? `z-20 -translate-y-2 scale-[1.12] rotate-0 bg-[#282B2E] border-2 shadow-[0_10px_20px_rgba(0,0,0,0.7),0_0_12px_rgba(212,175,55,0.5)] cursor-pointer`
+                      : isHovered
+                      ? `z-25 -translate-y-2.5 scale-[1.14] rotate-0 bg-[#282B2E] border-2 shadow-[0_10px_20px_rgba(0,0,0,0.7)] cursor-pointer`
+                      : isDimmed
+                      ? `${fanRotation} bg-[#191B1D] opacity-40 border cursor-pointer`
+                      : isAvailable
+                      ? `${fanRotation} bg-[#24272A] border hover:border-[#D4AF37] hover:-translate-y-3.5 hover:scale-[1.18] hover:rotate-0 hover:z-30 hover:shadow-[0_12px_24px_rgba(0,0,0,0.8),0_0_10px_rgba(212,175,55,0.4)] cursor-pointer`
+                      : `${fanRotation} bg-[#141618] opacity-25 border border-dashed border-[rgba(139,126,116,0.2)] cursor-not-allowed`
                   }`}
                 >
-                  {/* Top: Piece Glyphs + Name & Energy Cost Badge */}
+                  {/* Top: Piece Glyphs + Name & Code */}
                   <div className="w-full flex items-center justify-between gap-1 leading-none">
                     <div className="flex items-center gap-1 min-w-0">
                       <span style={{ color: theme.hex }} className="text-[11px] font-bold flex-shrink-0">
                         {theme.badgeIcon}
                       </span>
                       <span
-                        style={{ color: isPlayable || isSelected ? '#FAF9F6' : '#8B7E74' }}
+                        style={{ color: isAvailable || isSelected ? '#FAF9F6' : '#8B7E74' }}
                         className="text-[9px] font-bold truncate leading-none"
                       >
                         {card.name}
                       </span>
                     </div>
-                    <span
-                      className={`text-[8px] font-mono font-bold px-1 py-0.2 rounded leading-none flex-shrink-0 ${
-                        !isAvailable
-                          ? 'bg-[#191B1D] text-[#8B7E74]'
-                          : canAfford
-                          ? 'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40'
-                          : 'bg-[#191B1D] text-[#8B7E74]'
-                      }`}
-                    >
-                      {!isAvailable ? 'USED' : `⚡${card.energyCost}`}
-                    </span>
+                    {card.code && (
+                      <span
+                        style={{ color: theme.hex, borderColor: `${theme.hex}60` }}
+                        className="text-[8px] font-mono font-bold px-1 py-0.2 rounded border bg-[#141618] leading-none flex-shrink-0"
+                      >
+                        {card.code}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Center: Art Window / 5x4 Mini-Board Visual Explainer */}
+                  {/* Center: Placeholder Art Window / Mini-Board Visual Explainer */}
                   <div className="w-full my-auto">
                     {/* Default Art View: Centered CardArt Illustration */}
                     <div
-                      className={`w-full h-[38px] rounded-[4px] bg-[#141618] border border-[rgba(139,126,116,0.2)] flex items-center justify-center relative overflow-hidden ${
+                      className={`w-full h-[40px] rounded-[4px] bg-[#141618] border border-[rgba(139,126,116,0.2)] flex items-center justify-center relative overflow-hidden ${
                         isSelected || isActiveForPiece ? 'hidden' : 'flex group-hover:hidden'
                       }`}
                     >
@@ -209,11 +231,11 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
                     {/* Hover/Active View: 5x4 Mini-Board Schematic */}
                     <div
                       data-testid="tcg-mini-board"
-                      className={`w-full h-[38px] rounded-[4px] bg-[#141618] border border-[rgba(212,175,55,0.4)] flex items-center justify-center p-0.5 ${
+                      className={`w-full h-[40px] rounded-[4px] bg-[#141618] border border-[rgba(212,175,55,0.4)] flex items-center justify-center p-0.5 ${
                         isSelected || isActiveForPiece ? 'flex' : 'hidden group-hover:flex'
                       }`}
                     >
-                      <div className="grid grid-cols-5 gap-0.5 w-[54px] h-[32px]">
+                      <div className="grid grid-cols-5 gap-0.5 w-[54px] h-[34px]">
                         {[0, 1, 2, 3].map((r) =>
                           [0, 1, 2, 3, 4].map((c) => {
                             const isAnchor = r === 3 && c === 2;
@@ -245,13 +267,16 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
                     </div>
                   </div>
 
-                  {/* Bottom: Taxonomy Header & Concise Rule */}
+                  {/* Bottom: Rules Box (Zero-Ellipsis Rule: completely wraps) */}
                   <div className="w-full flex flex-col justify-end">
-                    <p className="text-[7px] font-mono font-bold text-[#D4AF37] uppercase tracking-wider truncate text-center leading-none">
-                      {conditionLabel} ➔ {effectLabel}
+                    <p
+                      style={{ color: theme.hex }}
+                      className="text-[6.5px] font-mono font-bold uppercase tracking-wider truncate text-center leading-none"
+                    >
+                      {conditionLabel}
                     </p>
-                    <p className="text-[7.5px] text-[#FAF9F6]/85 leading-tight text-center mt-0.5">
-                      {card.description}
+                    <p className="text-[7.5px] text-[#FAF9F6]/90 leading-tight text-center mt-0.5">
+                      {card.effectText || card.description}
                     </p>
                   </div>
                 </div>
