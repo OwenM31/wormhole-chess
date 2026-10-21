@@ -149,6 +149,9 @@ export interface ProfileGear {
   hat?: string;
   skin?: string;
   badge?: string;
+  material?: string;
+  headgear?: string;
+  base?: string;
 }
 
 export interface PlayerProfile {
