@@ -127,11 +127,11 @@ export const CardUtils = {
  */
 const HANDLER_REGISTRY = new Map<string, CardBehaviorHandler<any>>();
 
-export function registerCardHandler(handler: CardBehaviorHandler<any>): void {
+export function registerCardHandler<T extends TargetOption = any>(handler: CardBehaviorHandler<T>): void {
   HANDLER_REGISTRY.set(handler.cardId, handler);
 }
 
-export function getCardHandler(cardId: string): CardBehaviorHandler<any> | undefined {
+export function getCardHandler<T extends TargetOption = any>(cardId: string): CardBehaviorHandler<T> | undefined {
   return HANDLER_REGISTRY.get(cardId);
 }
 
@@ -2158,4 +2158,7 @@ function registerRemainingCatalogCards(): void {
   }
 }
 
+import { registerPlaybook36Handlers } from './playbook36Handlers';
+
+registerPlaybook36Handlers();
 registerRemainingCatalogCards();
