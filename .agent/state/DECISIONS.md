@@ -631,4 +631,81 @@ Following completion of Phase 1 (180-card nomenclature polish) and Phase 2 (90 M
 
 ---
 
-*Last updated: 2026-10-18*
+### [DECISION-026] Phase 3 Complete 36-Card Specification, Global Engine Invariants & Castle Wing Narrative Architecture
+
+**Date**: 2026-10-21
+**Status**: Accepted
+
+#### Context
+During Phase 3 discussion, all 36 cards across all 6 piece classes (`P1–P8, N1–N7, B1–B7, R1–R6, Q1–Q4, K1–K4`) were designed, audited, and locked with plain-English titles and unambiguous Condition → Effect rules. Simultaneously, global engine rules were simplified and the campaign's narrative, visual character identity, and Castle Wing progression were established.
+
+#### Decision
+1. **Global Engine Rules & Invariants**:
+   - **Energy Backburnered**: Removed active Energy costs (`⚡`); card plays are regulated by the **"1 card per turn"** Unified Action Model (*"The Card IS the Move"*) and each card's explicit **board condition**.
+   - **No Terrain Walls or Shields / No "Unmoved Piece" Conditions**: All 36 cards are pure physical piece actions triggered by repeatable board geometry.
+   - **Rank 1 (Home Back-Rank) Pawn Legalization**: Pawns may legally exist on Rank 1 (`a1–h1` relative to owner) via card effects (`K1 Conscription`, `K4 Banish`). On Rank 1, a Pawn moves 1 square forward onto Rank 2 (no double-step, no *en passant*). Any Pawn on Rank 2 (`a2–h2`) may move 1 or 2 squares forward. `DeckChessEngine.ts` must pass `{ skipValidation: true }` to `chess.load(fen, { skipValidation: true })`.
+   - **Rank 8 Instant Promotion Invariant**: Any card effect that places, spawns, or moves a friendly Pawn onto Rank 8 immediately promotes it.
+   - **Bishop Color-Complex Switching Relaxed**: Allowed via `B4 (Change Color)`, `R5 (Catapult)`, and `K3 (Royal Execution)`.
+   - **Pawn Spawning Config Flag (`limitPawnsTo8: boolean`)**: Only 4 cards spawn Pawns (`P8`, `N7`, `R6`, `K1`). Engine will support a toggle to playtest both Graveyard-limited and Unlimited Pawn spawning.
+
+2. **All 36 Locked Cards (`P1–P8, N1–N7, B1–B7, R1–R6, Q1–Q4, K1–K4`)**:
+   - **Pawns (`8`)**:
+     - `P1 — Sidestep`: Enemy directly in front of Pawn → step 1 square left or right onto an empty square.
+     - `P2 — Head On`: Enemy Pawn directly in front of Pawn → capture it straight ahead.
+     - `P3 — Follow Me`: Friendly piece directly behind Pawn & square in front empty → move both 1 square straight forward.
+     - `P4 — Attack Together`: Pawn is defended by a friendly Pawn → capture diagonally and move that defending Pawn into the vacated square.
+     - `P5 — Get Behind Me`: Friendly piece on rear-diagonal behind Pawn & square directly behind Pawn is empty → move that ally 1 square sideways into the square directly behind the Pawn.
+     - `P6 — Tag Out`: Friendly piece directly in front of Pawn → swap places with it.
+     - `P7 — Protect the King`: While this Pawn is pinned to your King → destroy an enemy piece on a forward-diagonal capture square without moving this Pawn.
+     - `P8 — Call Reserves`: Pawn in enemy territory (Ranks 5–7) with a friendly piece horizontally adjacent and empty square directly behind → spawn a friendly Pawn directly behind this Pawn.
+   - **Knights (`7`)**:
+     - `N1 — Adrenaline Jump`: Knight is under attack → jump 3 squares straight and 1 square to the side (`3×1` jump, onto an empty square or to capture).
+     - `N2 — Swap With Me`: Friendly piece on one of this Knight's L-jump squares → swap places with that friendly piece.
+     - `N3 — Trample`: At least 1 enemy Pawn lies on the 2-square straight leg of this Knight's normal `(2,1)` L-jump → jump onto an empty square and destroy any enemy Pawns on the 2-square straight leg.
+     - `N4 — Pin Swap`: While this Knight is pinned to your King → swap places with any friendly piece in the 8 surrounding squares.
+     - `N5 — Get to the King`: Your King is in check → jump this Knight from anywhere on the board to an empty square adjacent to your King that blocks the check.
+     - `N6 — Flanking Support`: This Knight is on an outer file (`a` or `h`) and you have another friendly Knight on the board → make a normal Knight jump and move your other Knight into the square this Knight just vacated.
+     - `N7 — Outpost Support`: This Knight is in enemy territory, is defended by a friendly Pawn on one rear-diagonal square, and the other rear-diagonal square behind this Knight is empty → spawn a friendly Pawn on that empty rear-diagonal square.
+   - **Bishops (`7`)**:
+     - `B1 — Let Me Through`: Friendly Pawn is 1 square diagonally in front of this Bishop → swap places with that friendly Pawn.
+     - `B2 — Pierce`: Enemy Pawn on unobstructed diagonal with at least 1 empty square beyond it → slide through that enemy Pawn, destroying it and landing on any unobstructed empty square beyond it.
+     - `B3 — Ricochet`: Empty square on `a`-file or `h`-file along Bishop's unobstructed diagonal → slide diagonally to that edge square and bounce 90° inward along the reflected diagonal (move or capture).
+     - `B4 — Change Color`: Bishop is on a home corner square (`a1` or `h1`) → step 1 square orthogonally onto an empty square, switching square color.
+     - `B5 — Take My Place`: While this Bishop is pinned to your King → swap places with a friendly piece along any of this Bishop's unobstructed diagonals.
+     - `B6 — Come This Way`: Bishop is on one of the 4 center squares (`d4, d5, e4, e5`) and a friendly Pawn lies on an unobstructed diagonal → pull that friendly Pawn along the diagonal to the square 1 tile diagonally adjacent to this Bishop.
+     - `B7 — Bishop's Blessing`: Friendly piece (including your King) is directly behind this Bishop → move that friendly piece any number of unobstructed squares along the diagonals of its current square color (onto an empty square or to capture an enemy non-King unit), while this Bishop remains in place.
+   - **Rooks (`6`)**:
+     - `R1 — Make Way`: Friendly Pawn is orthogonally adjacent to this Rook and the square directly beyond that Pawn along the same line is empty → push that Pawn 1 square away along that line and move this Rook into the square the Pawn vacated.
+     - `R2 — I've Got Your Back`: Friendly unit sits on the same rank as this Rook (unobstructed) and the square 1 rank directly in front of that unit is empty → push that friendly unit 1 square forward and slide this Rook horizontally into the square it vacated.
+     - `R3 — Cut Across`: Rook sits on one of the two main board diagonals (`a1–h8` or `a8–h1`) → step 1 square diagonally along that main diagonal (move or capture).
+     - `R4 — Move in Unison`: Your two Rooks share the same rank or file with no pieces between them → slide both Rooks the exact same number of unobstructed squares in the same perpendicular direction (move or capture).
+     - `R5 — Catapult`: Friendly non-King piece is directly behind/orthogonally adjacent to this Rook and an enemy unit lies along that unobstructed orthogonal line in front → launch that friendly piece over this Rook to land on and capture that enemy unit (Rook stays in place).
+     - `R6 — Garrison`: Your King is directly behind this Rook and the square directly in front of this Rook is empty → spawn 1 friendly Pawn onto the empty square directly in front of this Rook.
+   - **Queens (`4`)**:
+     - `Q1 — Royal Summons` *(working title: "Come Here")*: Friendly Pawn lies on this Queen's unobstructed rank or file at distance $\ge 2$ → move that Pawn along the line onto the empty square orthogonally adjacent to this Queen.
+     - `Q2 — The Queen's Gambit`: Friendly non-King unit in this Queen's unobstructed line of sight is under pseudo-legal attack by at least one enemy non-King unit → remove that friendly unit to your graveyard and move this Queen directly onto the attacking enemy unit's square, capturing it.
+     - `Q3 — All Rise`: This Queen is on Ranks 2–8 and at least one friendly Pawn on a strictly lower rank (`Pawn.rank < Queen.rank`) can advance → evaluating top-down, advance every friendly Pawn on a strictly lower rank 1 square straight forward if unobstructed.
+     - `Q4 — One Fell Swoop`: Supported from behind by a directly adjacent friendly Rook, Bishop, or second Queen along a shared attack ray where the forward ray has $\ge 1$ enemy unit, $0$ friendly units, and terminates at the board edge or immediately before the enemy King → move this Queen all the way to the end of that ray, capturing every enemy unit along the path.
+   - **Kings (`4`)**:
+     - `K1 — Conscription`: Your King is on a home corner square (`a1` or `h1`) with at least 1 empty orthogonally adjacent square (`a2/b1` or `h2/g1`) → spawn a friendly Pawn onto each empty orthogonally adjacent square (up to 2).
+     - `K2 — Royal Knighting`: Friendly Pawn is horizontally adjacent (1 square left or right on the same rank) to your King → remove that Pawn to your graveyard and spawn a friendly Knight onto that exact square.
+     - `K3 — Royal Execution`: Friendly unit is orthogonally adjacent to your King, and an enemy non-King unit occupies a square that ally could legally capture if standing on your King's square (ignoring both the King and the ally's current square for line-of-sight) → move that ally directly onto that enemy's square, capturing it.
+     - `K4 — Banish`: Along the same file and in front of your King, the first unit encountered is an enemy non-King unit on Ranks 1–4, and every unit in the contiguous vertical stack $S$ of enemy non-King units extending backward from it is also on Ranks 1–4, with an empty square immediately behind the topmost unit of $S$ → push the entire contiguous stack $S$ backward along the file toward Rank 8 as a rigid block until the topmost unit reaches Rank 8 or stops immediately before another unit (at Rank $\ge 5$).
+
+3. **Narrative, Visual Identity & Castle Wing Layout**:
+   - **Living Chess Piece Cast**: All characters in cutscenes and on the map are expressive carved/armored chess pieces (Player = unpainted wooden Pawn from town; Jester = crooked, banished 9th-file piece with a fool's cap; Guards = iron-helmed Pawns/Rooks; Lieutenants = ornate elite Commander pieces).
+   - **The Scheming Jester's Hook**: The King standardized the board from 9×9 to 8×8, stole the Jester's 36-page Playbook, banished him on sight, and distributed the moves to his Captains and Lieutenants. The Jester uses a tavern puzzle to scout the Player as his unassuming proxy/front-man to infiltrate the Castle and steal back all 36 pages.
+   - **Castle Wing Architecture**:
+     - **World 1 (`The Causeway` — 7 Cards)** $\rightarrow$ **World 2 (`Outer Courtyard` — 4 Cards)** $\rightarrow$ **Central Rotunda**.
+     - **Outer Wings (Worlds 3 & 4)**: **The Barracks** (Horse/Knight Bosses) and **The Chapel** (Bishop Bosses).
+     - **Inner Wings (Worlds 5 & 6)**: Inside the Barracks is **The Armory** (Rook Bosses); inside the Chapel is **The Royal Court** (Queen Boss).
+     - **World 7 (`The Throne Room` — 5 Cards)**: Unlocked by Heavy Keys from the Wings. After defeating **The King** (`K4 Banish`), **The Jester double-crosses the player**, steals the completed 36-card Playbook, and becomes the **True Final Boss** (backed by a strong card-aware AI).
+   - **Level Rhythm per Card**: 2–4 themed puzzles/encounters per card: 1–2 foreshadowing puzzles where the Lieutenant/Officer uses the card against the player $\rightarrow$ claim the card $\rightarrow$ immediate next cycle auto-locks the newly acquired card into one of the player's slots so they must use it.
+
+#### Consequences
+- Locks 100% of the 36-card mechanical design and engine invariants.
+- Aligns Castle architecture (`Barracks -> Armory`, `Chapel -> Royal Court`) with the 4 major piece classes (`Knight -> Rook`, `Bishop -> Queen`).
+
+---
+
+*Last updated: 2026-10-21*

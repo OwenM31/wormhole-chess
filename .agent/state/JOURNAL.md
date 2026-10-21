@@ -4,6 +4,45 @@
 
 ---
 
+### Session: 2026-10-21 10:43
+
+#### Objective
+Resume Phase 3 discussion (`@[.agent/workflows/resume.md]`), finalize and audit all 36 cards across all 6 piece classes (`P1–P8, N1–N7, B1–B7, R1–R6, Q1–Q4, K1–K4`), lock global engine invariants, establish the Campaign Narrative, Living Chess Piece character identity, and Castle Wing progression (`Barracks -> Armory`, `Chapel -> Royal Court`), and pause cleanly for session handoff (`@[.agent/workflows/pause.md]`).
+
+#### Accomplished
+- ✅ Finalized and audited all **36 Cards** (`8 Pawns, 7 Knights, 7 Bishops, 6 Rooks, 4 Queens, 4 Kings`) with plain-English titles and unambiguous Condition → Effect specifications (`[DECISION-026]` in `DECISIONS.md`).
+- ✅ Locked Global Engine Invariants:
+  - Backburnered Energy costs (`⚡`); card plays are governed by "1 card per turn" ("The Card IS the Move") and board conditions.
+  - Eliminated temporary terrain walls/shields and starting-square/unmoved piece conditions.
+  - Legalized Rank 1 (home back-rank) Pawns via card effects (`K1`, `K4`), verified empirically against `chess.js` using `chess.load(fen, { skipValidation: true })`.
+  - Locked Rank 8 instant promotion invariant, relaxed Bishop color-complex switching (`B4`, `R5`, `K3`), and added `limitPawnsTo8: boolean` config toggle for the 4 Pawn-spawning cards (`P8`, `N7`, `R6`, `K1`).
+- ✅ Locked Campaign Narrative, Visual Identity & Castle Wing Layout:
+  - **Living Chess Piece Cast**: Expressive carved/armored chess pieces (Player = unpainted wooden Pawn from town; Jester = crooked banned 9th-file piece with a fool's cap; Guards = iron-helmed Pawns/Rooks; Lieutenants = ornate elite pieces).
+  - **The Scheming Jester's Hook**: The King standardized the board from 9×9 to 8×8, stole the Jester's 36-page Playbook, banished him on sight, and distributed the moves to his Captains and Lieutenants. The Jester uses a tavern puzzle to scout the Player as his proxy/front-man.
+  - **Castle Wing Architecture**:
+    - **World 1 (`The Causeway` — 7 Cards)** $\rightarrow$ **World 2 (`Outer Courtyard` — 4 Cards)** $\rightarrow$ **Central Rotunda**.
+    - **Outer Wings (`Worlds 3 & 4`)**: **The Barracks** (Horse/Knight Bosses) and **The Chapel** (Bishop Bosses).
+    - **Inner Wings (`Worlds 5 & 6`)**: Inside the Barracks is **The Armory** (Rook Bosses); inside the Chapel is **The Royal Court** (Queen Boss).
+    - **World 7 (`The Throne Room` — 5 Cards)**: Unlocked by Heavy Keys. Beat **The King** (`K4 Banish`), after which **The Jester double-crosses the player**, steals the completed 36-card Playbook, and challenges the player as the **True Final Boss** (strong card-aware AI with master deck).
+  - **3-Step Card Cycle**: 2–4 themed puzzles per card (`1–2 Foreshadow Puzzles` where the officer uses the card against you $\rightarrow$ `Officer Duel` to claim the card $\rightarrow$ `Forced-Slot Mastery` in the next cycle where the card auto-fills into one of your slots).
+
+#### Verification
+- [x] Empirical `chess.js` verification of Rank 1 Pawn moves (`b1 -> b2` single step, no double-step, no *en passant*) and `{ skipValidation: true }` FEN loading.
+- [x] All 36 cards (`P1–P8, N1–N7, B1–B7, R1–R6, Q1–Q4, K1–K4`) documented in `[DECISION-026]` (`DECISIONS.md`).
+- [ ] Confirm final 2 questions with user (Class-Focused Wing Card Grouping & Shop vs. Direct Map Rewards) and author `STORYBOARD.md`.
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) right after we proposed the Class-Focused Wing Card Grouping (`Barracks = Knights, Chapel = Bishops, Armory = Rooks, Royal Court = Queens`) and "The Jester's Coat" Shop reward structure.
+
+#### Handoff Notes
+- Working tree is clean and all state files (`DECISIONS.md`, `STATE.md`, `JOURNAL.md`) are committed.
+- Upon resume (`/resume`), get the user's response on the 2 pending questions:
+  1. Whether they approve the **Class-Focused Wing Card Grouping** (`Barracks: P4, N4, N5, N6, K2`, `Chapel: P5, B3, B4, B5, B6`, `Armory: P6, R4, R5, R6, K1`, `Royal Court: P7, Q1, Q2, Q3, K3`), where each Wing gives 1 Pawn card + 4 class-specific cards matching that Wing's bosses.
+  2. Whether they want **"The Jester's Coat" Shop** (spending currency on Forging Duplicate Card Copies, Mulligans/Rewinds, +1 Bonus Sleeve Slot, and Piece Material/Hat Cosmetics while awarding baseline Card Slots & Keys directly at milestones) or prefer direct map rewards only.
+- Once confirmed, write `STORYBOARD.md` and proceed to `@[.agent/workflows/plan.md] 3`.
+
+---
+
 ### Session: 2026-10-18 11:05
 
 #### Objective
