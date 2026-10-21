@@ -415,7 +415,7 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
       {pendingCardMove && (
         <div
           data-testid="card-confirm-bar"
-          className="w-full p-2.5 bg-[#24272A] border-2 border-[#D4AF37] rounded flex items-center justify-between gap-3 shadow-2xl animate-fade-in"
+          className="relative z-30 w-full p-2.5 bg-[#24272A] border-2 border-[#D4AF37] rounded flex items-center justify-between gap-3 shadow-2xl animate-fade-in"
         >
           {/* Left: Card Badge & Summary */}
           <div className="flex items-center gap-2 min-w-0">

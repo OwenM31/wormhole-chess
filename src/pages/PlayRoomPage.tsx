@@ -5,6 +5,10 @@ import { useAuth } from '../context/AuthContext';
 import { useGameRoom } from '../hooks/useGameRoom';
 import { ChessClock } from '../components/ChessClock';
 import { WormholeLogo } from '../components/WormholeLogo';
+import { DeckChessBoard } from '../components/DeckChessBoard';
+import { TacticalHandBar } from '../components/TacticalHandBar';
+import { useDeckChessGame } from '../hooks/useDeckChessGame';
+import { usePlayerProfiles } from '../hooks/usePlayerProfiles';
 
 export const PlayRoomPage: React.FC = () => {
   const { code } = useParams<{ code: string }>();
@@ -47,6 +51,21 @@ export const PlayRoomPage: React.FC = () => {
   const isPlayer = room.yourRole === 'white' || room.yourRole === 'black';
   const isSpectator = room.yourRole === 'spectator';
   const state = room.roomState;
+
+  const profilesHook = usePlayerProfiles();
+  const { activeProfile } = profilesHook;
+  const isDeckBuilder = state?.variant === 'deck_builder';
+  const playerColor = room.yourRole === 'black' ? 'b' : 'w';
+
+  const deckGame = useDeckChessGame({
+    mode: 'multiplayer',
+    playerColor,
+    whiteDeck: activeProfile.equippedHand,
+    blackDeck: activeProfile.equippedHand,
+    onTurnComplete: (payload) => {
+      room.sendTurn(payload);
+    },
+  });
 
   return (
     <div style={styles.pageContainer}>
@@ -178,18 +197,56 @@ export const PlayRoomPage: React.FC = () => {
                   </span>
                 </div>
 
-                <div style={styles.arenaVisual}>
-                  <div style={styles.boardGraphic}>
-                    {state?.variant === 'deck_builder' ? '♟️ 🃏 ♟️' : '🌀 ♟️ 🌀'}
+                {isDeckBuilder ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', width: '100%', padding: '0.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '100%', maxWidth: '512px' }}>
+                        <DeckChessBoard
+                          fen={deckGame.fen}
+                          orientation={playerColor}
+                          selectedSquare={deckGame.selectedSquare}
+                          legalMoves={deckGame.legalMovesForSelected}
+                          empoweredMoves={deckGame.empoweredMoves}
+                          hoveredCardId={deckGame.hoveredCardId}
+                          selectedCardId={deckGame.selectedCardId}
+                          disambiguationCandidates={deckGame.disambiguationCandidates}
+                          pendingCardMove={deckGame.pendingCardMove}
+                          onSquareClick={deckGame.handleSquareClick}
+                          onConfirmCardMove={deckGame.confirmPendingCardMove}
+                          onCancelCardMove={deckGame.cancelPendingCardMove}
+                          inCheck={deckGame.inCheck}
+                          activeModifiers={deckGame.activeModifiers}
+                        />
+                      </div>
+                      <div style={{ width: '100%', maxWidth: '512px' }}>
+                        <TacticalHandBar
+                          hand={playerColor === 'w' ? deckGame.whiteHand : deckGame.blackHand}
+                          initialDeck={activeProfile.equippedHand}
+                          isMyTurn={state?.activeTurn === room.yourRole}
+                          selectedCardId={deckGame.selectedCardId}
+                          hoveredCardId={deckGame.hoveredCardId}
+                          activeCardIdsForPiece={deckGame.activeCardIdsForPiece}
+                          onSelectCard={deckGame.selectCard}
+                          onHoverCard={deckGame.setHoveredCard}
+                          onCancelTargeting={deckGame.cancelPendingCardMove}
+                          pendingCardMove={deckGame.pendingCardMove}
+                          selectedSquare={deckGame.selectedSquare}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <p style={styles.arenaHint}>
-                    {isPlayer
-                      ? state?.activeTurn === room.yourRole
-                        ? "It's your turn! Make your move."
-                        : "Waiting for opponent's move..."
-                      : 'Observing live game state.'}
-                  </p>
-                </div>
+                ) : (
+                  <div style={styles.arenaVisual}>
+                    <div style={styles.boardGraphic}>🌀 ♟️ 🌀</div>
+                    <p style={styles.arenaHint}>
+                      {isPlayer
+                        ? state?.activeTurn === room.yourRole
+                          ? "It's your turn! Make your move."
+                          : "Waiting for opponent's move..."
+                        : 'Observing live game state.'}
+                    </p>
+                  </div>
+                )}
 
                 {/* In-game HUD controls */}
                 {isPlayer && state?.status === 'in_progress' && (

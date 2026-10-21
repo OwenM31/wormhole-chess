@@ -3,18 +3,25 @@ import Navigation from '../components/Navigation';
 import { DeckChessBoard } from '../components/DeckChessBoard';
 import { TacticalHandBar } from '../components/TacticalHandBar';
 import { DeckBuilderView } from '../components/DeckBuilderView';
+import { DeckBuilderMainMenu } from '../components/DeckBuilderMainMenu';
+import { MultiplayerCharacterStage, OfflineMatchConfig } from '../components/MultiplayerCharacterStage';
 import { useDeckChessGame } from '../hooks/useDeckChessGame';
+import { usePlayerProfiles } from '../hooks/usePlayerProfiles';
 import { useAuth } from '../context/AuthContext';
 import { PieceColor } from '../types/deckChess';
-import { STARTER_DECK } from '../engine/cardGraph';
+import { CANONICAL_36_CARDS } from '../engine/cards/releaseRoster36';
+
+type TopScreen = 'menu' | 'multiplayer' | 'arena' | 'forge';
 
 export const DeckBuilderPage: React.FC = () => {
   const { user } = useAuth();
+  const profilesHook = usePlayerProfiles();
+  const { activeProfile } = profilesHook;
 
-  // Active top-level view: 'arena' (play chess) vs 'forge' (deck loadout curator)
-  const [activeTab, setActiveTab] = useState<'arena' | 'forge'>('arena');
+  // Active top-level screen: 'menu' (default), 'multiplayer', 'arena', or 'forge'
+  const [screen, setScreen] = useState<TopScreen>('menu');
 
-  // Right Panel tab state: 'moves' vs 'chat'
+  // Right Panel tab state in Arena: 'moves' vs 'chat'
   const [rightTab, setRightTab] = useState<'moves' | 'chat'>('moves');
 
   // Match setup state
@@ -28,7 +35,7 @@ export const DeckBuilderPage: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<
     Array<{ id: string; sender: string; text: string; time: string; isSystem?: boolean }>
   >([
-    { id: '1', sender: 'System', text: 'Tactical Room initialized. 8-card loadout active.', time: '00:00', isSystem: true },
+    { id: '1', sender: 'System', text: 'Tactical Room initialized. 36-Card Playbook active.', time: '00:00', isSystem: true },
     { id: '2', sender: 'Tactical AI', text: 'Good luck. Make your move or play a card.', time: '00:01' },
   ]);
   const [chatInput, setChatInput] = useState<string>('');
@@ -39,7 +46,7 @@ export const DeckBuilderPage: React.FC = () => {
     if (!trimmed) return;
     const newMsg = {
       id: String(Date.now()),
-      sender: user?.username || 'Player',
+      sender: user?.username || activeProfile.name || 'Player',
       text: trimmed,
       time: new Date().toLocaleTimeString([], { minute: '2-digit', second: '2-digit' }),
     };
@@ -47,29 +54,13 @@ export const DeckBuilderPage: React.FC = () => {
     setChatInput('');
   };
 
-  // Custom 8-card battle deck
-  const [customDeck, setCustomDeck] = useState<string[]>(() => {
-    const saved = localStorage.getItem('deck_builder_loadout_v1');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length === 8) {
-          return parsed;
-        }
-      } catch (e) {
-        // Fallback to starter deck
-      }
-    }
-    return STARTER_DECK.map((c) => c.id);
-  });
-
   // Hook connecting the game engine, tactical cards, and AI bot
   const game = useDeckChessGame({
     mode: 'ai',
     playerColor,
     aiDifficulty,
-    whiteDeck: playerColor === 'w' ? customDeck : undefined,
-    blackDeck: playerColor === 'b' ? customDeck : undefined,
+    whiteDeck: playerColor === 'w' ? activeProfile.equippedHand : undefined,
+    blackDeck: playerColor === 'b' ? activeProfile.equippedHand : undefined,
   });
 
   // Scroll to latest move when log updates
@@ -77,12 +68,35 @@ export const DeckBuilderPage: React.FC = () => {
     moveLogEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [game.combatLog]);
 
+  const handleStartOfflineMatch = (config: OfflineMatchConfig) => {
+    setPlayerColor(config.playerColor);
+    setAiDifficulty(config.aiDifficulty);
+
+    // AI deck generation based on mode
+    let aiDeck: string[] = [];
+    if (config.aiDeckMode === 'mirror') {
+      aiDeck = [...activeProfile.equippedHand];
+    } else if (config.aiDeckMode === 'random') {
+      const allIds = CANONICAL_36_CARDS.map((c) => c.id);
+      aiDeck = allIds.sort(() => Math.random() - 0.5).slice(0, config.handSize || 8);
+    } else {
+      // 'towny' mode: 0 cards
+      aiDeck = [];
+    }
+
+    const whiteDeck = config.playerColor === 'w' ? activeProfile.equippedHand : aiDeck;
+    const blackDeck = config.playerColor === 'b' ? activeProfile.equippedHand : aiDeck;
+
+    game.resetGame(whiteDeck, blackDeck);
+    setScreen('arena');
+  };
+
   const handleStartNewMatch = (color: PieceColor, diff: 'easy' | 'medium' | 'tactical') => {
     setPlayerColor(color);
     setAiDifficulty(diff);
     game.resetGame(
-      color === 'w' ? customDeck : undefined,
-      color === 'b' ? customDeck : undefined
+      color === 'w' ? activeProfile.equippedHand : undefined,
+      color === 'b' ? activeProfile.equippedHand : undefined
     );
   };
 
@@ -100,67 +114,101 @@ export const DeckBuilderPage: React.FC = () => {
     return glyphs.length > 0 ? glyphs.join(' ') : '—';
   };
 
-  // Material advantage calculation
   const playerCaptured = playerColor === 'w' ? game.graveyard.b : game.graveyard.w;
   const opponentCaptured = playerColor === 'w' ? game.graveyard.w : game.graveyard.b;
-
-  const playerMaterialScore =
-    playerCaptured.p * 1 +
-    playerCaptured.n * 3 +
-    playerCaptured.b * 3 +
-    playerCaptured.r * 5 +
-    playerCaptured.q * 9;
-
-  const opponentMaterialScore =
-    opponentCaptured.p * 1 +
-    opponentCaptured.n * 3 +
-    opponentCaptured.b * 3 +
-    opponentCaptured.r * 5 +
-    opponentCaptured.q * 9;
-
-  const materialAdvantage = playerMaterialScore - opponentMaterialScore;
 
   return (
     <div className="min-h-screen bg-[#191B1D] text-[#FAF9F6] flex flex-col font-sans select-none overflow-x-hidden">
       <Navigation />
 
-      {/* PAGE CONTENT */}
-      <main className="flex-1 p-2 sm:p-4 lg:p-6 flex flex-col items-center justify-center">
-        {activeTab === 'forge' ? (
+      {/* 1. MAIN MENU SCREEN */}
+      {screen === 'menu' && (
+        <DeckBuilderMainMenu
+          onOpenMultiplayer={() => setScreen('multiplayer')}
+          profilesHook={profilesHook}
+        />
+      )}
+
+      {/* 2. MULTIPLAYER CHARACTER STAGE SCREEN */}
+      {screen === 'multiplayer' && (
+        <MultiplayerCharacterStage
+          onBackToMenu={() => setScreen('menu')}
+          onStartOfflineMatch={handleStartOfflineMatch}
+          profilesHook={profilesHook}
+        />
+      )}
+
+      {/* 3. LEGACY FORGE / DECK BUILDER VIEW */}
+      {screen === 'forge' && (
+        <main className="flex-1 p-2 sm:p-4 lg:p-6 flex flex-col items-center justify-center">
           <div className="w-full max-w-5xl">
             <DeckBuilderView
-              initialDeck={customDeck}
+              initialDeck={activeProfile.equippedHand}
               onSaveDeck={(saved) => {
-                setCustomDeck(saved);
                 game.resetGame(
                   playerColor === 'w' ? saved : undefined,
                   playerColor === 'b' ? saved : undefined
                 );
-                setActiveTab('arena');
+                setScreen('arena');
               }}
-              onBackToBattle={() => setActiveTab('arena')}
+              onBackToBattle={() => setScreen('arena')}
             />
           </div>
-        ) : (
+        </main>
+      )}
+
+      {/* 4. ARENA MATCH SCREEN */}
+      {screen === 'arena' && (
+        <main className="flex-1 p-2 sm:p-4 lg:p-6 flex flex-col items-center justify-center">
+          {/* Top Arena Navigation Bar */}
+          <div className="w-full max-w-[1240px] flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setScreen('multiplayer')}
+                data-testid="back-to-stage-btn"
+                className="px-2.5 py-1 bg-[#24272A] hover:bg-[#2C3034] text-[#FAF9F6] border border-[rgba(139,126,116,0.25)] rounded text-xs font-semibold cursor-pointer"
+              >
+                ← Stage
+              </button>
+              <button
+                type="button"
+                onClick={() => setScreen('menu')}
+                data-testid="back-to-menu-btn"
+                className="px-2.5 py-1 bg-[#1C1E20] hover:bg-[#222528] text-[#8B7E74] hover:text-[#FAF9F6] border border-[rgba(139,126,116,0.2)] rounded text-xs cursor-pointer"
+              >
+                ← Main Menu
+              </button>
+            </div>
+            <div className="text-xs text-[#8B7E74]">
+              Profile: <span className="text-[#FAF9F6] font-semibold">{activeProfile.name}</span> · Mode: Playtest
+            </div>
+          </div>
+
           <div className="w-full max-w-[1240px] flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-5">
             {/* 1. LEFT COLUMN (356px): TCG Ruffle Hand Stage */}
             <div className="w-full max-w-[512px] lg:w-[356px] lg:h-[596px] order-2 lg:order-1 flex flex-col">
               <TacticalHandBar
                 hand={myHand}
-                initialDeck={customDeck}
+                initialDeck={activeProfile.equippedHand}
                 energy={game.energy}
                 hasPlayedCardThisTurn={game.hasPlayedCardThisTurn}
                 isMyTurn={isMyTurn}
                 selectedCard={game.selectedCard}
+                selectedCardId={game.selectedCardId}
+                hoveredCardId={game.hoveredCardId}
                 targetingStage={game.targetingStage}
-                activeCardIdsForPiece={game.empoweredMoves?.map((m) => m.cardId)}
+                activeCardIdsForPiece={game.activeCardIdsForPiece}
                 onSelectCard={game.selectCard}
-                onCancelTargeting={game.cancelCardSelection}
+                onHoverCard={game.setHoveredCard}
+                onCancelTargeting={game.cancelPendingCardMove}
+                pendingCardMove={game.pendingCardMove}
+                selectedSquare={game.selectedSquare}
               />
             </div>
 
             {/* 2. CENTER COLUMN (512px): Full 512x512 Chessboard */}
-            <div className="w-full max-w-[512px] lg:h-[596px] flex flex-col justify-between order-1 lg:order-2 gap-2">
+            <div className="w-full max-w-[512px] flex flex-col justify-between order-1 lg:order-2 gap-2">
               {/* Opponent Status Bar (36px) */}
               <div
                 className={`w-full h-[36px] px-3 rounded-md flex items-center justify-between text-xs border transition-all duration-300 ${
@@ -191,19 +239,25 @@ export const DeckBuilderPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Full 512x512 Square Chessboard */}
-              <div className="relative w-full max-w-[512px] aspect-square">
+              {/* Full 512x512 Square Chessboard Container */}
+              <div className="relative w-full max-w-[512px] flex flex-col items-center">
                 <DeckChessBoard
                   fen={game.fen}
                   orientation={playerColor}
                   selectedSquare={game.selectedSquare}
                   legalMoves={game.legalMovesForSelected}
                   empoweredMoves={game.empoweredMoves}
+                  hoveredCardId={game.hoveredCardId}
+                  selectedCardId={game.selectedCardId}
+                  disambiguationCandidates={game.disambiguationCandidates}
+                  pendingCardMove={game.pendingCardMove}
+                  onSquareClick={game.handleSquareClick}
+                  onConfirmCardMove={game.confirmPendingCardMove}
+                  onCancelCardMove={game.cancelPendingCardMove}
                   validAnchorSquares={game.validAnchorSquares}
                   validTargetSquares={game.validTargetSquares}
                   activeModifiers={game.activeModifiers}
                   inCheck={game.inCheck}
-                  onSquareClick={game.handleSquareClick}
                 />
 
                 {/* Game Over Modal Overlay */}
@@ -218,34 +272,31 @@ export const DeckBuilderPage: React.FC = () => {
                     </span>
                     <h2
                       className={`text-xl font-bold tracking-tight ${
-                        game.winner === 'draw'
-                          ? 'text-[#8B7E74]'
-                          : game.winner === playerColor
-                          ? 'text-[#D4AF37]'
-                          : 'text-[#AA4A44]'
+                        game.winner === playerColor ? 'text-[#D4AF37]' : 'text-[#FAF9F6]'
                       }`}
                     >
                       {game.winner === 'draw'
                         ? 'Draw'
                         : game.winner === playerColor
-                        ? 'Victory'
+                        ? 'Victory!'
                         : 'Defeat'}
                     </h2>
-                    <p className="text-xs text-[#8B7E74] font-mono mt-1">
-                      Match concluded by {game.finishReason || 'checkmate'}
+                    <p className="text-xs text-[#8B7E74] mt-1 capitalize font-mono">
+                      Reason: {game.finishReason ? game.finishReason.replace('_', ' ') : 'Match Concluded'}
                     </p>
-                    <div className="flex items-center gap-3 mt-4">
+
+                    <div className="mt-4 flex gap-2">
                       <button
-                        onClick={() => game.resetGame()}
-                        className="px-4 py-1.5 bg-[#4C5C4C] hover:bg-[#5C6C5C] text-[#FAF9F6] rounded text-xs font-semibold shadow transition-colors cursor-pointer"
+                        onClick={() => handleStartNewMatch(playerColor, aiDifficulty)}
+                        className="px-4 py-2 bg-[#4C5C4C] hover:bg-[#5C6C5C] text-[#FAF9F6] text-xs font-bold rounded transition-colors shadow cursor-pointer"
                       >
                         Rematch
                       </button>
                       <button
-                        onClick={() => setActiveTab('forge')}
-                        className="px-3 py-1.5 bg-[#24272A] hover:bg-[#282B2E] text-[#8B7E74] hover:text-[#FAF9F6] border border-[rgba(139,126,116,0.3)] rounded text-xs font-medium transition-colors cursor-pointer"
+                        onClick={() => setScreen('multiplayer')}
+                        className="px-4 py-2 bg-[#24272A] hover:bg-[#282B2E] text-[#D4AF37] border border-[#D4AF37]/40 text-xs font-semibold rounded transition-colors cursor-pointer"
                       >
-                        My Deck
+                        Back to Stage
                       </button>
                     </div>
                   </div>
@@ -262,128 +313,98 @@ export const DeckBuilderPage: React.FC = () => {
               >
                 <div className="flex items-center gap-2 truncate">
                   <span className="text-sm">👤</span>
-                  <span className="font-medium truncate">
-                    {user?.username || 'Player'}
-                  </span>
-                  <span className="text-[10px] text-[#8B7E74] font-mono">
-                    ({playerColor === 'w' ? 'White' : 'Black'})
-                  </span>
+                  <span className="font-medium truncate">{user?.username || activeProfile.name || 'Player'}</span>
+                  {isMyTurn && (
+                    <span className="text-[10px] text-[#D4AF37] font-mono animate-pulse">
+                      your turn
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 font-mono text-sm tracking-widest select-none opacity-85">
-                    <span>{renderGraveyardGlyphs(playerCaptured)}</span>
-                    {materialAdvantage > 0 && (
-                      <span className="text-[10px] text-[#D4AF37] font-bold">
-                        +{materialAdvantage}
-                      </span>
-                    )}
-                  </div>
-                  <span className="font-mono text-[11px] font-bold text-[#8B7E74]">
-                    09:42
+                  <span className="font-mono text-sm tracking-widest select-none opacity-85">
+                    {renderGraveyardGlyphs(playerCaptured)}
+                  </span>
+                  <span className="font-mono text-[11px] font-bold text-[#FAF9F6]">
+                    10:00
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* 3. RIGHT COLUMN (280px): Moves | Chat Tabs & Compact Footer */}
-            <div className="w-full max-w-[512px] lg:w-[280px] lg:h-[596px] order-3 bg-[#1C1E20] border border-[rgba(139,126,116,0.2)] rounded-md p-3 flex flex-col justify-between shadow-lg">
-              <div className="flex flex-col flex-1 min-h-0">
-                {/* Header with Segmented Tabs: Moves | Chat + Turn Counter */}
-                <div className="flex items-center justify-between pb-2.5 border-b border-[rgba(139,126,116,0.16)]">
-                  <div className="flex items-center bg-[#24272A] border border-[rgba(139,126,116,0.2)] rounded p-0.5 gap-0.5">
-                    <button
-                      onClick={() => setRightTab('moves')}
-                      className={`px-2.5 py-0.5 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
-                        rightTab === 'moves'
-                          ? 'bg-[#1C1E20] text-[#FAF9F6] border border-[#D4AF37]/50 shadow-sm'
-                          : 'text-[#8B7E74] hover:text-[#FAF9F6]'
-                      }`}
-                    >
-                      Moves
-                    </button>
-                    <button
-                      onClick={() => setRightTab('chat')}
-                      className={`px-2.5 py-0.5 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
-                        rightTab === 'chat'
-                          ? 'bg-[#1C1E20] text-[#FAF9F6] border border-[#D4AF37]/50 shadow-sm'
-                          : 'text-[#8B7E74] hover:text-[#FAF9F6]'
-                      }`}
-                    >
-                      Chat
-                    </button>
-                  </div>
-
-                  <span className="text-xs font-mono font-semibold text-[#D4AF37]">
-                    Turn {game.turnNumber}
-                  </span>
+            {/* 3. RIGHT COLUMN (280px): Tactical Telemetry & Moves / Chat Panel */}
+            <div className="w-full max-w-[512px] lg:w-[280px] lg:h-[596px] order-3 flex flex-col justify-between bg-[#1C1E20] border border-[rgba(139,126,116,0.2)] rounded-md p-3 shadow-xl">
+              {/* Header: Segmented Tabs (Moves | Chat) + Turn Counter */}
+              <div className="flex items-center justify-between pb-2.5 border-b border-[rgba(139,126,116,0.16)]">
+                <div className="flex bg-[#191B1D] p-0.5 rounded border border-[rgba(139,126,116,0.2)]">
+                  <button
+                    onClick={() => setRightTab('moves')}
+                    className={`px-3 py-1 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                      rightTab === 'moves'
+                        ? 'bg-[#24272A] text-[#FAF9F6] shadow-sm'
+                        : 'text-[#8B7E74] hover:text-[#FAF9F6]'
+                    }`}
+                  >
+                    Moves
+                  </button>
+                  <button
+                    onClick={() => setRightTab('chat')}
+                    className={`px-3 py-1 rounded text-xs font-semibold transition-colors cursor-pointer ${
+                      rightTab === 'chat'
+                        ? 'bg-[#24272A] text-[#FAF9F6] shadow-sm'
+                        : 'text-[#8B7E74] hover:text-[#FAF9F6]'
+                    }`}
+                  >
+                    Chat
+                  </button>
                 </div>
 
-                {/* Tab Body: Moves Log */}
+                <div className="text-right">
+                  <div className="text-[10px] font-mono text-[#8B7E74] uppercase">
+                    TURN {game.turnNumber}
+                  </div>
+                  <div className="text-[11px] font-bold text-[#D4AF37]">
+                    {isMyTurn ? 'Your Turn' : 'AI Turn'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tab Body: Moves List vs Live Chat */}
+              <div className="flex-1 my-2 overflow-hidden flex flex-col">
                 {rightTab === 'moves' ? (
-                  <div className="flex flex-col flex-1 min-h-0">
-                    {/* Difficulty Selector */}
-                    <div className="flex items-center justify-between py-2 border-b border-[rgba(139,126,116,0.12)] text-[11px] font-mono text-[#8B7E74]">
-                      <span>AI DIFFICULTY</span>
-                      <div className="flex gap-1">
-                        {(['easy', 'medium', 'tactical'] as const).map((diff) => (
-                          <button
-                            key={diff}
-                            onClick={() => handleStartNewMatch(playerColor, diff)}
-                            className={`px-1.5 py-0.5 rounded text-[10px] capitalize transition-colors cursor-pointer ${
-                              aiDifficulty === diff
-                                ? 'bg-[#D4AF37] text-[#191B1D] font-bold'
-                                : 'bg-[#24272A] text-[#8B7E74] hover:text-[#FAF9F6]'
-                            }`}
-                          >
-                            {diff}
-                          </button>
-                        ))}
+                  <div className="flex-1 overflow-y-auto pr-1 space-y-1 font-mono text-xs">
+                    {game.combatLog.length === 0 ? (
+                      <div className="text-center text-[#8B7E74] text-xs py-8">
+                        No moves recorded yet
                       </div>
-                    </div>
-
-                    {/* Scrollable Combat Log */}
-                    <div className="flex-1 overflow-y-auto py-2 pr-1 space-y-1 font-mono text-xs">
-                      {game.combatLog.length === 0 ? (
-                        <div className="text-[11px] text-[#8B7E74] italic text-center py-6">
-                          No moves recorded yet. Play a card or move a piece.
+                    ) : (
+                      game.combatLog.map((log) => (
+                        <div
+                          key={log.id}
+                          className={`p-1.5 rounded text-[11px] leading-tight ${
+                            log.type === 'system'
+                              ? 'bg-[#191B1D] text-[#8B7E74] italic border border-[rgba(139,126,116,0.1)]'
+                              : log.type === 'card'
+                              ? 'bg-[#24272A] border-l-2 border-[#D4AF37] text-[#FAF9F6]'
+                              : 'bg-[#191B1D] text-[#FAF9F6] border border-[rgba(139,126,116,0.15)]'
+                          }`}
+                        >
+                          {log.text}
                         </div>
-                      ) : (
-                        game.combatLog.map((log) => {
-                          const isCard = log.type === 'card';
-                          const isMove = log.type === 'move';
-
-                          return (
-                            <div
-                              key={log.id}
-                              className={`px-2 py-1 rounded text-[11px] leading-tight transition-colors ${
-                                isCard
-                                  ? 'bg-[#24272A] border border-[#D4AF37]/40 text-[#FAF9F6]'
-                                  : isMove
-                                  ? 'bg-[#191B1D] text-[#FAF9F6] border border-transparent'
-                                  : 'text-[#8B7E74] italic'
-                              }`}
-                            >
-                              {isCard && <span className="font-bold mr-1 text-[#D4AF37]">✦</span>}
-                              {log.text}
-                            </div>
-                          );
-                        })
-                      )}
-                      <div ref={moveLogEndRef} />
-                    </div>
+                      ))
+                    )}
+                    <div ref={moveLogEndRef} />
                   </div>
                 ) : (
-                  /* Tab Body: Live Tactical Chat */
-                  <div className="flex flex-col flex-1 min-h-0 justify-between">
-                    <div className="flex-1 overflow-y-auto py-2 pr-1 space-y-2 text-xs">
+                  <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                    <div className="flex-1 overflow-y-auto pr-1 space-y-2">
                       {chatMessages.map((msg) => (
                         <div
                           key={msg.id}
                           className={`p-1.5 rounded text-[11px] leading-relaxed ${
                             msg.isSystem
                               ? 'bg-[#191B1D] text-[#8B7E74] border border-[rgba(139,126,116,0.15)] italic'
-                              : msg.sender === (user?.username || 'Player')
+                              : msg.sender === (user?.username || activeProfile.name || 'Player')
                               ? 'bg-[#24272A] border border-[#D4AF37]/35 text-[#FAF9F6]'
                               : 'bg-[#191B1D] border border-[rgba(139,126,116,0.2)] text-[#FAF9F6]'
                           }`}
@@ -419,6 +440,7 @@ export const DeckBuilderPage: React.FC = () => {
               {/* ACTION FOOTER: Resign · New Game · My Deck */}
               <div className="pt-2.5 border-t border-[rgba(139,126,116,0.16)] flex items-center gap-1.5">
                 <button
+                  type="button"
                   onClick={() => game.resign(playerColor)}
                   disabled={game.isGameOver}
                   className="flex-1 py-1.5 bg-[#191B1D] hover:bg-[#AA4A44]/20 text-[#AA4A44] border border-[#AA4A44]/40 rounded text-xs font-semibold transition-colors disabled:opacity-40 cursor-pointer"
@@ -426,13 +448,15 @@ export const DeckBuilderPage: React.FC = () => {
                   Resign
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleStartNewMatch(playerColor, aiDifficulty)}
                   className="flex-1 py-1.5 bg-[#24272A] hover:bg-[#282B2E] text-[#FAF9F6] border border-[rgba(139,126,116,0.25)] rounded text-xs font-semibold transition-colors cursor-pointer"
                 >
                   New Game
                 </button>
                 <button
-                  onClick={() => setActiveTab('forge')}
+                  type="button"
+                  onClick={() => setScreen('multiplayer')}
                   className="flex-1 py-1.5 bg-[#24272A] hover:bg-[#282B2E] text-[#D4AF37] border border-[#D4AF37]/40 rounded text-xs font-semibold transition-colors cursor-pointer"
                 >
                   My Deck
@@ -440,8 +464,8 @@ export const DeckBuilderPage: React.FC = () => {
               </div>
             </div>
           </div>
-        )}
-      </main>
+        </main>
+      )}
     </div>
   );
 };
