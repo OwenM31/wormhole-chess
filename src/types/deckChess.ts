@@ -107,9 +107,13 @@ export interface CardDefinition {
   card_name?: string;
   piece?: string;
   anchor: PieceAnchor;
-  energyCost: number; // 1 to 3
+  energyCost: number; // 1 to 3 (legacy) / 0 in v3.0 Playbook
   score?: number;
   artId?: string;
+  code?: string; // e.g. 'P1', 'N1', ..., 'K4'
+  world?: number; // 1 to 7
+  conditionText?: string;
+  effectText?: string;
   condition_type?: ConditionGenre;
   condition_exact?: string;
   effect_type?: EffectGenre;
@@ -135,6 +139,29 @@ export interface EmpoweredMove {
   promotion?: string;
   actionType: 'move' | 'in_place' | 'ranged_capture' | 'spawn' | 'wall' | 'shield';
   metadata?: Record<string, any>;
+  extraSquare?: string;
+  previewFen?: string;
+  disambiguationPrompt?: string;
+}
+
+export interface ProfileGear {
+  title?: string;
+  hat?: string;
+  skin?: string;
+  badge?: string;
+}
+
+export interface PlayerProfile {
+  id: string;
+  name: string;
+  level: number;
+  gold: number;
+  unlockedCards: string[];
+  copyLimits: Record<string, number>; // cardId -> allowed copies (1 to 5)
+  playtestAll36: boolean;
+  handSize: number; // default 8
+  equippedHand: string[];
+  gear: ProfileGear;
 }
 
 export interface BoardModifier {

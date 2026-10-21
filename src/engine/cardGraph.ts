@@ -1,4 +1,7 @@
 import { CardDefinition, PieceAnchor } from '../types/deckChess';
+import { CANONICAL_36_CARDS, PIECE_COLOR_THEMES as THEMES_36 } from './cards/releaseRoster36';
+
+export { CANONICAL_36_CARDS };
 
 /**
  * Visual color identities and badges by piece class
@@ -8,135 +11,47 @@ export const PIECE_COLOR_THEMES: Record<
   { color: string; hex: string; badgeIcon: string; label: string }
 > = {
   pawn: {
-    color: 'Amber',
-    hex: '#d29922',
+    color: 'pawn-gray',
+    hex: '#8A9199',
     badgeIcon: '♟',
     label: 'Pawn Infantry',
   },
   knight: {
-    color: 'Emerald',
-    hex: '#3fb950',
+    color: 'knight-green',
+    hex: '#3FB950',
     badgeIcon: '♞',
     label: 'Knight Cavalry',
   },
   bishop: {
-    color: 'Violet',
-    hex: '#bc8cff',
+    color: 'bishop-blue',
+    hex: '#3B82F6',
     badgeIcon: '♝',
     label: 'Bishop Cleric',
   },
   rook: {
-    color: 'Cobalt',
-    hex: '#58a6ff',
+    color: 'rook-purple',
+    hex: '#A855F7',
     badgeIcon: '♜',
     label: 'Rook Citadel',
   },
   queen: {
-    color: 'Rose',
-    hex: '#f778ba',
+    color: 'queen-red',
+    hex: '#EF4444',
     badgeIcon: '♛',
     label: 'Queen Regent',
   },
   king: {
-    color: 'Solar Gold',
-    hex: '#e3b341',
+    color: 'king-gold',
+    hex: '#D4AF37',
     badgeIcon: '♚',
     label: 'Royal Sovereign',
   },
 };
 
 /**
- * 8-Card Curated Starter Deck
+ * 8-Card Curated Starter Deck from the 36-Card Playbook (First 8 Cards: P1, P2, P3, N1, B1, N2, R1, N3)
  */
-export const STARTER_DECK: CardDefinition[] = [
-  {
-    id: 'pawn_vanguard',
-    artId: 'pawn_vanguard_tow',
-    name: 'Vanguard Advance',
-    anchor: 'pawn',
-    energyCost: 1,
-    conditions: [{ type: 'UNMOVED' }],
-    effects: [{ type: 'EXTEND_RANGE', param: 1 }],
-    description: 'An unmoved pawn can advance 3 squares forward on its opening leap instead of 2 (if unobstructed).',
-    visualTheme: PIECE_COLOR_THEMES.pawn,
-  },
-  {
-    id: 'pawn_scuttle',
-    artId: 'pawn_tactical_retreat',
-    name: 'Abandon Ship',
-    anchor: 'pawn',
-    energyCost: 1,
-    conditions: [{ type: 'UNDER_FIRE' }],
-    effects: [{ type: 'SCUTTLE' }],
-    description: 'Scuttle an attacked pawn off the board to your graveyard before it is taken, denying enemy tempo.',
-    visualTheme: PIECE_COLOR_THEMES.pawn,
-  },
-  {
-    id: 'knight_escort',
-    artId: 'knight_saddle_carry',
-    name: 'Cavalry Escort',
-    anchor: 'knight',
-    energyCost: 2,
-    conditions: [{ type: 'FRIENDLY_ADJACENCY' }],
-    effects: [{ type: 'CARRY_PASSENGER' }],
-    description: 'Target a friendly adjacent pawn. When the Knight jumps, transport the passenger to the landing square or adjacent flank.',
-    visualTheme: PIECE_COLOR_THEMES.knight,
-  },
-  {
-    id: 'knight_swap',
-    artId: 'knight_stable_swap',
-    name: 'Dislocation Swap',
-    anchor: 'knight',
-    energyCost: 2,
-    conditions: [{ type: 'IN_TERRITORY', param: 'ENEMY_HALF' }],
-    effects: [{ type: 'COORDINATE_SWAP' }],
-    tradeoff: 'TEMPO_CONCESSION',
-    description: 'A knight deep in enemy territory swaps coordinates with any friendly minor piece or pawn.',
-    visualTheme: PIECE_COLOR_THEMES.knight,
-  },
-  {
-    id: 'bishop_pierce',
-    artId: 'bishop_piercing_ray',
-    name: 'Prism Ray',
-    anchor: 'bishop',
-    energyCost: 3,
-    conditions: [{ type: 'LINE_OF_SIGHT_ALIGNMENT' }],
-    effects: [{ type: 'PIERCE_CAPTURE', param: 2 }],
-    description: 'Bishop fires along a diagonal, capturing an enemy piece and immediately continuing to capture the piece directly behind it.',
-    visualTheme: PIECE_COLOR_THEMES.bishop,
-  },
-  {
-    id: 'bishop_invert',
-    artId: 'bishop_color_shift',
-    name: 'Color Inversion',
-    anchor: 'bishop',
-    energyCost: 2,
-    conditions: [{ type: 'OPEN_LINE' }],
-    effects: [{ type: 'VECTOR_GRAFT', param: 'orthogonal_step' }],
-    description: 'Shift an active bishop 1 square orthogonally onto an empty square, permanently inverting its diagonal square color.',
-    visualTheme: PIECE_COLOR_THEMES.bishop,
-  },
-  {
-    id: 'rook_rampart',
-    name: 'Rampart Deploy',
-    anchor: 'rook',
-    energyCost: 2,
-    conditions: [{ type: 'OPEN_LINE' }],
-    effects: [{ type: 'DEPLOY_OBSTACLE', param: 2 }],
-    description: 'Deploy a holographic barrier along the rook line on an empty square for 2 rounds, blocking line-of-sight and passage.',
-    visualTheme: PIECE_COLOR_THEMES.rook,
-  },
-  {
-    id: 'king_decree',
-    name: 'Royal Decree',
-    anchor: 'king',
-    energyCost: 2,
-    conditions: [{ type: 'FRIENDLY_ADJACENCY' }],
-    effects: [{ type: 'TANDEM_SHIFT' }],
-    description: 'The King steps 1 square and an adjacent friendly piece immediately shifts into the square vacated by the King.',
-    visualTheme: PIECE_COLOR_THEMES.king,
-  },
-];
+export const STARTER_DECK: CardDefinition[] = CANONICAL_36_CARDS.slice(0, 8);
 
 import rawCatalog90 from './cards/cardCatalog90.json';
 import rawCatalogMajor90 from './cards/cardCatalogMajor90.json';
@@ -244,17 +159,19 @@ export const LEGACY_EXTRA_CARDS: CardDefinition[] = [
  * Expanded Card Library for deck customization
  */
 export const EXPANDED_LIBRARY: CardDefinition[] = [
-  ...STARTER_DECK,
-  ...LEGACY_EXTRA_CARDS,
+  ...CANONICAL_36_CARDS,
   ...CANONICAL_180_CARDS.filter(
-    (c) => !STARTER_DECK.some((s) => s.id === c.id) && !LEGACY_EXTRA_CARDS.some((l) => l.id === c.id)
+    (c) => !CANONICAL_36_CARDS.some((p) => p.id === c.id) && !LEGACY_EXTRA_CARDS.some((l) => l.id === c.id)
   ),
+  ...LEGACY_EXTRA_CARDS.filter((l) => !CANONICAL_36_CARDS.some((p) => p.id === l.id)),
 ];
 
 /**
- * Get card definition by unique ID
+ * Get card definition by unique ID (prioritizes Canonical 36-Card Playbook)
  */
 export function getCardById(id: string): CardDefinition | undefined {
+  const from36 = CANONICAL_36_CARDS.find((c) => c.id === id);
+  if (from36) return from36;
   return EXPANDED_LIBRARY.find((c) => c.id === id);
 }
 
@@ -269,7 +186,7 @@ export function getCardsByAnchor(anchor?: PieceAnchor): CardDefinition[] {
 /**
  * Validate that an 8-card deck complies with tournament rules:
  * - Exactly 8 cards
- * - Energy cost of each card is between 1 and 3
+ * - Energy cost of each card is between 0 and 3
  * - At least 1 pawn card
  * - At least 1 minor piece card (knight or bishop)
  */
@@ -292,7 +209,7 @@ export function validateDeckLoadout(deck: CardDefinition[]): {
   }
 
   for (const card of deck) {
-    if (card.energyCost < 1 || card.energyCost > 3) {
+    if (card.energyCost < 0 || card.energyCost > 3) {
       return { isValid: false, error: `Card ${card.name} has invalid energy cost ${card.energyCost}` };
     }
   }
