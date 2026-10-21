@@ -7,8 +7,9 @@ updated: 2026-10-21T12:43:00-05:00
 # Roadmap
 
 > **Current Milestone:** v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-> **Current Phase:** Phase 3 — 36-Card Engine, Deck Builder Main Menu Hub & Multiplayer / AI Playtest Prototype
-> **Status:** 🔄 Ready for Design / Planning (Phases 1–2 Complete; Storyboard & 36-Card Spec Locked)
+> **Current Milestone:** v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
+> **Current Phase:** Phase 4 — Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
+> **Status:** 🔄 Ready for Planning & Execution (Phases 1–3 Complete & Verified)
 
 ## Milestone Goal
 
@@ -19,9 +20,9 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 - [x] **180-Card Nomenclature & Schema Foundation (Phase 1)**: Concise names (<=21 chars), zero-ellipsis rule formulas (<=120 chars), and `artId` mappings across all 180 catalog cards.
 - [x] **Battlefield Minor Unit Art Suite (Phase 2)**: 90 custom vector SVG illustrations for Pawn, Knight, and Bishop cards wired into `<CardArt />`.
 - [x] **Campaign Storyboard & 36-Card Specification (`STORYBOARD.md`)**: Locked all 36 cards (`P1–P8, N1–N7, B1–B7, R1–R6, Q1–Q4, K1–K4`), Global Engine Invariants, Concurrent Castle Wings (`Worlds 3–6`), Town Tavern Hustle, and Jester Shop.
-- [ ] **36-Card Engine & Global Invariants (Phase 3)**: Implement all 36 bespoke card handlers in `cardRegistry.ts` and global rules in `DeckChessEngine.ts` (1 card per turn / no Energy cost, Rank 1 Pawn legalization, Rank 8 instant promotion, relaxed Bishop color switching, `limitPawnsTo8` toggle).
-- [ ] **Deck Builder Main Menu Hub & Multi-Profile Switcher (Phase 3)**: Vibrant main menu at `/deck-builder` with `Campaign`, `Multiplayer`, `My Profile` + `Switch Profile` (multi-slot local profiles), and a right-hand Player Stats (`Gold Coins`, `Level`) + Aesthetic Canvas area.
-- [ ] **Multiplayer & AI Playtest Prototype (Phase 3)**: 36-card Deck Builder loadout screen, Private Room Matchmaking (`/play/:code`), and Custom AI Playtest mode to test cards and tune AI opponents.
+- [x] **36-Card Engine & Global Invariants (Phase 3)**: Implement all 36 bespoke card handlers in `cardRegistry.ts` and global rules in `DeckChessEngine.ts` (1 card per turn / no Energy cost, Rank 1 Pawn legalization, Rank 8 instant promotion, relaxed Bishop color switching, `limitPawnsTo8` toggle).
+- [x] **Deck Builder Main Menu Hub & Multi-Profile Switcher (Phase 3)**: Vibrant main menu at `/deck-builder` with `Campaign`, `Multiplayer`, `My Profile` + `Switch Profile` (multi-slot local profiles), and a right-hand Player Stats (`Gold Coins`, `Level`) + Aesthetic Canvas area.
+- [x] **Multiplayer & AI Playtest Prototype (Phase 3)**: 36-card Deck Builder loadout screen, Private Room Matchmaking (`/play/:code`), and Custom AI Playtest mode to test cards and tune AI opponents.
 - [ ] **Campaign Engine, Town Tavern & Worlds 1–7 (Phases 4–6)**: Build the Castle Map UI, Town Tavern 0-card bot hustle, Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), and the 7-World Campaign puzzle sequences.
 
 ---
@@ -41,7 +42,7 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 ---
 
 ### Phase 3: 36-Card Engine, Deck Builder Main Menu Hub & Multiplayer / AI Playtest Prototype
-**Status:** 🔄 Next Up
+**Status:** ✅ Complete
 **Objective:** Implement all 36 locked cards (`P1–P8, N1–N7, B1–B7, R1–R6, Q1–Q4, K1–K4`) and global engine invariants in `DeckChessEngine.ts` and `cardRegistry.ts`; build the vibrant Deck Builder Main Menu Hub (`Campaign`, `Multiplayer`, `My Profile` + `Switch Profile`, and Right-Side Player Stats & Aesthetic Canvas); and wire up the full Multiplayer & AI Playtest Prototype (36-Card Deck Builder screen, Private Matchmaking rooms, and AI opponent playtesting).
 **Deliverables:**
 - `src/engine/cards/releaseRoster36.ts` and 36/36 bespoke `CardBehaviorHandler` implementations in `src/engine/cards/cardRegistry.ts` with 100% unit test coverage
@@ -53,6 +54,7 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 ---
 
 ### Phase 4: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
+**Status:** 🔄 Next Up
 **Status:** ⬜ Not Started
 **Objective:** Build the Campaign Map & Puzzle Engine (`Foreshadow -> Officer Duel -> Forced-Slot` cycle), Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), "Back to Town" Tavern Hustle (0-card Towny bots for Gold Coins), and World 1 (`The Causeway` — 7 Cards: `P1, P2, P3, N1, B1, N2, R1`).
 
