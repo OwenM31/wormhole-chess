@@ -153,4 +153,20 @@
 4. **Decoupled `<CardArt />` Component**:
    - Render assets via `public/assets/cards/{piece}/{artId}.svg` with zero layout shift and graceful piece glyph fallback.
 
+---
+
+## Milestone v3.0 — Phase 3: Deck Builder Main Menu Hub (Fluid 11-Column Loden Green Grid)
+
+- **Date Approved:** 2026-10-21
+- **Selected Variant:** **Variant A (Refined — Loden Green Atmospheric Backdrop + Fluid 11-Column Focal Grid)**
+- **Reference Image:** `.agent/state/artifacts/design/phase_3_menu_hub_approved.png`
+
+### Rationale
+- Restores the authentic **Loden Green (`#3C493F` / `#4C5C4C`)**, **Smokey Taupe (`#8B7E74`)**, and **Deep Charcoal (`#191B1D` / `#24272A`)** palette across the fullscreen background art and mode buttons, eliminating yellow/brown color drift.
+- Replaces brittle hardcoded pixel widths (`470px`, `320px`, `215px`) with a responsive **11-Column CSS Grid (`repeat(11, minmax(0, 1fr))`)**:
+  - **Columns 3–6 (`grid-column: 3 / span 4`)**: Primary Menu Stack (`Campaign`, `Multiplayer`, and `My Profile` + compact `Switch Profile` side-by-side).
+  - **Column 7**: Natural 1-column inner gutter keeping both sections visually unified near the optical center.
+  - **Columns 8–10 (`grid-column: 8 / span 3`)**: Skinnier Player Showcase Companion Card featuring top `LVL` / `Gold` telemetry, a fluid `aspect-ratio` **Character Canvas**, a 3-slot **Gear & Cosmetics** row (`Material`, `Headgear`, `Base`), and the `HAND (5/5)` footer.
+
+
 

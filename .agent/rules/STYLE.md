@@ -116,3 +116,17 @@
   - Top HUD badge at $(10, 6)$, dimensions $100 \times 11$, $rx=2$, fill `#141618`, stroke `#D4AF37`.
   - Displays trigger condition in bold monospace (e.g. `COND: 2 SQUARES CLEAR`).
 
+---
+
+### 8. Deck Builder Main Menu Hub — Fluid 11-Column Focal Grid (Milestone v3.0 Phase 3)
+- **Zero Hardcoded Pixel Column Widths**:
+  - Never hardcode fixed pixel widths (e.g. `470px`, `320px`) or fixed pixel heights (`215px`) for layout columns or character stages.
+  - Use a fluid **11-Column CSS Grid** on desktop (`grid-template-columns: repeat(11, minmax(0, 1fr))`, `gap: clamp(1rem, 1.8vw, 2rem)`):
+    - **Primary Menu Stack (`Campaign`, `Multiplayer`, `My Profile` + `Switch Profile`)**: `grid-column: 3 / span 4` (Columns 3–6).
+    - **Center Breathing Gutter**: Column 7 (`1fr` natural grid column gap).
+    - **Player Showcase Companion Card (`Stats`, `Character Canvas`, `Gear & Cosmetics`, `Hand`)**: `grid-column: 8 / span 3` (Columns 8–10).
+  - Use `aspect-ratio: 4 / 3` (or `1 / 1`) and `rem`/`clamp()` spacing for the Character Canvas window so it scales fluidly across all desktop, laptop, tablet, and mobile viewports.
+- **Authentic Loden Green & Smokey Taupe Atmospheric Backdrop**:
+  - Fullscreen background art layer and primary `Campaign` hero button strictly use the established **Loden Green Dark (`#3C493F`)**, **Loden Green (`#4C5C4C`)**, **Smokey Taupe (`#8B7E74`)**, and **Deep Charcoal (`#191B1D` / `#24272A`)** palette—never yellow/brown washes.
+
+

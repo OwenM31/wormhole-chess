@@ -695,16 +695,71 @@ During Phase 3 discussion, all 36 cards across all 6 piece classes (`P1–P8, N1
 3. **Narrative, Visual Identity & Castle Wing Layout**:
    - **Living Chess Piece Cast**: All characters in cutscenes and on the map are expressive carved/armored chess pieces (Player = unpainted wooden Pawn from town; Jester = crooked, banished 9th-file piece with a fool's cap; Guards = iron-helmed Pawns/Rooks; Lieutenants = ornate elite Commander pieces).
    - **The Scheming Jester's Hook**: The King standardized the board from 9×9 to 8×8, stole the Jester's 36-page Playbook, banished him on sight, and distributed the moves to his Captains and Lieutenants. The Jester uses a tavern puzzle to scout the Player as his unassuming proxy/front-man to infiltrate the Castle and steal back all 36 pages.
-   - **Castle Wing Architecture**:
-     - **World 1 (`The Causeway` — 7 Cards)** $\rightarrow$ **World 2 (`Outer Courtyard` — 4 Cards)** $\rightarrow$ **Central Rotunda**.
-     - **Outer Wings (Worlds 3 & 4)**: **The Barracks** (Horse/Knight Bosses) and **The Chapel** (Bishop Bosses).
-     - **Inner Wings (Worlds 5 & 6)**: Inside the Barracks is **The Armory** (Rook Bosses); inside the Chapel is **The Royal Court** (Queen Boss).
-     - **World 7 (`The Throne Room` — 5 Cards)**: Unlocked by Heavy Keys from the Wings. After defeating **The King** (`K4 Banish`), **The Jester double-crosses the player**, steals the completed 36-card Playbook, and becomes the **True Final Boss** (backed by a strong card-aware AI).
-   - **Level Rhythm per Card**: 2–4 themed puzzles/encounters per card: 1–2 foreshadowing puzzles where the Lieutenant/Officer uses the card against the player $\rightarrow$ claim the card $\rightarrow$ immediate next cycle auto-locks the newly acquired card into one of the player's slots so they must use it.
+   - **Castle Wing Architecture (4 Concurrent Wings `Worlds 3–6`)**:
+     - **Town Hub (`Back to Town — The Tavern Hustle`)**: Limitless currency & sandbox mode where players play full 8×8 games against 0-card standard-chess Towny bots (*Barnaby the Woodcarver, Greta the Innkeeper, Bram the Blacksmith, Mayor Aldric*) while using their unlocked cards.
+     - **World 1 (`The Causeway` — 7 Cards: `P1, P2, P3, N1, B1, N2, R1`)** $\rightarrow$ **World 2 (`Outer Courtyard` — 4 Cards: `N3, R2, B2, R3` + 2 Wing Keys)** $\rightarrow$ **Central Rotunda**.
+     - **4 Concurrent Wings (`Worlds 3, 4, 5, 6`)** branching directly off the Central Rotunda (Option B Semi-Themed Balance):
+       - **World 3 (`The Barracks` — 5 Cards)**: `P4, N4, B3 (swapped Bishop), N6` + Boss `K2 (Royal Knighting)` + `1 Wing Key` + `Throne Seal #1`.
+       - **World 4 (`The Chapel` — 5 Cards)**: `P5, B4, N5 (swapped Knight), B5` + Boss `B6 (Come This Way)` + `1 Wing Key` + `Throne Seal #2`.
+       - **World 5 (`The Armory` — 5 Cards)**: `P6, R4, Q1 (swapped Queen), R5` + Boss `K1 (Conscription)` + `1 Wing Key` + `Throne Seal #3`.
+       - **World 6 (`The Royal Court` — 5 Cards)**: `P7, Q2, R6 (swapped Rook), Q3` + Boss `K3 (Royal Execution)` + `1 Wing Key` + `Throne Seal #4`.
+     - **World 7 (`The Throne Room` — 5 Cards: `N7, P8, B7, Q4, K4`)**: Unlocked by collecting all 4 Throne Seals. After defeating **The King** (`K4 Banish`), **The Jester double-crosses the player**, steals the completed 36-card Playbook, and becomes the **True Final Boss** (backed by our strong card-aware AI).
+   - **3-Step Card Cycle & Forced-Slot Rule**:
+     - 1–2 Foreshadow Puzzles (Officer uses upcoming card `C_n` against you; for **only the very first puzzle of `C_n`'s cycle**, your newly unlocked `C_{n-1}` is auto-slotted into 1 hand slot) $\rightarrow$ Officer Duel (claim `C_n`).
+     - **Area Finale Exception**: The final Boss card of each World (`R1, R3, K2, B6, K1, K3, K4`) has **no forced-slot puzzle afterward** since the area ends immediately after the Boss duel.
+   - **Streamlined Jester's Coat Shop (`4 Items`)**:
+     - Cut *Mulligan* and *Loaded Draw* (since players bring a predetermined hand with no random drawing).
+     - Keep 4 items: `Jester's Distraction` (Rewind 1 turn via FEN history stack), `Jester's Whisper` (Engine Hint), `Carbon Copy` (Campaign/Tavern duplicate card copy), and `+1 "Up Your Sleeve" Card Slot`.
 
 #### Consequences
-- Locks 100% of the 36-card mechanical design and engine invariants.
-- Aligns Castle architecture (`Barracks -> Armory`, `Chapel -> Royal Court`) with the 4 major piece classes (`Knight -> Rook`, `Bishop -> Queen`).
+- Locks 100% of the 36-card mechanical design, engine invariants, concurrent 7-World Castle architecture, Tavern Hustle sandbox mode, and Jester Shop in `.agent/state/STORYBOARD.md`.
+- Ready to proceed directly to `@[.agent/workflows/plan.md] 3`.
+
+---
+
+### [DECISION-027] Phase 3 Discussion: Full-Screen Multiplayer Character Stage, 5-Dot Copy Stack, Pokémon Piece-Color Frames & Card Outcome Preview (`✓` / `✕`)
+
+**Date**: 2026-10-21
+**Status**: Accepted
+
+#### Context
+During `/discuss-phase 3`, we clarified the exact UX flow for the Multiplayer screen, deck/hand rules, card visual framing, codebase refactoring scope, and board disambiguation / outcome confirmation.
+
+#### Decision
+1. **Multiplayer Screen Architecture (Full-Screen Character Backdrop + Top-Right Play Actions + Bottom 8-Card Hand & Library)**:
+   - Clicking **`Multiplayer`** on the Main Menu Hub expands the **Character Canvas to full screen**, placing the player's Living Chess Piece standing inside a room/alcove as the full-screen background.
+   - **Top-Right Play Action Cluster** (Chess.com-inspired):
+     - **`Offline Match`** (Play vs. AI / Practice with configurable hand size, AI difficulty, and AI deck)
+     - **`Search for Opponent`** (Online matchmaking queue)
+     - **`Private Match`** (Create Room / Join with Code)
+     - **`Async Matches`** (View/manage asynchronous turn-based games)
+   - **Lower Deck & Library Stage (Below the Player Character)**:
+     - Displays the player's **8-Card Equipped Hand** (configurable hand size, default `8`).
+     - Below the equipped hand is a **Filterable / Sortable Library** of the 36 cards.
+     - **5-Dot Copy Stack (`●`)**: Each card displays a vertical stack of **5 dots** beside it indicating how many copies the player is allowed to equip (`1` copy by default, max `5` copies; all `5` copies unlocked in Playtest Mode).
+2. **Card Consumption & Backburnered Cooldown Note**:
+   - Each equipped card slot is **single-use per match** (spent once played).
+   - *Backburner Note*: Reintroducing Energy in the future as a per-card **Cooldown** is noted for post-completion exploration, keeping the core game clean first.
+3. **Pokémon-Style Piece-Colored Card Frames with Placeholder Art Windows**:
+   - All 36 cards use a Pokémon-style TCG frame with a clean placeholder art window inside, color-coded strictly by piece class:
+     - **Pawn (`P1–P8`)**: **Gray** (`#8A9199`)
+     - **Knight (`N1–N7`)**: **Green** (`#3FB950`)
+     - **Bishop (`B1–B7`)**: **Blue** (`#3B82F6`)
+     - **Rook (`R1–R6`)**: **Purple** (`#A855F7`)
+     - **Queen (`Q1–Q4`)**: **Red** (`#EF4444`)
+     - **King (`K1–K4`)**: **Gold** (`#D4AF37`)
+4. **Bidirectional Selection (`Piece-First` & `Card-First`), Card Hover Preview, Disambiguation & Outcome Confirmation (`✓` / `✕`)**:
+   - **Standard Chess Moves**: Execute immediately (no confirmation prompt).
+   - **All Card Moves Require Final Confirmation (`✓` / `✕`)**: Every card move—whether automatic (`Q3 All Rise`), single-path, or disambiguated after an extra player decision—displays a **live visual preview of the resulting board state** once all parameters are chosen, accompanied by a **Big Green Check (`✓`)** and **Big Red X (`✕`)** confirmation bar at the bottom of the board.
+   - **Piece-First Flow**: Clicking a friendly piece on the board shows its standard moves on the board AND **emphasizes all currently playable cards for that piece in the hand** (popping them out while slightly dulling/dimming non-applicable cards).
+   - **Card-First Flow**: Clicking a playable card in the hand **emphasizes the eligible friendly piece(s) on the board** (if multiple pieces can use it) and guides the player through any target/ally disambiguation clicks before showing the final outcome preview + `✓` / `✕` bar.
+   - **Card Hover Board Preview**: Keep the TCG card hover pop-out animation and preview the card's effect / eligible targets directly on the main chessboard when hovering a playable card in hand (built cleanly so we can tune/toggle it if it ever feels visually busy).
+5. **Intense Refactoring Authorization**:
+   - Refactor the existing 180-card placeholder catalog and Energy-gated engine cleanly around the canonical **36-Card Playbook** (`releaseRoster36.ts`, `cardRegistry.ts`, `DeckChessEngine.ts`).
+
+#### Consequences
+- Eliminates artwork bottlenecks by using piece-colored Pokémon-style TCG frames (`Gray, Green, Blue, Purple, Red, Gold`).
+- Guarantees zero accidental card plays and crystal-clear multi-piece resolution via the step-by-step disambiguation + Board Outcome Preview (`✓` / `✕`).
 
 ---
 
