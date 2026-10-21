@@ -1,4 +1,7 @@
+import React from 'react';
 import { BoardModifier, PieceColor, Square, EmpoweredMove } from '../types/deckChess';
+import { CANONICAL_36_CARDS, PIECE_COLOR_THEMES } from '../engine/cards/releaseRoster36';
+import { getCardById } from '../engine/cardGraph';
 
 export interface DeckChessBoardProps {
   fen: string;
@@ -6,12 +9,20 @@ export interface DeckChessBoardProps {
   selectedSquare?: string | null;
   legalMoves?: string[];
   empoweredMoves?: EmpoweredMove[];
+  hoveredCardId?: string | null;
+  selectedCardId?: string | null;
+  disambiguationCandidates?: EmpoweredMove[] | null;
+  pendingCardMove?: EmpoweredMove | null;
+  onSquareClick: (square: string) => void;
+  onConfirmCardMove?: () => void;
+  onCancelCardMove?: () => void;
   validAnchorSquares?: string[];
   validTargetSquares?: string[];
   activeModifiers?: BoardModifier[];
   inCheck?: boolean;
-  onSquareClick: (square: string) => void;
 }
+
+const CARD_MAP = new Map(CANONICAL_36_CARDS.map((c) => [c.id, c]));
 
 // Crisp SVG piece renders with glowing dropshadows
 function ChessPieceSvg({
@@ -24,7 +35,7 @@ function ChessPieceSvg({
   const isWhite = color === 'w';
   const fill = isWhite ? '#FAF9F6' : '#191B1D';
   const stroke = isWhite ? '#191B1D' : '#8B7E74';
-  const accent = isWhite ? '#D4AF37' : '#D4AF37';
+  const accent = '#D4AF37';
 
   switch (type) {
     case 'p':
@@ -143,14 +154,23 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
   selectedSquare,
   legalMoves = [],
   empoweredMoves = [],
+  hoveredCardId,
+  selectedCardId,
+  disambiguationCandidates,
+  pendingCardMove,
+  onSquareClick,
+  onConfirmCardMove,
+  onCancelCardMove,
   validAnchorSquares = [],
   validTargetSquares = [],
   activeModifiers = [],
   inCheck = false,
-  onSquareClick,
 }) => {
+  // If pendingCardMove exists, render the resulting board state (previewFen)!
+  const effectiveFen = pendingCardMove?.previewFen || fen;
+
   // Parse FEN board pieces
-  const fenParts = fen.split(' ');
+  const fenParts = effectiveFen.split(' ');
   const fenRows = fenParts[0].split('/');
 
   // 8x8 matrix from rank 8 (row 0) to rank 1 (row 7)
@@ -183,10 +203,51 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
   const displayFiles = orientation === 'w' ? files : [...files].reverse();
   const displayRanks = orientation === 'w' ? ranks : [...ranks].reverse();
 
+  // Card details for active preview
+  const activeCardDef = pendingCardMove
+    ? CARD_MAP.get(pendingCardMove.cardId) || getCardById(pendingCardMove.cardId)
+    : null;
+
+  // Hovered / Selected Card theme highlight
+  const highlightedCardId = hoveredCardId || selectedCardId;
+  const highlightedCardDef = highlightedCardId
+    ? CARD_MAP.get(highlightedCardId) || getCardById(highlightedCardId)
+    : null;
+  const cardThemeHex = highlightedCardDef
+    ? (highlightedCardDef.visualTheme?.hex || PIECE_COLOR_THEMES[highlightedCardDef.anchor]?.hex || '#D4AF37')
+    : '#D4AF37';
+
+  // Disambiguation candidates extraSquares
+  const disambiguationSquares = disambiguationCandidates
+    ? disambiguationCandidates.map((c) => c.extraSquare).filter((s): s is string => Boolean(s))
+    : [];
+
   return (
-    <div className="relative inline-block select-none p-2 sm:p-2.5 bg-[#191B1D] rounded-md border border-[rgba(139,126,116,0.25)] shadow-2xl backdrop-blur-md w-full max-w-[470px]">
-      {/* 8x8 Grid */}
-      <div className="grid grid-cols-8 grid-rows-8 w-full aspect-square rounded overflow-hidden border border-[rgba(139,126,116,0.2)] shadow-inner">
+    <div className="relative flex flex-col select-none p-2 sm:p-2.5 bg-[#191B1D] rounded-md border border-[rgba(139,126,116,0.25)] shadow-2xl backdrop-blur-md w-full max-w-[512px] gap-2">
+      {/* Disambiguation Instruction Banner */}
+      {disambiguationCandidates && disambiguationCandidates.length > 0 && (
+        <div
+          data-testid="disambiguation-banner"
+          className="w-full py-1.5 px-3 bg-[#24272A] border border-[#D4AF37] rounded flex items-center justify-between text-xs text-[#FAF9F6] animate-pulse"
+        >
+          <span className="font-bold text-[#D4AF37]">
+            🎯 {disambiguationCandidates[0]?.disambiguationPrompt || 'Select which participating square to target'}
+          </span>
+          <button
+            type="button"
+            onClick={onCancelCardMove}
+            className="text-[10px] text-[#8B7E74] hover:text-[#FAF9F6] underline cursor-pointer"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* 8x8 Chess Grid */}
+      <div
+        data-testid="chessboard-grid"
+        className="grid grid-cols-8 grid-rows-8 w-full aspect-square rounded overflow-hidden border border-[rgba(139,126,116,0.2)] shadow-inner relative"
+      >
         {displayRanks.map((rankStr, rankDisplayIndex) => {
           return displayFiles.map((fileStr, fileDisplayIndex) => {
             const squareName = `${fileStr}${rankStr}` as Square;
@@ -206,6 +267,12 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
             const empoweredMove = empoweredMoves.find((m) => m.to === squareName);
             const isValidAnchor = validAnchorSquares.includes(squareName);
             const isValidTarget = validTargetSquares.includes(squareName);
+            const isDisambiguationSquare = disambiguationSquares.includes(squareName);
+
+            // Preview Highlights (when pendingCardMove is active)
+            const isPreviewFrom = pendingCardMove && pendingCardMove.from === squareName;
+            const isPreviewTo = pendingCardMove && pendingCardMove.to === squareName;
+            const isPreviewExtra = pendingCardMove && pendingCardMove.extraSquare === squareName;
 
             // Modifiers on this square
             const barrier = activeModifiers.find((m) => m.type === 'barrier' && m.square === squareName);
@@ -248,18 +315,45 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                   <div className="absolute inset-0 bg-[#AA4A44]/40 border-2 border-[#AA4A44] animate-pulse pointer-events-none z-10" />
                 )}
 
-                {/* Card Anchor Highlight (Warm Gold) */}
-                {isValidAnchor && (
-                  <div className="absolute inset-0 border-2 border-[#D4AF37] bg-[#D4AF37]/30 animate-pulse rounded-sm pointer-events-none z-10" />
+                {/* Live Outcome Preview Origin (From) Highlight */}
+                {isPreviewFrom && (
+                  <div className="absolute inset-0 border-2 border-dashed border-[#8B7E74] bg-[#141618]/40 rounded-sm pointer-events-none z-15" />
                 )}
 
-                {/* Card Target Destination Highlight (Tactical Purple) */}
-                {isValidTarget && (
+                {/* Live Outcome Preview Destination (To) Highlight */}
+                {isPreviewTo && (
+                  <div className="absolute inset-0 border-2 border-[#3FB950] bg-[#3FB950]/30 shadow-[0_0_12px_#3FB950] animate-pulse rounded-sm pointer-events-none z-15" />
+                )}
+
+                {/* Live Outcome Preview Extra Square Highlight */}
+                {isPreviewExtra && (
+                  <div className="absolute inset-0 border-2 border-[#D4AF37] bg-[#D4AF37]/30 shadow-[0_0_10px_#D4AF37] animate-pulse rounded-sm pointer-events-none z-15" />
+                )}
+
+                {/* Disambiguation Candidate Pulse Ring */}
+                {isDisambiguationSquare && (
+                  <div className="absolute inset-0 border-2 border-[#38BDF8] bg-[#38BDF8]/30 shadow-[0_0_12px_#38BDF8] animate-pulse rounded-sm pointer-events-none z-20 flex items-center justify-center">
+                    <span className="text-[10px] font-mono font-bold text-[#38BDF8] bg-[#191B1D]/80 px-1 rounded">
+                      PICK
+                    </span>
+                  </div>
+                )}
+
+                {/* Card Anchor Highlight (Warm Gold / Card Theme) */}
+                {isValidAnchor && !pendingCardMove && (
+                  <div
+                    style={{ borderColor: cardThemeHex, backgroundColor: `${cardThemeHex}30` }}
+                    className="absolute inset-0 border-2 animate-pulse rounded-sm pointer-events-none z-10"
+                  />
+                )}
+
+                {/* Card Target Destination Highlight */}
+                {isValidTarget && !pendingCardMove && (
                   <div className="absolute inset-0 border-2 border-[#A855F7] bg-[#A855F7]/35 animate-pulse rounded-sm pointer-events-none z-10" />
                 )}
 
-                {/* Standard Legal Move Indicator (0⚡) */}
-                {isLegalMove && !empoweredMove && (
+                {/* Standard Legal Move Indicator (Instant execution) */}
+                {isLegalMove && !empoweredMove && !pendingCardMove && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                     {piece ? (
                       // Capture ring
@@ -273,33 +367,26 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                   </div>
                 )}
 
-                {/* Empowered Card Move Indicator (Glowing Gold Ring) */}
-                {empoweredMove && (
+                {/* Empowered Card Move Indicator (Glowing Ring) */}
+                {empoweredMove && !pendingCardMove && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-25">
-                    <div className="w-4/5 h-4/5 rounded-full border-2 border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.7)] animate-pulse flex items-center justify-center bg-[#D4AF37]/20">
-                      <span className="text-[9px] font-mono font-bold text-[#D4AF37] px-1 py-0.2 bg-[#191B1D]/90 rounded border border-[#D4AF37]/40 shadow-sm">
-                        {empoweredMove.energyCost}⚡
+                    <div
+                      style={{ borderColor: cardThemeHex, backgroundColor: `${cardThemeHex}25` }}
+                      className="w-4/5 h-4/5 rounded-full border-2 shadow-[0_0_12px_rgba(212,175,55,0.7)] animate-pulse flex items-center justify-center"
+                    >
+                      <span
+                        style={{ color: cardThemeHex, borderColor: `${cardThemeHex}60` }}
+                        className="text-[9px] font-mono font-bold px-1 py-0.2 bg-[#191B1D]/90 rounded border shadow-sm"
+                      >
+                        {empoweredMove.metadata?.cardName ? empoweredMove.metadata.cardName.split(' ')[0] : 'CARD'}
                       </span>
-                    </div>
-
-                    {/* Micro-Tooltip on hover */}
-                    <div className="hidden group-hover:flex absolute bottom-[108%] left-1/2 -translate-x-1/2 w-48 p-2 bg-[#141618] border border-[#D4AF37] rounded shadow-2xl z-50 flex-col gap-0.5 text-left pointer-events-none backdrop-blur-md">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-[#D4AF37]">
-                        <span className="truncate">{empoweredMove.metadata?.cardName || empoweredMove.cardId}</span>
-                        <span className="text-[10px] px-1 bg-[#D4AF37]/20 rounded font-mono ml-1">{empoweredMove.energyCost}⚡</span>
-                      </div>
-                      {empoweredMove.metadata?.effectExact && (
-                        <span className="text-[9px] font-mono text-[#8B7E74]">
-                          {empoweredMove.metadata.effectGenre} · {empoweredMove.metadata.effectExact}
-                        </span>
-                      )}
                     </div>
                   </div>
                 )}
 
                 {/* Piece Visual */}
                 {piece && (
-                  <div className="relative z-10 flex items-center justify-center w-full h-full">
+                  <div className="relative z-10 flex items-center justify-center w-full h-full pointer-events-none">
                     <ChessPieceSvg type={piece.type} color={piece.color} />
                   </div>
                 )}
@@ -323,6 +410,55 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
           });
         })}
       </div>
+
+      {/* Mandatory Board Outcome Confirmation Bar (✓ / ✕) */}
+      {pendingCardMove && (
+        <div
+          data-testid="card-confirm-bar"
+          className="w-full p-2.5 bg-[#24272A] border-2 border-[#D4AF37] rounded flex items-center justify-between gap-3 shadow-2xl animate-fade-in"
+        >
+          {/* Left: Card Badge & Summary */}
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-bold text-[#D4AF37] flex-shrink-0">
+              ⚡
+            </span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold text-[#FAF9F6] truncate">
+                {activeCardDef?.code ? `${activeCardDef.code} · ` : ''}
+                {activeCardDef?.name || pendingCardMove.cardId}
+              </span>
+              <span className="text-[10px] text-[#8B7E74] truncate">
+                Confirm outcome ({pendingCardMove.from} ➔ {pendingCardMove.to})?
+              </span>
+            </div>
+          </div>
+
+          {/* Right: Big Green Check ✓ and Big Red X ✕ Buttons */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Big Green Check Button (✓ Confirm) */}
+            <button
+              type="button"
+              onClick={onConfirmCardMove}
+              data-testid="confirm-card-move-btn"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#3FB950] hover:bg-[#2EA043] text-[#FAF9F6] border border-[#2EA043] rounded text-xs font-bold transition-all shadow-[0_0_10px_rgba(63,185,80,0.5)] cursor-pointer"
+            >
+              <span>✓</span> Confirm
+            </button>
+
+            {/* Big Red X Button (✕ Cancel) */}
+            <button
+              type="button"
+              onClick={onCancelCardMove}
+              data-testid="cancel-card-move-btn"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#AA4A44] hover:bg-[#883934] text-[#FAF9F6] border border-[#AA4A44]/60 rounded text-xs font-bold transition-all cursor-pointer"
+            >
+              <span>✕</span> Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+export default DeckChessBoard;
