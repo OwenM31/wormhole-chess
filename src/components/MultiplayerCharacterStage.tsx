@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { usePlayerProfiles } from '../hooks/usePlayerProfiles';
 import { CANONICAL_36_CARDS, PIECE_COLOR_THEMES } from '../engine/cards/releaseRoster36';
 import { CardDefinition, PieceAnchor, PieceColor } from '../types/deckChess';
-import { CardArt } from './CardArt';
+import { PlayingCard } from './PlayingCard';
 
 export interface OfflineMatchConfig {
   playerColor: PieceColor;
@@ -595,106 +595,46 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
             </div>
           </div>
 
-          {/* Equipped Slots Grid */}
+          {/* Equipped Slots Grid (8 Miniature 5:7 Portrait Playing Cards) */}
           <div
             style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${activeProfile.handSize}, minmax(0, 1fr))`,
-              gap: '0.5rem',
+              gap: '0.6rem',
             }}
           >
             {Array.from({ length: activeProfile.handSize }).map((_, idx) => {
               const cardId = activeProfile.equippedHand[idx];
               const card = cardId ? CARD_LOOKUP.get(cardId) : null;
               if (card) {
-                const theme = PIECE_COLOR_THEMES[card.anchor] || PIECE_COLOR_THEMES.pawn;
                 return (
-                  <div
+                  <PlayingCard
                     key={`${card.id}-${idx}`}
-                    style={{
-                      position: 'relative',
-                      backgroundColor: '#191B1D',
-                      border: `1.5px solid ${theme.hex}`,
-                      borderRadius: '4px',
-                      padding: '0.4rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      minHeight: '68px',
+                    card={card}
+                    size="equipped"
+                    dataTestId={`equipped-slot-${idx}`}
+                    onClick={() => unequipCardAtIndex(idx)}
+                    onRemove={(e) => {
+                      e.stopPropagation();
+                      unequipCardAtIndex(idx);
                     }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          color: theme.hex,
-                        }}
-                      >
-                        {card.code}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => unequipCardAtIndex(idx)}
-                        title="Unequip card"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#8B7E74',
-                          cursor: 'pointer',
-                          fontSize: '0.7rem',
-                          padding: '0 2px',
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.7rem',
-                        fontWeight: 600,
-                        color: '#FAF9F6',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {card.name}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '0.6rem',
-                        color: theme.hex,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.2rem',
-                      }}
-                    >
-                      <span>{theme.badgeIcon}</span>
-                      <span>Slot {idx + 1}</span>
-                    </div>
-                  </div>
+                  />
                 );
               }
               return (
                 <div
                   key={`empty-${idx}`}
                   style={{
+                    aspectRatio: '5 / 7',
                     backgroundColor: '#1C1E20',
-                    border: '1px dashed rgba(139, 126, 116, 0.25)',
-                    borderRadius: '4px',
+                    border: '1.5px dashed rgba(139, 126, 116, 0.3)',
+                    borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    minHeight: '68px',
                     color: '#6E665E',
-                    fontSize: '0.7rem',
+                    fontSize: '0.72rem',
+                    fontFamily: 'ui-monospace, monospace',
                   }}
                 >
                   Slot {idx + 1}
@@ -799,221 +739,31 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
           </div>
         </div>
 
-        {/* 3. 36-Card Library Grid */}
+        {/* 3. 36-Card Library Grid (5:7 Portrait Playing Cards + External Top-Right Copy Blips) */}
         <div
           data-testid="cards-library-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: '0.85rem',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(212px, 1fr))',
+            gap: '1.25rem 0.9rem',
+            justifyItems: 'center',
           }}
         >
           {displayedCards.map((card) => {
-            const theme = PIECE_COLOR_THEMES[card.anchor] || PIECE_COLOR_THEMES.pawn;
             const maxCopies = getMaxCopiesForCard(card.id);
             const equippedCopies = getEquippedCopiesForCard(card.id);
-            const isFullyEquipped = equippedCopies >= maxCopies;
 
             return (
-              <div
+              <PlayingCard
                 key={card.id}
-                data-testid={`library-card-${card.id}`}
+                card={card}
+                size="library"
+                showExternalBlips={true}
+                maxCopies={maxCopies}
+                equippedCopies={equippedCopies}
+                dataTestId={`library-card-${card.id}`}
                 onClick={() => handleCardClick(card)}
-                style={{
-                  position: 'relative',
-                  backgroundColor: '#24272A',
-                  border: `2px solid ${theme.hex}`,
-                  borderRadius: '6px',
-                  padding: '0.65rem',
-                  display: 'flex',
-                  gap: '0.65rem',
-                  cursor: isFullyEquipped ? 'default' : 'pointer',
-                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isFullyEquipped) {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = `0 6px 16px rgba(0, 0, 0, 0.4), 0 0 10px ${theme.hex}40`;
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.3)';
-                }}
-              >
-                {/* Vertical 5-Dot Copy Stack (data-testid="copy-dot-stack") */}
-                <div
-                  data-testid="copy-dot-stack"
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '2px 0',
-                    minWidth: '22px',
-                    borderRight: '1px solid rgba(139, 126, 116, 0.15)',
-                    paddingRight: '0.45rem',
-                  }}
-                  title={`Copies: ${equippedCopies} equipped of ${maxCopies} max`}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '4px',
-                      alignItems: 'center',
-                    }}
-                  >
-                    {[1, 2, 3, 4, 5].map((dotNum) => {
-                      const isEquipped = dotNum <= equippedCopies;
-                      const isAllowed = dotNum <= maxCopies;
-                      return (
-                        <span
-                          key={dotNum}
-                          style={{
-                            width: '7px',
-                            height: '7px',
-                            borderRadius: '50%',
-                            backgroundColor: isEquipped
-                              ? '#D4AF37'
-                              : isAllowed
-                              ? 'rgba(139, 126, 116, 0.3)'
-                              : '#191B1D',
-                            border: isAllowed ? '1px solid #8B7E74' : '1px solid #2C3034',
-                            boxShadow: isEquipped ? '0 0 4px #D4AF37' : 'none',
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '0.6rem',
-                      fontFamily: 'ui-monospace, monospace',
-                      color: isFullyEquipped ? '#D4AF37' : '#8B7E74',
-                      fontWeight: 700,
-                      marginTop: '4px',
-                    }}
-                  >
-                    {equippedCopies}/{maxCopies}
-                  </span>
-                </div>
-
-                {/* Card Content (Header + Art Window + Zero-Ellipsis Rules Box) */}
-                <div
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.35rem',
-                  }}
-                >
-                  {/* Top Header: Code + Name + Anchor Icon */}
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      <span
-                        style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 800,
-                          color: theme.hex,
-                          letterSpacing: '0.02em',
-                        }}
-                      >
-                        {card.code}
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                          color: '#FAF9F6',
-                        }}
-                      >
-                        {card.name}
-                      </span>
-                    </div>
-                    <span
-                      style={{
-                        fontSize: '0.85rem',
-                        color: theme.hex,
-                      }}
-                      title={card.anchor}
-                    >
-                      {theme.badgeIcon}
-                    </span>
-                  </div>
-
-                  {/* Placeholder / CardArt Window */}
-                  <div
-                    style={{
-                      width: '100%',
-                      height: '56px',
-                      backgroundColor: '#191B1D',
-                      borderRadius: '3px',
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '1px solid rgba(139, 126, 116, 0.15)',
-                    }}
-                  >
-                    <CardArt
-                      anchor={card.anchor}
-                      artId={card.artId}
-                      cardName={card.name}
-                    />
-                  </div>
-
-                  {/* Rules Box (Zero-Ellipsis Rule: completely wraps and fits) */}
-                  <div
-                    style={{
-                      backgroundColor: '#1C1E20',
-                      borderRadius: '3px',
-                      padding: '0.4rem 0.5rem',
-                      fontSize: '0.72rem',
-                      lineHeight: 1.35,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.2rem',
-                    }}
-                  >
-                    <div>
-                      <span
-                        style={{
-                          fontWeight: 700,
-                          color: '#8B7E74',
-                          marginRight: '0.25rem',
-                          fontSize: '0.65rem',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        COND:
-                      </span>
-                      <span style={{ color: '#FAF9F6' }}>{card.conditionText}</span>
-                    </div>
-                    <div>
-                      <span
-                        style={{
-                          fontWeight: 700,
-                          color: theme.hex,
-                          marginRight: '0.25rem',
-                          fontSize: '0.65rem',
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        EFF:
-                      </span>
-                      <span style={{ color: '#FAF9F6' }}>{card.effectText}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              />
             );
           })}
         </div>

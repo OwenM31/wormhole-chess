@@ -129,4 +129,23 @@
 - **Authentic Loden Green & Smokey Taupe Atmospheric Backdrop**:
   - Fullscreen background art layer and primary `Campaign` hero button strictly use the established **Loden Green Dark (`#3C493F`)**, **Loden Green (`#4C5C4C`)**, **Smokey Taupe (`#8B7E74`)**, and **Deep Charcoal (`#191B1D` / `#24272A`)** palette—never yellow/brown washes.
 
+---
+
+### 9. Playing Card Anatomy & External Top-Right Copy Blips (Milestone v3.0 Phase 3)
+- **True `5:7` Portrait Playing Card Ratio (`Variant A Refined`)**:
+  - All cards across the **36-Card Library**, **Equipped Hand Rack**, and **In-Match Tactical Hand** must render as `5:7` portrait playing cards (`src/components/PlayingCard.tsx`)—never wide horizontal rectangles or text-only flash cards.
+  - **Outer Stepped Piece-Color Frame**:
+    - Pawn (`#9CA3AF ➔ #5B626A`), Knight (`#4ADE80 ➔ #1F7A34`), Bishop (`#60A5FA ➔ #1D4ED8`), Rook (`#C084FC ➔ #6B21A8`), Queen (`#F87171 ➔ #B91C1C`), King (`#F5D061 ➔ #A67C14`).
+  - **Inner Card Structure (Zero Copy Count Inside Card)**:
+    1. **Top Header Bar (`#141618`)**: Piece glyph + full Card Name on left, Playbook code badge (`P1`–`K4`) on right.
+    2. **Recessed 5×5 Isometric Board Art Window (`<CardArt />`)**: Displays the bespoke 5×5 coplanar isometric chessboard + Staunton piece silhouette + golden trajectory vectors (`public/assets/cards/{anchor}/{artId}.svg`) with zero internal `COND:` text box inside the SVG.
+    3. **Mid-Card Condition Strip (`#2C3034`)**: `3px` piece-colored left border with `IF: {Condition}`.
+    4. **Bottom Dark Rules Box (`#141618`)**: Complete effect text with zero ellipses and zero copy counters inside the card frame.
+- **External Top-Right Copy Blips (`data-testid="copy-dot-stack"`)**:
+  - In the Library Grid, copy blips are rendered **outside** the card off its **right edge**, **aligned to the top** of the card.
+  - Total blips rendered equals `maxCopies` (the number of copies available to the player, `1–5`).
+  - **Filled Gold Blip (`●` / `[X]`)**: Copy is currently equipped in the player's hand (`#D4AF37` fill, `#FFFDF7` border).
+  - **Empty Dark Blip (`○` / `[ ]`)**: Copy is available to equip (`#191B1D` fill, `#8B7E74` border).
+
+
 

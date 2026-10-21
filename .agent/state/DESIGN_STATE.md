@@ -168,5 +168,19 @@
   - **Column 7**: Natural 1-column inner gutter keeping both sections visually unified near the optical center.
   - **Columns 8–10 (`grid-column: 8 / span 3`)**: Skinnier Player Showcase Companion Card featuring top `LVL` / `Gold` telemetry, a fluid `aspect-ratio` **Character Canvas**, a 3-slot **Gear & Cosmetics** row (`Material`, `Headgear`, `Base`), and the `HAND (5/5)` footer.
 
+---
+
+## Milestone v3.0 — Phase 3 (Refinement): 5:7 Portrait Playing Card & External Top-Right Copy Blips
+
+- **Date Approved:** 2026-10-21
+- **Selected Variant:** **Variant A (Refined — Classic 5:7 TCG Frame + Pure 5×5 Isometric Board Art + External Top-Right Copy Blip Stack)**
+- **Reference Image:** `.agent/state/artifacts/design/phase_3_playing_card_approved.png`
+- **Canonical Component:** `src/components/PlayingCard.tsx`
+
+### Rationale
+- Eliminates the "flash card" regression by unifying the **36-Card Library**, **Equipped Hand Row**, and **In-Match Tactical Hand** onto a true `5:7` portrait playing card (`PlayingCard.tsx`) with stepped piece-colored outer frames, recessed 5×5 isometric board vector art (`p1_sidestep.svg` .. `k4_banish.svg`), a mid-card `IF:` condition strip, and a clean dark rules box.
+- Keeps the playing card face 100% pure by moving the copy indicator **outside** the card off its **right edge**, **aligned to the top** (`[X][X][ ][ ][ ]` = 2 equipped of 5 available; `[ ][ ][ ]` = 0 equipped of 3 available).
+
+
 
 
