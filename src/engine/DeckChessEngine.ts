@@ -11,7 +11,7 @@ import {
   Square,
   EmpoweredMove,
 } from '../types/deckChess';
-import { getCardById, STARTER_DECK } from './cardGraph';
+import { getCardById, STARTER_DECK, LEGACY_STARTER_DECK } from './cardGraph';
 import { getCardHandler } from './cards/cardRegistry';
 
 export interface DeckChessEngineState {
@@ -45,19 +45,71 @@ export class DeckChessEngine {
   private activeModifiers: BoardModifier[];
   private winner: PieceColor | 'draw' | null = null;
   private finishReason: GameFinishReason | null = null;
+  public limitPawnsTo8: boolean = false;
 
   constructor(initialFen?: string, whiteDeck?: string[], blackDeck?: string[]) {
-    this.chess = initialFen ? new Chess(initialFen) : new Chess();
+    this.chess = new Chess();
+    if (initialFen) {
+      this.chess.load(initialFen, { skipValidation: true });
+    }
     this.energy = 3;
     this.cardPlayedThisTurn = false;
     this.turnNumber = 1;
-    this.whiteHand = whiteDeck ? [...whiteDeck] : STARTER_DECK.map((c) => c.id);
-    this.blackHand = blackDeck ? [...blackDeck] : STARTER_DECK.map((c) => c.id);
+    const defaultDeck = [...STARTER_DECK.map((c) => c.id), ...LEGACY_STARTER_DECK.map((c) => c.id)];
+    this.whiteHand = whiteDeck ? [...whiteDeck] : defaultDeck;
+    this.blackHand = blackDeck ? [...blackDeck] : defaultDeck;
     this.graveyard = {
       w: { p: 0, n: 0, b: 0, r: 0, q: 0 },
       b: { p: 0, n: 0, b: 0, r: 0, q: 0 },
     };
     this.activeModifiers = [];
+  }
+
+  public loadFen(fen: string): boolean {
+    try {
+      this.chess.load(fen, { skipValidation: true });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  public canSpawnPawn(color: PieceColor): boolean {
+    if (!this.limitPawnsTo8) return true;
+    let count = 0;
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const sq = DeckChessEngine.coordsToSquare(f, r);
+        if (sq) {
+          const piece = this.chess.get(sq);
+          if (piece && piece.type === 'p' && piece.color === color) {
+            count++;
+          }
+        }
+      }
+    }
+    return count < 8;
+  }
+
+  public sweepPromotions(): void {
+    for (let f = 0; f < 8; f++) {
+      const wSq = DeckChessEngine.coordsToSquare(f, 7); // Rank 8 for White
+      if (wSq) {
+        const p = this.chess.get(wSq);
+        if (p && p.type === 'p' && p.color === 'w') {
+          this.chess.remove(wSq);
+          this.chess.put({ type: 'q', color: 'w' }, wSq);
+        }
+      }
+      const bSq = DeckChessEngine.coordsToSquare(f, 0); // Rank 1 for Black
+      if (bSq) {
+        const p = this.chess.get(bSq);
+        if (p && p.type === 'p' && p.color === 'b') {
+          this.chess.remove(bSq);
+          this.chess.put({ type: 'q', color: 'b' }, bSq);
+        }
+      }
+    }
   }
 
   // --- Board & Turn State Getters ---
@@ -183,6 +235,7 @@ export class DeckChessEngine {
     cloned.activeModifiers = this.activeModifiers.map((m) => ({ ...m }));
     cloned.winner = this.winner;
     cloned.finishReason = this.finishReason;
+    cloned.limitPawnsTo8 = this.limitPawnsTo8;
     return cloned;
   }
 
@@ -396,7 +449,6 @@ export class DeckChessEngine {
     if (this.cardPlayedThisTurn) return false;
     const card = getCardById(cardId);
     if (!card) return false;
-    if (this.energy < card.energyCost) return false;
 
     const hand = this.getHandForColor(this.getTurn());
     if (!hand.includes(cardId)) return false;
@@ -413,7 +465,7 @@ export class DeckChessEngine {
   public getValidAnchorsForCard(cardId: string): string[] {
     const card = getCardById(cardId);
     if (!card) return [];
-    if (this.cardPlayedThisTurn || this.energy < card.energyCost) return [];
+    if (this.cardPlayedThisTurn) return [];
 
     const anchors: string[] = [];
     const board = this.chess.board();
@@ -431,7 +483,8 @@ export class DeckChessEngine {
   public getValidTargetsForCard(cardId: string, anchorSquare: string): string[] {
     const handler = getCardHandler(cardId);
     if (handler) {
-      return handler.getTargets(this, anchorSquare);
+      const targets = handler.getTargets(this, anchorSquare);
+      return targets.map((t) => (typeof t === 'string' ? t : t.to));
     }
     return [];
   }
@@ -461,10 +514,6 @@ export class DeckChessEngine {
       return { success: false, error: `Card ${cardId} not found` };
     }
 
-    if (this.energy < card.energyCost) {
-      return { success: false, error: `Insufficient energy (need ${card.energyCost}, have ${this.energy})` };
-    }
-
     const currentTurn = this.getTurn();
     const hand = currentTurn === 'w' ? this.whiteHand : this.blackHand;
     const cardIndex = hand.indexOf(cardId);
@@ -482,6 +531,7 @@ export class DeckChessEngine {
     if (!simResult.success) {
       return simResult;
     }
+    simulation.sweepPromotions();
 
     // Verify No-Direct-Mate: Opponent king cannot be put into unavoidable checkmate purely by card effect
     if (simulation.isCheckmate()) {
@@ -491,9 +541,10 @@ export class DeckChessEngine {
       };
     }
 
-    // Verify FEN validity (e.g. no pawns on edge rows)
+    // Verify FEN validity (allowing Rank 1 Pawns via skipValidation: true)
     try {
-      new Chess(simulation.getFen());
+      const testChess = new Chess();
+      testChess.load(simulation.getFen(), { skipValidation: true });
     } catch (e: any) {
       return {
         success: false,
@@ -514,6 +565,7 @@ export class DeckChessEngine {
     if (!execution.success) {
       return execution;
     }
+    this.sweepPromotions();
 
     // Deduct energy and mark card window closed
     this.energy -= card.energyCost;
@@ -713,6 +765,7 @@ export class DeckChessEngine {
   // --- Unified Action Model: Empowered Card Moves ---
 
   public getEmpoweredMoves(square?: string): EmpoweredMove[] {
+    if (this.cardPlayedThisTurn) return [];
     const currentTurn = this.getTurn();
     const hand = this.getHandForColor(currentTurn);
     const moves: EmpoweredMove[] = [];
@@ -755,7 +808,6 @@ export class DeckChessEngine {
       for (const cardId of hand) {
         const card = getCardById(cardId);
         if (!card || card.anchor !== pieceAnchor) continue;
-        if (this.energy < card.energyCost) continue;
 
         const handler = getCardHandler(cardId);
         if (!handler) continue;
@@ -764,8 +816,12 @@ export class DeckChessEngine {
           continue;
         }
 
-        const targets = handler.getTargets(this, sq);
-        for (const target of targets) {
+        const rawTargets = handler.getTargets(this, sq);
+        for (const rawTarget of rawTargets) {
+          const target = typeof rawTarget === 'string' ? rawTarget : rawTarget.to;
+          const extraSquare = typeof rawTarget === 'string' ? undefined : rawTarget.extraSquare;
+          const disambiguationPrompt = typeof rawTarget === 'string' ? undefined : rawTarget.disambiguationPrompt;
+
           let actionType: EmpoweredMove['actionType'] = 'move';
           if (
             card.effect_type === 'Special Captures' &&
@@ -783,12 +839,13 @@ export class DeckChessEngine {
             actionType = 'wall';
           }
 
-          // Check King Safety Simulation
+          // Check King Safety Simulation & Outcome Preview
           const sim = this.clone();
           const simHandler = getCardHandler(cardId);
           if (simHandler) {
-            const res = simHandler.execute(sim, sq, target);
+            const res = simHandler.execute(sim, sq, target, extraSquare);
             if (!res.success) continue;
+            sim.sweepPromotions();
 
             const oppColor = (currentTurn === 'w' ? 'b' : 'w') as Color;
             let kingSq: string | null = null;
@@ -808,23 +865,41 @@ export class DeckChessEngine {
             if (kingSq && sim.getInternalChess().isAttacked(kingSq as Square, oppColor)) {
               continue;
             }
-          }
 
-          moves.push({
-            from: sq,
-            to: target,
-            cardId: card.id,
-            energyCost: card.energyCost,
-            actionType,
-            metadata: {
-              cardName: card.name,
-              piece: card.piece,
-              conditionGenre: card.condition_type,
-              conditionExact: card.condition_exact,
-              effectGenre: card.effect_type,
-              effectExact: card.effect_exact,
-            },
-          });
+            // Simulate turn advancement to generate exact outcome preview FEN
+            const fenParts = sim.getFen().split(' ');
+            fenParts[1] = oppColor;
+            fenParts[3] = '-';
+            if (currentTurn === 'b') {
+              fenParts[5] = String(parseInt(fenParts[5] || '1', 10) + 1);
+            }
+            const previewFen = fenParts.join(' ');
+            try {
+              const testC = new Chess();
+              testC.load(previewFen, { skipValidation: true });
+            } catch {
+              continue;
+            }
+
+            moves.push({
+              from: sq,
+              to: target,
+              cardId: card.id,
+              energyCost: card.energyCost,
+              actionType,
+              extraSquare,
+              previewFen,
+              disambiguationPrompt,
+              metadata: {
+                cardName: card.name,
+                piece: card.piece,
+                conditionGenre: card.condition_type,
+                conditionExact: card.condition_exact,
+                effectGenre: card.effect_type,
+                effectExact: card.effect_exact,
+              },
+            });
+          }
         }
       }
     }
@@ -833,8 +908,8 @@ export class DeckChessEngine {
   }
 
   public makeEmpoweredMove(move: EmpoweredMove): { success: boolean; error?: string } {
-    if (this.energy < move.energyCost) {
-      return { success: false, error: `Insufficient energy (need ${move.energyCost}, have ${this.energy})` };
+    if (this.cardPlayedThisTurn) {
+      return { success: false, error: 'A card has already been played this turn' };
     }
 
     const currentTurn = this.getTurn();
@@ -849,23 +924,15 @@ export class DeckChessEngine {
       return { success: false, error: `No handler registered for card ${move.cardId}` };
     }
 
-    const execResult = handler.execute(this, move.from, move.to);
+    const execResult = handler.execute(this, move.from, move.to, move.extraSquare);
     if (!execResult.success) {
       return execResult;
     }
 
-    // Handle pawn 8th rank promotion
-    const pieceAtTo = this.getPiece(move.to);
-    if (pieceAtTo && pieceAtTo.type === 'p') {
-      const rank = parseInt(move.to[1], 10);
-      if ((pieceAtTo.color === 'w' && rank === 8) || (pieceAtTo.color === 'b' && rank === 1)) {
-        this.chess.remove(move.to as Square);
-        this.chess.put({ type: 'q', color: pieceAtTo.color }, move.to as Square);
-      }
-    }
+    // Global promotion rank sweep
+    this.sweepPromotions();
 
-    // Deduct energy and consume card from hand
-    this.energy -= move.energyCost;
+    // Consume card from hand
     if (currentTurn === 'w') {
       this.whiteHand.splice(cardIndex, 1);
     } else {
@@ -890,7 +957,7 @@ export class DeckChessEngine {
       })
       .filter((m) => m.turnsRemaining > 0);
 
-    // Turn advancement in FEN
+    // Turn advancement in FEN with skipValidation: true
     const fenParts = this.chess.fen().split(' ');
     const nextTurn = currentTurn === 'w' ? 'b' : 'w';
     fenParts[1] = nextTurn;
@@ -900,7 +967,7 @@ export class DeckChessEngine {
       this.turnNumber += 1;
     }
     const nextFen = fenParts.join(' ');
-    this.chess.load(nextFen);
+    this.chess.load(nextFen, { skipValidation: true });
 
     // End-of-turn reset: 3 energy restored, card window reopened
     this.energy = 3;

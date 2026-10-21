@@ -53,6 +53,96 @@ export const PIECE_COLOR_THEMES: Record<
  */
 export const STARTER_DECK: CardDefinition[] = CANONICAL_36_CARDS.slice(0, 8);
 
+export const LEGACY_STARTER_DECK: CardDefinition[] = [
+  {
+    id: 'pawn_vanguard',
+    artId: 'pawn_vanguard_tow',
+    name: 'Vanguard Advance',
+    anchor: 'pawn',
+    energyCost: 1,
+    conditions: [{ type: 'UNMOVED' }],
+    effects: [{ type: 'EXTEND_RANGE', param: 1 }],
+    description: 'An unmoved pawn can advance 3 squares forward on its opening leap instead of 2 (if unobstructed).',
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+  },
+  {
+    id: 'pawn_scuttle',
+    artId: 'pawn_tactical_retreat',
+    name: 'Abandon Ship',
+    anchor: 'pawn',
+    energyCost: 1,
+    conditions: [{ type: 'UNDER_FIRE' }],
+    effects: [{ type: 'SCUTTLE' }],
+    description: 'Scuttle an attacked pawn off the board to your graveyard before it is taken, denying enemy tempo.',
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+  },
+  {
+    id: 'knight_escort',
+    artId: 'knight_saddle_carry',
+    name: 'Cavalry Escort',
+    anchor: 'knight',
+    energyCost: 2,
+    conditions: [{ type: 'FRIENDLY_ADJACENCY' }],
+    effects: [{ type: 'CARRY_PASSENGER' }],
+    description: 'Target a friendly adjacent pawn. When the Knight jumps, transport the passenger to the landing square or adjacent flank.',
+    visualTheme: PIECE_COLOR_THEMES.knight,
+  },
+  {
+    id: 'knight_swap',
+    artId: 'knight_stable_swap',
+    name: 'Dislocation Swap',
+    anchor: 'knight',
+    energyCost: 2,
+    conditions: [{ type: 'IN_TERRITORY', param: 'ENEMY_HALF' }],
+    effects: [{ type: 'COORDINATE_SWAP' }],
+    tradeoff: 'TEMPO_CONCESSION',
+    description: 'A knight deep in enemy territory swaps coordinates with any friendly minor piece or pawn.',
+    visualTheme: PIECE_COLOR_THEMES.knight,
+  },
+  {
+    id: 'bishop_pierce',
+    artId: 'bishop_piercing_ray',
+    name: 'Prism Ray',
+    anchor: 'bishop',
+    energyCost: 3,
+    conditions: [{ type: 'LINE_OF_SIGHT_ALIGNMENT' }],
+    effects: [{ type: 'PIERCE_CAPTURE', param: 2 }],
+    description: 'Bishop fires along a diagonal, capturing an enemy piece and immediately continuing to capture the piece directly behind it.',
+    visualTheme: PIECE_COLOR_THEMES.bishop,
+  },
+  {
+    id: 'bishop_invert',
+    artId: 'bishop_color_shift',
+    name: 'Color Inversion',
+    anchor: 'bishop',
+    energyCost: 2,
+    conditions: [{ type: 'OPEN_LINE' }],
+    effects: [{ type: 'VECTOR_GRAFT', param: 'orthogonal_step' }],
+    description: 'Shift an active bishop 1 square orthogonally onto an empty square, permanently inverting its diagonal square color.',
+    visualTheme: PIECE_COLOR_THEMES.bishop,
+  },
+  {
+    id: 'rook_rampart',
+    name: 'Rampart Deploy',
+    anchor: 'rook',
+    energyCost: 2,
+    conditions: [{ type: 'OPEN_LINE' }],
+    effects: [{ type: 'DEPLOY_OBSTACLE', param: 2 }],
+    description: 'Deploy a holographic barrier along the rook line on an empty square for 2 rounds, blocking line-of-sight and passage.',
+    visualTheme: PIECE_COLOR_THEMES.rook,
+  },
+  {
+    id: 'king_decree',
+    name: 'Royal Decree',
+    anchor: 'king',
+    energyCost: 2,
+    conditions: [{ type: 'FRIENDLY_ADJACENCY' }],
+    effects: [{ type: 'TANDEM_SHIFT' }],
+    description: 'The King steps 1 square and an adjacent friendly piece immediately shifts into the square vacated by the King.',
+    visualTheme: PIECE_COLOR_THEMES.king,
+  },
+];
+
 import rawCatalog90 from './cards/cardCatalog90.json';
 import rawCatalogMajor90 from './cards/cardCatalogMajor90.json';
 
@@ -160,6 +250,7 @@ export const LEGACY_EXTRA_CARDS: CardDefinition[] = [
  */
 export const EXPANDED_LIBRARY: CardDefinition[] = [
   ...CANONICAL_36_CARDS,
+  ...LEGACY_STARTER_DECK,
   ...CANONICAL_180_CARDS.filter(
     (c) => !CANONICAL_36_CARDS.some((p) => p.id === c.id) && !LEGACY_EXTRA_CARDS.some((l) => l.id === c.id)
   ),

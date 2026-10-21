@@ -9,12 +9,14 @@ import {
 import { DeckChessEngine } from '../DeckChessEngine';
 import { getCardById, CANONICAL_180_CARDS } from '../cardGraph';
 
-export interface CardBehaviorHandler {
+export type TargetOption = string | { to: string; extraSquare?: string; disambiguationPrompt?: string };
+
+export interface CardBehaviorHandler<T extends TargetOption = string> {
   cardId: string;
   // Specific condition evaluation beyond generic primitives
   evaluateConditions?(engine: DeckChessEngine, anchorSquare: string): boolean;
   // Get primary target squares for card activation
-  getTargets(engine: DeckChessEngine, anchorSquare: string): string[];
+  getTargets(engine: DeckChessEngine, anchorSquare: string): T[];
   // Get secondary target squares (e.g. knight leap for knight_escort)
   getSecondaryTargets?(engine: DeckChessEngine, anchorSquare: string, targetSquare: string): string[];
   // Execute card mutation on board and modifiers
@@ -123,13 +125,13 @@ export const CardUtils = {
 /**
  * Registry of card behavior handlers
  */
-const HANDLER_REGISTRY = new Map<string, CardBehaviorHandler>();
+const HANDLER_REGISTRY = new Map<string, CardBehaviorHandler<any>>();
 
-export function registerCardHandler(handler: CardBehaviorHandler): void {
+export function registerCardHandler(handler: CardBehaviorHandler<any>): void {
   HANDLER_REGISTRY.set(handler.cardId, handler);
 }
 
-export function getCardHandler(cardId: string): CardBehaviorHandler | undefined {
+export function getCardHandler(cardId: string): CardBehaviorHandler<any> | undefined {
   return HANDLER_REGISTRY.get(cardId);
 }
 
