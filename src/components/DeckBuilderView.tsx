@@ -12,11 +12,13 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import CardArt from './CardArt';
+import { MultiplayerCharacterStage } from './MultiplayerCharacterStage';
 
 export interface DeckBuilderViewProps {
   initialDeck?: string[];
   onSaveDeck: (deckIds: string[]) => void;
   onBackToBattle?: () => void;
+  defaultMode?: 'stage' | 'catalog';
 }
 
 const STORAGE_KEY = 'deck_builder_loadout_v1';
@@ -25,8 +27,10 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
   initialDeck,
   onSaveDeck,
   onBackToBattle,
+  defaultMode = 'catalog',
 }) => {
   const { user } = useAuth();
+  const [viewMode, setViewMode] = useState<'stage' | 'catalog'>(defaultMode);
 
   // Load saved deck or fallback to starter deck
   const [selectedIds, setSelectedIds] = useState<string[]>(() => {
@@ -148,6 +152,31 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
     { key: 'king' as const, label: `King (${CANONICAL_180_CARDS.filter((c) => c.anchor === 'king').length})` },
   ];
 
+  if (viewMode === 'stage') {
+    return (
+      <div className="w-full flex flex-col">
+        <div className="flex items-center justify-between p-2.5 bg-[#1C1E20] border-b border-[rgba(139,126,116,0.2)]">
+          <span className="text-xs font-semibold text-[#8B7E74]">
+            36-Card Playbook Multiplayer Stage
+          </span>
+          <button
+            onClick={() => setViewMode('catalog')}
+            data-testid="switch-to-catalog-btn"
+            className="px-3 py-1 bg-[#24272A] hover:bg-[#2C3034] text-[#FAF9F6] border border-[rgba(139,126,116,0.3)] rounded text-xs font-medium cursor-pointer"
+          >
+            Switch to 180-Card Catalog →
+          </button>
+        </div>
+        <MultiplayerCharacterStage
+          onBackToMenu={onBackToBattle || (() => {})}
+          onStartOfflineMatch={() => {
+            onBackToBattle?.();
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-6xl mx-auto p-3 sm:p-5 flex flex-col gap-5 text-[#FAF9F6]">
       {/* Top Banner & Actions */}
@@ -159,6 +188,13 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setViewMode('stage')}
+            data-testid="toggle-stage-view-btn"
+            className="px-3 py-1.5 bg-[#3C493F] hover:bg-[#4C5C4C] text-[#FAF9F6] rounded text-xs font-semibold transition-colors cursor-pointer border border-[#D4AF37]/50"
+          >
+            ⚔️ 36-Card Stage
+          </button>
           {onBackToBattle && (
             <button
               onClick={onBackToBattle}

@@ -1,0 +1,1500 @@
+import React, { useState, useMemo } from 'react';
+import { usePlayerProfiles } from '../hooks/usePlayerProfiles';
+import { CANONICAL_36_CARDS, PIECE_COLOR_THEMES } from '../engine/cards/releaseRoster36';
+import { CardDefinition, PieceAnchor, PieceColor } from '../types/deckChess';
+import { CardArt } from './CardArt';
+
+export interface OfflineMatchConfig {
+  playerColor: PieceColor;
+  aiDifficulty: 'easy' | 'medium' | 'tactical';
+  handSize: number;
+  aiDeckMode: 'random' | 'mirror' | 'towny';
+}
+
+export interface MultiplayerCharacterStageProps {
+  onBackToMenu: () => void;
+  onStartOfflineMatch?: (config: OfflineMatchConfig) => void;
+  onSearchOpponent?: () => void;
+  onOpenPrivateMatch?: () => void;
+  onOpenAsyncMatches?: () => void;
+  profilesHook?: ReturnType<typeof usePlayerProfiles>;
+}
+
+const CARD_LOOKUP = new Map(CANONICAL_36_CARDS.map((c) => [c.id, c]));
+
+type SortOption = 'playbook' | 'piece' | 'world' | 'name';
+
+export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps> = ({
+  onBackToMenu,
+  onStartOfflineMatch,
+  onSearchOpponent,
+  onOpenPrivateMatch,
+  onOpenAsyncMatches,
+  profilesHook,
+}) => {
+  const internalHook = usePlayerProfiles();
+  const hook = profilesHook || internalHook;
+  const {
+    activeSlotId,
+    activeProfile,
+    setHandSize,
+    getMaxCopiesForCard,
+    getEquippedCopiesForCard,
+    equipCard,
+    unequipCardAtIndex,
+    clearHand,
+    autoFillHand,
+  } = hook;
+
+  // Modals / Status overlays
+  const [showOfflineModal, setShowOfflineModal] = useState(false);
+  const [showMatchmakingStatus, setShowMatchmakingStatus] = useState(false);
+  const [showPrivateModal, setShowPrivateModal] = useState(false);
+  const [showAsyncModal, setShowAsyncModal] = useState(false);
+  const [privateCodeInput, setPrivateCodeInput] = useState('');
+
+  // Offline Match Configuration state
+  const [offlineColor, setOfflineColor] = useState<PieceColor>('w');
+  const [offlineDifficulty, setOfflineDifficulty] = useState<'easy' | 'medium' | 'tactical'>('medium');
+  const [offlineHandSize, setOfflineHandSize] = useState<number>(activeProfile.handSize || 8);
+  const [offlineAiDeck, setOfflineAiDeck] = useState<'random' | 'mirror' | 'towny'>('random');
+
+  // Filter & Sort state for the 36-card library
+  const [filterAnchor, setFilterAnchor] = useState<PieceAnchor | 'all'>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('playbook');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Toast / feedback message
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  const showNotification = (msg: string) => {
+    setFeedback(msg);
+    setTimeout(() => setFeedback(null), 2500);
+  };
+
+  // Filter & Sort cards
+  const displayedCards = useMemo(() => {
+    let list = CANONICAL_36_CARDS.filter((card) => {
+      if (filterAnchor !== 'all' && card.anchor !== filterAnchor) return false;
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = card.name.toLowerCase().includes(query);
+        const matchesCode = (card.code || '').toLowerCase().includes(query);
+        const matchesDesc = (card.description || '').toLowerCase().includes(query);
+        if (!matchesName && !matchesCode && !matchesDesc) return false;
+      }
+      return true;
+    });
+
+    list = [...list].sort((a, b) => {
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      if (sortBy === 'world') {
+        const wA = a.world ?? 1;
+        const wB = b.world ?? 1;
+        if (wA !== wB) return wA - wB;
+        return (a.code || '').localeCompare(b.code || '');
+      }
+      if (sortBy === 'piece') {
+        const order: Record<PieceAnchor, number> = { pawn: 1, knight: 2, bishop: 3, rook: 4, queen: 5, king: 6 };
+        const diff = (order[a.anchor] || 0) - (order[b.anchor] || 0);
+        if (diff !== 0) return diff;
+        return (a.code || '').localeCompare(b.code || '');
+      }
+      // 'playbook' default
+      return 0;
+    });
+
+    return list;
+  }, [filterAnchor, sortBy, searchQuery]);
+
+  // Handle Equipping card
+  const handleCardClick = (card: CardDefinition) => {
+    const maxCopies = getMaxCopiesForCard(card.id);
+    const equippedCopies = getEquippedCopiesForCard(card.id);
+
+    if (equippedCopies >= maxCopies) {
+      showNotification(`Maximum copies reached for ${card.code} (${maxCopies} max)`);
+      return;
+    }
+    if (activeProfile.equippedHand.length >= activeProfile.handSize) {
+      showNotification(`Hand is full (${activeProfile.handSize}/${activeProfile.handSize})`);
+      return;
+    }
+
+    const ok = equipCard(card.id);
+    if (!ok) {
+      showNotification(`Could not equip ${card.name}`);
+    }
+  };
+
+  const handleLaunchOffline = () => {
+    setShowOfflineModal(false);
+    if (onStartOfflineMatch) {
+      onStartOfflineMatch({
+        playerColor: offlineColor,
+        aiDifficulty: offlineDifficulty,
+        handSize: offlineHandSize,
+        aiDeckMode: offlineAiDeck,
+      });
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        minHeight: 'calc(100vh - 54px)',
+        backgroundColor: '#191B1D',
+        color: '#FAF9F6',
+        display: 'flex',
+        flexDirection: 'column',
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
+      }}
+    >
+      {/* Upper Atmospheric Castle Background Header */}
+      <div
+        style={{
+          position: 'relative',
+          backgroundColor: '#1E2225',
+          borderBottom: '1px solid rgba(139, 126, 116, 0.25)',
+          padding: '0.75rem 1.25rem',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          zIndex: 20,
+        }}
+      >
+        {/* Left: Back to Main Menu Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button
+            type="button"
+            onClick={onBackToMenu}
+            data-testid="stage-back-to-menu-btn"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.5rem 0.85rem',
+              backgroundColor: '#24272A',
+              color: '#FAF9F6',
+              border: '1px solid rgba(139, 126, 116, 0.25)',
+              borderRadius: '4px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.12s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#D4AF37';
+              e.currentTarget.style.backgroundColor = '#2C3034';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(139, 126, 116, 0.25)';
+              e.currentTarget.style.backgroundColor = '#24272A';
+            }}
+          >
+            <span>←</span> Main Menu
+          </button>
+
+          {/* Active Profile Telemetry Capsule */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.4rem 0.75rem',
+              backgroundColor: '#191B1D',
+              border: '1px solid rgba(139, 126, 116, 0.2)',
+              borderRadius: '4px',
+              fontSize: '0.8rem',
+            }}
+          >
+            <span
+              style={{
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                padding: '0.1rem 0.35rem',
+                backgroundColor: '#3C493F',
+                borderRadius: '2px',
+              }}
+            >
+              {activeSlotId.replace('_', ' ')}
+            </span>
+            <span style={{ fontWeight: 600 }}>{activeProfile.name}</span>
+            <span style={{ color: '#8B7E74' }}>·</span>
+            <span style={{ color: '#D4AF37' }}>🪙 {activeProfile.gold}</span>
+          </div>
+        </div>
+
+        {/* Top-Right Play Action Cluster */}
+        <div
+          data-testid="stage-play-actions"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          {/* Offline Match */}
+          <button
+            type="button"
+            onClick={() => setShowOfflineModal(true)}
+            data-testid="stage-offline-match-btn"
+            style={{
+              padding: '0.55rem 0.95rem',
+              backgroundColor: '#4C5C4C',
+              color: '#FAF9F6',
+              border: '1px solid rgba(212, 175, 55, 0.4)',
+              borderRadius: '4px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              transition: 'all 0.12s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#5C6C5C';
+              e.currentTarget.style.borderColor = '#D4AF37';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#4C5C4C';
+              e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.4)';
+            }}
+          >
+            <span>🤖</span> Offline Match
+          </button>
+
+          {/* Search for Opponent */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowMatchmakingStatus(true);
+              if (onSearchOpponent) onSearchOpponent();
+            }}
+            data-testid="stage-search-opponent-btn"
+            style={{
+              padding: '0.55rem 0.95rem',
+              backgroundColor: '#24272A',
+              color: '#FAF9F6',
+              border: '1px solid rgba(139, 126, 116, 0.25)',
+              borderRadius: '4px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+            }}
+          >
+            <span>⚔️</span> Search Opponent
+          </button>
+
+          {/* Private Match */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowPrivateModal(true);
+              if (onOpenPrivateMatch) onOpenPrivateMatch();
+            }}
+            data-testid="stage-private-match-btn"
+            style={{
+              padding: '0.55rem 0.85rem',
+              backgroundColor: '#1C1E20',
+              color: '#FAF9F6',
+              border: '1px solid rgba(139, 126, 116, 0.2)',
+              borderRadius: '4px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Private Match
+          </button>
+
+          {/* Async Matches */}
+          <button
+            type="button"
+            onClick={() => {
+              setShowAsyncModal(true);
+              if (onOpenAsyncMatches) onOpenAsyncMatches();
+            }}
+            data-testid="stage-async-matches-btn"
+            style={{
+              padding: '0.55rem 0.85rem',
+              backgroundColor: '#1C1E20',
+              color: '#8B7E74',
+              border: '1px solid rgba(139, 126, 116, 0.2)',
+              borderRadius: '4px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Async Matches
+          </button>
+        </div>
+      </div>
+
+      {/* Floating Feedback Toast */}
+      {feedback && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '70px',
+            right: '24px',
+            zIndex: 100,
+            padding: '0.65rem 1rem',
+            backgroundColor: '#24272A',
+            border: '1px solid #D4AF37',
+            color: '#FAF9F6',
+            borderRadius: '4px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+          }}
+        >
+          {feedback}
+        </div>
+      )}
+
+      {/* Character Focal Backdrop Stage (Compact Living Piece Room) */}
+      <div
+        data-testid="character-backdrop-stage"
+        style={{
+          position: 'relative',
+          backgroundColor: '#191B1D',
+          borderBottom: '1px solid rgba(139, 126, 116, 0.2)',
+          padding: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          background: 'linear-gradient(180deg, #24272A 0%, #191B1D 100%)',
+        }}
+      >
+        <svg
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 0.35,
+            pointerEvents: 'none',
+          }}
+          viewBox="0 0 1000 200"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          <g stroke="#4C5C4C" strokeWidth="1" strokeOpacity="0.4">
+            <line x1="500" y1="20" x2="100" y2="200" />
+            <line x1="500" y1="20" x2="300" y2="200" />
+            <line x1="500" y1="20" x2="500" y2="200" />
+            <line x1="500" y1="20" x2="700" y2="200" />
+            <line x1="500" y1="20" x2="900" y2="200" />
+            <line x1="200" y1="120" x2="800" y2="120" />
+            <line x1="120" y1="160" x2="880" y2="160" />
+          </g>
+        </svg>
+
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1.25rem',
+          }}
+        >
+          {/* Mini Pedestal Silhouette */}
+          <div
+            style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              backgroundColor: '#141618',
+              border: '2px solid #D4AF37',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 16px rgba(212, 175, 55, 0.25)',
+            }}
+          >
+            <span style={{ fontSize: '2.5rem', color: '#D4AF37' }}>♟</span>
+          </div>
+
+          <div>
+            <div
+              style={{
+                fontSize: '0.7rem',
+                color: '#8B7E74',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+              }}
+            >
+              Living Hero · Stage Room
+            </div>
+            <div
+              style={{
+                fontSize: '1.15rem',
+                fontWeight: 700,
+                color: '#FAF9F6',
+              }}
+            >
+              {activeProfile.name}
+            </div>
+            <div
+              style={{
+                fontSize: '0.75rem',
+                color: '#8B7E74',
+                marginTop: '0.15rem',
+              }}
+            >
+              Material: <span style={{ color: '#FAF9F6' }}>{activeProfile.gear.material}</span> · Headgear:{' '}
+              <span style={{ color: '#FAF9F6' }}>{activeProfile.gear.headgear}</span> · Base:{' '}
+              <span style={{ color: '#FAF9F6' }}>{activeProfile.gear.base}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* LOWER STAGE: Equipped Hand Row & Filterable/Sortable 36-Card Library */}
+      <div
+        style={{
+          flex: 1,
+          padding: '1rem clamp(1rem, 2vw, 2rem)',
+          maxWidth: '1440px',
+          width: '100%',
+          margin: '0 auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.25rem',
+        }}
+      >
+        {/* 1. Equipped Hand Row */}
+        <div
+          data-testid="equipped-hand-stage"
+          style={{
+            backgroundColor: '#24272A',
+            border: '1px solid rgba(139, 126, 116, 0.25)',
+            borderRadius: '6px',
+            padding: '0.85rem 1rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.75rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  color: '#FAF9F6',
+                }}
+              >
+                EQUIPPED HAND
+              </span>
+              <span
+                style={{
+                  fontSize: '0.8rem',
+                  fontFamily: 'ui-monospace, monospace',
+                  color: '#D4AF37',
+                  fontWeight: 700,
+                }}
+              >
+                ({activeProfile.equippedHand.length}/{activeProfile.handSize})
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {/* Hand Size Selector */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  fontSize: '0.75rem',
+                  color: '#8B7E74',
+                }}
+              >
+                <span>Hand Size:</span>
+                <select
+                  value={activeProfile.handSize}
+                  onChange={(e) => setHandSize(Number(e.target.value))}
+                  data-testid="hand-size-select"
+                  style={{
+                    backgroundColor: '#191B1D',
+                    color: '#FAF9F6',
+                    border: '1px solid rgba(139, 126, 116, 0.3)',
+                    borderRadius: '3px',
+                    padding: '0.2rem 0.4rem',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((sz) => (
+                    <option key={sz} value={sz}>
+                      {sz} Cards
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Clear Hand */}
+              <button
+                type="button"
+                onClick={clearHand}
+                data-testid="clear-hand-btn"
+                style={{
+                  padding: '0.25rem 0.6rem',
+                  backgroundColor: '#1C1E20',
+                  color: '#8B7E74',
+                  border: '1px solid rgba(139, 126, 116, 0.2)',
+                  borderRadius: '3px',
+                  fontSize: '0.7rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Clear Hand
+              </button>
+
+              {/* Auto-Fill */}
+              <button
+                type="button"
+                onClick={autoFillHand}
+                data-testid="autofill-hand-btn"
+                style={{
+                  padding: '0.25rem 0.6rem',
+                  backgroundColor: '#3C493F',
+                  color: '#FAF9F6',
+                  border: '1px solid rgba(212, 175, 55, 0.3)',
+                  borderRadius: '3px',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Auto-Fill
+              </button>
+            </div>
+          </div>
+
+          {/* Equipped Slots Grid */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${activeProfile.handSize}, minmax(0, 1fr))`,
+              gap: '0.5rem',
+            }}
+          >
+            {Array.from({ length: activeProfile.handSize }).map((_, idx) => {
+              const cardId = activeProfile.equippedHand[idx];
+              const card = cardId ? CARD_LOOKUP.get(cardId) : null;
+              if (card) {
+                const theme = PIECE_COLOR_THEMES[card.anchor] || PIECE_COLOR_THEMES.pawn;
+                return (
+                  <div
+                    key={`${card.id}-${idx}`}
+                    style={{
+                      position: 'relative',
+                      backgroundColor: '#191B1D',
+                      border: `1.5px solid ${theme.hex}`,
+                      borderRadius: '4px',
+                      padding: '0.4rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      minHeight: '68px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          color: theme.hex,
+                        }}
+                      >
+                        {card.code}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => unequipCardAtIndex(idx)}
+                        title="Unequip card"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#8B7E74',
+                          cursor: 'pointer',
+                          fontSize: '0.7rem',
+                          padding: '0 2px',
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        color: '#FAF9F6',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {card.name}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '0.6rem',
+                        color: theme.hex,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.2rem',
+                      }}
+                    >
+                      <span>{theme.badgeIcon}</span>
+                      <span>Slot {idx + 1}</span>
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div
+                  key={`empty-${idx}`}
+                  style={{
+                    backgroundColor: '#1C1E20',
+                    border: '1px dashed rgba(139, 126, 116, 0.25)',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '68px',
+                    color: '#6E665E',
+                    fontSize: '0.7rem',
+                  }}
+                >
+                  Slot {idx + 1}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 2. Filterable & Sortable 36-Card Library Header */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.75rem',
+          }}
+        >
+          {/* Piece Class Filter Tabs */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: '#1C1E20',
+              borderRadius: '4px',
+              padding: '2px',
+              gap: '2px',
+              flexWrap: 'wrap',
+            }}
+          >
+            {[
+              { id: 'all', label: 'All (36)' },
+              { id: 'pawn', label: '♟ Pawn (8)' },
+              { id: 'knight', label: '♞ Knight (7)' },
+              { id: 'bishop', label: '♝ Bishop (7)' },
+              { id: 'rook', label: '♜ Rook (6)' },
+              { id: 'queen', label: '♛ Queen (4)' },
+              { id: 'king', label: '♚ King (4)' },
+            ].map((tab) => {
+              const active = filterAnchor === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setFilterAnchor(tab.id as PieceAnchor | 'all')}
+                  data-testid={`filter-tab-${tab.id}`}
+                  style={{
+                    padding: '0.35rem 0.65rem',
+                    borderRadius: '3px',
+                    fontSize: '0.75rem',
+                    fontWeight: active ? 700 : 500,
+                    backgroundColor: active ? '#24272A' : 'transparent',
+                    color: active ? '#FAF9F6' : '#8B7E74',
+                    border: active ? '1px solid rgba(212, 175, 55, 0.4)' : '1px solid transparent',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sort & Search Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="text"
+              placeholder="Search 36 cards..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                padding: '0.35rem 0.6rem',
+                backgroundColor: '#191B1D',
+                border: '1px solid rgba(139, 126, 116, 0.25)',
+                borderRadius: '3px',
+                color: '#FAF9F6',
+                fontSize: '0.75rem',
+                width: '140px',
+              }}
+            />
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              data-testid="sort-cards-select"
+              style={{
+                backgroundColor: '#191B1D',
+                color: '#FAF9F6',
+                border: '1px solid rgba(139, 126, 116, 0.25)',
+                borderRadius: '3px',
+                padding: '0.35rem 0.5rem',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="playbook">By Playbook (P1–K4)</option>
+              <option value="piece">By Piece Class</option>
+              <option value="world">By World (W1–W7)</option>
+              <option value="name">Alphabetical</option>
+            </select>
+          </div>
+        </div>
+
+        {/* 3. 36-Card Library Grid */}
+        <div
+          data-testid="cards-library-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gap: '0.85rem',
+          }}
+        >
+          {displayedCards.map((card) => {
+            const theme = PIECE_COLOR_THEMES[card.anchor] || PIECE_COLOR_THEMES.pawn;
+            const maxCopies = getMaxCopiesForCard(card.id);
+            const equippedCopies = getEquippedCopiesForCard(card.id);
+            const isFullyEquipped = equippedCopies >= maxCopies;
+
+            return (
+              <div
+                key={card.id}
+                data-testid={`library-card-${card.id}`}
+                onClick={() => handleCardClick(card)}
+                style={{
+                  position: 'relative',
+                  backgroundColor: '#24272A',
+                  border: `2px solid ${theme.hex}`,
+                  borderRadius: '6px',
+                  padding: '0.65rem',
+                  display: 'flex',
+                  gap: '0.65rem',
+                  cursor: isFullyEquipped ? 'default' : 'pointer',
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isFullyEquipped) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = `0 6px 16px rgba(0, 0, 0, 0.4), 0 0 10px ${theme.hex}40`;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.3)';
+                }}
+              >
+                {/* Vertical 5-Dot Copy Stack (data-testid="copy-dot-stack") */}
+                <div
+                  data-testid="copy-dot-stack"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '2px 0',
+                    minWidth: '22px',
+                    borderRight: '1px solid rgba(139, 126, 116, 0.15)',
+                    paddingRight: '0.45rem',
+                  }}
+                  title={`Copies: ${equippedCopies} equipped of ${maxCopies} max`}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                      alignItems: 'center',
+                    }}
+                  >
+                    {[1, 2, 3, 4, 5].map((dotNum) => {
+                      const isEquipped = dotNum <= equippedCopies;
+                      const isAllowed = dotNum <= maxCopies;
+                      return (
+                        <span
+                          key={dotNum}
+                          style={{
+                            width: '7px',
+                            height: '7px',
+                            borderRadius: '50%',
+                            backgroundColor: isEquipped
+                              ? '#D4AF37'
+                              : isAllowed
+                              ? 'rgba(139, 126, 116, 0.3)'
+                              : '#191B1D',
+                            border: isAllowed ? '1px solid #8B7E74' : '1px solid #2C3034',
+                            boxShadow: isEquipped ? '0 0 4px #D4AF37' : 'none',
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span
+                    style={{
+                      fontSize: '0.6rem',
+                      fontFamily: 'ui-monospace, monospace',
+                      color: isFullyEquipped ? '#D4AF37' : '#8B7E74',
+                      fontWeight: 700,
+                      marginTop: '4px',
+                    }}
+                  >
+                    {equippedCopies}/{maxCopies}
+                  </span>
+                </div>
+
+                {/* Card Content (Header + Art Window + Zero-Ellipsis Rules Box) */}
+                <div
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.35rem',
+                  }}
+                >
+                  {/* Top Header: Code + Name + Anchor Icon */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 800,
+                          color: theme.hex,
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        {card.code}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          color: '#FAF9F6',
+                        }}
+                      >
+                        {card.name}
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '0.85rem',
+                        color: theme.hex,
+                      }}
+                      title={card.anchor}
+                    >
+                      {theme.badgeIcon}
+                    </span>
+                  </div>
+
+                  {/* Placeholder / CardArt Window */}
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '56px',
+                      backgroundColor: '#191B1D',
+                      borderRadius: '3px',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1px solid rgba(139, 126, 116, 0.15)',
+                    }}
+                  >
+                    <CardArt
+                      anchor={card.anchor}
+                      artId={card.artId}
+                      cardName={card.name}
+                    />
+                  </div>
+
+                  {/* Rules Box (Zero-Ellipsis Rule: completely wraps and fits) */}
+                  <div
+                    style={{
+                      backgroundColor: '#1C1E20',
+                      borderRadius: '3px',
+                      padding: '0.4rem 0.5rem',
+                      fontSize: '0.72rem',
+                      lineHeight: 1.35,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.2rem',
+                    }}
+                  >
+                    <div>
+                      <span
+                        style={{
+                          fontWeight: 700,
+                          color: '#8B7E74',
+                          marginRight: '0.25rem',
+                          fontSize: '0.65rem',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        COND:
+                      </span>
+                      <span style={{ color: '#FAF9F6' }}>{card.conditionText}</span>
+                    </div>
+                    <div>
+                      <span
+                        style={{
+                          fontWeight: 700,
+                          color: theme.hex,
+                          marginRight: '0.25rem',
+                          fontSize: '0.65rem',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        EFF:
+                      </span>
+                      <span style={{ color: '#FAF9F6' }}>{card.effectText}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* MODAL 1: Offline Match Configurator */}
+      {showOfflineModal && (
+        <div
+          data-testid="offline-match-modal"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setShowOfflineModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#24272A',
+              border: '1px solid rgba(139, 126, 116, 0.3)',
+              borderRadius: '6px',
+              width: '100%',
+              maxWidth: '460px',
+              padding: '1.5rem',
+              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.6)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0 }}>
+                  Configure Offline Match
+                </h2>
+                <div style={{ fontSize: '0.75rem', color: '#8B7E74', marginTop: '0.15rem' }}>
+                  Solo match vs Tactical Chess Engine AI
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowOfflineModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#8B7E74',
+                  fontSize: '1.2rem',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Config Options */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              {/* Color */}
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#8B7E74', marginBottom: '0.35rem' }}>
+                  PLAYER COLOR
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setOfflineColor('w')}
+                    style={{
+                      padding: '0.5rem',
+                      backgroundColor: offlineColor === 'w' ? '#3C493F' : '#1C1E20',
+                      border: offlineColor === 'w' ? '1px solid #D4AF37' : '1px solid rgba(139, 126, 116, 0.2)',
+                      borderRadius: '4px',
+                      color: '#FAF9F6',
+                      fontWeight: 600,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ⚪ White (First)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOfflineColor('b')}
+                    style={{
+                      padding: '0.5rem',
+                      backgroundColor: offlineColor === 'b' ? '#3C493F' : '#1C1E20',
+                      border: offlineColor === 'b' ? '1px solid #D4AF37' : '1px solid rgba(139, 126, 116, 0.2)',
+                      borderRadius: '4px',
+                      color: '#FAF9F6',
+                      fontWeight: 600,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ⚫ Black (Second)
+                  </button>
+                </div>
+              </div>
+
+              {/* AI Difficulty */}
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#8B7E74', marginBottom: '0.35rem' }}>
+                  AI DIFFICULTY
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
+                  {(['easy', 'medium', 'tactical'] as const).map((diff) => (
+                    <button
+                      key={diff}
+                      type="button"
+                      onClick={() => setOfflineDifficulty(diff)}
+                      style={{
+                        padding: '0.45rem',
+                        textTransform: 'capitalize',
+                        backgroundColor: offlineDifficulty === diff ? '#4C5C4C' : '#1C1E20',
+                        border: offlineDifficulty === diff ? '1px solid #D4AF37' : '1px solid rgba(139, 126, 116, 0.2)',
+                        borderRadius: '4px',
+                        color: '#FAF9F6',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {diff}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Hand Size */}
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#8B7E74', marginBottom: '0.35rem' }}>
+                  HAND SIZE (1–8)
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <select
+                    value={offlineHandSize}
+                    onChange={(e) => setOfflineHandSize(Number(e.target.value))}
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      backgroundColor: '#191B1D',
+                      border: '1px solid rgba(139, 126, 116, 0.3)',
+                      borderRadius: '4px',
+                      color: '#FAF9F6',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                      <option key={s} value={s}>
+                        {s} Cards Hand
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* AI Deck Mode */}
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#8B7E74', marginBottom: '0.35rem' }}>
+                  AI DECK LOADOUT
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem' }}>
+                  {[
+                    { id: 'random', label: 'Random 8-Card' },
+                    { id: 'mirror', label: 'Mirror My Hand' },
+                    { id: 'towny', label: 'Towny (0-Card)' },
+                  ].map((mode) => (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={() => setOfflineAiDeck(mode.id as any)}
+                      style={{
+                        padding: '0.45rem',
+                        backgroundColor: offlineAiDeck === mode.id ? '#4C5C4C' : '#1C1E20',
+                        border: offlineAiDeck === mode.id ? '1px solid #D4AF37' : '1px solid rgba(139, 126, 116, 0.2)',
+                        borderRadius: '4px',
+                        color: '#FAF9F6',
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {mode.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Launch Action */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <button
+                type="button"
+                onClick={() => setShowOfflineModal(false)}
+                style={{
+                  padding: '0.6rem 1rem',
+                  backgroundColor: '#191B1D',
+                  color: '#8B7E74',
+                  border: '1px solid rgba(139, 126, 116, 0.2)',
+                  borderRadius: '4px',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLaunchOffline}
+                data-testid="start-offline-match-btn"
+                style={{
+                  padding: '0.6rem 1.25rem',
+                  backgroundColor: '#4C5C4C',
+                  color: '#FAF9F6',
+                  border: '1px solid #D4AF37',
+                  borderRadius: '4px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                ⚔️ Start Match
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: Search for Opponent Matchmaking Status */}
+      {showMatchmakingStatus && (
+        <div
+          data-testid="matchmaking-status-modal"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setShowMatchmakingStatus(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#24272A',
+              border: '1px solid rgba(139, 126, 116, 0.3)',
+              borderRadius: '6px',
+              width: '100%',
+              maxWidth: '420px',
+              padding: '1.5rem',
+              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.6)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              gap: '1rem',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                border: '3px solid #D4AF37',
+                borderTopColor: 'transparent',
+                animation: 'spin 1s linear infinite',
+              }}
+            />
+            <div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>
+                Searching for Opponent...
+              </h3>
+              <p style={{ fontSize: '0.8rem', color: '#8B7E74', margin: '0.4rem 0 0 0' }}>
+                Matching your {activeProfile.equippedHand.length}-card loadout with tactical players
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowMatchmakingStatus(false)}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#191B1D',
+                color: '#8B7E74',
+                border: '1px solid rgba(139, 126, 116, 0.3)',
+                borderRadius: '4px',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel Search
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: Private Match */}
+      {showPrivateModal && (
+        <div
+          data-testid="private-match-modal"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setShowPrivateModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#24272A',
+              border: '1px solid rgba(139, 126, 116, 0.3)',
+              borderRadius: '6px',
+              width: '100%',
+              maxWidth: '440px',
+              padding: '1.5rem',
+              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.6)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.25rem',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Private Room</h3>
+              <button
+                type="button"
+                onClick={() => setShowPrivateModal(false)}
+                style={{ background: 'none', border: 'none', color: '#8B7E74', fontSize: '1.2rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  showNotification('Room created: WORMHOLE-CHESS-7');
+                  setShowPrivateModal(false);
+                }}
+                style={{
+                  padding: '0.75rem',
+                  backgroundColor: '#4C5C4C',
+                  color: '#FAF9F6',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  borderRadius: '4px',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                }}
+              >
+                + Create New Private Room
+              </button>
+
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  placeholder="Enter 6-digit room code..."
+                  value={privateCodeInput}
+                  onChange={(e) => setPrivateCodeInput(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: '0.6rem 0.75rem',
+                    backgroundColor: '#191B1D',
+                    border: '1px solid rgba(139, 126, 116, 0.3)',
+                    borderRadius: '4px',
+                    color: '#FAF9F6',
+                    fontSize: '0.8rem',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (privateCodeInput.trim()) {
+                      showNotification(`Joining room ${privateCodeInput.trim()}...`);
+                      setShowPrivateModal(false);
+                    }
+                  }}
+                  style={{
+                    padding: '0.6rem 1rem',
+                    backgroundColor: '#24272A',
+                    color: '#FAF9F6',
+                    border: '1px solid rgba(139, 126, 116, 0.3)',
+                    borderRadius: '4px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Join
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: Async Matches */}
+      {showAsyncModal && (
+        <div
+          data-testid="async-matches-modal"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => setShowAsyncModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: '#24272A',
+              border: '1px solid rgba(139, 126, 116, 0.3)',
+              borderRadius: '6px',
+              width: '100%',
+              maxWidth: '460px',
+              padding: '1.5rem',
+              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.6)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Active Async Matches</h3>
+              <button
+                type="button"
+                onClick={() => setShowAsyncModal(false)}
+                style={{ background: 'none', border: 'none', color: '#8B7E74', fontSize: '1.2rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '1.5rem', textAlign: 'center', color: '#8B7E74', fontSize: '0.85rem' }}>
+              No active asynchronous matches in progress.
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setShowAsyncModal(false)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: '#191B1D',
+                  color: '#FAF9F6',
+                  border: '1px solid rgba(139, 126, 116, 0.3)',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
