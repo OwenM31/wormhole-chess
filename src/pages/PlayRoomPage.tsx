@@ -6,6 +6,7 @@ import { useGameRoom } from '../hooks/useGameRoom';
 import { ChessClock } from '../components/ChessClock';
 import { WormholeLogo } from '../components/WormholeLogo';
 import { DeckChessBoard } from '../components/DeckChessBoard';
+import { TabletopArena } from '../components/TabletopArena';
 import { TacticalHandBar } from '../components/TacticalHandBar';
 import { useDeckChessGame } from '../hooks/useDeckChessGame';
 import { usePlayerProfiles } from '../hooks/usePlayerProfiles';
@@ -198,27 +199,30 @@ export const PlayRoomPage: React.FC = () => {
                 </div>
 
                 {isDeckBuilder ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', width: '100%', padding: '0.5rem' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%', alignItems: 'center', justifyContent: 'center' }}>
-                      <div style={{ width: '100%', maxWidth: '512px' }}>
-                        <DeckChessBoard
-                          fen={deckGame.fen}
-                          orientation={playerColor}
-                          selectedSquare={deckGame.selectedSquare}
-                          legalMoves={deckGame.legalMovesForSelected}
-                          empoweredMoves={deckGame.empoweredMoves}
-                          hoveredCardId={deckGame.hoveredCardId}
-                          selectedCardId={deckGame.selectedCardId}
-                          disambiguationCandidates={deckGame.disambiguationCandidates}
-                          pendingCardMove={deckGame.pendingCardMove}
-                          onSquareClick={deckGame.handleSquareClick}
-                          onConfirmCardMove={deckGame.confirmPendingCardMove}
-                          onCancelCardMove={deckGame.cancelPendingCardMove}
-                          inCheck={deckGame.inCheck}
-                          activeModifiers={deckGame.activeModifiers}
-                        />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center', width: '100%', padding: '0.25rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', width: '100%', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '100%', maxWidth: '820px' }}>
+                        <TabletopArena>
+                          <DeckChessBoard
+                            embedded
+                            fen={deckGame.fen}
+                            orientation={playerColor}
+                            selectedSquare={deckGame.selectedSquare}
+                            legalMoves={deckGame.legalMovesForSelected}
+                            empoweredMoves={deckGame.empoweredMoves}
+                            hoveredCardId={deckGame.hoveredCardId}
+                            selectedCardId={deckGame.selectedCardId}
+                            disambiguationCandidates={deckGame.disambiguationCandidates}
+                            pendingCardMove={deckGame.pendingCardMove}
+                            onSquareClick={deckGame.handleSquareClick}
+                            onConfirmCardMove={deckGame.confirmPendingCardMove}
+                            onCancelCardMove={deckGame.cancelPendingCardMove}
+                            inCheck={deckGame.inCheck}
+                            activeModifiers={deckGame.activeModifiers}
+                          />
+                        </TabletopArena>
                       </div>
-                      <div style={{ width: '100%', maxWidth: '512px' }}>
+                      <div style={{ width: '100%', maxWidth: '820px' }}>
                         <TacticalHandBar
                           hand={playerColor === 'w' ? deckGame.whiteHand : deckGame.blackHand}
                           initialDeck={activeProfile.equippedHand}

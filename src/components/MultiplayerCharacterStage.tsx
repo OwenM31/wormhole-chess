@@ -376,7 +376,10 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
-          background: 'linear-gradient(180deg, #24272A 0%, #191B1D 100%)',
+          backgroundImage:
+            'linear-gradient(180deg, rgba(36, 39, 42, 0.82) 0%, rgba(25, 27, 29, 0.94) 100%), url(/assets/backgrounds/village-backdrop.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 50%',
         }}
       >
         <svg
@@ -385,7 +388,7 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
             inset: 0,
             width: '100%',
             height: '100%',
-            opacity: 0.35,
+            opacity: 0.25,
             pointerEvents: 'none',
           }}
           viewBox="0 0 1000 200"
@@ -423,9 +426,19 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: '0 0 16px rgba(212, 175, 55, 0.25)',
+              overflow: 'hidden',
             }}
           >
-            <span style={{ fontSize: '2.5rem', color: '#D4AF37' }}>♟</span>
+            <img
+              src="/assets/characters/wooden-pawn-portrait.png"
+              alt="Hero Portrait"
+              data-testid="stage-hero-portrait"
+              style={{
+                width: '92%',
+                height: '92%',
+                objectFit: 'contain',
+              }}
+            />
           </div>
 
           <div>

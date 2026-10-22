@@ -77,7 +77,32 @@ export const DeckBuilderMainMenu: React.FC<DeckBuilderMainMenuProps> = ({
         }
       `}</style>
 
-      {/* 1. Fullscreen Atmospheric Castle Causeway & Perspective Floor SVG */}
+      {/* Fullscreen Village Backdrop Art with Atmospheric Vignette */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundImage: 'url(/assets/backgrounds/village-backdrop.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 45%',
+          opacity: 0.38,
+          filter: 'saturate(0.9) brightness(0.65)',
+          pointerEvents: 'none',
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'radial-gradient(circle at 50% 40%, rgba(25, 27, 29, 0.4) 0%, rgba(25, 27, 29, 0.85) 70%, #191B1D 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* 1. Perspective Causeway SVG Accent Over Art */}
       <svg
         aria-hidden="true"
         style={{
@@ -86,7 +111,7 @@ export const DeckBuilderMainMenu: React.FC<DeckBuilderMainMenuProps> = ({
           width: '100%',
           height: '100%',
           pointerEvents: 'none',
-          opacity: 0.85,
+          opacity: 0.45,
         }}
         viewBox="0 0 1440 900"
         preserveAspectRatio="xMidYMid slice"
@@ -496,81 +521,56 @@ export const DeckBuilderMainMenu: React.FC<DeckBuilderMainMenuProps> = ({
               overflow: 'hidden',
             }}
           >
-            {/* Living Pawn Pedestal SVG */}
-            <svg
-              style={{ width: '100%', height: '100%' }}
-              viewBox="0 0 400 300"
-              preserveAspectRatio="xMidYMid meet"
-            >
-              <defs>
-                <radialGradient id="pedestalSpot" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#4C5C4C" stopOpacity="0.45" />
-                  <stop offset="60%" stopColor="#3C493F" stopOpacity="0.15" />
-                  <stop offset="100%" stopColor="#191B1D" stopOpacity="0" />
-                </radialGradient>
-                <linearGradient id="pawnWood" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#A88B72" />
-                  <stop offset="50%" stopColor="#7E634E" />
-                  <stop offset="100%" stopColor="#4A3B2C" />
-                </linearGradient>
-                <linearGradient id="pedestalTier" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#3A3E42" />
-                  <stop offset="100%" stopColor="#1F2224" />
-                </linearGradient>
-              </defs>
+            {/* Ambient Spotlight */}
+            <div
+              style={{
+                position: 'absolute',
+                width: '70%',
+                height: '45%',
+                bottom: '10%',
+                borderRadius: '50%',
+                background:
+                  'radial-gradient(ellipse at center, rgba(76, 92, 76, 0.45) 0%, rgba(212, 175, 55, 0.15) 50%, transparent 80%)',
+                filter: 'blur(12px)',
+                pointerEvents: 'none',
+              }}
+            />
 
-              {/* Ambient Spotlight */}
-              <ellipse cx="200" cy="220" rx="140" ry="60" fill="url(#pedestalSpot)" />
+            {/* Living Wooden Hero Pawn Artwork */}
+            <img
+              src="/assets/characters/wooden-pawn.png"
+              alt={activeProfile.name}
+              data-testid="hero-character-art"
+              style={{
+                position: 'relative',
+                zIndex: 2,
+                height: '86%',
+                maxHeight: '260px',
+                width: 'auto',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 12px 24px rgba(0, 0, 0, 0.65))',
+                transform: 'translateY(4%)',
+              }}
+            />
 
-              {/* Pedestal Base Tiers */}
-              <ellipse cx="200" cy="245" rx="90" ry="24" fill="#0E1012" />
-              <ellipse cx="200" cy="240" rx="85" ry="20" fill="url(#pedestalTier)" stroke="#8B7E74" strokeWidth="1" strokeOpacity="0.4" />
-              <ellipse cx="200" cy="230" rx="65" ry="16" fill="#282C30" stroke="#8B7E74" strokeWidth="1" strokeOpacity="0.5" />
-              <ellipse cx="200" cy="222" rx="48" ry="12" fill="#D4AF37" fillOpacity="0.3" stroke="#D4AF37" strokeWidth="1" />
-
-              {/* Living Pawn Silhouette */}
-              {/* Plinth */}
-              <ellipse cx="200" cy="216" rx="28" ry="8" fill="url(#pawnWood)" stroke="#2C2016" strokeWidth="1" />
-              {/* Lower Body Flare */}
-              <path
-                d="M 178,214 C 182,192 188,172 191,150 L 209,150 C 212,172 218,192 222,214 Z"
-                fill="url(#pawnWood)"
-                stroke="#2C2016"
-                strokeWidth="1"
+            {/* Playtest Mode Golden Halo */}
+            {activeProfile.playtestAll36 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '12%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '64px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  border: '2px dashed #D4AF37',
+                  boxShadow: '0 0 16px rgba(212, 175, 55, 0.6)',
+                  zIndex: 3,
+                  pointerEvents: 'none',
+                }}
               />
-              {/* Collar Ring */}
-              <ellipse cx="200" cy="148" rx="18" ry="5" fill="#C49B72" stroke="#2C2016" strokeWidth="1" />
-              {/* Neck */}
-              <path d="M 193,148 L 194,136 L 206,136 L 207,148 Z" fill="url(#pawnWood)" />
-              {/* Head / Spherical Finial */}
-              <circle cx="200" cy="116" r="20" fill="url(#pawnWood)" stroke="#2C2016" strokeWidth="1.2" />
-              {/* Head Specular Highlight */}
-              <circle cx="194" cy="110" r="5" fill="#FAF9F6" fillOpacity="0.25" />
-
-              {/* Headgear cosmetic if equipped */}
-              {activeProfile.gear.headgear && activeProfile.gear.headgear !== 'None' && (
-                <path
-                  d="M 182,106 Q 200,90 218,106 L 214,100 Q 200,82 186,100 Z"
-                  fill="#D4AF37"
-                  stroke="#141618"
-                  strokeWidth="1"
-                />
-              )}
-
-              {/* Playtest Mode Halo */}
-              {activeProfile.playtestAll36 && (
-                <ellipse
-                  cx="200"
-                  cy="90"
-                  rx="26"
-                  ry="7"
-                  fill="none"
-                  stroke="#D4AF37"
-                  strokeWidth="1.5"
-                  strokeDasharray="3 3"
-                />
-              )}
-            </svg>
+            )}
 
             {/* Playtest Active Badge Overlay */}
             {activeProfile.playtestAll36 && (
@@ -588,6 +588,7 @@ export const DeckBuilderMainMenu: React.FC<DeckBuilderMainMenuProps> = ({
                   border: '1px solid #D4AF37',
                   color: '#D4AF37',
                   borderRadius: '3px',
+                  zIndex: 4,
                 }}
               >
                 ⚡ 36 CARDS UNLOCKED

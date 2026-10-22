@@ -20,6 +20,7 @@ export interface DeckChessBoardProps {
   validTargetSquares?: string[];
   activeModifiers?: BoardModifier[];
   inCheck?: boolean;
+  embedded?: boolean;
 }
 
 const CARD_MAP = new Map(CANONICAL_36_CARDS.map((c) => [c.id, c]));
@@ -165,6 +166,7 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
   validTargetSquares = [],
   activeModifiers = [],
   inCheck = false,
+  embedded = false,
 }) => {
   // If pendingCardMove exists, render the resulting board state (previewFen)!
   const effectiveFen = pendingCardMove?.previewFen || fen;
@@ -223,12 +225,22 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
     : [];
 
   return (
-    <div className="relative flex flex-col select-none p-2 sm:p-2.5 bg-[#191B1D] rounded-md border border-[rgba(139,126,116,0.25)] shadow-2xl backdrop-blur-md w-full max-w-[512px] gap-2">
+    <div
+      className={
+        embedded
+          ? 'relative flex flex-col select-none w-full h-full'
+          : 'relative flex flex-col select-none p-2 sm:p-2.5 bg-[#191B1D] rounded-md border border-[rgba(139,126,116,0.25)] shadow-2xl backdrop-blur-md w-full max-w-[512px] gap-2'
+      }
+    >
       {/* Disambiguation Instruction Banner */}
       {disambiguationCandidates && disambiguationCandidates.length > 0 && (
         <div
           data-testid="disambiguation-banner"
-          className="w-full py-1.5 px-3 bg-[#24272A] border border-[#D4AF37] rounded flex items-center justify-between text-xs text-[#FAF9F6] animate-pulse"
+          className={
+            embedded
+              ? 'absolute top-2 inset-x-2 z-30 py-1.5 px-3 bg-[#24272A]/95 border border-[#D4AF37] rounded flex items-center justify-between text-xs text-[#FAF9F6] shadow-xl backdrop-blur-sm animate-pulse'
+              : 'w-full py-1.5 px-3 bg-[#24272A] border border-[#D4AF37] rounded flex items-center justify-between text-xs text-[#FAF9F6] animate-pulse'
+          }
         >
           <span className="font-bold text-[#D4AF37]">
             🎯 {disambiguationCandidates[0]?.disambiguationPrompt || 'Select which participating square to target'}
@@ -246,7 +258,11 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
       {/* 8x8 Chess Grid */}
       <div
         data-testid="chessboard-grid"
-        className="grid grid-cols-8 grid-rows-8 w-full aspect-square rounded overflow-hidden border border-[rgba(139,126,116,0.2)] shadow-inner relative"
+        className={
+          embedded
+            ? 'grid grid-cols-8 grid-rows-8 w-full h-full aspect-square rounded-sm overflow-hidden border border-[rgba(44,32,22,0.8)] shadow-inner relative'
+            : 'grid grid-cols-8 grid-rows-8 w-full aspect-square rounded overflow-hidden border border-[rgba(139,126,116,0.2)] shadow-inner relative'
+        }
       >
         {displayRanks.map((rankStr, rankDisplayIndex) => {
           return displayFiles.map((fileStr, fileDisplayIndex) => {
@@ -259,7 +275,9 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
 
             // Checkerboard coloring (Smokey Taupe #8B7E74 vs Loden Green Dark #3C493F)
             const isLight = (fileIndex + rankActual) % 2 !== 0;
-            const squareBg = isLight ? '#8B7E74' : '#3C493F';
+            const squareBg = embedded
+              ? (isLight ? 'rgba(139, 126, 116, 0.88)' : 'rgba(60, 73, 63, 0.92)')
+              : (isLight ? '#8B7E74' : '#3C493F');
 
             // Active highlights
             const isSelected = selectedSquare === squareName;
@@ -415,7 +433,11 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
       {pendingCardMove && (
         <div
           data-testid="card-confirm-bar"
-          className="relative z-30 w-full p-2.5 bg-[#24272A] border-2 border-[#D4AF37] rounded flex items-center justify-between gap-3 shadow-2xl animate-fade-in"
+          className={
+            embedded
+              ? 'absolute bottom-2 inset-x-2 z-30 p-2.5 bg-[#1C1E20]/95 border-2 border-[#D4AF37] rounded-md flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-sm animate-fade-in'
+              : 'relative z-30 w-full p-2.5 bg-[#24272A] border-2 border-[#D4AF37] rounded flex items-center justify-between gap-3 shadow-2xl animate-fade-in'
+          }
         >
           {/* Left: Card Badge & Summary */}
           <div className="flex items-center gap-2 min-w-0">

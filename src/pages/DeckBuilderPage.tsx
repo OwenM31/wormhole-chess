@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '../components/Navigation';
 import { DeckChessBoard } from '../components/DeckChessBoard';
+import { TabletopArena } from '../components/TabletopArena';
 import { TacticalHandBar } from '../components/TacticalHandBar';
 import { DeckBuilderView } from '../components/DeckBuilderView';
 import { DeckBuilderMainMenu } from '../components/DeckBuilderMainMenu';
@@ -239,68 +240,71 @@ export const DeckBuilderPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Full 512x512 Square Chessboard Container */}
-              <div className="relative w-full max-w-[512px] flex flex-col items-center">
-                <DeckChessBoard
-                  fen={game.fen}
-                  orientation={playerColor}
-                  selectedSquare={game.selectedSquare}
-                  legalMoves={game.legalMovesForSelected}
-                  empoweredMoves={game.empoweredMoves}
-                  hoveredCardId={game.hoveredCardId}
-                  selectedCardId={game.selectedCardId}
-                  disambiguationCandidates={game.disambiguationCandidates}
-                  pendingCardMove={game.pendingCardMove}
-                  onSquareClick={game.handleSquareClick}
-                  onConfirmCardMove={game.confirmPendingCardMove}
-                  onCancelCardMove={game.cancelPendingCardMove}
-                  validAnchorSquares={game.validAnchorSquares}
-                  validTargetSquares={game.validTargetSquares}
-                  activeModifiers={game.activeModifiers}
-                  inCheck={game.inCheck}
-                />
+              {/* Tavern Tabletop Stage with Inscribed Chessboard */}
+              <div className="relative w-full max-w-[820px] flex flex-col items-center">
+                <TabletopArena>
+                  <DeckChessBoard
+                    embedded
+                    fen={game.fen}
+                    orientation={playerColor}
+                    selectedSquare={game.selectedSquare}
+                    legalMoves={game.legalMovesForSelected}
+                    empoweredMoves={game.empoweredMoves}
+                    hoveredCardId={game.hoveredCardId}
+                    selectedCardId={game.selectedCardId}
+                    disambiguationCandidates={game.disambiguationCandidates}
+                    pendingCardMove={game.pendingCardMove}
+                    onSquareClick={game.handleSquareClick}
+                    onConfirmCardMove={game.confirmPendingCardMove}
+                    onCancelCardMove={game.cancelPendingCardMove}
+                    validAnchorSquares={game.validAnchorSquares}
+                    validTargetSquares={game.validTargetSquares}
+                    activeModifiers={game.activeModifiers}
+                    inCheck={game.inCheck}
+                  />
 
-                {/* Game Over Modal Overlay */}
-                {game.isGameOver && (
-                  <div className="absolute inset-0 bg-[#141618]/90 backdrop-blur-md rounded-md flex flex-col items-center justify-center p-6 text-center z-30 border border-[#D4AF37]/50 shadow-2xl">
-                    <span className="text-4xl mb-2">
-                      {game.winner === 'draw'
-                        ? '🤝'
-                        : game.winner === playerColor
-                        ? '🏆'
-                        : '💀'}
-                    </span>
-                    <h2
-                      className={`text-xl font-bold tracking-tight ${
-                        game.winner === playerColor ? 'text-[#D4AF37]' : 'text-[#FAF9F6]'
-                      }`}
-                    >
-                      {game.winner === 'draw'
-                        ? 'Draw'
-                        : game.winner === playerColor
-                        ? 'Victory!'
-                        : 'Defeat'}
-                    </h2>
-                    <p className="text-xs text-[#8B7E74] mt-1 capitalize font-mono">
-                      Reason: {game.finishReason ? game.finishReason.replace('_', ' ') : 'Match Concluded'}
-                    </p>
+                  {/* Game Over Modal Overlay */}
+                  {game.isGameOver && (
+                    <div className="absolute inset-0 bg-[#141618]/90 backdrop-blur-md rounded-md flex flex-col items-center justify-center p-6 text-center z-40 border border-[#D4AF37]/50 shadow-2xl">
+                      <span className="text-4xl mb-2">
+                        {game.winner === 'draw'
+                          ? '🤝'
+                          : game.winner === playerColor
+                          ? '🏆'
+                          : '💀'}
+                      </span>
+                      <h2
+                        className={`text-xl font-bold tracking-tight ${
+                          game.winner === playerColor ? 'text-[#D4AF37]' : 'text-[#FAF9F6]'
+                        }`}
+                      >
+                        {game.winner === 'draw'
+                          ? 'Draw'
+                          : game.winner === playerColor
+                          ? 'Victory!'
+                          : 'Defeat'}
+                      </h2>
+                      <p className="text-xs text-[#8B7E74] mt-1 capitalize font-mono">
+                        Reason: {game.finishReason ? game.finishReason.replace('_', ' ') : 'Match Concluded'}
+                      </p>
 
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={() => handleStartNewMatch(playerColor, aiDifficulty)}
-                        className="px-4 py-2 bg-[#4C5C4C] hover:bg-[#5C6C5C] text-[#FAF9F6] text-xs font-bold rounded transition-colors shadow cursor-pointer"
-                      >
-                        Rematch
-                      </button>
-                      <button
-                        onClick={() => setScreen('multiplayer')}
-                        className="px-4 py-2 bg-[#24272A] hover:bg-[#282B2E] text-[#D4AF37] border border-[#D4AF37]/40 text-xs font-semibold rounded transition-colors cursor-pointer"
-                      >
-                        Back to Stage
-                      </button>
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          onClick={() => handleStartNewMatch(playerColor, aiDifficulty)}
+                          className="px-4 py-2 bg-[#4C5C4C] hover:bg-[#5C6C5C] text-[#FAF9F6] text-xs font-bold rounded transition-colors shadow cursor-pointer"
+                        >
+                          Rematch
+                        </button>
+                        <button
+                          onClick={() => setScreen('multiplayer')}
+                          className="px-4 py-2 bg-[#24272A] hover:bg-[#282B2E] text-[#D4AF37] border border-[#D4AF37]/40 text-xs font-semibold rounded transition-colors cursor-pointer"
+                        >
+                          Back to Stage
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </TabletopArena>
               </div>
 
               {/* Player Status Bar (36px) */}
