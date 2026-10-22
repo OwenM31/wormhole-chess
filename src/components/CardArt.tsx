@@ -34,7 +34,7 @@ export const CardArt: React.FC<CardArtProps> = ({
   if (!assetSrc || hasError) {
     return (
       <div
-        className={`w-full h-full flex items-center justify-center bg-[#141618] rounded select-none ${className}`}
+        className={`w-full h-full flex items-center justify-center bg-transparent rounded select-none ${className}`}
         title={cardName || anchor}
       >
         <span
@@ -48,7 +48,7 @@ export const CardArt: React.FC<CardArtProps> = ({
   }
 
   return (
-    <div className={`w-full h-full flex items-center justify-center overflow-hidden bg-[#141618] rounded ${className}`}>
+    <div className={`w-full h-full flex items-center justify-center overflow-hidden bg-transparent rounded ${className}`}>
       <img
         src={assetSrc}
         alt={alt || cardName || `${anchor} card illustration`}

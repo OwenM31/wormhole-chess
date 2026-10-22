@@ -8,6 +8,19 @@ if (!fs.existsSync(SCREENSHOT_DIR)) {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 }
 
+async function safeScreenshot(page, destPath) {
+  const buf = await page.screenshot();
+  for (let i = 0; i < 5; i++) {
+    try {
+      fs.writeFileSync(destPath, buf);
+      return;
+    } catch (e) {
+      await new Promise((r) => setTimeout(r, 400));
+    }
+  }
+  fs.writeFileSync(destPath, buf);
+}
+
 async function verifyPhase3Playtest() {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(' PHASE 3 PLAYTEST PROTOYPE & MULTIPLAYER VERIFICATION');
@@ -88,7 +101,7 @@ async function verifyPhase3Playtest() {
 
     // Capture Main Menu Screenshot
     const menuShotPath = path.join(SCREENSHOT_DIR, 'phase3_main_menu_hub.png');
-    await page.screenshot({ path: menuShotPath });
+    await safeScreenshot(page, menuShotPath);
     console.log(`   ✓ Captured visual proof: ${menuShotPath}`);
 
     // -------------------------------------------------------------------------
@@ -147,7 +160,7 @@ async function verifyPhase3Playtest() {
 
     // Capture Multiplayer Stage Screenshot
     const stageShotPath = path.join(SCREENSHOT_DIR, 'phase3_multiplayer_stage.png');
-    await page.screenshot({ path: stageShotPath });
+    await safeScreenshot(page, stageShotPath);
     console.log(`   ✓ Captured visual proof: ${stageShotPath}`);
 
     // -------------------------------------------------------------------------
@@ -254,7 +267,7 @@ async function verifyPhase3Playtest() {
 
     // Capture Arena Screenshot
     const arenaShotPath = path.join(SCREENSHOT_DIR, 'phase3_arena_card_confirmation.png');
-    await page.screenshot({ path: arenaShotPath });
+    await safeScreenshot(page, arenaShotPath);
     console.log(`   ✓ Captured visual proof: ${arenaShotPath}`);
 
     // Verify 0 browser console errors

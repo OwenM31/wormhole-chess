@@ -25,13 +25,122 @@ export interface PlayingCardProps {
   dataTestId?: string;
 }
 
+export interface PieceColorPalette {
+  borderGrad: string;
+  cardBg: string;
+  headerBg: string;
+  headerBorder: string;
+  artBg: string;
+  artBorder: string;
+  condBg: string;
+  condBorder: string;
+  rulesBg: string;
+  rulesBorder: string;
+  textColor: string;
+  accentColor: string;
+  codeBg: string;
+}
+
+export const PIECE_PALETTES: Record<PieceAnchor, PieceColorPalette> = {
+  pawn: {
+    borderGrad: 'linear-gradient(135deg, #9CA3AF 0%, #4B5563 100%)',
+    cardBg: 'linear-gradient(180deg, #F3F4F6 0%, #E5E7EB 100%)',
+    headerBg: '#E5E7EB',
+    headerBorder: '#D1D5DB',
+    artBg: 'radial-gradient(circle at 50% 45%, #3B424C 0%, #1F2429 100%)',
+    artBorder: 'rgba(75, 85, 99, 0.45)',
+    condBg: '#E5E7EB',
+    condBorder: '#6B7280',
+    rulesBg: '#FFFFFF',
+    rulesBorder: '#D1D5DB',
+    textColor: '#1F2937',
+    accentColor: '#4B5563',
+    codeBg: 'rgba(255, 255, 255, 0.9)',
+  },
+  knight: {
+    borderGrad: 'linear-gradient(135deg, #4ADE80 0%, #15803D 100%)',
+    cardBg: 'linear-gradient(180deg, #F0FDF4 0%, #DCFCE7 100%)',
+    headerBg: '#DCFCE7',
+    headerBorder: '#BBF7D0',
+    artBg: 'radial-gradient(circle at 50% 45%, #244B30 0%, #122C1B 100%)',
+    artBorder: 'rgba(22, 163, 74, 0.45)',
+    condBg: '#DCFCE7',
+    condBorder: '#16A34A',
+    rulesBg: '#FFFFFF',
+    rulesBorder: '#BBF7D0',
+    textColor: '#14532D',
+    accentColor: '#16A34A',
+    codeBg: 'rgba(255, 255, 255, 0.9)',
+  },
+  bishop: {
+    borderGrad: 'linear-gradient(135deg, #60A5FA 0%, #1D4ED8 100%)',
+    cardBg: 'linear-gradient(180deg, #EFF6FF 0%, #DBEAFE 100%)',
+    headerBg: '#DBEAFE',
+    headerBorder: '#BFDBFE',
+    artBg: 'radial-gradient(circle at 50% 45%, #24416B 0%, #122440 100%)',
+    artBorder: 'rgba(37, 99, 235, 0.45)',
+    condBg: '#DBEAFE',
+    condBorder: '#2563EB',
+    rulesBg: '#FFFFFF',
+    rulesBorder: '#BFDBFE',
+    textColor: '#1E3A8A',
+    accentColor: '#2563EB',
+    codeBg: 'rgba(255, 255, 255, 0.9)',
+  },
+  rook: {
+    borderGrad: 'linear-gradient(135deg, #C084FC 0%, #7E22CE 100%)',
+    cardBg: 'linear-gradient(180deg, #FAF5FF 0%, #F3E8FF 100%)',
+    headerBg: '#F3E8FF',
+    headerBorder: '#E9D5FF',
+    artBg: 'radial-gradient(circle at 50% 45%, #462568 0%, #251239 100%)',
+    artBorder: 'rgba(147, 51, 234, 0.45)',
+    condBg: '#F3E8FF',
+    condBorder: '#9333EA',
+    rulesBg: '#FFFFFF',
+    rulesBorder: '#E9D5FF',
+    textColor: '#3B0764',
+    accentColor: '#9333EA',
+    codeBg: 'rgba(255, 255, 255, 0.9)',
+  },
+  queen: {
+    borderGrad: 'linear-gradient(135deg, #F87171 0%, #B91C1C 100%)',
+    cardBg: 'linear-gradient(180deg, #FEF2F2 0%, #FEE2E2 100%)',
+    headerBg: '#FEE2E2',
+    headerBorder: '#FECACA',
+    artBg: 'radial-gradient(circle at 50% 45%, #572528 0%, #301012 100%)',
+    artBorder: 'rgba(220, 38, 38, 0.45)',
+    condBg: '#FEE2E2',
+    condBorder: '#DC2626',
+    rulesBg: '#FFFFFF',
+    rulesBorder: '#FECACA',
+    textColor: '#450A0A',
+    accentColor: '#DC2626',
+    codeBg: 'rgba(255, 255, 255, 0.9)',
+  },
+  king: {
+    borderGrad: 'linear-gradient(135deg, #FACC15 0%, #A16207 100%)',
+    cardBg: 'linear-gradient(180deg, #FEFCE8 0%, #FEF9C3 100%)',
+    headerBg: '#FEF9C3',
+    headerBorder: '#FEF08A',
+    artBg: 'radial-gradient(circle at 50% 45%, #52401C 0%, #2E220C 100%)',
+    artBorder: 'rgba(202, 138, 4, 0.45)',
+    condBg: '#FEF9C3',
+    condBorder: '#CA8A04',
+    rulesBg: '#FFFFFF',
+    rulesBorder: '#FEF08A',
+    textColor: '#422006',
+    accentColor: '#CA8A04',
+    codeBg: 'rgba(255, 255, 255, 0.9)',
+  },
+};
+
 const PIECE_FRAME_GRADIENTS: Record<PieceAnchor, string> = {
-  pawn: 'linear-gradient(135deg, #9CA3AF 0%, #5B626A 100%)',
-  knight: 'linear-gradient(135deg, #4ADE80 0%, #1F7A34 100%)',
-  bishop: 'linear-gradient(135deg, #60A5FA 0%, #1D4ED8 100%)',
-  rook: 'linear-gradient(135deg, #C084FC 0%, #6B21A8 100%)',
-  queen: 'linear-gradient(135deg, #F87171 0%, #B91C1C 100%)',
-  king: 'linear-gradient(135deg, #F5D061 0%, #A67C14 100%)',
+  pawn: PIECE_PALETTES.pawn.borderGrad,
+  knight: PIECE_PALETTES.knight.borderGrad,
+  bishop: PIECE_PALETTES.bishop.borderGrad,
+  rook: PIECE_PALETTES.rook.borderGrad,
+  queen: PIECE_PALETTES.queen.borderGrad,
+  king: PIECE_PALETTES.king.borderGrad,
 };
 
 /**
@@ -82,12 +191,12 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
   onMouseLeave,
   dataTestId,
 }) => {
+  const pal = PIECE_PALETTES[card.anchor] || PIECE_PALETTES.pawn;
   const theme =
     card.visualTheme ||
     PIECE_COLOR_THEMES[card.anchor] ||
     PIECE_COLOR_THEMES.pawn;
-  const frameGradient =
-    PIECE_FRAME_GRADIENTS[card.anchor] || PIECE_FRAME_GRADIENTS.pawn;
+  const frameGradient = pal.borderGrad;
 
   // ==========================================================================
   // 1. EQUIPPED MINIATURE 5:7 PLAYING CARD (For 8-Slot Equipped Hand Rack)
@@ -105,7 +214,7 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35)',
           cursor: onClick ? 'pointer' : 'default',
           transition: 'transform 0.15s ease, box-shadow 0.15s ease',
         }}
@@ -119,9 +228,9 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
         <div
           style={{
             flex: 1,
-            background: 'linear-gradient(180deg, #24272A 0%, #191B1D 100%)',
+            background: pal.cardBg,
             borderRadius: '5px',
-            border: '1px solid rgba(0, 0, 0, 0.65)',
+            border: '1px solid rgba(0, 0, 0, 0.18)',
             padding: '4px',
             display: 'flex',
             flexDirection: 'column',
@@ -135,17 +244,17 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: '#141618',
+              backgroundColor: pal.headerBg,
               borderRadius: '3px',
               padding: '2px 5px',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              border: `1px solid ${pal.headerBorder}`,
             }}
           >
             <span
               style={{
                 fontSize: '0.68rem',
                 fontWeight: 800,
-                color: theme.hex,
+                color: pal.accentColor,
                 fontFamily: 'ui-monospace, monospace',
                 display: 'flex',
                 alignItems: 'center',
@@ -163,7 +272,7 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#8B7E74',
+                  color: pal.textColor,
                   cursor: 'pointer',
                   fontSize: '0.68rem',
                   fontWeight: 700,
@@ -176,13 +285,14 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
             )}
           </div>
 
-          {/* 5x5 Isometric Board Art Window */}
+          {/* 5x5 Isometric Board Art Window (Duller shade of border color) */}
           <div
             style={{
               flex: 1,
-              background: 'radial-gradient(circle at 50% 45%, #262B30 0%, #121416 100%)',
+              background: pal.artBg,
               borderRadius: '3px',
-              border: '1px solid rgba(212, 175, 55, 0.28)',
+              border: `1px solid ${pal.artBorder}`,
+              boxShadow: 'inset 0 1px 4px rgba(0, 0, 0, 0.5)',
               overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
@@ -196,15 +306,15 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
           {/* Bottom Nameplate (Zero Ellipsis) */}
           <div
             style={{
-              backgroundColor: '#141618',
+              backgroundColor: pal.rulesBg,
               borderRadius: '3px',
               padding: '3px 4px',
               textAlign: 'center',
               fontSize: '0.66rem',
               fontWeight: 700,
-              color: '#FAF9F6',
+              color: pal.textColor,
               lineHeight: 1.15,
-              border: '1px solid rgba(139, 126, 116, 0.18)',
+              border: `1px solid ${pal.rulesBorder}`,
             }}
           >
             {card.name}
@@ -230,12 +340,12 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
         onMouseLeave={onMouseLeave}
         title={`${card.code ? `[${card.code}] ` : ''}${card.name}\nIF: ${card.conditionText}\nEFF: ${card.effectText || card.description}`}
         style={{
-          background: isAvailable || isSelected ? frameGradient : '#24272A',
+          background: isAvailable || isSelected ? pal.borderGrad : '#24272A',
           boxShadow: goldRing
             ? '0 14px 28px rgba(0,0,0,0.85), 0 0 14px rgba(212,175,55,0.75)'
             : isExpanded
             ? '0 12px 24px rgba(0,0,0,0.8), 0 0 10px rgba(212,175,55,0.4)'
-            : '0 6px 14px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.22)',
+            : '0 6px 14px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3)',
           outline: goldRing ? '2px solid #D4AF37' : 'none',
         }}
         className={`group relative tcg-card w-[92px] h-[142px] sm:w-[96px] sm:h-[148px] rounded-[8px] p-[4px] flex flex-col transition-all duration-200 select-none ${overlapClass} ${
@@ -252,15 +362,30 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
             : `${fanRotationClass} opacity-25 cursor-not-allowed`
         }`}
       >
-        <div className="flex-1 bg-gradient-to-b from-[#24272A] to-[#191B1D] rounded-[5px] border border-black/70 p-[4px] flex flex-col justify-between gap-[3px] overflow-hidden">
+        <div
+          style={{
+            background: pal.cardBg,
+            border: '1px solid rgba(0, 0, 0, 0.18)',
+          }}
+          className="flex-1 rounded-[5px] p-[4px] flex flex-col justify-between gap-[3px] overflow-hidden"
+        >
           {/* Header Bar: Full Card Name + Code Badge (Zero Ellipsis) */}
-          <div className="w-full flex items-center justify-between gap-1 bg-[#141618] border border-white/10 rounded-[3px] px-1 py-0.5">
-            <span className="text-[7.5px] font-extrabold text-[#FAF9F6] leading-tight">
+          <div
+            style={{
+              backgroundColor: pal.headerBg,
+              border: `1px solid ${pal.headerBorder}`,
+            }}
+            className="w-full flex items-center justify-between gap-1 rounded-[3px] px-1 py-0.5"
+          >
+            <span
+              style={{ color: pal.textColor }}
+              className="text-[7.5px] font-extrabold leading-tight"
+            >
               {card.name}
             </span>
             {card.code && (
               <span
-                style={{ color: theme.hex }}
+                style={{ color: pal.accentColor }}
                 className="text-[7px] font-mono font-extrabold flex-shrink-0 leading-none"
               >
                 {card.code}
@@ -268,26 +393,44 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
             )}
           </div>
 
-          {/* 5x5 Isometric Board Art Window */}
+          {/* 5x5 Isometric Board Art Window (Duller shade of border color) */}
           <div
             data-testid="tcg-mini-board"
-            className="w-full h-[50px] rounded-[3px] bg-[#121416] border border-[#D4AF37]/30 flex items-center justify-center overflow-hidden flex-shrink-0"
+            style={{
+              background: pal.artBg,
+              border: `1px solid ${pal.artBorder}`,
+              boxShadow: 'inset 0 1px 4px rgba(0, 0, 0, 0.5)',
+            }}
+            className="w-full h-[50px] rounded-[3px] flex items-center justify-center overflow-hidden flex-shrink-0"
           >
             <CardArt anchor={card.anchor} artId={card.artId} cardName={card.name} />
           </div>
 
           {/* Condition Strip */}
           <div
-            style={{ borderLeft: `2px solid ${theme.hex}` }}
-            className="w-full bg-[#2C3034] rounded-[2px] px-1 py-[1.5px] text-[6px] font-bold text-[#FAF9F6] leading-[1.15]"
+            style={{
+              backgroundColor: pal.condBg,
+              borderLeft: `2px solid ${pal.condBorder}`,
+              color: pal.textColor,
+            }}
+            className="w-full rounded-[2px] px-1 py-[1.5px] text-[6px] font-bold leading-[1.15]"
           >
-            <span style={{ color: theme.hex }}>IF: </span>
+            <span style={{ color: pal.accentColor, fontWeight: 900 }}>IF: </span>
             {getConciseCondition(card, true)}
           </div>
 
           {/* Rules Box */}
-          <div className="flex-1 bg-[#141618] border border-[#8B7E74]/20 rounded-[3px] px-1 py-0.5 flex items-center">
-            <p className="text-[6.2px] text-[#E6E4E0] leading-[1.16]">
+          <div
+            style={{
+              backgroundColor: pal.rulesBg,
+              border: `1px solid ${pal.rulesBorder}`,
+            }}
+            className="flex-1 rounded-[3px] px-1 py-0.5 flex items-center"
+          >
+            <p
+              style={{ color: pal.textColor }}
+              className="text-[6.2px] font-semibold leading-[1.16]"
+            >
               {getConciseEffect(card, true)}
             </p>
           </div>
@@ -324,32 +467,33 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
           position: 'relative',
           cursor: isFullyEquipped ? 'default' : 'pointer',
           boxShadow:
-            '0 10px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25)',
+            '0 10px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35)',
           transition: 'transform 0.15s ease, box-shadow 0.15s ease',
         }}
         onMouseEnter={(e) => {
           if (!isFullyEquipped) {
             e.currentTarget.style.transform = 'translateY(-3px)';
-            e.currentTarget.style.boxShadow = `0 14px 28px rgba(0, 0, 0, 0.7), 0 0 12px ${theme.hex}55, inset 0 1px 0 rgba(255, 255, 255, 0.3)`;
+            e.currentTarget.style.boxShadow = `0 14px 28px rgba(0, 0, 0, 0.7), 0 0 12px ${pal.accentColor}55, inset 0 1px 0 rgba(255, 255, 255, 0.4)`;
           }
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.boxShadow =
-            '0 10px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25)';
+            '0 10px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.35)';
         }}
       >
-        {/* Inner Dark Bevel Surface */}
+        {/* Inner Card Surface */}
         <div
           style={{
             flex: 1,
-            background: 'linear-gradient(180deg, #24272A 0%, #191B1D 100%)',
+            background: pal.cardBg,
             borderRadius: '6px',
-            border: '1px solid rgba(0, 0, 0, 0.65)',
+            border: '1px solid rgba(0, 0, 0, 0.18)',
             padding: '7px',
             display: 'flex',
             flexDirection: 'column',
             gap: '6px',
+            boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.7)',
           }}
         >
           {/* Top Header Bar: Piece Glyph + Full Name + Playbook Code */}
@@ -358,8 +502,8 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: '#141618',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              backgroundColor: pal.headerBg,
+              border: `1px solid ${pal.headerBorder}`,
               borderRadius: '4px',
               padding: '4px 6px',
               gap: '4px',
@@ -369,14 +513,14 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
               style={{
                 fontSize: '11.5px',
                 fontWeight: 800,
-                color: '#FAF9F6',
+                color: pal.textColor,
                 letterSpacing: '-0.01em',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
               }}
             >
-              <span style={{ color: theme.hex }}>{theme.badgeIcon}</span>
+              <span style={{ color: pal.accentColor, fontSize: '13px' }}>{theme.badgeIcon}</span>
               <span>{card.name}</span>
             </div>
             {card.code && (
@@ -387,9 +531,9 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
                   fontWeight: 800,
                   padding: '1px 5px',
                   borderRadius: '3px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  color: theme.hex,
-                  border: `1px solid ${theme.hex}60`,
+                  backgroundColor: pal.codeBg,
+                  color: pal.accentColor,
+                  border: `1px solid ${pal.accentColor}`,
                   flexShrink: 0,
                 }}
               >
@@ -398,15 +542,15 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
             )}
           </div>
 
-          {/* Recessed 5x5 Isometric Board Art Window */}
+          {/* Recessed 5x5 Isometric Board Art Window (Duller shade of border color) */}
           <div
             style={{
               width: '100%',
               height: '108px',
-              background: 'radial-gradient(circle at 50% 45%, #262B30 0%, #121416 100%)',
+              background: pal.artBg,
               borderRadius: '4px',
-              border: '1.5px solid rgba(212, 175, 55, 0.32)',
-              boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.75)',
+              border: `1.5px solid ${pal.artBorder}`,
+              boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.6)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -420,33 +564,34 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
           {/* Mid-Card Condition Strip */}
           <div
             style={{
-              backgroundColor: '#2C3034',
-              borderTop: '1px solid rgba(255, 255, 255, 0.09)',
-              borderBottom: '1px solid rgba(0, 0, 0, 0.5)',
-              borderLeft: `3px solid ${theme.hex}`,
+              backgroundColor: pal.condBg,
+              borderTop: '1px solid rgba(255, 255, 255, 0.8)',
+              borderBottom: `1px solid ${pal.headerBorder}`,
+              borderLeft: `3px solid ${pal.condBorder}`,
               borderRadius: '3px',
               padding: '3.5px 6px',
               fontSize: '8.8px',
               fontWeight: 700,
-              color: '#FAF9F6',
+              color: pal.textColor,
               lineHeight: 1.2,
             }}
           >
-            <span style={{ color: theme.hex }}>IF: </span>
+            <span style={{ color: pal.accentColor, fontWeight: 900 }}>IF: </span>
             {getConciseCondition(card)}
           </div>
 
-          {/* Dark Rules Box (Zero Ellipsis, Zero Copy Count Inside) */}
+          {/* Rules Box with Dark Text on Light Surface */}
           <div
             style={{
               flex: 1,
-              backgroundColor: '#141618',
-              border: '1px solid rgba(139, 126, 116, 0.22)',
+              backgroundColor: pal.rulesBg,
+              border: `1px solid ${pal.rulesBorder}`,
               borderRadius: '4px',
               padding: '5px 7px',
               fontSize: '9.6px',
               lineHeight: 1.3,
-              color: '#E6E4E0',
+              color: pal.textColor,
+              fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
             }}
