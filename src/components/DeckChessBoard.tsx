@@ -348,11 +348,14 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                   <div className="absolute inset-0 border-2 border-[#D4AF37] bg-[#D4AF37]/30 shadow-[0_0_10px_#D4AF37] animate-pulse rounded-sm pointer-events-none z-15" />
                 )}
 
-                {/* Disambiguation Candidate Pulse Ring */}
+                {/* Disambiguation Candidate Pulse Ring (Step-Aside Tile) */}
                 {isDisambiguationSquare && (
-                  <div className="absolute inset-0 border-2 border-[#38BDF8] bg-[#38BDF8]/30 shadow-[0_0_12px_#38BDF8] animate-pulse rounded-sm pointer-events-none z-20 flex items-center justify-center">
-                    <span className="text-[10px] font-mono font-bold text-[#38BDF8] bg-[#191B1D]/80 px-1 rounded">
-                      PICK
+                  <div
+                    data-testid={`disambiguation-${squareName}`}
+                    className="absolute inset-0 border-2 border-[#3FB950] bg-[#3FB950]/30 shadow-[0_0_12px_#3FB950] animate-pulse rounded-sm pointer-events-none z-20 flex items-center justify-center"
+                  >
+                    <span className="text-[10px] font-mono font-bold text-[#3FB950] bg-[#191B1D]/90 px-1 rounded border border-[#3FB950]/50">
+                      STEP ASIDE
                     </span>
                   </div>
                 )}
@@ -370,13 +373,13 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                   <div className="absolute inset-0 border-2 border-[#A855F7] bg-[#A855F7]/35 animate-pulse rounded-sm pointer-events-none z-10" />
                 )}
 
-                {/* Standard Legal Move Indicator (Instant execution) */}
-                {isLegalMove && !empoweredMove && !pendingCardMove && (
+                {/* Standard Legal Move Indicator (Instant execution when no card is armed) */}
+                {isLegalMove && !selectedCardId && !hoveredCardId && !pendingCardMove && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                     {piece ? (
                       // Capture ring
-                      <div className="w-4/5 h-4/5 rounded-full border-2 border-[#AA4A44]/85 flex items-center justify-center">
-                        <span className="text-[8px] font-mono font-bold text-[#AA4A44]">0⚡</span>
+                      <div className="w-4/5 h-4/5 rounded-full border-2 border-[#AA4A44] flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-[#AA4A44]" />
                       </div>
                     ) : (
                       // Empty move subtle dot
@@ -385,8 +388,8 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                   </div>
                 )}
 
-                {/* Empowered Card Move Indicator (Glowing Ring) */}
-                {empoweredMove && !pendingCardMove && (
+                {/* Empowered Card Move Indicator (Glowing Ring - only when card is armed or hovered) */}
+                {empoweredMove && (selectedCardId || hoveredCardId) && !pendingCardMove && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-25">
                     <div
                       style={{ borderColor: cardThemeHex, backgroundColor: `${cardThemeHex}25` }}
