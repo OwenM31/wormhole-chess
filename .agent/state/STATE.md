@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-22T18:46:40-05:00
+updated: 2026-10-23T10:45:34-05:00
 ---
 
 # Project State
@@ -8,42 +8,29 @@ updated: 2026-10-22T18:46:40-05:00
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 - **Phase**: 3 — 36-Card Engine, Deck Builder Main Menu Hub & Multiplayer / AI Playtest Prototype (Complete & Verified)
-- **Task**: Ready for Phase 4 planning (`/plan 4` — Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1)
-- **Status**: Active (resumed 2026-10-22 18:46)
+- **Task**: Private Match Implementation & Production Verification Complete; Ready for Phase 4 Planning (`@[.agent/workflows/plan.md] 4`)
+- **Status**: Paused at 2026-10-23 10:45
 - **Roadmap Status**: Phases 1–3 Complete & Verified; Ready for Phase 4 (Campaign Engine & World 1)
 
 ## Last Session Summary
-Executed all 4 plans and verification for Phase 3:
-1. **Plan 3.1 (Wave 1) — Canonical 36-Card Roster & Engine Refactor (`e745a2c`, `72f96b1`)**:
-   - Authored `src/engine/cards/releaseRoster36.ts` defining all 36 cards (`P1–P8, N1–N7, B1–B7, R1–R6, Q1–Q4, K1–K4`) with Pokémon piece-color frames (`#8A9199 Gray, #3FB950 Green, #3B82F6 Blue, #A855F7 Purple, #EF4444 Red, #D4AF37 Gold`).
-   - Refactored `src/engine/DeckChessEngine.ts` to support Rank 1 Pawns (`{ skipValidation: true }`), `sweepPromotions()`, `limitPawnsTo8` cap, and generated `previewFen` and `extraSquare` on `getEmpoweredMoves()`.
-2. **Plan 3.2 (Wave 2) — 36 Bespoke Handlers & Playbook TDD Test Suite (`20fd70a`, `6a84690`)**:
-   - Authored all 36 bespoke behavior handlers in `src/engine/cards/playbook36Handlers.ts` and registered in `src/engine/cards/cardRegistry.ts`.
-   - Built comprehensive verification suite `scripts/verify-36-playbook.ts` (167 assertions covering all 36 cards and global engine invariants).
-   - Total engine test pass count increased to 403 tests (236 legacy + 167 Playbook) with 100% pass rate.
-3. **Plan 3.3 (Wave 2) — Multi-Profile Hook, Fluid 11-Column Main Menu & Multiplayer Stage (`29eea20`, `84b46c5`, `5fec23c`)**:
-   - Authored `src/hooks/usePlayerProfiles.ts` supporting 3 profile slots, Playtest Mode toggle (`playtestAll36`), hand sizing (`1–8`), copy limits (`1–5`), and `localStorage` persistence.
-   - Built `src/components/DeckBuilderMainMenu.tsx` implementing the approved fluid 11-column Loden Green grid (`repeat(11, minmax(0, 1fr))`, `grid-column: 3 / span 4`, Column 7 gutter, `grid-column: 8 / span 3` showcase card with `aspect-ratio: 4 / 3` Character Canvas and Living Pawn pedestal SVG) with zero hardcoded pixel column widths.
-   - Built `src/components/MultiplayerCharacterStage.tsx` featuring the full-screen Living Piece room backdrop, Top-Right Play Buttons (`Offline Match`, `Search for Opponent`, `Private Match`, `Async Matches`), equipped 8-card hand, filterable/sortable 36-card library with vertical 5-dot copy stack (`1–5`), and dual-mode integration in `src/components/DeckBuilderView.tsx`.
-4. **Plan 3.4 (Wave 3) — Bidirectional Selection, Hover Preview, Disambiguation & Outcome Confirmation (`aa268ad`, `b24cabf`, `dc478a5`)**:
-   - Upgraded `src/hooks/useDeckChessGame.ts` and `src/components/TacticalHandBar.tsx` for bidirectional piece-first/card-first selection, card hover preview, piece card pop-out emphasis, and card-aware AI evaluation.
-   - Upgraded `src/components/DeckChessBoard.tsx` with live `previewFen` board rendering, ally disambiguation prompt, and the Bottom Confirmation Bar featuring the Big Green Check (`✓ Confirm`) and Big Red X (`✕ Cancel`).
-   - Wired `DeckBuilderPage.tsx` and `PlayRoomPage.tsx` with full navigation (`menu`, `multiplayer`, `arena`, `forge`).
-   - Authored and verified `scripts/verify-phase3-playtest.mjs` in headless Chromium Playwright: verified 11-column fluid grid, profile switcher, multiplayer stage with 36 copy dot stacks, offline match launch, piece-first and card-first selection, outcome confirmation bar, cancellation, and execution. Captured visual proofs: `phase3_main_menu_hub.png`, `phase3_multiplayer_stage.png`, and `phase3_arena_card_confirmation.png`.
-5. **Phase 3 Formal Verification (`dda3880`)**:
-   - Validated all 7 must-haves against the 3-Tier Verification Triangle with 100% pass rate.
-   - Authored `.agent/state/phases/3/VERIFICATION.md` and updated `.agent/state/ROADMAP.md` marking Phase 3 complete.
-6. **Real Private Match & Remote Turn Synchronization (Verified)**:
-   - Remediated modal action stub in `MultiplayerCharacterStage.tsx` with room code generator and time control selection (`3+0`, `5+0`, `10+0`, `untimed`).
-   - Built dual-mode networking in `useGameRoom.ts`: local `BroadcastChannel` fallback for zero-config multi-tab play and Cloudflare `GameRoomDO` WebSocket for internet play.
-   - Added `sessionStorage` per-tab identification to eliminate tab seat collisions.
+1. **Full Surface UX Sweep (`/ux-sweep`)**:
+   - Swept all 6 routes (`/`, `/deck-builder`, `/wormhole`, `/dashboard`, `/login`, `/register`, `/play/:code`) on Desktop and Mobile.
+   - Identified and remediated DEF-007 ("My Deck" action footer button in Arena now routes to Forge loadout customizer).
+2. **Private Multiplayer Match & Remote Synchronization ([DEF-008])**:
+   - Replaced modal toast stubs in `MultiplayerCharacterStage.tsx` with room code generation and time control selection (`3+0`, `5+0`, `10+0`, `untimed`), navigating to `/play/:code`.
+   - Built dual-mode network transport in `useGameRoom.ts`: zero-config `BroadcastChannel` local fallback for instant multi-tab dev, and Cloudflare Pages Functions + `GameRoomDO` Durable Object WebSockets for internet play.
+   - Added per-tab session isolation via `sessionStorage` (`getTabSessionId`), enabling testing in two tabs on the same machine without White/Black seat collision.
    - Wired `applyRemoteTurn` in `PlayRoomPage.tsx` and `useDeckChessGame.ts` with authoritative FEN synchronization, card consumption, modifier tracking, and audio cues.
-   - Authored `scripts/test-multiplayer-private-match.mjs` verifying 2-player match launch, challenger join, turn progression, and FEN synchronization in headless Chrome. All 403 unit tests green.
+3. **Automated & Empirical Verification**:
+   - Created `scripts/test-multiplayer-private-match.mjs` verifying 2-player private match flow in headless Chrome (Room creation -> Player 2 joins -> Transition to in_progress -> White moves e2-e4 -> Black receives move and turn transfers to Black).
+   - Verified live production deployment on `https://wormhole-chess.com`: verified that pushing to GitHub `origin/master` auto-deploys via Cloudflare Pages, and verified live room creation and 2-player handshake over the internet on `https://wormhole-chess.com/play/WH-PROD1`.
+   - All 403 engine unit tests passing, full-stack typecheck clean.
+   - Authored artifact `private-match-verification.md` and updated `DEFECTS.md`.
 
 ## In-Progress Work
 
-- Files modified: None (all code and summaries committed cleanly).
-- Tests status: Passing (403/403 engine unit tests, 33/33 Phase 1 contract tests, full-stack typecheck 0 errors, production build 0 errors, Playwright E2E 0 errors).
+- Files modified: None (working tree clean and synced with remote).
+- Tests status: Passing (403/403 engine unit tests, full-stack typecheck 0 errors, production build 0 errors, Playwright E2E 0 errors, Live Production handshake verified).
 
 ## Blockers
 
@@ -55,16 +42,15 @@ None.
 - `[DECISION-025]`: Milestone v3.0 Strategic Pivot: PvZ2-Style Parallel World Key Campaign & 36-Card Pyramid Curation (`8P, 7K, 7B, 6R, 4Q, 4Kg`).
 - `[DECISION-026]`: Phase 3 Complete 36-Card Specification, Global Engine Invariants, Concurrent Castle Wings (`Worlds 3–6`), Tavern Hustle & Jester Shop.
 - `[DECISION-027]`: Full-Screen Multiplayer Character Stage, 5-Dot Copy Stack, Pokémon Piece-Color Frames (`Gray, Green, Blue, Purple, Red, Gold`), Bidirectional Selection & Card Outcome Confirmation (`✓` / `✕`).
+- `[DECISION-028]`: Authoritative FEN Synchronization & Dual-Mode Transport for Private Matches: `BroadcastChannel` for local multi-tab dev with per-tab `sessionStorage` IDs, and Cloudflare `GameRoomDO` Durable Objects for internet play.
 
 ### Files of Interest
-- `.agent/state/STORYBOARD.md`: Canonical 36-Card & 7-World Campaign Storyboard.
-- `.agent/state/phases/3/VERIFICATION.md`: Verification report with 7/7 must-haves verified.
-- `scripts/verify-36-playbook.ts`: 167-test TDD verification suite for the 36-Card Playbook.
-- `scripts/verify-phase3-playtest.mjs`: Playwright E2E test verifying all Phase 3 flows.
-- `.agent/state/artifacts/screenshots/`:
-  - `phase3_main_menu_hub.png`: Fluid 11-column Loden Green grid.
-  - `phase3_multiplayer_stage.png`: Full-screen character stage with 5-dot copy stack.
-  - `phase3_arena_card_confirmation.png`: Live board outcome preview and confirmation bar (`✓` / `✕`).
+- `src/components/MultiplayerCharacterStage.tsx`: Private match creation and join modal with time control selection.
+- `src/hooks/useGameRoom.ts`: Dual-mode networking (BroadcastChannel fallback + Cloudflare DO WebSocket) with per-tab isolation.
+- `src/hooks/useDeckChessGame.ts`: Authoritative remote turn application (`applyRemoteTurn`), card consumption, and modifier tracking.
+- `src/pages/PlayRoomPage.tsx`: Live room viewport, clock sync, turn listener, and board integration.
+- `scripts/test-multiplayer-private-match.mjs`: Headless Chrome Playwright verification script for private matches.
+- `.agent/state/DEFECTS.md`: Remediated DEF-007 and DEF-008.
 
 ## Next Steps
 
