@@ -936,6 +936,17 @@ export class DeckChessEngine {
       return { success: false, error: `No handler registered for card ${move.cardId}` };
     }
 
+    // Save snapshot in case move leaves King in check and must be rolled back
+    const rollbackFen = this.chess.fen();
+    const rollbackTurnNumber = this.turnNumber;
+    const rollbackEnergy = this.energy;
+    const rollbackCardPlayed = this.cardPlayedThisTurn;
+    const rollbackGraveyard = {
+      w: { ...this.graveyard.w },
+      b: { ...this.graveyard.b },
+    };
+    const rollbackModifiers = [...this.activeModifiers];
+
     const execResult = handler.execute(this, move.from, move.to, move.extraSquare);
     if (!execResult.success) {
       return execResult;
@@ -943,6 +954,33 @@ export class DeckChessEngine {
 
     // Global promotion rank sweep
     this.sweepPromotions();
+
+    // King safety check: Own king cannot be in check after card move
+    const oppColor = (currentTurn === 'w' ? 'b' : 'w') as Color;
+    let kingSq: string | null = null;
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const s = DeckChessEngine.coordsToSquare(f, r);
+        if (s) {
+          const p = this.getPiece(s);
+          if (p && p.type === 'k' && p.color === currentTurn) {
+            kingSq = s;
+            break;
+          }
+        }
+      }
+      if (kingSq) break;
+    }
+
+    if (kingSq && this.chess.isAttacked(kingSq as Square, oppColor)) {
+      this.chess.load(rollbackFen, { skipValidation: true });
+      this.turnNumber = rollbackTurnNumber;
+      this.energy = rollbackEnergy;
+      this.cardPlayedThisTurn = rollbackCardPlayed;
+      this.graveyard = rollbackGraveyard;
+      this.activeModifiers = rollbackModifiers;
+      return { success: false, error: 'Illegal Card Move: Leaves friendly King in check' };
+    }
 
     // Consume card from hand
     if (currentTurn === 'w') {

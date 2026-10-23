@@ -322,7 +322,7 @@ export function registerPlaybook36Handlers(): void {
       if (!dest || !valid.includes(dest)) return { success: false, error: 'Invalid Protect the King target' };
 
       const enemy = engine.getPiece(dest);
-      if (!enemy) return { success: false, error: 'No enemy piece at target' };
+      if (!enemy || enemy.type === 'k') return { success: false, error: 'No enemy piece or cannot capture King' };
 
       const chess = engine.getInternalChess();
       chess.remove(dest as Square);
@@ -578,7 +578,7 @@ export function registerPlaybook36Handlers(): void {
       const targets: string[] = [];
       for (const sq of adjacent) {
         const p = engine.getPiece(sq);
-        if (p && p.color === turn) {
+        if (p && p.color === turn && p.type !== 'k') {
           targets.push(sq);
         }
       }
@@ -591,7 +591,7 @@ export function registerPlaybook36Handlers(): void {
 
       const knight = engine.getPiece(anchorSquare);
       const ally = engine.getPiece(dest);
-      if (!knight || !ally) return { success: false, error: 'Missing pieces for Pin Swap' };
+      if (!knight || !ally || ally.type === 'k') return { success: false, error: 'Missing or invalid pieces for Pin Swap' };
 
       const chess = engine.getInternalChess();
       chess.remove(anchorSquare as Square);
@@ -1035,7 +1035,7 @@ export function registerPlaybook36Handlers(): void {
           if (!sq || engine.isSquareBlockedByBarrier(sq)) break;
           const p = engine.getPiece(sq);
           if (p) {
-            if (p.color === turn) {
+            if (p.color === turn && p.type !== 'k') {
               targets.push(sq);
             }
             break;
@@ -1052,7 +1052,7 @@ export function registerPlaybook36Handlers(): void {
 
       const bishop = engine.getPiece(anchorSquare);
       const ally = engine.getPiece(dest);
-      if (!bishop || !ally) return { success: false, error: 'Missing pieces for swap' };
+      if (!bishop || !ally || ally.type === 'k') return { success: false, error: 'Missing or invalid pieces for swap' };
 
       const chess = engine.getInternalChess();
       chess.remove(anchorSquare as Square);
@@ -1297,7 +1297,7 @@ export function registerPlaybook36Handlers(): void {
           if (enemy.color === engine.getTurn() || enemy.type === 'k') {
             return { success: false, error: 'Cannot capture friendly piece or king' };
           }
-          engine.addToGraveyard(enemy.type, enemy.color);
+          engine.addToPlayerGraveyard(enemy.color, enemy.type);
           chess.remove(targetSquare as Square);
         }
       }
@@ -2309,6 +2309,7 @@ export function registerPlaybook36Handlers(): void {
       let k = 1;
       while (true) {
         const nextRank = topP.rank + dir * (k + 1);
+        if (nextRank < 0 || nextRank > 7) break;
         const nextRel = getRelativeRank(nextRank, turn);
         if (nextRel > 7) break; // reached back rank
         const testSq = CardUtils.getSquare(file, nextRank);
