@@ -8,7 +8,7 @@ updated: 2026-10-21T12:43:00-05:00
 
 > **Current Milestone:** v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 > **Current Milestone:** v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-> **Current Phase:** Phase 4 — Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
+> **Current Phase:** Phase 4 — Gameplay Bugfixes, 36-Card Mechanics Audit & Mobile Card Ergonomics
 > **Status:** 🔄 Ready for Planning & Execution (Phases 1–3 Complete & Verified)
 
 ## Milestone Goal
@@ -23,7 +23,8 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 - [x] **36-Card Engine & Global Invariants (Phase 3)**: Implement all 36 bespoke card handlers in `cardRegistry.ts` and global rules in `DeckChessEngine.ts` (1 card per turn / no Energy cost, Rank 1 Pawn legalization, Rank 8 instant promotion, relaxed Bishop color switching, `limitPawnsTo8` toggle).
 - [x] **Deck Builder Main Menu Hub & Multi-Profile Switcher (Phase 3)**: Vibrant main menu at `/deck-builder` with `Campaign`, `Multiplayer`, `My Profile` + `Switch Profile` (multi-slot local profiles), and a right-hand Player Stats (`Gold Coins`, `Level`) + Aesthetic Canvas area.
 - [x] **Multiplayer & AI Playtest Prototype (Phase 3)**: 36-card Deck Builder loadout screen, Private Room Matchmaking (`/play/:code`), and Custom AI Playtest mode to test cards and tune AI opponents.
-- [ ] **Campaign Engine, Town Tavern & Worlds 1–7 (Phases 4–6)**: Build the Castle Map UI, Town Tavern 0-card bot hustle, Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), and the 7-World Campaign puzzle sequences.
+- [ ] **Gameplay Bugfixes, 36-Card Audit & Mobile Ergonomics (Phase 4)**: Sleek standard move vs empowered card move choice, full 36-card mechanics/condition audit (including perpendicular R1 step-aside), mobile horizontal card scroll wheels, and auto-sorting spent cards to hand end.
+- [ ] **Campaign Engine, Town Tavern & Worlds 1–7 (Phases 5–7)**: Build the Castle Map UI, Town Tavern 0-card bot hustle, Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), and the 7-World Campaign puzzle sequences.
 
 ---
 
@@ -53,20 +54,26 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 
 ---
 
-### Phase 4: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
+### Phase 4: Gameplay Bugfixes, 36-Card Mechanics Audit & Mobile Card Ergonomics
 **Status:** 🔄 Next Up
+**Status:** ⬜ Not Started
+**Objective:** Resolve piece move vs card move collision (provide an intuitive way to make standard chess moves without forcing empowered card play), conduct a comprehensive condition/effect audit and bug squash across all 36 playable cards (including perpendicular pawn evasion for R1 "Make Way"), implement mobile horizontal scroll wheels for card containers (Deck Builder and Tactical Hand Bar), and auto-sort spent/grayed-out cards to the end of the player's hand.
+
+---
+
+### Phase 5: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
 **Status:** ⬜ Not Started
 **Objective:** Build the Campaign Map & Puzzle Engine (`Foreshadow -> Officer Duel -> Forced-Slot` cycle), Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), "Back to Town" Tavern Hustle (0-card Towny bots for Gold Coins), and World 1 (`The Causeway` — 7 Cards: `P1, P2, P3, N1, B1, N2, R1`).
 
 ---
 
-### Phase 5: World 2 (`Outer Courtyard`) & Concurrent Castle Wings (`Worlds 3–6`)
+### Phase 6: World 2 (`Outer Courtyard`) & Concurrent Castle Wings (`Worlds 3–6`)
 **Status:** ⬜ Not Started
 **Objective:** Author and verify the puzzle cycles, Wing Keys, and Boss Duels across World 2 (`N3, R2, B2, R3`) and the 4 Concurrent Wings off the Central Rotunda: World 3 (`The Barracks`), World 4 (`The Chapel`), World 5 (`The Armory`), and World 6 (`The Royal Court`).
 
 ---
 
-### Phase 6: World 7 (`The Throne Room`), The Jester Final Boss & Release Audit
+### Phase 7: World 7 (`The Throne Room`), The Jester Final Boss & Release Audit
 **Status:** ⬜ Not Started
 **Objective:** Author and verify World 7 (`N7, P8, B7, Q4, K4`), the Iron King Boss Duel, and the True Final Boss showdown against the Scheming Jester (36-card Master AI), followed by full UX verification and Milestone v3.0 release.
 

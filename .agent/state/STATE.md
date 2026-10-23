@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-23T10:45:34-05:00
+updated: 2026-10-23T11:00:00-05:00
 ---
 
 # Project State
@@ -7,10 +7,10 @@ updated: 2026-10-23T10:45:34-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-- **Phase**: 3 — 36-Card Engine, Deck Builder Main Menu Hub & Multiplayer / AI Playtest Prototype (Complete & Verified)
-- **Task**: Private Match Implementation & Production Verification Complete; Ready for Phase 4 Planning (`@[.agent/workflows/plan.md] 4`)
-- **Status**: Paused at 2026-10-23 10:45
-- **Roadmap Status**: Phases 1–3 Complete & Verified; Ready for Phase 4 (Campaign Engine & World 1)
+- **Phase**: 4 — Gameplay Bugfixes, 36-Card Mechanics Audit & Mobile Card Ergonomics
+- **Task**: Ready for Phase 4 Planning (`@[.agent/workflows/plan.md] 4`)
+- **Status**: Active (resumed 2026-10-23 11:00)
+- **Roadmap Status**: Phases 1–3 Complete & Verified; Ready for Phase 4 (Gameplay Bugfixes, 36-Card Mechanics Audit & Mobile Card Ergonomics)
 
 ## Last Session Summary
 1. **Full Surface UX Sweep (`/ux-sweep`)**:
@@ -54,5 +54,9 @@ None.
 
 ## Next Steps
 
-1. Run `@[.agent/workflows/plan.md] 4` (or `/plan 4`) to design, research, and plan Phase 4: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`).
-2. Implement Phase 4 campaign map progression, Town Tavern 0-card bot hustle, Jester Shop modal, and World 1 puzzle sequence (`P1, P2, P3, N1, B1, N2, R1`).
+1. Run `@[.agent/workflows/plan.md] 4` (or `/plan 4`) to design, research, and plan Phase 4: Gameplay Bugfixes, 36-Card Mechanics Audit & Mobile Card Ergonomics.
+2. Implement Phase 4:
+   - Resolve piece move vs card move collision (enable standard moves without forced card consumption).
+   - Audit and fix all 36 card conditions and effects (e.g. R1 perpendicular pawn step-aside).
+   - Implement horizontal scroll wheels for mobile card containers (deck builder & in-game tactical hand).
+   - Auto-sort spent/grayed-out cards to the end of the player hand.
