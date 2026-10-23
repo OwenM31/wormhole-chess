@@ -336,6 +336,10 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
       <div
         data-card-id={card.id}
         data-testid={dataTestId || `hand-card-${card.id}`}
+        data-available={String(isAvailable)}
+        data-spent={String(!isAvailable)}
+        data-selected={String(isSelected)}
+        data-active-for-piece={String(isActiveForPiece)}
         onClick={onClick}
         onPointerEnter={(e) => {
           if (e.pointerType === 'mouse') onMouseEnter?.();

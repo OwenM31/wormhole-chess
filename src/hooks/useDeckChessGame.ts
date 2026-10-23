@@ -627,10 +627,17 @@ export function useDeckChessGame({
             const pieceEmpowered = engineRef.current
               .getEmpoweredMoves(square)
               .filter((m) => m.cardId === selectedCardId);
-            setEmpoweredMovesForSelected(pieceEmpowered);
-            const extraSquares = Array.from(new Set(pieceEmpowered.map((m) => m.extraSquare).filter(Boolean)));
-            if (extraSquares.length > 1) {
-              setDisambiguationCandidates(pieceEmpowered);
+            if (pieceEmpowered.length > 0) {
+              setEmpoweredMovesForSelected(pieceEmpowered);
+              const extraSquares = Array.from(new Set(pieceEmpowered.map((m) => m.extraSquare).filter(Boolean)));
+              if (extraSquares.length > 1) {
+                setDisambiguationCandidates(pieceEmpowered);
+              }
+            } else {
+              // Clicked piece cannot use this card -> automatically disarm card and show standard moves!
+              setSelectedCardId(null);
+              setSelectedCard(null);
+              setEmpoweredMovesForSelected([]);
             }
           } else {
             // When no card is armed, piece click ONLY produces standard chess moves

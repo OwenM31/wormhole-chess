@@ -307,6 +307,7 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
               <div
                 key={squareName}
                 data-square={squareName}
+                data-testid={`square-${squareName}`}
                 onClick={() => onSquareClick(squareName)}
                 className="relative flex items-center justify-center transition-[filter,background-color] duration-150 cursor-pointer hover:brightness-110 aspect-square group"
                 style={{ backgroundColor: squareBg, aspectRatio: '1 / 1' }}
@@ -375,7 +376,10 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
 
                 {/* Standard Legal Move Indicator (Instant execution when no card is armed) */}
                 {isLegalMove && !selectedCardId && !hoveredCardId && !pendingCardMove && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                  <div
+                    data-testid={`legal-move-${squareName}`}
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
+                  >
                     {piece ? (
                       // Capture ring
                       <div className="w-4/5 h-4/5 rounded-full border-2 border-[#AA4A44] flex items-center justify-center">
@@ -390,7 +394,10 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
 
                 {/* Empowered Card Move Indicator (Glowing Ring - only when card is armed or hovered) */}
                 {empoweredMove && (selectedCardId || hoveredCardId) && !pendingCardMove && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-25">
+                  <div
+                    data-testid={`empowered-move-${squareName}`}
+                    className="absolute inset-0 flex items-center justify-center pointer-events-none z-25"
+                  >
                     <div
                       style={{ borderColor: cardThemeHex, backgroundColor: `${cardThemeHex}25` }}
                       className="w-4/5 h-4/5 rounded-full border-2 shadow-[0_0_12px_rgba(212,175,55,0.7)] animate-pulse flex items-center justify-center"
