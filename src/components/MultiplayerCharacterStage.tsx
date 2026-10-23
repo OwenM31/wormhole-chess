@@ -46,6 +46,7 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
     unequipCardAtIndex,
     clearHand,
     autoFillHand,
+    randomizeHand,
   } = hook;
 
   // Modals / Status overlays
@@ -588,6 +589,30 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
                 }}
               >
                 Clear Hand
+              </button>
+
+              {/* Randomize / Shuffle (1 copy per card) */}
+              <button
+                type="button"
+                onClick={randomizeHand}
+                data-testid="randomize-hand-btn"
+                style={{
+                  padding: '0.25rem 0.65rem',
+                  backgroundColor: '#4C5C4C',
+                  color: '#FAF9F6',
+                  border: '1px solid #D4AF37',
+                  borderRadius: '3px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  boxShadow: '0 0 8px rgba(212, 175, 55, 0.25)',
+                }}
+                title="Randomize hand with unique cards (1 copy per card)"
+              >
+                <span>🎲</span> Randomize
               </button>
 
               {/* Auto-Fill */}

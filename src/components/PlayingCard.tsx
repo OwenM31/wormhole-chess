@@ -204,6 +204,7 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
   if (size === 'equipped') {
     return (
       <div
+        data-card-id={card.id}
         data-testid={dataTestId}
         onClick={onClick}
         style={{

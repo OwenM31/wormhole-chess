@@ -11,6 +11,7 @@ import {
 } from '../engine/cardGraph';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { CANONICAL_36_CARDS } from '../engine/cards/releaseRoster36';
 import CardArt from './CardArt';
 import { MultiplayerCharacterStage } from './MultiplayerCharacterStage';
 
@@ -105,6 +106,21 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
     localStorage.setItem(STORAGE_KEY, JSON.stringify(starterIds));
     onSaveDeck(starterIds);
     setSaveMessage('Reset to balanced Starter Deck!');
+  };
+
+  const handleRandomizeDeck = () => {
+    const pool = CANONICAL_36_CARDS.map((c) => c.id);
+    // Fisher-Yates shuffle
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    const randomized = shuffled.slice(0, 8);
+    setSelectedIds(randomized);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(randomized));
+    onSaveDeck(randomized);
+    setSaveMessage('🎲 Hand randomized with 8 unique cards!');
   };
 
   const handleSave = async () => {
@@ -203,6 +219,14 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
               Back to Arena
             </button>
           )}
+          <button
+            onClick={handleRandomizeDeck}
+            data-testid="randomize-deck-btn"
+            className="px-3 py-1.5 bg-[#4C5C4C] hover:bg-[#5C6C5C] text-[#FAF9F6] rounded text-xs font-bold transition-colors cursor-pointer border border-[#D4AF37] shadow flex items-center gap-1.5"
+            title="Randomize deck with 8 unique cards (1 copy per card)"
+          >
+            <span>🎲</span> Randomize
+          </button>
           <button
             onClick={handleResetStarter}
             className="px-3 py-1.5 bg-[#191B1D] hover:bg-[#282B2E] text-[#D4AF37] rounded text-xs font-medium transition-colors cursor-pointer border border-[#D4AF37]/40"

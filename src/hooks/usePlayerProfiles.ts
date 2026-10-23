@@ -253,6 +253,32 @@ export function usePlayerProfiles() {
     });
   }, [activeSlotId]);
 
+  const randomizeHand = useCallback(() => {
+    setProfiles((prev) => {
+      const cur = prev[activeSlotId];
+      if (!cur) return prev;
+      const targetSize = cur.handSize || 8;
+      // Pre-release testing pool: use unlocked cards if >= targetSize, otherwise full 36 cards
+      const pool = cur.playtestAll36 || cur.unlockedCards.length < targetSize ? ALL_36_IDS : cur.unlockedCards;
+      // Deduplicate to guarantee strictly 1 copy per card
+      const uniquePool = Array.from(new Set(pool));
+      // Fisher-Yates shuffle
+      const shuffled = [...uniquePool];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const newHand = shuffled.slice(0, targetSize);
+      return {
+        ...prev,
+        [activeSlotId]: {
+          ...cur,
+          equippedHand: newHand,
+        },
+      };
+    });
+  }, [activeSlotId]);
+
   const togglePlaytestMode = useCallback(() => {
     setProfiles((prev) => {
       const cur = prev[activeSlotId];
@@ -309,6 +335,7 @@ export function usePlayerProfiles() {
     unequipCardAtIndex,
     clearHand,
     autoFillHand,
+    randomizeHand,
     togglePlaytestMode,
     updateGear,
   };
