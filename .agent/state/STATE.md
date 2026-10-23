@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-23T11:00:00-05:00
+updated: 2026-10-23T11:30:00-05:00
 ---
 
 # Project State
@@ -8,9 +8,9 @@ updated: 2026-10-23T11:00:00-05:00
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 - **Phase**: 4 — Gameplay Bugfixes, 36-Card Mechanics Audit & Mobile Card Ergonomics
-- **Task**: Ready for Phase 4 Planning (`@[.agent/workflows/plan.md] 4`)
-- **Status**: Active (resumed 2026-10-23 11:00)
-- **Roadmap Status**: Phases 1–3 Complete & Verified; Ready for Phase 4 (Gameplay Bugfixes, 36-Card Mechanics Audit & Mobile Card Ergonomics)
+- **Task**: Planning Complete (4 Plans across 3 Waves in `.agent/state/phases/4/`)
+- **Status**: Ready for Execution (`@[.agent/workflows/execute.md] 4`)
+- **Roadmap Status**: Phases 1–3 Complete & Verified; Ready for Phase 4 Execution
 
 ## Last Session Summary
 1. **Full Surface UX Sweep (`/ux-sweep`)**:
@@ -54,9 +54,8 @@ None.
 
 ## Next Steps
 
-1. Run `@[.agent/workflows/plan.md] 4` (or `/plan 4`) to design, research, and plan Phase 4: Gameplay Bugfixes, 36-Card Mechanics Audit & Mobile Card Ergonomics.
-2. Implement Phase 4:
-   - Resolve piece move vs card move collision (enable standard moves without forced card consumption).
-   - Audit and fix all 36 card conditions and effects (e.g. R1 perpendicular pawn step-aside).
-   - Implement horizontal scroll wheels for mobile card containers (deck builder & in-game tactical hand).
-   - Auto-sort spent/grayed-out cards to the end of the player hand.
+1. Run `@[.agent/workflows/execute.md] 4` (or `/execute 4`) to execute all 4 plans for Phase 4 across Waves 1–3:
+   - **Wave 1**: Plan 4.1 (Engine Mechanics Audit, Check Safety & R1 Redesign) + Plan 4.2 (Mobile Card Scroll Rows & Spent-Card Tail Ordering).
+   - **Wave 2**: Plan 4.3 (Unified Turn Flow, Standard Move Decoupling & Multi-Step Card Staging).
+   - **Wave 3**: Plan 4.4 (36-Card Mechanics TDD Suite & Playwright E2E Verification).
+2. Run `@[.agent/workflows/verify.md] 4` to empirically verify all must-haves and close out Phase 4.
