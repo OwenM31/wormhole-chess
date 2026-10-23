@@ -1192,49 +1192,122 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'r1_make_way',
-    getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    getTargets(engine: DeckChessEngine, anchorSquare: string): TargetOption[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
-      const orthogonals = [
+      const orthogonals: [number, number][] = [
         [1, 0], [-1, 0], [0, 1], [0, -1],
       ];
 
-      const targets: string[] = [];
+      const targets: TargetOption[] = [];
       for (const [df, dr] of orthogonals) {
         const pawnSq = CardUtils.getSquare(file + df, rank + dr);
-        if (pawnSq) {
-          const p = engine.getPiece(pawnSq);
-          if (p && p.color === turn && p.type === 'p') {
-            const beyondSq = CardUtils.getSquare(file + df * 2, rank + dr * 2);
-            if (beyondSq && !engine.getPiece(beyondSq) && !engine.isSquareBlockedByBarrier(beyondSq)) {
-              targets.push(pawnSq);
+        if (!pawnSq) continue;
+        const p = engine.getPiece(pawnSq);
+        if (!p || p.color !== turn || p.type !== 'p') continue;
+
+        const pawnCoords = CardUtils.getCoords(pawnSq);
+        const perpendiculars: [number, number][] = [
+          [-dr, df],
+          [dr, -df],
+        ];
+
+        const validPawnDests: string[] = [];
+        for (const [pDf, pDr] of perpendiculars) {
+          const pawnDest = CardUtils.getSquare(pawnCoords.file + pDf, pawnCoords.rank + pDr);
+          if (pawnDest && !engine.getPiece(pawnDest) && !engine.isSquareBlockedByBarrier(pawnDest)) {
+            validPawnDests.push(pawnDest);
+          }
+        }
+
+        if (validPawnDests.length === 0) continue;
+
+        const rookDestinations: string[] = [];
+        let step = 1;
+        while (true) {
+          const rookDest = CardUtils.getSquare(file + df * step, rank + dr * step);
+          if (!rookDest) break;
+          if (engine.isSquareBlockedByBarrier(rookDest)) break;
+
+          if (rookDest === pawnSq) {
+            rookDestinations.push(rookDest);
+          } else {
+            const destPiece = engine.getPiece(rookDest);
+            if (destPiece) {
+              if (destPiece.color !== turn && destPiece.type !== 'k') {
+                rookDestinations.push(rookDest);
+              }
+              break;
+            } else {
+              rookDestinations.push(rookDest);
             }
+          }
+          step++;
+        }
+
+        for (const rookDest of rookDestinations) {
+          for (const pawnDest of validPawnDests) {
+            targets.push({
+              to: rookDest,
+              extraSquare: pawnDest,
+              disambiguationPrompt: 'Choose which square the pawn steps aside to',
+            });
           }
         }
       }
       return targets;
     },
-    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string) {
-      const valid = this.getTargets(engine, anchorSquare);
-      const dest = targetSquare || valid[0];
-      if (!dest || !valid.includes(dest)) return { success: false, error: 'Invalid Make Way target' };
+    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string, extraSquare?: string) {
+      if (!targetSquare) return { success: false, error: 'Missing target square for Make Way' };
+      const rawTargets = this.getTargets(engine, anchorSquare);
+      const match = rawTargets.find((t) => {
+        if (typeof t === 'string') return t === targetSquare;
+        return t.to === targetSquare && (!extraSquare || t.extraSquare === extraSquare);
+      });
+      if (!match) return { success: false, error: 'Invalid Make Way target' };
+
+      const chosenPawnDest = typeof match === 'string' ? extraSquare : (match.extraSquare || extraSquare);
+      if (!chosenPawnDest) return { success: false, error: 'Missing pawn destination square' };
 
       const rook = engine.getPiece(anchorSquare);
-      const pawn = engine.getPiece(dest);
-      if (!rook || !pawn) return { success: false, error: 'Missing pieces for Make Way' };
+      if (!rook) return { success: false, error: 'Missing Rook for Make Way' };
 
       const cRook = CardUtils.getCoords(anchorSquare);
-      const cPawn = CardUtils.getCoords(dest);
-      const df = cPawn.file - cRook.file;
-      const dr = cPawn.rank - cRook.rank;
-      const beyondSq = CardUtils.getSquare(cPawn.file + df, cPawn.rank + dr);
-      if (!beyondSq) return { success: false, error: 'No space beyond pawn' };
+      const cTarget = CardUtils.getCoords(targetSquare);
+      const diffF = cTarget.file - cRook.file;
+      const diffR = cTarget.rank - cRook.rank;
+      const df = Math.sign(diffF);
+      const dr = Math.sign(diffR);
+      if ((df === 0 && dr === 0) || (df !== 0 && dr !== 0)) {
+        return { success: false, error: 'Target square must be along an orthogonal line from Rook' };
+      }
+
+      const pawnSq = CardUtils.getSquare(cRook.file + df, cRook.rank + dr);
+      if (!pawnSq) return { success: false, error: 'Invalid pawn square' };
+      const pawn = engine.getPiece(pawnSq);
+      if (!pawn || pawn.color !== engine.getTurn() || pawn.type !== 'p') {
+        return { success: false, error: 'Missing friendly pawn adjacent to Rook along movement line' };
+      }
 
       const chess = engine.getInternalChess();
+
+      if (targetSquare !== pawnSq) {
+        const enemy = engine.getPiece(targetSquare);
+        if (enemy) {
+          if (enemy.color === engine.getTurn() || enemy.type === 'k') {
+            return { success: false, error: 'Cannot capture friendly piece or king' };
+          }
+          engine.addToGraveyard(enemy.type, enemy.color);
+          chess.remove(targetSquare as Square);
+        }
+      }
+
+      chess.remove(pawnSq as Square);
+      chess.put(pawn, chosenPawnDest as Square);
+
       chess.remove(anchorSquare as Square);
-      chess.remove(dest as Square);
-      chess.put(pawn, beyondSq as Square);
-      chess.put(rook, dest as Square);
+      chess.put(rook, targetSquare as Square);
+
       return { success: true };
     },
   });

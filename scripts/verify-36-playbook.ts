@@ -288,11 +288,14 @@ console.log('\nSuite 5: Bespoke Rooks Suite (R1–R6)');
   // R1: Make Way
   const r1Engine = new DeckChessEngine('4k3/8/8/8/8/8/4P3/4R2K w - - 0 1', ['r1_make_way']);
   const r1Moves = r1Engine.getEmpoweredMoves('e1');
-  assert(r1Moves.some(m => m.to === 'e2'), 'R1 Make Way targets adjacent pawn at e2');
-  const r1Res = r1Engine.makeEmpoweredMove(r1Moves[0]);
+  assert(r1Moves.some(m => m.to === 'e2' && m.extraSquare === 'd2'), 'R1 Make Way offers perpendicular step-aside to d2');
+  assert(r1Moves.some(m => m.to === 'e2' && m.extraSquare === 'f2'), 'R1 Make Way offers perpendicular step-aside to f2');
+  assert(r1Moves.some(m => m.to === 'e5'), 'R1 Make Way allows Rook to slide along opened file to e5');
+  const chosenMove = r1Moves.find(m => m.to === 'e2' && m.extraSquare === 'd2')!;
+  const r1Res = r1Engine.makeEmpoweredMove(chosenMove);
   assert(r1Res.success === true, 'R1 Make Way executed');
   assert(r1Engine.getPiece('e2')?.type === 'r', 'Rook moved into e2');
-  assert(r1Engine.getPiece('e3')?.type === 'p', 'Pawn pushed to e3');
+  assert(r1Engine.getPiece('d2')?.type === 'p', 'Pawn stepped aside perpendicularly to d2');
 
   // R2: I've Got Your Back
   const r2Engine = new DeckChessEngine('4k3/8/8/8/8/8/8/R3B2K w - - 0 1', ['r2_ive_got_your_back']);
@@ -443,10 +446,10 @@ console.log('\nSuite 8: Global Engine Invariants');
   assert(rank1Engine.getPiece('b2')?.type === 'p', 'Pawn now at b2');
 
   // 2. Rank 8 Instant Promotion sweep on secondary moves
-  const promoEngine = new DeckChessEngine('7k/4P3/4R3/8/8/8/8/4K3 w - - 0 1', ['r1_make_way']);
-  const makeWayPromo = promoEngine.getEmpoweredMoves('e6');
-  assert(makeWayPromo.some(m => m.to === 'e7'), 'R1 Make Way available on e6');
-  promoEngine.makeEmpoweredMove(makeWayPromo[0]);
+  const promoEngine = new DeckChessEngine('3Q3k/4P3/8/8/8/8/8/4K3 w - - 0 1', ['q3_all_rise']);
+  const allRisePromo = promoEngine.getEmpoweredMoves('d8');
+  assert(allRisePromo.length > 0, 'Q3 All Rise available on d8');
+  promoEngine.makeEmpoweredMove(allRisePromo[0]);
   assert(promoEngine.getPiece('e8')?.type === 'q', 'Secondary pawn pushed to Rank 8 immediately promotes to Queen');
 
   // 3. limitPawnsTo8 toggle

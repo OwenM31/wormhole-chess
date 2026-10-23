@@ -121,9 +121,9 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     world: 1,
     energyCost: 0,
     artId: 'r1_make_way',
-    conditionText: 'Friendly Pawn is orthogonally adjacent and square directly beyond along line is empty.',
-    effectText: 'Push that Pawn 1 square away along line and move this Rook into vacated square.',
-    description: 'Adjacent ally Pawn with empty space beyond: Push Pawn 1 square away and take its square.',
+    conditionText: 'Friendly Pawn is orthogonally adjacent and has an empty square perpendicular to your line.',
+    effectText: 'Pawn steps aside perpendicular to an empty square, and Rook slides to any open square along the opened line.',
+    description: 'Adjacent ally Pawn steps aside to empty square, clearing file for Rook to charge.',
     visualTheme: PIECE_COLOR_THEMES.rook
   },
 
