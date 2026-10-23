@@ -3,6 +3,7 @@ import { CardDefinition, TargetingStage, EmpoweredMove } from '../types/deckChes
 import { getCardById } from '../engine/cardGraph';
 import { CANONICAL_36_CARDS } from '../engine/cards/releaseRoster36';
 import { PlayingCard } from './PlayingCard';
+import { buildHandDisplay } from '../utils/handOrder';
 
 export interface TacticalHandBarProps {
   hand: string[]; // Active card IDs remaining in hand
@@ -34,17 +35,17 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
   activeCardIdsForPiece = [],
   onSelectCard,
   onHoverCard,
-  onCancelTargeting,
   pendingCardMove,
   selectedSquare,
 }) => {
   // If initialDeck is not provided, use current hand as baseline
   const deckCards = initialDeck.length > 0 ? initialDeck : hand;
+  const handItems = buildHandDisplay(deckCards, hand);
 
-  const rows =
-    deckCards.length <= 4
-      ? [deckCards]
-      : [deckCards.slice(0, 4), deckCards.slice(4, 8)];
+  const desktopRows =
+    handItems.length <= 4
+      ? [handItems]
+      : [handItems.slice(0, 4), handItems.slice(4, 8)];
 
   const activeCardId = selectedCardId || selectedCard?.id || null;
 
@@ -64,7 +65,7 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
           </span>
         </div>
 
-        {/* Right Status / Cancel Button */}
+        {/* Right Status (Cancel button removed; re-tapping selected card deselects) */}
         <div className="flex items-center gap-2">
           {pendingCardMove ? (
             <div className="flex items-center gap-1.5 bg-[#3C493F] border border-[#D4AF37] px-2 py-0.5 rounded text-[11px]">
@@ -73,15 +74,6 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
           ) : activeCardId ? (
             <div className="flex items-center gap-1.5 bg-[#191B1D] border border-[#D4AF37]/60 px-2 py-0.5 rounded text-[11px] animate-pulse">
               <span className="text-[#D4AF37] font-medium">🎯 Card Active</span>
-              {onCancelTargeting && (
-                <button
-                  type="button"
-                  onClick={onCancelTargeting}
-                  className="px-1.5 py-0.5 bg-[#AA4A44] hover:bg-[#883934] text-[#FAF9F6] rounded text-[9px] font-bold transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-              )}
             </div>
           ) : hasPlayedCardThisTurn ? (
             <span className="text-[10px] font-mono text-[#D4AF37] font-medium">
@@ -91,18 +83,71 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
         </div>
       </div>
 
-      {/* 2. 2×4 Portrait TCG Ruffle Hand Spread (Variant A 5:7 Playing Cards) */}
-      <div className="flex flex-col gap-3.5 my-auto w-full items-center justify-center py-1">
-        {rows.map((rowCards, rowIdx) => (
+      {/* 2. Mobile Single Horizontal Swipeable Row (< lg) */}
+      <div
+        className="flex lg:hidden flex-nowrap overflow-x-auto snap-x snap-mandatory overscroll-x-contain [touch-action:pan-x] pt-6 pb-4 px-3 gap-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full items-center [mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-16px),transparent)]"
+      >
+        {handItems.map((item) => {
+          const card = CARD_MAP.get(item.cardId) || getCardById(item.cardId);
+          if (!card) return null;
+
+          const isAvailable = !item.spent;
+          const isSelected = activeCardId === item.cardId;
+          const isHovered = hoveredCardId === item.cardId;
+          const isActiveForPiece = activeCardIdsForPiece.includes(item.cardId);
+          const isPieceSelected = Boolean(selectedSquare);
+          const isDimmed = isPieceSelected && !isActiveForPiece && !isSelected;
+
+          return (
+            <div
+              key={item.slotKey}
+              ref={(el) => {
+                if (isSelected && el) {
+                  el.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+                }
+              }}
+              className="flex-shrink-0 snap-start"
+            >
+              <PlayingCard
+                card={card}
+                size="hand"
+                isAvailable={isAvailable}
+                isSelected={isSelected}
+                isHovered={isHovered}
+                isActiveForPiece={isActiveForPiece}
+                isDimmed={isDimmed}
+                fanRotationClass="rotate-0"
+                overlapClass=""
+                dataTestId={`hand-card-${item.cardId}`}
+                onClick={() => {
+                  if (isAvailable || isSelected) {
+                    onSelectCard(item.cardId);
+                  }
+                }}
+                onMouseEnter={() => {
+                  if (onHoverCard) onHoverCard(item.cardId);
+                }}
+                onMouseLeave={() => {
+                  if (onHoverCard) onHoverCard(null);
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 3. Desktop 2×4 Portrait TCG Ruffle Hand Spread (>= lg) */}
+      <div className="hidden lg:flex flex-col gap-3.5 my-auto w-full items-center justify-center py-1">
+        {desktopRows.map((rowCards, rowIdx) => (
           <div key={rowIdx} className="flex items-center justify-center w-full px-2">
-            {rowCards.map((cardId, cardIdx) => {
-              const card = CARD_MAP.get(cardId) || getCardById(cardId);
+            {rowCards.map((item, cardIdx) => {
+              const card = CARD_MAP.get(item.cardId) || getCardById(item.cardId);
               if (!card) return null;
 
-              const isAvailable = hand.includes(cardId);
-              const isSelected = activeCardId === cardId;
-              const isHovered = hoveredCardId === cardId;
-              const isActiveForPiece = activeCardIdsForPiece.includes(cardId);
+              const isAvailable = !item.spent;
+              const isSelected = activeCardId === item.cardId;
+              const isHovered = hoveredCardId === item.cardId;
+              const isActiveForPiece = activeCardIdsForPiece.includes(item.cardId);
               const isPieceSelected = Boolean(selectedSquare);
               const isDimmed = isPieceSelected && !isActiveForPiece && !isSelected;
 
@@ -120,7 +165,7 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
 
               return (
                 <PlayingCard
-                  key={`${cardId}-${cardIdx}`}
+                  key={item.slotKey}
                   card={card}
                   size="hand"
                   isAvailable={isAvailable}
@@ -130,14 +175,14 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
                   isDimmed={isDimmed}
                   fanRotationClass={fanRotation}
                   overlapClass={overlapClass}
-                  dataTestId={`hand-card-${cardId}`}
+                  dataTestId={`hand-card-${item.cardId}`}
                   onClick={() => {
                     if (isAvailable || isSelected) {
-                      onSelectCard(cardId);
+                      onSelectCard(item.cardId);
                     }
                   }}
                   onMouseEnter={() => {
-                    if (onHoverCard) onHoverCard(cardId);
+                    if (onHoverCard) onHoverCard(item.cardId);
                   }}
                   onMouseLeave={() => {
                     if (onHoverCard) onHoverCard(null);

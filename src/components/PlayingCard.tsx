@@ -336,10 +336,16 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
         data-card-id={card.id}
         data-testid={dataTestId || `hand-card-${card.id}`}
         onClick={onClick}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
+        onPointerEnter={(e) => {
+          if (e.pointerType === 'mouse') onMouseEnter?.();
+        }}
+        onPointerLeave={(e) => {
+          if (e.pointerType === 'mouse') onMouseLeave?.();
+        }}
         title={`${card.code ? `[${card.code}] ` : ''}${card.name}\nIF: ${card.conditionText}\nEFF: ${card.effectText || card.description}`}
         style={{
+          width: 'clamp(5.75rem, 24vw, 6rem)',
+          aspectRatio: '5 / 7',
           background: isAvailable || isSelected ? pal.borderGrad : '#24272A',
           boxShadow: goldRing
             ? '0 14px 28px rgba(0,0,0,0.85), 0 0 14px rgba(212,175,55,0.75)'
@@ -348,7 +354,7 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
             : '0 6px 14px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3)',
           outline: goldRing ? '2px solid #D4AF37' : 'none',
         }}
-        className={`group relative tcg-card w-[92px] h-[142px] sm:w-[96px] sm:h-[148px] rounded-[8px] p-[4px] flex flex-col transition-all duration-200 select-none ${overlapClass} ${
+        className={`group relative tcg-card w-[clamp(5.75rem,24vw,6rem)] aspect-[5/7] rounded-[8px] p-[4px] flex flex-col transition-all duration-200 select-none ${overlapClass} ${
           isSelected
             ? 'z-40 -translate-y-4 scale-[1.24] rotate-0 cursor-pointer'
             : isActiveForPiece
@@ -358,7 +364,7 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
             : isDimmed
             ? `${fanRotationClass} opacity-40 cursor-pointer`
             : isAvailable
-            ? `${fanRotationClass} hover:-translate-y-4 hover:scale-[1.22] hover:rotate-0 hover:z-40 cursor-pointer`
+            ? `${fanRotationClass} [@media(hover:hover)]:hover:-translate-y-4 [@media(hover:hover)]:hover:scale-[1.22] [@media(hover:hover)]:hover:rotate-0 [@media(hover:hover)]:hover:z-40 cursor-pointer`
             : `${fanRotationClass} opacity-25 cursor-not-allowed`
         }`}
       >
