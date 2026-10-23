@@ -85,6 +85,7 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
 
       {/* 2. Mobile Single Horizontal Swipeable Row (< lg) */}
       <div
+        data-testid="tactical-hand-mobile-row"
         className="flex lg:hidden flex-nowrap overflow-x-auto snap-x snap-mandatory overscroll-x-contain [touch-action:pan-x] pt-6 pb-4 px-3 gap-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden w-full items-center [mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-16px),transparent)]"
       >
         {handItems.map((item) => {
@@ -137,7 +138,10 @@ export const TacticalHandBar: React.FC<TacticalHandBarProps> = ({
       </div>
 
       {/* 3. Desktop 2×4 Portrait TCG Ruffle Hand Spread (>= lg) */}
-      <div className="hidden lg:flex flex-col gap-3.5 my-auto w-full items-center justify-center py-1">
+      <div
+        data-testid="tactical-hand-desktop-grid"
+        className="hidden lg:flex flex-col gap-3.5 my-auto w-full items-center justify-center py-1"
+      >
         {desktopRows.map((rowCards, rowIdx) => (
           <div key={rowIdx} className="flex items-center justify-center w-full px-2">
             {rowCards.map((item, cardIdx) => {

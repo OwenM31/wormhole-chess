@@ -613,10 +613,17 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
 
           {/* Equipped Slots Grid (8 Miniature 5:7 Portrait Playing Cards) */}
           <div
+            data-testid="equipped-slots-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: `repeat(${activeProfile.handSize}, minmax(0, 1fr))`,
+              gridAutoFlow: 'column',
+              gridAutoColumns: 'minmax(5.75rem, 1fr)',
+              overflowX: 'auto',
+              scrollSnapType: 'x mandatory',
+              overscrollBehaviorX: 'contain',
+              touchAction: 'pan-x',
               gap: '0.6rem',
+              paddingBottom: '0.5rem',
             }}
           >
             {Array.from({ length: activeProfile.handSize }).map((_, idx) => {
@@ -641,6 +648,7 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
                 <div
                   key={`empty-${idx}`}
                   style={{
+                    scrollSnapAlign: 'start',
                     aspectRatio: '5 / 7',
                     backgroundColor: '#1C1E20',
                     border: '1.5px dashed rgba(139, 126, 116, 0.3)',
