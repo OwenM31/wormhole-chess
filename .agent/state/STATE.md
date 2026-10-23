@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-21T15:44:05-05:00
+updated: 2026-10-22T18:46:40-05:00
 ---
 
 # Project State
@@ -9,7 +9,7 @@ updated: 2026-10-21T15:44:05-05:00
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 - **Phase**: 3 — 36-Card Engine, Deck Builder Main Menu Hub & Multiplayer / AI Playtest Prototype (Complete & Verified)
 - **Task**: Ready for Phase 4 planning (`/plan 4` — Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1)
-- **Status**: Active (resumed 2026-10-21 15:44)
+- **Status**: Active (resumed 2026-10-22 18:46)
 - **Roadmap Status**: Phases 1–3 Complete & Verified; Ready for Phase 4 (Campaign Engine & World 1)
 
 ## Last Session Summary
@@ -33,6 +33,12 @@ Executed all 4 plans and verification for Phase 3:
 5. **Phase 3 Formal Verification (`dda3880`)**:
    - Validated all 7 must-haves against the 3-Tier Verification Triangle with 100% pass rate.
    - Authored `.agent/state/phases/3/VERIFICATION.md` and updated `.agent/state/ROADMAP.md` marking Phase 3 complete.
+6. **Real Private Match & Remote Turn Synchronization (Verified)**:
+   - Remediated modal action stub in `MultiplayerCharacterStage.tsx` with room code generator and time control selection (`3+0`, `5+0`, `10+0`, `untimed`).
+   - Built dual-mode networking in `useGameRoom.ts`: local `BroadcastChannel` fallback for zero-config multi-tab play and Cloudflare `GameRoomDO` WebSocket for internet play.
+   - Added `sessionStorage` per-tab identification to eliminate tab seat collisions.
+   - Wired `applyRemoteTurn` in `PlayRoomPage.tsx` and `useDeckChessGame.ts` with authoritative FEN synchronization, card consumption, modifier tracking, and audio cues.
+   - Authored `scripts/test-multiplayer-private-match.mjs` verifying 2-player match launch, challenger join, turn progression, and FEN synchronization in headless Chrome. All 403 unit tests green.
 
 ## In-Progress Work
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import { useAuth } from '../context/AuthContext';
@@ -55,7 +55,7 @@ export const PlayRoomPage: React.FC = () => {
 
   const profilesHook = usePlayerProfiles();
   const { activeProfile } = profilesHook;
-  const isDeckBuilder = state?.variant === 'deck_builder';
+  const isDeckBuilder = (state?.variant || variant || 'deck_builder').includes('deck_builder');
   const playerColor = room.yourRole === 'black' ? 'b' : 'w';
 
   const deckGame = useDeckChessGame({
@@ -67,6 +67,33 @@ export const PlayRoomPage: React.FC = () => {
       room.sendTurn(payload);
     },
   });
+
+  // Track applied remote moves from roomState
+  const lastProcessedTurnRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!state || !state.moveHistory || state.moveHistory.length === 0) return;
+    const latestMove = state.moveHistory[state.moveHistory.length - 1];
+    if (latestMove && latestMove.turnNumber > lastProcessedTurnRef.current) {
+      lastProcessedTurnRef.current = latestMove.turnNumber;
+      if (latestMove.player !== room.yourRole && latestMove.payload) {
+        deckGame.applyRemoteTurn(latestMove.payload as any);
+      }
+    }
+  }, [state?.moveHistory, room.yourRole, deckGame.applyRemoteTurn]);
+
+  // When match begins or syncs existing state, align if needed
+  useEffect(() => {
+    if (state?.status === 'in_progress' && state.moveHistory && state.moveHistory.length > 0) {
+      const latestMove = state.moveHistory[state.moveHistory.length - 1];
+      if (latestMove && latestMove.turnNumber > lastProcessedTurnRef.current) {
+        lastProcessedTurnRef.current = latestMove.turnNumber;
+        if (latestMove.player !== room.yourRole && latestMove.payload) {
+          deckGame.applyRemoteTurn(latestMove.payload as any);
+        }
+      }
+    }
+  }, [state?.status]);
 
   return (
     <div style={styles.pageContainer}>

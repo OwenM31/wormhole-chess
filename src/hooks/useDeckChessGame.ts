@@ -393,7 +393,7 @@ export function useDeckChessGame({
       if (gameState.isGameOver || isAiThinking) return false;
 
       const currentTurn = engineRef.current.getTurn();
-      if (mode === 'ai' && currentTurn !== playerColor) return false;
+      if ((mode === 'ai' || mode === 'multiplayer') && currentTurn !== playerColor) return false;
 
       const res = engineRef.current.makeMove({ from, to, promotion });
       if (!res.success || !res.move) {
@@ -476,7 +476,7 @@ export function useDeckChessGame({
     if (!pendingCardMove) return false;
     if (gameState.isGameOver || isAiThinking) return false;
     const currentTurn = engineRef.current.getTurn();
-    if (mode === 'ai' && currentTurn !== playerColor) return false;
+    if ((mode === 'ai' || mode === 'multiplayer') && currentTurn !== playerColor) return false;
 
     const move: EmpoweredMove = pendingCardMove;
     const targetPiece = engineRef.current.getPiece(move.to);
@@ -574,7 +574,7 @@ export function useDeckChessGame({
     (square: string) => {
       if (gameState.isGameOver || isAiThinking) return;
       const activeTurn = engineRef.current.getTurn();
-      if (mode === 'ai' && activeTurn !== playerColor) return;
+      if ((mode === 'ai' || mode === 'multiplayer') && activeTurn !== playerColor) return;
 
       // 1. If currently in Disambiguation state, check if clicked square is one of the candidates' extraSquare
       if (disambiguationCandidates && disambiguationCandidates.length > 0) {
@@ -681,9 +681,9 @@ export function useDeckChessGame({
       const engine = engineRef.current;
 
       if (payload.cardAction) {
-        const { cardId, anchorSquare, targetSquare, extraSquare } = payload.cardAction;
+        const { cardId, anchorSquare } = payload.cardAction;
         const cardDef = getCardById(cardId);
-        engine.activateCard(cardId, anchorSquare, targetSquare, extraSquare);
+        engine.consumeCard(cardId, payload.playerColor);
         playCardSound();
         addLog(
           `${payload.playerColor === 'w' ? 'White' : 'Black'} played [${cardDef?.name || cardId}] on ${anchorSquare}`,
@@ -692,35 +692,38 @@ export function useDeckChessGame({
         );
       }
 
-      const moveRes = engine.makeMove(payload.chessMove);
-      if (moveRes.success && moveRes.move) {
-        const moveSan = moveRes.move.san || `${payload.chessMove.from}-${payload.chessMove.to}`;
-        addLog(
-          `${payload.playerColor === 'w' ? 'White' : 'Black'} moved ${moveSan}`,
-          'move',
-          payload.playerColor
-        );
-
-        if (moveRes.move.captured) {
-          playCaptureSound();
-        } else {
-          playMoveSound();
-        }
-        if (engine.inCheck()) {
-          setTimeout(playCheckSound, 120);
-        }
-
-        const turnRecord: RecordedTurn = {
-          turnNumber: payload.turnNumber,
-          player: payload.playerColor,
-          chessMove: payload.chessMove,
-          cardAction: payload.cardAction,
-          fenAfter: payload.resultingFen,
-          combatText: `${payload.playerColor === 'w' ? 'White' : 'Black'} moved ${moveSan}`,
-          timestamp: Date.now(),
-        };
-        setRecordedTurns((prev) => [...prev, turnRecord]);
+      if (payload.resultingFen) {
+        engine.loadFen(payload.resultingFen);
+      } else {
+        engine.makeMove(payload.chessMove);
       }
+
+      if (payload.activeModifiers) {
+        engine.setActiveModifiers(payload.activeModifiers);
+      }
+
+      const moveSan = `${payload.chessMove.from}-${payload.chessMove.to}`;
+      addLog(
+        `${payload.playerColor === 'w' ? 'White' : 'Black'} moved ${moveSan}`,
+        'move',
+        payload.playerColor
+      );
+
+      playMoveSound();
+      if (engine.inCheck()) {
+        setTimeout(playCheckSound, 120);
+      }
+
+      const turnRecord: RecordedTurn = {
+        turnNumber: payload.turnNumber,
+        player: payload.playerColor,
+        chessMove: payload.chessMove,
+        cardAction: payload.cardAction,
+        fenAfter: payload.resultingFen || engine.getFen(),
+        combatText: `${payload.playerColor === 'w' ? 'White' : 'Black'} moved ${moveSan}`,
+        timestamp: Date.now(),
+      };
+      setRecordedTurns((prev) => [...prev, turnRecord]);
 
       cancelPendingCardMove();
       syncState();

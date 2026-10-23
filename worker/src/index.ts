@@ -8,9 +8,11 @@ export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
     const url = new URL(request.url);
 
+    const pathname = url.pathname.replace(/^\/api/, '');
+
     // Route /room/:code -> GameRoomDO
-    if (url.pathname.startsWith('/room/')) {
-      const parts = url.pathname.split('/').filter(Boolean);
+    if (pathname.startsWith('/room/')) {
+      const parts = pathname.split('/').filter(Boolean);
       // Expected pathname: /room/<code...>
       const roomCode = (parts[1] || 'ROOM').toUpperCase();
       const id = env.GAME_ROOM.idFromName(roomCode);
@@ -19,7 +21,7 @@ export default {
     }
 
     // Route /matchmaking/* -> MatchmakerDO (singleton "global")
-    if (url.pathname.startsWith('/matchmaking')) {
+    if (pathname.startsWith('/matchmaking')) {
       const id = env.MATCHMAKER.idFromName('global');
       const stub = env.MATCHMAKER.get(id);
       return stub.fetch(request);

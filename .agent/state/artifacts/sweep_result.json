@@ -1,12 +1,14 @@
 {
+  "sweepDate": "2026-10-22T23:56:02.570Z",
   "routesSwept": 6,
-  "interactiveElementsTested": 51,
+  "interactiveElementsTested": 63,
   "defects": [],
   "screenshots": [
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_01_home_desktop.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_01_home_mobile.png",
-    "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_02_deck_builder_desktop.png",
-    "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_02_deck_forge_desktop.png",
+    "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_02_main_menu_desktop.png",
+    "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_02_multiplayer_stage_desktop.png",
+    "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_02_arena_desktop.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_02_deck_builder_mobile.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_03_wormhole_desktop.png",
     "C:\\Users\\omeye\\OneDrive\\Desktop\\dev\\repos\\wormhole-chess\\.agent\\state\\artifacts\\screenshots\\sweep_03_wormhole_mobile.png",

@@ -146,11 +146,23 @@ export class DeckChessEngine {
     return color === 'w' ? this.getWhiteHand() : this.getBlackHand();
   }
 
+  public consumeCard(cardId: string, color: PieceColor): void {
+    const hand = color === 'w' ? this.whiteHand : this.blackHand;
+    const idx = hand.indexOf(cardId);
+    if (idx !== -1) {
+      hand.splice(idx, 1);
+    }
+  }
+
   public getGraveyard(): { w: Graveyard; b: Graveyard } {
     return {
       w: { ...this.graveyard.w },
       b: { ...this.graveyard.b },
     };
+  }
+
+  public setActiveModifiers(modifiers: BoardModifier[]): void {
+    this.activeModifiers = [...modifiers];
   }
 
   public getActiveModifiers(): BoardModifier[] {

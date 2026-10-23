@@ -460,7 +460,7 @@ export const DeckBuilderPage: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setScreen('multiplayer')}
+                  onClick={() => setScreen('forge')}
                   className="flex-1 py-1.5 bg-[#24272A] hover:bg-[#282B2E] text-[#D4AF37] border border-[#D4AF37]/40 rounded text-xs font-semibold transition-colors cursor-pointer"
                 >
                   My Deck

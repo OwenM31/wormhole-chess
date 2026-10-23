@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePlayerProfiles } from '../hooks/usePlayerProfiles';
 import { CANONICAL_36_CARDS, PIECE_COLOR_THEMES } from '../engine/cards/releaseRoster36';
 import { CardDefinition, PieceAnchor, PieceColor } from '../types/deckChess';
@@ -32,6 +33,7 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
   onOpenAsyncMatches,
   profilesHook,
 }) => {
+  const navigate = useNavigate();
   const internalHook = usePlayerProfiles();
   const hook = profilesHook || internalHook;
   const {
@@ -52,6 +54,7 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
   const [showPrivateModal, setShowPrivateModal] = useState(false);
   const [showAsyncModal, setShowAsyncModal] = useState(false);
   const [privateCodeInput, setPrivateCodeInput] = useState('');
+  const [privateTimeControl, setPrivateTimeControl] = useState<'3+0' | '5+0' | '10+0' | 'untimed'>('5+0');
 
   // Offline Match Configuration state
   const [offlineColor, setOfflineColor] = useState<PieceColor>('w');
@@ -1108,7 +1111,7 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
               border: '1px solid rgba(139, 126, 116, 0.3)',
               borderRadius: '6px',
               width: '100%',
-              maxWidth: '440px',
+              maxWidth: '460px',
               padding: '1.5rem',
               boxShadow: '0 12px 32px rgba(0, 0, 0, 0.6)',
               display: 'flex',
@@ -1118,7 +1121,12 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Private Room</h3>
+              <div>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Private Room</h3>
+                <p style={{ fontSize: '0.75rem', color: '#8B7E74', margin: '0.25rem 0 0' }}>
+                  Play real-time Deck Builder chess with a friend over the internet.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowPrivateModal(false)}
@@ -1128,12 +1136,51 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
               </button>
             </div>
 
+            {/* Time Control Selection */}
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#8B7E74', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
+                Time Control
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
+                {[
+                  { id: '3+0', label: '3 min' },
+                  { id: '5+0', label: '5 min' },
+                  { id: '10+0', label: '10 min' },
+                  { id: 'untimed', label: 'Untimed' },
+                ].map(({ id, label }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setPrivateTimeControl(id as any)}
+                    style={{
+                      padding: '0.45rem',
+                      backgroundColor: privateTimeControl === id ? '#4C5C4C' : '#191B1D',
+                      color: privateTimeControl === id ? '#FAF9F6' : '#8B7E74',
+                      border: privateTimeControl === id ? '1px solid #D4AF37' : '1px solid rgba(139, 126, 116, 0.25)',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <button
                 type="button"
                 onClick={() => {
-                  showNotification('Room created: WORMHOLE-CHESS-7');
+                  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                  let code = '';
+                  for (let i = 0; i < 4; i++) {
+                    code += chars.charAt(Math.floor(Math.random() * chars.length));
+                  }
+                  const newRoomCode = `WH-${code}`;
                   setShowPrivateModal(false);
+                  navigate(`/play/${newRoomCode}?variant=deck_builder&timeControl=${privateTimeControl}`);
                 }}
                 style={{
                   padding: '0.75rem',
@@ -1144,17 +1191,37 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
                   fontWeight: 700,
                   fontSize: '0.85rem',
                   cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
                 }}
               >
-                + Create New Private Room
+                <span>⚔️</span> Create & Enter Room
               </button>
+
+              <div style={{ position: 'relative', textAlign: 'center', margin: '0.25rem 0' }}>
+                <div style={{ borderTop: '1px solid rgba(139, 126, 116, 0.2)', position: 'absolute', top: '50%', width: '100%' }} />
+                <span style={{ position: 'relative', backgroundColor: '#24272A', padding: '0 0.5rem', fontSize: '0.7rem', color: '#8B7E74', textTransform: 'uppercase' }}>
+                  or join with code
+                </span>
+              </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <input
                   type="text"
-                  placeholder="Enter 6-digit room code..."
+                  placeholder="Enter room code (e.g. WH-K7X2)..."
                   value={privateCodeInput}
                   onChange={(e) => setPrivateCodeInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const clean = privateCodeInput.trim().toUpperCase();
+                      if (clean) {
+                        setShowPrivateModal(false);
+                        navigate(`/play/${clean}?variant=deck_builder`);
+                      }
+                    }
+                  }}
                   style={{
                     flex: 1,
                     padding: '0.6rem 0.75rem',
@@ -1168,9 +1235,10 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
                 <button
                   type="button"
                   onClick={() => {
-                    if (privateCodeInput.trim()) {
-                      showNotification(`Joining room ${privateCodeInput.trim()}...`);
+                    const clean = privateCodeInput.trim().toUpperCase();
+                    if (clean) {
                       setShowPrivateModal(false);
+                      navigate(`/play/${clean}?variant=deck_builder`);
                     }
                   }}
                   style={{
