@@ -4,6 +4,42 @@
 
 ---
 
+### Session: 2026-10-23 11:31
+
+#### Objective
+Insert Phase 4 (*Gameplay Bugfixes, 36-Card Mechanics Audit & Mobile Card Ergonomics*) in response to playtest feedback, conduct architectural research, formulate decoupled turn-flow and card-staging mechanics, and author all atomic execution plans.
+
+#### Accomplished
+- ✅ Executed `/insert-phase 4`:
+  - Inserted Phase 4 into `ROADMAP.md` and renumbered subsequent Campaign phases (5, 6, 7).
+  - Formulated 4 target deliverables from playtest observations: piece-first standard move decoupling, R1 "Make Way" perpendicular step-aside redesign, mobile horizontal card scroll wheels, and spent-card tail reordering.
+- ✅ Conducted Phase 4 Research & Architectural Specification (`RESEARCH.md`):
+  - Designed the Decoupled Card-Armed State Machine (Option A): clicking a piece on the board displays and executes standard chess moves without being hijacked by card abilities; cards must be tapped in hand to arm empowered moves; tapping again or clicking an unrelated piece immediately disarms.
+  - Specified R1 "Make Way" perpendicular movement: blocking friendly pawn steps aside to an empty adjacent tile (`extraSquare`), and the Rook slides to any open square along the opened file (`to`).
+  - Specified pure presentation sorting `buildHandDisplay` ensuring spent cards sort count-aware to the hand tail while unspent cards preserve relative order.
+  - Designed responsive fluid rem/clamp sizing and native horizontal scroll snap for mobile card rows without card squishing.
+- ✅ Created 4 Complete Execution Plans across 3 Waves:
+  - **Plan 4.1 (Wave 1)**: Engine Mechanics Audit, King Check Safety & R1 Redesign (`01-PLAN.md`).
+  - **Plan 4.2 (Wave 1)**: Mobile Card Scroll Rows & Spent-Card Tail Ordering (`02-PLAN.md`).
+  - **Plan 4.3 (Wave 2)**: Unified Turn Flow, Standard Move Decoupling & Multi-Step Staging (`03-PLAN.md`).
+  - **Plan 4.4 (Wave 3)**: 36-Card Mechanics TDD Test Suite & Playwright E2E Verification (`04-PLAN.md`).
+  - Committed all plans and research to git repository (`7d7fc95`).
+
+#### Verification
+- [x] All 4 plans verified against checker criteria (2-3 atomic tasks, file boundaries, measurable done criteria).
+- [x] Wave assignments respect file ownership rules (Wave 1 files 100% disjoint).
+- [x] Git commit clean (`docs(phase-4): create execution plans`).
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) at clean boundary between planning and execution.
+
+#### Handoff Notes
+- Working tree is clean and synced.
+- All Phase 4 plans are saved in `.agent/state/phases/4/`.
+- Upon resuming (`/resume`), proceed immediately to **`@[.agent/workflows/execute.md] 4`** to run all plans across Waves 1–3.
+
+---
+
 ### Session: 2026-10-23 10:45
 
 #### Objective

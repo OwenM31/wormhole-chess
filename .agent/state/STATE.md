@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-23T11:30:00-05:00
+updated: 2026-10-23T11:31:30-05:00
 ---
 
 # Project State
@@ -9,28 +9,29 @@ updated: 2026-10-23T11:30:00-05:00
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 - **Phase**: 4 — Gameplay Bugfixes, 36-Card Mechanics Audit & Mobile Card Ergonomics
 - **Task**: Planning Complete (4 Plans across 3 Waves in `.agent/state/phases/4/`)
-- **Status**: Ready for Execution (`@[.agent/workflows/execute.md] 4`)
-- **Roadmap Status**: Phases 1–3 Complete & Verified; Ready for Phase 4 Execution
+- **Status**: Paused at 2026-10-23 11:31
+- **Roadmap Status**: Phases 1–3 Complete & Verified; Ready for Phase 4 Execution (`@[.agent/workflows/execute.md] 4`)
 
 ## Last Session Summary
-1. **Full Surface UX Sweep (`/ux-sweep`)**:
-   - Swept all 6 routes (`/`, `/deck-builder`, `/wormhole`, `/dashboard`, `/login`, `/register`, `/play/:code`) on Desktop and Mobile.
-   - Identified and remediated DEF-007 ("My Deck" action footer button in Arena now routes to Forge loadout customizer).
-2. **Private Multiplayer Match & Remote Synchronization ([DEF-008])**:
-   - Replaced modal toast stubs in `MultiplayerCharacterStage.tsx` with room code generation and time control selection (`3+0`, `5+0`, `10+0`, `untimed`), navigating to `/play/:code`.
-   - Built dual-mode network transport in `useGameRoom.ts`: zero-config `BroadcastChannel` local fallback for instant multi-tab dev, and Cloudflare Pages Functions + `GameRoomDO` Durable Object WebSockets for internet play.
-   - Added per-tab session isolation via `sessionStorage` (`getTabSessionId`), enabling testing in two tabs on the same machine without White/Black seat collision.
-   - Wired `applyRemoteTurn` in `PlayRoomPage.tsx` and `useDeckChessGame.ts` with authoritative FEN synchronization, card consumption, modifier tracking, and audio cues.
-3. **Automated & Empirical Verification**:
-   - Created `scripts/test-multiplayer-private-match.mjs` verifying 2-player private match flow in headless Chrome (Room creation -> Player 2 joins -> Transition to in_progress -> White moves e2-e4 -> Black receives move and turn transfers to Black).
-   - Verified live production deployment on `https://wormhole-chess.com`: verified that pushing to GitHub `origin/master` auto-deploys via Cloudflare Pages, and verified live room creation and 2-player handshake over the internet on `https://wormhole-chess.com/play/WH-PROD1`.
-   - All 403 engine unit tests passing, full-stack typecheck clean.
-   - Authored artifact `private-match-verification.md` and updated `DEFECTS.md`.
+1. **Inserted Phase 4 (`/insert-phase 4`)**:
+   - Added Phase 4 (*Gameplay Bugfixes, 36-Card Mechanics Audit & Mobile Card Ergonomics*) addressing 4 playtest discoveries: piece-move vs card-move hijacking, R1 "Make Way" perpendicular movement, mobile card compression, and spent-card tail reordering.
+   - Renumbered subsequent Campaign phases to Phases 5, 6, and 7.
+2. **Architectural Design & Research (`RESEARCH.md`)**:
+   - Formulated the Decoupled Card-Armed State Machine (Option A): clicking a piece on the board strictly executes standard chess moves unless an applicable card is explicitly armed in hand.
+   - Redesigned R1 "Make Way": blocking friendly pawn steps aside perpendicular to ray onto an empty tile (`extraSquare`), allowing the Rook to slide to any open square along the newly cleared file (`to`).
+   - Defined pure presentation sorting `buildHandDisplay` ensuring spent cards shift count-aware to the hand tail while unspent cards preserve relative order.
+   - Designed fluid rem/clamp sizing and native horizontal scroll snap for mobile card rows without card distortion.
+3. **Authored 4 Atomic Phase Plans (`01-PLAN.md` – `04-PLAN.md`)**:
+   - **Plan 4.1 (Wave 1)**: Engine Mechanics Audit, King Check Safety & R1 Redesign (`releaseRoster36.ts`, `playbook36Handlers.ts`, `DeckChessEngine.ts`).
+   - **Plan 4.2 (Wave 1)**: Mobile Card Scroll Rows & Spent-Card Tail Ordering (`handOrder.ts`, `PlayingCard.tsx`, `TacticalHandBar.tsx`, `MultiplayerCharacterStage.tsx`).
+   - **Plan 4.3 (Wave 2)**: Unified Turn Flow, Standard Move Decoupling & Multi-Step Staging (`useDeckChessGame.ts`, `DeckChessBoard.tsx`).
+   - **Plan 4.4 (Wave 3)**: 36-Card Mechanics TDD Test Suite & Playwright E2E Verification (`verify-36-mechanics-edge-cases.ts`, `verify-phase4-gameplay-fixes.mjs`).
+   - All plans verified and committed to git (`7d7fc95`).
 
 ## In-Progress Work
 
-- Files modified: None (working tree clean and synced with remote).
-- Tests status: Passing (403/403 engine unit tests, full-stack typecheck 0 errors, production build 0 errors, Playwright E2E 0 errors, Live Production handshake verified).
+- Files modified: None (working tree clean and committed to git).
+- Tests status: Passing (all unit tests green, full-stack typechecks clean, plans verified).
 
 ## Blockers
 
@@ -39,23 +40,24 @@ None.
 ## Context Dump
 
 ### Decisions Made
-- `[DECISION-025]`: Milestone v3.0 Strategic Pivot: PvZ2-Style Parallel World Key Campaign & 36-Card Pyramid Curation (`8P, 7K, 7B, 6R, 4Q, 4Kg`).
-- `[DECISION-026]`: Phase 3 Complete 36-Card Specification, Global Engine Invariants, Concurrent Castle Wings (`Worlds 3–6`), Tavern Hustle & Jester Shop.
-- `[DECISION-027]`: Full-Screen Multiplayer Character Stage, 5-Dot Copy Stack, Pokémon Piece-Color Frames (`Gray, Green, Blue, Purple, Red, Gold`), Bidirectional Selection & Card Outcome Confirmation (`✓` / `✕`).
-- `[DECISION-028]`: Authoritative FEN Synchronization & Dual-Mode Transport for Private Matches: `BroadcastChannel` for local multi-tab dev with per-tab `sessionStorage` IDs, and Cloudflare `GameRoomDO` Durable Objects for internet play.
+- `[DECISION-028]`: Authoritative FEN Synchronization & Dual-Mode Transport for Private Matches (`BroadcastChannel` local fallback + Cloudflare `GameRoomDO` Durable Objects).
+- `[DECISION-029]`: Turn Flow & Card Arming Decoupling (Option A) — clicking a piece on the board exclusively displays and executes standard chess moves. Cards must be explicitly tapped in hand to arm empowered moves; tapping again or clicking an unrelated piece immediately disarms.
+- `[DECISION-030]`: R1 "Make Way" Redesign — friendly blocking pawn steps aside perpendicular to the Rook's line onto an empty tile (`extraSquare`); Rook slides to any open square along the opened file (`to`).
+- `[DECISION-031]`: Count-Aware Hand Display & Mobile Horizontal Scroll — pure `buildHandDisplay` utility placing spent cards at tail while preserving unspent order; fluid clamp sizing + scroll snap preventing mobile squish.
 
 ### Files of Interest
-- `src/components/MultiplayerCharacterStage.tsx`: Private match creation and join modal with time control selection.
-- `src/hooks/useGameRoom.ts`: Dual-mode networking (BroadcastChannel fallback + Cloudflare DO WebSocket) with per-tab isolation.
-- `src/hooks/useDeckChessGame.ts`: Authoritative remote turn application (`applyRemoteTurn`), card consumption, and modifier tracking.
-- `src/pages/PlayRoomPage.tsx`: Live room viewport, clock sync, turn listener, and board integration.
-- `scripts/test-multiplayer-private-match.mjs`: Headless Chrome Playwright verification script for private matches.
-- `.agent/state/DEFECTS.md`: Remediated DEF-007 and DEF-008.
+- `.agent/state/phases/4/01-PLAN.md` through `04-PLAN.md`: Phase 4 executable plans.
+- `.agent/state/phases/4/RESEARCH.md`: Architectural specification and state machine diagram.
+- `src/hooks/useDeckChessGame.ts`: Game controller hook to be upgraded for decoupled card-arming.
+- `src/components/DeckChessBoard.tsx`: Board component rendering standard move dots and card markers.
+- `src/components/TacticalHandBar.tsx`: Hand bar to receive mobile swipeable row and spent card tail ordering.
+- `src/engine/cards/playbook36Handlers.ts`: 36 bespoke card implementations (redesigning R1 and adding King safety).
 
 ## Next Steps
 
-1. Run `@[.agent/workflows/execute.md] 4` (or `/execute 4`) to execute all 4 plans for Phase 4 across Waves 1–3:
+1. Run `@[.agent/workflows/execute.md] 4` (or `/execute 4`) to execute Plans 4.1 through 4.4 across Waves 1–3:
    - **Wave 1**: Plan 4.1 (Engine Mechanics Audit, Check Safety & R1 Redesign) + Plan 4.2 (Mobile Card Scroll Rows & Spent-Card Tail Ordering).
    - **Wave 2**: Plan 4.3 (Unified Turn Flow, Standard Move Decoupling & Multi-Step Card Staging).
    - **Wave 3**: Plan 4.4 (36-Card Mechanics TDD Suite & Playwright E2E Verification).
+2. Run `@[.agent/workflows/verify.md] 4` to empirically verify all must-haves and close out Phase 4.
 2. Run `@[.agent/workflows/verify.md] 4` to empirically verify all must-haves and close out Phase 4.
