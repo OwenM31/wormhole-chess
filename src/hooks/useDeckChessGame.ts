@@ -167,15 +167,23 @@ export function useDeckChessGame({
     return Array.from(set);
   }, [selectedSquare, selectedCardId, gameState.fen]);
 
-  // Card selection from tactical hand bar (Card-First Flow)
+  // Card selection from tactical hand bar (Card-First Flow & Arm/Disarm Toggle)
   const selectCardFromHand = useCallback(
     (cardId: string) => {
       if (gameState.isGameOver || isAiThinking) return;
       if (mode === 'ai' && gameState.turn !== playerColor) return;
 
-      // If clicking same card, cancel selection
+      // Card Arm / Disarm Toggle: Tapping the currently armed card disarms it and reverts to standard moves
       if (selectedCardId === cardId) {
-        cancelPendingCardMove();
+        setSelectedCardId(null);
+        setSelectedCard(null);
+        setPendingCardMove(null);
+        setDisambiguationCandidates(null);
+        setEmpoweredMovesForSelected([]);
+        if (selectedSquare) {
+          const legalStandard = engineRef.current.getLegalMoves(selectedSquare).map((m) => m.to);
+          setLegalMovesForSelected(legalStandard);
+        }
         return;
       }
 
@@ -206,12 +214,19 @@ export function useDeckChessGame({
       setSelectedCardId(cardId);
       setSelectedCard(card);
 
-      // If there is exactly 1 unique move outcome and no disambiguation needed, jump straight to outcome preview!
-      if (allCardMoves.length === 1 && !allCardMoves[0].extraSquare) {
-        setPendingCardMove(allCardMoves[0]);
-        setSelectedSquare(allCardMoves[0].from);
-        setEmpoweredMovesForSelected(allCardMoves);
-        return;
+      // If an anchor piece was already selected and it can use this card:
+      if (selectedSquare) {
+        const pieceMoves = allCardMoves.filter((m) => m.from === selectedSquare);
+        if (pieceMoves.length > 0) {
+          setEmpoweredMovesForSelected(pieceMoves);
+          const extraSquares = Array.from(new Set(pieceMoves.map((m) => m.extraSquare).filter(Boolean)));
+          if (extraSquares.length > 1) {
+            setDisambiguationCandidates(pieceMoves);
+          } else if (pieceMoves.length === 1 && !pieceMoves[0].extraSquare) {
+            setPendingCardMove(pieceMoves[0]);
+          }
+          return;
+        }
       }
 
       // If all candidate moves originate from a single piece on the board, auto-focus that piece!
@@ -221,7 +236,14 @@ export function useDeckChessGame({
         setSelectedSquare(singleAnchor);
         const legalStandard = engineRef.current.getLegalMoves(singleAnchor).map((m) => m.to);
         setLegalMovesForSelected(legalStandard);
-        setEmpoweredMovesForSelected(allCardMoves);
+        const anchorMoves = allCardMoves.filter((m) => m.from === singleAnchor);
+        setEmpoweredMovesForSelected(anchorMoves);
+        const extraSquares = Array.from(new Set(anchorMoves.map((m) => m.extraSquare).filter(Boolean)));
+        if (extraSquares.length > 1) {
+          setDisambiguationCandidates(anchorMoves);
+        } else if (anchorMoves.length === 1 && !anchorMoves[0].extraSquare) {
+          setPendingCardMove(anchorMoves[0]);
+        }
       } else {
         // Multiple candidate pieces on the board
         clearPieceSelection();
@@ -235,6 +257,7 @@ export function useDeckChessGame({
       mode,
       playerColor,
       selectedCardId,
+      selectedSquare,
       cancelPendingCardMove,
       clearPieceSelection,
       addLog,
@@ -569,44 +592,49 @@ export function useDeckChessGame({
     triggerAiTurn,
   ]);
 
-  // Square click coordinator (Piece-First & Card-First & Disambiguation)
+  // Square click coordinator (Decoupled Standard Moves & Card-Armed State Machine)
   const handleSquareClick = useCallback(
     (square: string) => {
       if (gameState.isGameOver || isAiThinking) return;
       const activeTurn = engineRef.current.getTurn();
       if ((mode === 'ai' || mode === 'multiplayer') && activeTurn !== playerColor) return;
 
-      // 1. If currently in Disambiguation state, check if clicked square is one of the candidates' extraSquare
-      if (disambiguationCandidates && disambiguationCandidates.length > 0) {
-        const candidate = disambiguationCandidates.find((c) => c.extraSquare === square);
-        if (candidate) {
-          setPendingCardMove(candidate);
-          setDisambiguationCandidates(null);
+      const clickedPiece = engineRef.current.getPiece(square);
+
+      // 1. If an outcome preview is already pending confirmation, clicking outside or another piece cancels preview
+      if (pendingCardMove) {
+        if (clickedPiece && clickedPiece.color === activeTurn) {
+          cancelPendingCardMove();
+          setSelectedSquare(square);
+          const legalStandard = engineRef.current.getLegalMoves(square).map((m) => m.to);
+          setLegalMovesForSelected(legalStandard);
+          setEmpoweredMovesForSelected([]);
           return;
         }
-        // Clicking outside candidate cancels disambiguation
-        setDisambiguationCandidates(null);
+        cancelPendingCardMove();
         return;
       }
 
-      // 2. If a card outcome is already pending confirmation, clicking a square does not accidentally commit
-      if (pendingCardMove) {
-        return;
-      }
-
-      // 3. Piece-First / Card-First Selection Logic
+      // 2. Initial Piece Click (No piece currently selected)
       if (!selectedSquare) {
-        const piece = engineRef.current.getPiece(square);
-        if (piece && piece.color === activeTurn) {
+        if (clickedPiece && clickedPiece.color === activeTurn) {
           setSelectedSquare(square);
           const legalStandard = engineRef.current.getLegalMoves(square).map((m) => m.to);
           setLegalMovesForSelected(legalStandard);
 
-          const pieceEmpowered = engineRef.current.getEmpoweredMoves(square);
+          // If a card was ALREADY armed in hand, filter empowered moves for this card on this piece
           if (selectedCardId) {
-            setEmpoweredMovesForSelected(pieceEmpowered.filter((m) => m.cardId === selectedCardId));
-          } else {
+            const pieceEmpowered = engineRef.current
+              .getEmpoweredMoves(square)
+              .filter((m) => m.cardId === selectedCardId);
             setEmpoweredMovesForSelected(pieceEmpowered);
+            const extraSquares = Array.from(new Set(pieceEmpowered.map((m) => m.extraSquare).filter(Boolean)));
+            if (extraSquares.length > 1) {
+              setDisambiguationCandidates(pieceEmpowered);
+            }
+          } else {
+            // When no card is armed, piece click ONLY produces standard chess moves
+            setEmpoweredMovesForSelected([]);
           }
         }
         return;
@@ -616,62 +644,129 @@ export function useDeckChessGame({
       if (selectedSquare === square) {
         clearPieceSelection();
         setSelectedCardId(null);
+        setSelectedCard(null);
+        setDisambiguationCandidates(null);
         return;
       }
 
-      // 4. Check if clicking an empowered move destination
+      // 3. CASE A: NO CARD ARMED (selectedCardId === null)
+      // Standard chess moves execute immediately without any card interception
+      if (!selectedCardId) {
+        // Standard legal move executed instantly
+        if (legalMovesForSelected.includes(square)) {
+          makeMove(selectedSquare, square);
+          return;
+        }
+
+        // Clicking another friendly piece switches selection
+        if (clickedPiece && clickedPiece.color === activeTurn) {
+          setSelectedSquare(square);
+          const legalStandard = engineRef.current.getLegalMoves(square).map((m) => m.to);
+          setLegalMovesForSelected(legalStandard);
+          setEmpoweredMovesForSelected([]);
+          return;
+        }
+
+        // Clicking empty or enemy square not in legal moves clears selection
+        clearPieceSelection();
+        return;
+      }
+
+      // 4. CASE B: CARD IS ARMED (selectedCardId !== null)
+      // Check multi-step staging (e.g. R1 Make Way pawn step-aside choice)
+      if (disambiguationCandidates && disambiguationCandidates.length > 0) {
+        // Did the user click one of the candidate extraSquares (e.g. pawn step-aside tile)?
+        const matchingCandidate = disambiguationCandidates.filter((c) => c.extraSquare === square);
+        if (matchingCandidate.length > 0) {
+          const uniqueDests = Array.from(new Set(matchingCandidate.map((m) => m.to)));
+          if (uniqueDests.length === 1) {
+            // Exactly one Rook destination -> proceed directly to preview
+            setPendingCardMove(matchingCandidate[0]);
+            setDisambiguationCandidates(null);
+          } else {
+            // Multiple Rook destinations along the opened line!
+            // Narrow candidate moves to those using this step-aside square
+            setEmpoweredMovesForSelected(matchingCandidate);
+            setDisambiguationCandidates(null);
+          }
+          return;
+        }
+
+        // If user clicked another friendly piece, automatically disarm card and select new piece
+        if (clickedPiece && clickedPiece.color === activeTurn) {
+          cancelPendingCardMove();
+          setSelectedSquare(square);
+          const legalStandard = engineRef.current.getLegalMoves(square).map((m) => m.to);
+          setLegalMovesForSelected(legalStandard);
+          setEmpoweredMovesForSelected([]);
+          return;
+        }
+
+        // Clicking outside cancels staging and disarms
+        cancelPendingCardMove();
+        return;
+      }
+
+      // Check if clicking an empowered destination square
       const matchingEmpowered = empoweredMovesForSelected.filter((m) => m.to === square);
       if (matchingEmpowered.length > 0) {
-        if (matchingEmpowered.length === 1 && !matchingEmpowered[0].disambiguationPrompt) {
-          // Transition directly to Live Outcome Preview + Bottom Confirmation Bar
+        if (matchingEmpowered.length === 1 && (!matchingEmpowered[0].disambiguationPrompt || matchingEmpowered[0].extraSquare)) {
           setPendingCardMove(matchingEmpowered[0]);
           return;
         }
 
-        // Multiple candidates or prompt required -> enter Disambiguation state
+        // Multiple candidates with different extraSquares -> enter disambiguation staging
         setDisambiguationCandidates(matchingEmpowered);
         return;
       }
 
-      // 5. Check if clicking a standard legal move destination (instant execution)
-      if (legalMovesForSelected.includes(square)) {
-        makeMove(selectedSquare, square);
-        return;
-      }
-
-      // 6. Clicking another friendly piece switches selection
-      const clickedPiece = engineRef.current.getPiece(square);
+      // If clicking another friendly piece while a card is armed:
       if (clickedPiece && clickedPiece.color === activeTurn) {
-        setSelectedSquare(square);
-        const legalStandard = engineRef.current.getLegalMoves(square).map((m) => m.to);
-        setLegalMovesForSelected(legalStandard);
+        // Can this piece also use the armed card?
+        const newPieceEmpowered = engineRef.current
+          .getEmpoweredMoves(square)
+          .filter((m) => m.cardId === selectedCardId);
 
-        const pieceEmpowered = engineRef.current.getEmpoweredMoves(square);
-        if (selectedCardId) {
-          setEmpoweredMovesForSelected(pieceEmpowered.filter((m) => m.cardId === selectedCardId));
+        if (newPieceEmpowered.length > 0) {
+          // Switch anchor piece and keep card armed
+          setSelectedSquare(square);
+          const legalStandard = engineRef.current.getLegalMoves(square).map((m) => m.to);
+          setLegalMovesForSelected(legalStandard);
+          setEmpoweredMovesForSelected(newPieceEmpowered);
+          const extraSquares = Array.from(new Set(newPieceEmpowered.map((m) => m.extraSquare).filter(Boolean)));
+          if (extraSquares.length > 1) {
+            setDisambiguationCandidates(newPieceEmpowered);
+          } else {
+            setDisambiguationCandidates(null);
+          }
         } else {
-          setEmpoweredMovesForSelected(pieceEmpowered);
+          // Unrelated piece clicked -> automatically disarm card and select piece for standard moves!
+          cancelPendingCardMove();
+          setSelectedSquare(square);
+          const legalStandard = engineRef.current.getLegalMoves(square).map((m) => m.to);
+          setLegalMovesForSelected(legalStandard);
+          setEmpoweredMovesForSelected([]);
         }
         return;
       }
 
-      // Clicking empty/illegal square clears selection
-      clearPieceSelection();
-      setSelectedCardId(null);
+      // Clicking illegal square disarms card and clears selection
+      cancelPendingCardMove();
     },
     [
       gameState.isGameOver,
       isAiThinking,
       mode,
       playerColor,
-      disambiguationCandidates,
       pendingCardMove,
       selectedSquare,
       selectedCardId,
+      disambiguationCandidates,
       empoweredMovesForSelected,
       legalMovesForSelected,
-      clearPieceSelection,
       makeMove,
+      clearPieceSelection,
+      cancelPendingCardMove,
     ]
   );
 
