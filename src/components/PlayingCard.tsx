@@ -207,6 +207,7 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
         data-testid={dataTestId}
         onClick={onClick}
         style={{
+          scrollSnapAlign: 'start',
           aspectRatio: '5 / 7',
           background: frameGradient,
           borderRadius: '8px',
