@@ -224,6 +224,19 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
     ? disambiguationCandidates.map((c) => c.extraSquare).filter((s): s is string => Boolean(s))
     : [];
 
+  // Dynamic contextual badge for secondary square choices
+  const disambiguationPromptText = disambiguationCandidates?.[0]?.disambiguationPrompt || '';
+  const disambiguationBadgeLabel = (() => {
+    const lower = disambiguationPromptText.toLowerCase();
+    if (lower.includes('step aside') || lower.includes('aside')) return 'STEP ASIDE';
+    if (lower.includes('reinforc') || lower.includes('knight')) return 'REINFORCE';
+    if (lower.includes('defend') || lower.includes('pawn')) return 'DEFEND';
+    if (lower.includes('sacrifice')) return 'SACRIFICE';
+    if (lower.includes('ally') || lower.includes('execut')) return 'EXECUTE';
+    if (lower.includes('tuck') || lower.includes('behind')) return 'COVER';
+    return 'CHOOSE';
+  })();
+
   return (
     <div
       className={
@@ -349,14 +362,14 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                   <div className="absolute inset-0 border-2 border-[#D4AF37] bg-[#D4AF37]/30 shadow-[0_0_10px_#D4AF37] animate-pulse rounded-sm pointer-events-none z-15" />
                 )}
 
-                {/* Disambiguation Candidate Pulse Ring (Step-Aside Tile) */}
+                {/* Disambiguation Candidate Pulse Ring (Dynamic Secondary Choice Tile) */}
                 {isDisambiguationSquare && (
                   <div
                     data-testid={`disambiguation-${squareName}`}
                     className="absolute inset-0 border-2 border-[#3FB950] bg-[#3FB950]/30 shadow-[0_0_12px_#3FB950] animate-pulse rounded-sm pointer-events-none z-20 flex items-center justify-center"
                   >
-                    <span className="text-[10px] font-mono font-bold text-[#3FB950] bg-[#191B1D]/90 px-1 rounded border border-[#3FB950]/50">
-                      STEP ASIDE
+                    <span className="text-[9px] sm:text-[10px] font-mono font-bold text-[#3FB950] bg-[#191B1D]/90 px-1 rounded border border-[#3FB950]/50 tracking-wider uppercase">
+                      {disambiguationBadgeLabel}
                     </span>
                   </div>
                 )}

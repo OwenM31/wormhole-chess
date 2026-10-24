@@ -23,6 +23,7 @@ export const PlayRoomPage: React.FC = () => {
   const [chatInput, setChatInput] = useState<string>('');
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(true);
+  const [showGameOverModal, setShowGameOverModal] = useState<boolean>(true);
 
   const room = useGameRoom({
     roomCode: code || '',
@@ -345,10 +346,34 @@ export const PlayRoomPage: React.FC = () => {
           )}
         </div>
 
-        {/* GAME OVER MODAL */}
-        {state?.status === 'finished' && (
+        {/* GAME OVER MODAL & REVIEW BOARD BANNER */}
+        {state?.status === 'finished' && showGameOverModal && (
           <div style={styles.modalOverlay}>
-            <div style={styles.modalCard}>
+            <div style={{ ...styles.modalCard, position: 'relative' }}>
+              <button
+                type="button"
+                onClick={() => setShowGameOverModal(false)}
+                aria-label="Close modal to review board"
+                title="Review Board"
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'rgba(25, 27, 29, 0.7)',
+                  border: '1px solid rgba(139, 126, 116, 0.3)',
+                  color: '#8B7E74',
+                  borderRadius: '50%',
+                  width: '28px',
+                  height: '28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                ✕
+              </button>
               <div style={styles.modalTrophy}>
                 {state.winner === 'draw' ? '🤝' : state.winner === room.yourRole ? '🏆' : '💀'}
               </div>
@@ -363,17 +388,84 @@ export const PlayRoomPage: React.FC = () => {
                 Conclusion by {state.finishReason?.replace('_', ' ') || 'game over'}
               </p>
               <div style={styles.modalActions}>
-                <button style={styles.primaryActionBtn} onClick={() => navigate('/dashboard')}>
-                  Return to Dashboard
-                </button>
                 <button
-                  style={styles.secondaryActionBtn}
+                  style={styles.primaryActionBtn}
                   onClick={() => window.location.reload()}
                 >
                   Play Again
                 </button>
+                <button
+                  style={styles.secondaryActionBtn}
+                  onClick={() => setShowGameOverModal(false)}
+                >
+                  Review Board
+                </button>
+                <button
+                  style={styles.secondaryActionBtn}
+                  onClick={() => navigate('/deck-builder')}
+                >
+                  Back to Matchmaking
+                </button>
+                <button
+                  style={{ ...styles.secondaryActionBtn, opacity: 0.8 }}
+                  onClick={() => navigate('/dashboard')}
+                >
+                  Return to Dashboard
+                </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* FLOATING BANNER WHEN GAME OVER MODAL IS DISMISSED */}
+        {state?.status === 'finished' && !showGameOverModal && (
+          <div
+            style={{
+              position: 'fixed',
+              top: '1rem',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 900,
+              backgroundColor: '#141618f0',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(212, 175, 55, 0.6)',
+              borderRadius: '6px',
+              padding: '0.6rem 1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+              maxWidth: '90vw',
+            }}
+          >
+            <span style={{ fontSize: '1.25rem' }}>
+              {state.winner === 'draw' ? '🤝' : state.winner === room.yourRole ? '🏆' : '💀'}
+            </span>
+            <span style={{ fontWeight: 700, color: state.winner === room.yourRole ? '#D4AF37' : '#FAF9F6', fontSize: '0.9rem' }}>
+              {state.winner === 'draw'
+                ? 'Game Drawn'
+                : state.winner === room.yourRole
+                ? 'Victory!'
+                : `${state.winner === 'white' ? 'White' : 'Black'} Won`}
+            </span>
+            <button
+              style={{ ...styles.primaryActionBtn, padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+              onClick={() => window.location.reload()}
+            >
+              Play Again
+            </button>
+            <button
+              style={{ ...styles.secondaryActionBtn, padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+              onClick={() => navigate('/deck-builder')}
+            >
+              Back to Matchmaking
+            </button>
+            <button
+              style={{ background: 'none', border: 'none', color: '#8B7E74', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.8rem' }}
+              onClick={() => setShowGameOverModal(true)}
+            >
+              Show Results
+            </button>
           </div>
         )}
       </main>
