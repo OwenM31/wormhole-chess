@@ -181,7 +181,7 @@ export const MatchmakingLobby: React.FC = () => {
                   <span style={styles.variantName}>Deck Builder</span>
                   <span style={styles.variantTag}>2D</span>
                 </div>
-                <div style={styles.variantDesc}>Chess with card actions & energy</div>
+                <div style={styles.variantDesc}>Chess with tactical card actions</div>
                 <div style={styles.variantQueueCount}>
                   {metrics.inQueue.deck_builder} queuing
                 </div>

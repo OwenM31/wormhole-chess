@@ -192,7 +192,7 @@ export const DashboardPage: React.FC = () => {
                   <span style={modeTagStyle}>2D</span>
                 </div>
                 <h3 style={playTitleStyle}>Deck Builder</h3>
-                <p style={playDescStyle}>Chess with card actions and energy management.</p>
+                <p style={playDescStyle}>Chess with tactical card actions powered by the 36-Card Playbook.</p>
               </div>
               <Link to="/deck-builder" style={btnPlayPurpleStyle}>
                 Play Deck Builder →

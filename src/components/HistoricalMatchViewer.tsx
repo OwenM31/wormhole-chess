@@ -169,15 +169,17 @@ export const HistoricalMatchViewer: React.FC<HistoricalMatchViewerProps> = ({
                   <div>
                     <div style={styles.cardTitleRow}>
                       <span style={styles.cardName}>{currentCard.name}</span>
-                      <span
-                        style={{
-                          ...styles.energyTag,
-                          backgroundColor: `${cardTheme.hex}25`,
-                          color: cardTheme.hex,
-                        }}
-                      >
-                        ⚡ {currentCard.energyCost} Energy
-                      </span>
+                      {currentCard.code && (
+                        <span
+                          style={{
+                            ...styles.cardCodeTag,
+                            backgroundColor: `${cardTheme.hex}25`,
+                            color: cardTheme.hex,
+                          }}
+                        >
+                          {currentCard.code}
+                        </span>
+                      )}
                     </div>
                     <p style={styles.cardDesc}>{currentCard.description}</p>
                   </div>
@@ -486,7 +488,7 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: '0.05em',
     color: '#FAF9F6',
   },
-  energyTag: {
+  cardCodeTag: {
     fontSize: '0.65rem',
     fontWeight: 600,
     fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',

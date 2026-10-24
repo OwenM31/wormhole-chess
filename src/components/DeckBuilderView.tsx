@@ -315,9 +315,11 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
                   <span style={{ color: theme.hex }} className="text-sm font-bold">
                     {theme.badgeIcon}
                   </span>
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40">
-                    ⚡{card.energyCost}
-                  </span>
+                  {card.code && (
+                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-black/40 text-[#FAF9F6] border border-[rgba(139,126,116,0.2)]">
+                      {card.code}
+                    </span>
+                  )}
                 </div>
 
                 <div className="w-full h-12 my-1 rounded overflow-hidden flex items-center justify-center bg-[#141618]">
@@ -393,9 +395,11 @@ export const DeckBuilderView: React.FC<DeckBuilderViewProps> = ({
                         {card.anchor}
                       </span>
                     </span>
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40">
-                      ⚡ {card.energyCost} Energy
-                    </span>
+                    {card.code && (
+                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-black/40 text-[#FAF9F6] border border-[rgba(139,126,116,0.2)]">
+                        {card.code}
+                      </span>
+                    )}
                   </div>
 
                   {/* Card Art Stage */}
