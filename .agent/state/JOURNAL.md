@@ -4,6 +4,37 @@
 
 ---
 
+### Session: 2026-10-24 10:05
+
+#### Objective
+Address post-Phase 4 playtest feedback:
+1. Prevent mobile auto-scrolling to Move Log on move completion.
+2. Add "Review Board" dismissal & restore banner for Game Over modal across Offline & Multiplayer rooms, with "Back to Matchmaking" routing.
+3. Generalize secondary-choice disambiguation tile labels in `DeckChessBoard.tsx` from static "STEP ASIDE" to dynamic contextual labels (`REINFORCE`, `STEP ASIDE`, `SACRIFICE`, `DEFEND`, `EXECUTE`, `CHOOSE`).
+
+#### Accomplished
+- ✅ **Mobile Move Log Scroll Stability**:
+  - Replaced `moveLogEndRef.scrollIntoView()` with direct `moveLogContainerRef.current.scrollTop = moveLogContainerRef.current.scrollHeight` in `DeckBuilderPage.tsx`.
+  - Window scroll position remains completely anchored (`scrollY: 0`) while move log auto-scrolls internally.
+- ✅ **Game Over Dismissal & "Review Board" Mode**:
+  - Implemented `showGameOverModal` state in `DeckBuilderPage.tsx` and `PlayRoomPage.tsx`.
+  - Added top-right `✕` dismiss button and `"Review Board"` button on the game-over modal.
+  - Added `"Back to Matchmaking"` button navigating back to the Forge/Matchmaking stage.
+  - Built compact floating status pill/banner when modal is minimized (`[🏆 Victory / Defeat] [Rematch] [Back to Matchmaking] [Show Results]`), restoring the modal on click.
+- ✅ **Dynamic Contextual Disambiguation Labels**:
+  - Updated `DeckChessBoard.tsx` to compute dynamic badge text from `disambiguationPrompt` (`REINFORCE` for Knights, `STEP ASIDE` for Make Way, `SACRIFICE` for Queen's Gambit, `DEFEND` for pawns, `EXECUTE` for allies, `CHOOSE` default).
+- ✅ **Automated & E2E Verification**:
+  - Created `scripts/verify-game-over-and-scroll.mjs` verifying mobile scroll stability (`scrollY: 0`), Game Over modal appearance, Review Board dismiss, board visibility, Show Results modal restoration, and Back to Matchmaking routing.
+  - 43/43 mechanics edge-case tests PASS (`scripts/verify-36-mechanics-edge-cases.ts`).
+  - Full-stack typecheck clean (`npm run typecheck:all`).
+  - Production build clean (`npm run build`).
+
+#### Handoff Notes
+- Working tree clean and committed to git (`6ca4d7c`).
+- Ready to proceed to **Phase 5 Planning** (`@[.agent/workflows/plan.md] 5`).
+
+---
+
 ### Session: 2026-10-24 09:45
 
 #### Objective
