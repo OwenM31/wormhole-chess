@@ -763,4 +763,37 @@ During `/discuss-phase 3`, we clarified the exact UX flow for the Multiplayer sc
 
 ---
 
-*Last updated: 2026-10-21*
+### [DECISION-034] Phase 5 Decisions: Complete Engine/UI Energy Purge, Medieval Village Palette, Live Landing Card Showcase & Batched Copywriting Review
+
+**Date**: 2026-10-24
+**Status**: Accepted
+
+#### Context
+During `/discuss-phase 5`, we reviewed the UI revamp scope for the Landing Page and Deck Builder front page, the removal of the obsolete energy mechanic, visual theming directions, and the review protocol for the 36-card copy.
+
+#### Decision
+1. **Full Engine & UI Energy Purge**:
+   - Completely remove the legacy `energy` property and methods (`getEnergy`, `rollbackEnergy`, `energy: 3`) from `DeckChessEngine.ts`.
+   - Remove `energyCost` tags, pips, and references from all UI components (`HomePage.tsx`, `DeckBuilderView.tsx`, `DashboardPage.tsx`, `MatchmakingLobby.tsx`, `TacticalHandBar.tsx`, `HistoricalMatchViewer.tsx`) and TypeScript interfaces (`deckChess.ts`).
+2. **"Deck Builder Matchmaking" Renaming**:
+   - Rename "Deck Builder Stage" to "Deck Builder Matchmaking" in `DeckBuilderMainMenu.tsx`, `MultiplayerCharacterStage.tsx`, and all associated headers and test selectors.
+3. **"Medieval Village" Brighter & Weathered Aesthetic Palette**:
+   - Brighten and soften the UI shell away from stark monochromatic dark charcoal:
+     - Soft, bright grassy greens (`#4D7C4D`, `#5B8C5A`, `#3A5E3A` accents)
+     - Soft woody warm browns (`#8C6D53`, `#6E503A`, `#A88B70`)
+     - Weathered cobblestone light & dark grays (`#D1CCC7`, `#8A8580`, `#2D3033`, `#1E2022`)
+   - Preserve sharp contrast for chessboard tiles, piece readability, and card faces while providing a lived-in fantasy tavern/village atmosphere.
+4. **Landing Page (`/`) Live Card Roster Showcase (Option A)**:
+   - Replace the 4 legacy mock cards on `HomePage.tsx` with authentic `<PlayingCard />` components from the canonical 36-card roster, featuring piece-colored Pokémon-style borders and bespoke vector SVG illustrations.
+5. **Copywriting Polish & Balance Parking**:
+   - Apply approved punchy copy for P1–P6 and N1–N2.
+   - Park mechanical retcons (e.g. tuning underpowered P7 "Protect the King" and refining N3 "Trample") for Phase 6, where the Grandmaster AI simulation and balance harness will provide empirical win-rate data.
+
+#### Consequences
+- Engine and types are 100% clean of legacy energy debt.
+- Visual atmosphere gains a warmer, lived-in medieval village identity.
+- All 36 card conditions and effects are systematically refined and verified against test suites.
+
+---
+
+*Last updated: 2026-10-24*
