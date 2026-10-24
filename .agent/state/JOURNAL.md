@@ -29,6 +29,15 @@ Address post-Phase 4 playtest feedback:
   - Full-stack typecheck clean (`npm run typecheck:all`).
   - Production build clean (`npm run build`).
 
+#### Verification
+- [x] All 43 edge case assertions passing in `scripts/verify-36-mechanics-edge-cases.ts`.
+- [x] Playwright E2E verification passing in `scripts/verify-game-over-and-scroll.mjs` (mobile scroll anchor + review board dismiss + back to matchmaking).
+- [x] Full-stack typecheck clean across client, functions, worker (`npm run typecheck:all`).
+- [x] Production build passes cleanly with Vite in 6.04s (`npm run build`).
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`). Post-Phase 4 playtest UX fixes and dynamic disambiguation labels are fully tested and committed; ready for Phase 5 planning.
+
 #### Handoff Notes
 - Working tree clean and committed to git (`6ca4d7c`).
 - Ready to proceed to **Phase 5 Planning** (`@[.agent/workflows/plan.md] 5`).
