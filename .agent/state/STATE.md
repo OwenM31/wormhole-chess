@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-24T16:23:00-05:00
+updated: 2026-10-24T16:43:00-05:00
 ---
 
 # Project State
@@ -7,30 +7,27 @@ updated: 2026-10-24T16:23:00-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-- **Phase**: Phase 5 — *Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & 36-Card Copywriting Polish*
-- **Task**: Ready for Execution (`@[.agent/workflows/execute.md] 5`)
-- **Status**: Paused at 2026-10-24 16:23
-- **Roadmap Status**: Phases 1–4 Complete & Verified; Phase 5 Planned across 5 atomic plans (3 waves)
+- **Phase**: Phase 5 — *Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & 36-Card Copywriting Polish* (Completed & Formally Verified)
+- **Task**: Ready for Phase 6 Planning (`@[.agent/workflows/plan.md] 6`)
+- **Status**: Complete & Verified (All 5 plans executed across 3 waves)
+- **Roadmap Status**: Phases 1–5 Complete & Verified; Phase 6 Ready for Planning
 
 ## Last Session Summary
-1. **Roadmap Phase Insertion**:
-   - Inserted Phase 5 (*Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & 36-Card Copywriting Polish*) and Phase 6 (*Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix*).
-   - Renumbered subsequent campaign phases: Phase 7 (*The Causeway & Campaign Engine*), Phase 8 (*World 2 & Concurrent Wings 3–6*), Phase 9 (*World 7 & Jester Final Boss*).
-2. **Phase 5 Scoping & Architectural Discussion (`DECISION-034`)**:
-   - Confirmed complete removal of legacy energy mechanic from both engine (`DeckChessEngine.ts`) and all UI components.
-   - Renamed "Deck Builder Stage" to "Deck Builder Matchmaking".
-   - Locked in "Medieval Village" aesthetic palette: soft grassy greens (`#5B8C5A`, `#4D7C4D`), warm woody browns (`#8C6D53`, `#5A412F`), and weathered cobblestone grays (`#D1CCC7`, `#2D3033`).
-   - Selected Option A for `HomePage.tsx`: Live 36-Card Roster Showcase with real `<PlayingCard />` components, replacing 4 outdated mock cards.
-   - Refined punchy active-voice copy for P1–P8 and N1–N2; parked mechanical balance retcons for Phase 6 simulation.
-3. **Phase 5 Research & Execution Planning**:
-   - Authored `.agent/state/phases/5/RESEARCH.md`.
-   - Created 5 atomic plans across 3 execution waves (`5.1-PLAN.md` through `5.5-PLAN.md`).
-   - Verified plan integrity and committed to git (`fa1b61b`).
+1. **Phase 5 Execution**:
+   - **Plan 5.1 (Wave 1)**: Complete engine & UI energy purge. Removed `energy` state, methods, deduction, and restoration from `DeckChessEngine.ts`. Purged energy UI pills and labels from `HomePage.tsx`, `DeckBuilderView.tsx`, `TacticalHandBar.tsx`, `HistoricalMatchViewer.tsx`, and matchmaking views.
+   - **Plan 5.2 (Wave 1)**: 36-card copywriting polish in `releaseRoster36.ts`. Updated P1–P8 and N1–N2 with active-voice rule formulas. Renamed P2 to "Attack Head On". All 169 playbook assertions and 43 mechanics edge-case tests pass 100% green.
+   - **Plan 5.3 (Wave 2)**: Medieval Village theme tokens declared in `src/index.css` (`--village-grass-bright`, `--village-wood-warm`, `--village-stone-dark`, etc.) and utility classes. Renamed "Deck Builder Stage" to "Deck Builder Matchmaking" across menus and breadcrumb headers. Added tabletop vignette to `TabletopArena.tsx`.
+   - **Plan 5.4 (Wave 2)**: Landing page revamped with Medieval Village palette and atmospheric background. Purged all energy pills and mock cards. Built Live 36-Card Roster Showcase with real `<PlayingCard />` components (P2, N1, B1, R1, Q2, K2). Updated CTA to "Enter Deck Builder Matchmaking →".
+   - **Plan 5.5 (Wave 3)**: Authored and executed Playwright E2E verification suite (`scripts/verify-phase5-ui-and-energy.mjs`) verifying all 4 scenarios across desktop and mobile (375px) with zero horizontal overflow.
+2. **Phase 5 Verification**:
+   - Formally verified all must-haves with 100% pass rate.
+   - Authored `.agent/state/phases/5/VERIFICATION.md` with verdict **PASS**.
+   - Updated `ROADMAP.md` and `STATE.md`.
 
 ## In-Progress Work
 
-- Files modified: None (working tree clean, plans and docs committed).
-- Tests status: Passing 100% green across all unit, integration, and E2E suites.
+- Files modified: None (working tree clean, all plans, tests, and summaries committed).
+- Tests status: Passing 100% green across all unit, integration, and E2E suites (4/4 E2E scenarios, 169/169 playbook tests, 43/43 mechanics edge cases, 0 typecheck errors, production build in 1.40s).
 
 ## Blockers
 
@@ -47,15 +44,13 @@ None.
 - `[DECISION-029]`: Turn Flow & Card Arming Decoupling (Option A).
 
 ### Files of Interest
-- `.agent/state/phases/5/RESEARCH.md`: Architecture for energy purge, palette tokens, and live card showcase.
-- `.agent/state/phases/5/5.1-PLAN.md`: Plan 5.1 (Engine & UI Energy Purge).
-- `.agent/state/phases/5/5.2-PLAN.md`: Plan 5.2 (36-Card Copywriting Polish & Playbook Sync).
-- `.agent/state/phases/5/5.3-PLAN.md`: Plan 5.3 (Medieval Village Theme Palette & Matchmaking Rename).
-- `.agent/state/phases/5/5.4-PLAN.md`: Plan 5.4 (Landing Page UI Revamp & Live Card Showcase).
-- `.agent/state/phases/5/5.5-PLAN.md`: Plan 5.5 (End-to-End Visual & Functional Verification).
+- `.agent/state/phases/5/VERIFICATION.md`: Formal verification report for Phase 5.
+- `scripts/verify-phase5-ui-and-energy.mjs`: E2E verification suite for zero-energy, live showcase, and matchmaking rename.
+- `src/pages/HomePage.tsx`: Medieval Village landing page with live 36-card roster showcase.
+- `src/components/MultiplayerCharacterStage.tsx`: Deck Builder Matchmaking lobby.
+- `src/engine/cards/releaseRoster36.ts`: Canonical 36-card roster with active-voice copywriting.
 
 ## Next Steps
 
-1. Run `@[.agent/workflows/execute.md] 5` to execute Phase 5 plans.
-2. Conduct Phase 5 verification via `@[.agent/workflows/verify.md] 5`.
-3. Proceed to Phase 6: *Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix*.
+1. Run `@[.agent/workflows/plan.md] 6` to plan Phase 6 (*Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix*).
+2. Execute Phase 6 plans via `@[.agent/workflows/execute.md] 6`.

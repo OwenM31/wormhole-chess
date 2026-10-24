@@ -4,6 +4,52 @@
 
 ---
 
+### Session: 2026-10-24 16:44
+
+#### Objective
+Execute all 5 plans of Phase 5 across 3 waves (`@[.agent/workflows/execute.md] 5`): complete engine and UI energy purge, polish 36-card copywriting (P1–P8, N1–N2, rename P2), implement Medieval Village theme tokens & atmospheric assets, rename Deck Builder Stage to Deck Builder Matchmaking, revamp HomePage with live 36-card roster showcase, and verify all deliverables end-to-end via Playwright E2E and regression suites.
+
+#### Accomplished
+- ✅ **Plan 5.1 (Wave 1 — Complete Engine & UI Energy Purge)**:
+  - Removed `energy: number`, `getEnergy()`, energy deductions, and end-of-turn restoration from `DeckChessEngine.ts`. Preserved 1-card-per-turn invariant.
+  - Made `energyCost?: number` optional in `CardDefinition` and removed from `EmpoweredMove`.
+  - Removed `energy: gameState.energy` from `useDeckChessGame.ts` hook.
+  - Purged `⚡` pills, lightning tags, and energy mentions from `DeckBuilderView.tsx`, `TacticalHandBar.tsx`, `HistoricalMatchViewer.tsx`, `DashboardPage.tsx`, and `MatchmakingLobby.tsx`.
+- ✅ **Plan 5.2 (Wave 1 — 36-Card Copywriting Polish & Playbook Sync)**:
+  - Applied active-voice copywriting in `releaseRoster36.ts` for P1–P8 and N1–N2.
+  - Renamed P2 from "Head On" to "Attack Head On".
+  - Verified 169/169 playbook assertions and 43/43 mechanics edge-case assertions passing 100%.
+- ✅ **Plan 5.3 (Wave 2 — Medieval Village Theme Palette & Matchmaking Rename)**:
+  - Declared CSS custom properties in `src/index.css` (`--village-grass-bright`, `--village-wood-warm`, `--village-stone-dark`, etc.) and utility classes (`.village-panel`, `.village-card`, `.village-btn-primary`, `.village-btn-wood`).
+  - Renamed subtext in `DeckBuilderMainMenu.tsx` to `Deck Builder Matchmaking · Offline & Online`.
+  - Added `data-testid="matchmaking-lobby-title"` breadcrumb header and restyled character backdrop in `MultiplayerCharacterStage.tsx`.
+  - Enhanced tavern chessboard in `TabletopArena.tsx` with contrast-elevating dark-wood radial vignette.
+- ✅ **Plan 5.4 (Wave 2 — Landing Page UI Revamp & Live Card Showcase)**:
+  - Revamped `HomePage.tsx` with Medieval Village palette tokens and fixed atmospheric backdrop art (`village-backdrop.jpg`).
+  - Purged all fake mock cards and energy badges.
+  - Built Live 36-Card Roster Showcase rendering real `<PlayingCard />` components for P2, N1, B1, R1, Q2, and K2 with vector illustrations, piece-colored frames, and active-voice rules.
+  - Updated primary CTA to "Enter Deck Builder Matchmaking →".
+- ✅ **Plan 5.5 (Wave 3 — End-to-End Visual & Functional Verification)**:
+  - Authored `scripts/verify-phase5-ui-and-energy.mjs` verifying zero energy on HomePage, live card showcase with vector art, matchmaking stage rename, and 0px mobile horizontal overflow (375px).
+  - Captured screenshots: `phase5_home_desktop_showcase.png`, `phase5_matchmaking_stage.png`, and `phase5_mobile_home.png`.
+- ✅ **Phase 5 Must-Haves Verification**:
+  - Authored `.agent/state/phases/5/VERIFICATION.md` with verdict **PASS**.
+  - Marked Phase 5 complete in `ROADMAP.md` and updated `STATE.md`.
+
+#### Verification
+- [x] All 4 browser scenarios passing in `scripts/verify-phase5-ui-and-energy.mjs`.
+- [x] 169 / 169 playbook assertions passing in `scripts/verify-36-playbook.ts`.
+- [x] 43 / 43 edge cases passing in `scripts/verify-36-mechanics-edge-cases.ts`.
+- [x] Full-stack typecheck clean across client, functions, worker (`npm run typecheck:all`).
+- [x] Production build passes cleanly with Vite in 1.40s (`npm run build`).
+
+#### Handoff Notes
+- Working tree clean and committed to git.
+- Phase 5 is 100% complete and verified.
+- Proceed to Phase 6 Planning via `@[.agent/workflows/plan.md] 6` (*Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix*).
+
+---
+
 ### Session: 2026-10-24 16:23
 
 #### Objective
