@@ -204,7 +204,6 @@ export const DeckBuilderPage: React.FC = () => {
               <TacticalHandBar
                 hand={myHand}
                 initialDeck={activeProfile.equippedHand}
-                energy={game.energy}
                 hasPlayedCardThisTurn={game.hasPlayedCardThisTurn}
                 isMyTurn={isMyTurn}
                 selectedCard={game.selectedCard}

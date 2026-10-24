@@ -277,7 +277,6 @@ export function getCardsByAnchor(anchor?: PieceAnchor): CardDefinition[] {
 /**
  * Validate that an 8-card deck complies with tournament rules:
  * - Exactly 8 cards
- * - Energy cost of each card is between 0 and 3
  * - At least 1 pawn card
  * - At least 1 minor piece card (knight or bishop)
  */
@@ -297,12 +296,6 @@ export function validateDeckLoadout(deck: CardDefinition[]): {
   const hasMinor = deck.some((c) => c.anchor === 'knight' || c.anchor === 'bishop');
   if (!hasMinor) {
     return { isValid: false, error: 'Deck must contain at least 1 Minor piece card (Knight or Bishop)' };
-  }
-
-  for (const card of deck) {
-    if (card.energyCost < 0 || card.energyCost > 3) {
-      return { isValid: false, error: `Card ${card.name} has invalid energy cost ${card.energyCost}` };
-    }
   }
 
   return { isValid: true };

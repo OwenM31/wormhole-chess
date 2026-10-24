@@ -8,7 +8,6 @@ import { buildHandDisplay } from '../utils/handOrder';
 export interface TacticalHandBarProps {
   hand: string[]; // Active card IDs remaining in hand
   initialDeck?: string[]; // All cards originally in hand to show consumed status
-  energy?: number;
   hasPlayedCardThisTurn?: boolean;
   isMyTurn: boolean;
   selectedCard?: CardDefinition | null;

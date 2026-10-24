@@ -935,7 +935,6 @@ export function useDeckChessGame({
     fen: gameState.fen,
     turn: gameState.turn,
     turnNumber: gameState.turnNumber,
-    energy: gameState.energy,
     hasPlayedCardThisTurn: gameState.cardPlayedThisTurn,
     whiteHand: gameState.whiteHand,
     blackHand: gameState.blackHand,

@@ -107,7 +107,7 @@ export interface CardDefinition {
   card_name?: string;
   piece?: string;
   anchor: PieceAnchor;
-  energyCost: number; // 1 to 3 (legacy) / 0 in v3.0 Playbook
+  energyCost?: number; // Legacy field (deprecated / zero in v3.0 Playbook)
   score?: number;
   artId?: string;
   code?: string; // e.g. 'P1', 'N1', ..., 'K4'
@@ -135,7 +135,6 @@ export interface EmpoweredMove {
   from: string;
   to: string;
   cardId: string;
-  energyCost: number;
   promotion?: string;
   actionType: 'move' | 'in_place' | 'ranged_capture' | 'spawn' | 'wall' | 'shield';
   metadata?: Record<string, any>;

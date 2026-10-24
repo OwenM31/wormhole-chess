@@ -18,7 +18,6 @@ export interface DeckChessEngineState {
   fen: string;
   turn: PieceColor;
   turnNumber: number;
-  energy: number;
   cardPlayedThisTurn: boolean;
   whiteHand: string[];
   blackHand: string[];
@@ -36,7 +35,6 @@ export interface DeckChessEngineState {
 
 export class DeckChessEngine {
   private chess: Chess;
-  private energy: number;
   private cardPlayedThisTurn: boolean;
   private turnNumber: number;
   private whiteHand: string[];
@@ -52,7 +50,6 @@ export class DeckChessEngine {
     if (initialFen) {
       this.chess.load(initialFen, { skipValidation: true });
     }
-    this.energy = 3;
     this.cardPlayedThisTurn = false;
     this.turnNumber = 1;
     const defaultDeck = [...STARTER_DECK.map((c) => c.id), ...LEGACY_STARTER_DECK.map((c) => c.id)];
@@ -124,10 +121,6 @@ export class DeckChessEngine {
 
   public getTurnNumber(): number {
     return this.turnNumber;
-  }
-
-  public getEnergy(): number {
-    return this.energy;
   }
 
   public hasPlayedCardThisTurn(): boolean {
@@ -222,7 +215,6 @@ export class DeckChessEngine {
       fen: this.getFen(),
       turn: this.getTurn(),
       turnNumber: this.turnNumber,
-      energy: this.energy,
       cardPlayedThisTurn: this.cardPlayedThisTurn,
       whiteHand: this.getWhiteHand(),
       blackHand: this.getBlackHand(),
@@ -237,7 +229,6 @@ export class DeckChessEngine {
 
   public clone(): DeckChessEngine {
     const cloned = new DeckChessEngine(this.getFen(), this.whiteHand, this.blackHand);
-    cloned.energy = this.energy;
     cloned.cardPlayedThisTurn = this.cardPlayedThisTurn;
     cloned.turnNumber = this.turnNumber;
     cloned.graveyard = {
@@ -579,8 +570,7 @@ export class DeckChessEngine {
     }
     this.sweepPromotions();
 
-    // Deduct energy and mark card window closed
-    this.energy -= card.energyCost;
+    // Mark card window closed
     this.cardPlayedThisTurn = true;
 
     // Remove single-use card from hand
@@ -751,8 +741,7 @@ export class DeckChessEngine {
       })
       .filter((m) => m.turnsRemaining > 0);
 
-    // End-of-turn reset: 3 energy restored, card window reopened
-    this.energy = 3;
+    // End-of-turn reset: card window reopened
     this.cardPlayedThisTurn = false;
 
     if (previousTurn === 'b') {
@@ -897,7 +886,6 @@ export class DeckChessEngine {
               from: sq,
               to: target,
               cardId: card.id,
-              energyCost: card.energyCost,
               actionType,
               extraSquare,
               previewFen,
@@ -939,7 +927,6 @@ export class DeckChessEngine {
     // Save snapshot in case move leaves King in check and must be rolled back
     const rollbackFen = this.chess.fen();
     const rollbackTurnNumber = this.turnNumber;
-    const rollbackEnergy = this.energy;
     const rollbackCardPlayed = this.cardPlayedThisTurn;
     const rollbackGraveyard = {
       w: { ...this.graveyard.w },
@@ -975,7 +962,6 @@ export class DeckChessEngine {
     if (kingSq && this.chess.isAttacked(kingSq as Square, oppColor)) {
       this.chess.load(rollbackFen, { skipValidation: true });
       this.turnNumber = rollbackTurnNumber;
-      this.energy = rollbackEnergy;
       this.cardPlayedThisTurn = rollbackCardPlayed;
       this.graveyard = rollbackGraveyard;
       this.activeModifiers = rollbackModifiers;
@@ -1019,8 +1005,7 @@ export class DeckChessEngine {
     const nextFen = fenParts.join(' ');
     this.chess.load(nextFen, { skipValidation: true });
 
-    // End-of-turn reset: 3 energy restored, card window reopened
-    this.energy = 3;
+    // End-of-turn reset: card window reopened
     this.cardPlayedThisTurn = false;
 
     // Check game termination
