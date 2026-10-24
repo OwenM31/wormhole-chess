@@ -3,14 +3,59 @@ import { Link } from 'react-router-dom';
 import Navigation from '../components/Navigation';
 import { WormholeLogo } from '../components/WormholeLogo';
 import { WormholeSpacetimeIllustration } from '../components/WormholeSpacetimeIllustration';
+import { PlayingCard } from '../components/PlayingCard';
+import { CANONICAL_36_CARDS } from '../engine/cards/releaseRoster36';
+import { CardDefinition } from '../types/deckChess';
 
 type VariantTab = 'deck-builder' | 'wormhole';
+
+const SHOWCASE_CARD_IDS = [
+  'p2_head_on',
+  'n1_adrenaline_jump',
+  'b1_let_me_through',
+  'r1_make_way',
+  'q2_the_queens_gambit',
+  'k2_royal_knighting',
+];
 
 export const HomePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<VariantTab>('deck-builder');
 
+  const showcaseCards = React.useMemo(() => {
+    return SHOWCASE_CARD_IDS.map((id) =>
+      CANONICAL_36_CARDS.find((c) => c.id === id)
+    ).filter(Boolean) as CardDefinition[];
+  }, []);
+
   return (
     <div style={containerStyle}>
+      {/* Medieval Village Atmospheric Backdrop Art */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundImage: 'url(/assets/backgrounds/village-backdrop.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center 40%',
+          opacity: 0.16,
+          filter: 'saturate(0.9) brightness(0.65)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background:
+            'radial-gradient(circle at 50% 30%, rgba(26, 28, 30, 0.4) 0%, rgba(26, 28, 30, 0.85) 60%, #1A1C1E 100%)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+
       <style>{`
         .home-tab-btn {
           outline: none;
@@ -28,22 +73,22 @@ export const HomePage: React.FC = () => {
           transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
         }
         .home-card-item:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-          border-color: rgba(139, 126, 116, 0.45) !important;
+          transform: translateY(-4px);
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
         }
         .home-btn-primary {
           transition: background-color 0.15s ease, transform 0.15s ease;
         }
         .home-btn-primary:hover {
-          background-color: #5d705d !important;
+          background-color: #6aa269 !important;
+          transform: translateY(-1px);
         }
         .home-btn-secondary {
           transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
         .home-btn-secondary:hover {
-          border-color: rgba(139, 126, 116, 0.5) !important;
-          background-color: #24272A !important;
+          border-color: rgba(140, 109, 83, 0.6) !important;
+          background-color: #2D3033 !important;
           color: #FAF9F6 !important;
         }
 
@@ -65,10 +110,6 @@ export const HomePage: React.FC = () => {
           .home-stage-header-row {
             flex-direction: column !important;
             align-items: flex-start !important;
-            gap: 0.75rem !important;
-          }
-          .home-cards-grid {
-            grid-template-columns: 1fr !important;
             gap: 0.75rem !important;
           }
           .home-stage-actions {
@@ -176,82 +217,63 @@ export const HomePage: React.FC = () => {
                 <div>
                   <h2 style={stageTitleStyle}>Deck Builder Chess</h2>
                   <p style={stageDescStyle}>
-                    Standard chess rules with an 8-card loadout and 3 energy per turn.
+                    Standard chess rules empowered by bespoke tactical cards — 1 card per turn, zero energy clutter, infinite tactical depth.
                   </p>
                 </div>
-                <div style={energyPillStyle}>
-                  <span>⚡</span>
-                  <span>ENERGY 3/3</span>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem',
+                    padding: '0.35rem 0.75rem',
+                    backgroundColor: 'rgba(91, 140, 90, 0.15)',
+                    border: '1px solid rgba(91, 140, 90, 0.4)',
+                    borderRadius: '4px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    color: '#FAF9F6',
+                    fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+                  }}
+                >
+                  <span style={{ color: '#5B8C5A' }}>●</span>
+                  <span>36-CARD PLAYBOOK</span>
                 </div>
               </div>
 
-              {/* Tactical Card Asset Showcase */}
-              <div style={cardsGridStyle} className="home-cards-grid">
-                {/* Knight Escort */}
-                <div
-                  className="home-card-item"
-                  style={{ ...cardItemStyle, borderTop: '3px solid #3fb950' }}
-                >
-                  <div style={cardTopStyle}>
-                    <span style={{ fontSize: '1.25rem' }}>♞</span>
-                    <span style={cardCostStyle}>2⚡</span>
+              {/* Authentic Live 36-Card Playbook Showcase */}
+              <div
+                data-testid="home-showcase-roster"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                  gap: '0.85rem',
+                  margin: '0.5rem 0 1rem',
+                  alignItems: 'start',
+                }}
+              >
+                {showcaseCards.map((card) => (
+                  <div
+                    key={card.id}
+                    className="home-card-item"
+                    style={{
+                      width: '100%',
+                      maxWidth: '148px',
+                      margin: '0 auto',
+                    }}
+                  >
+                    <PlayingCard
+                      card={card}
+                      size="equipped"
+                      dataTestId={`showcase-card-${card.code}`}
+                    />
                   </div>
-                  <div>
-                    <div style={cardNameStyle}>Knight Escort</div>
-                    <div style={cardEffectStyle}>Transports adjacent pawn on jump.</div>
-                  </div>
-                </div>
-
-                {/* Shield Wall */}
-                <div
-                  className="home-card-item"
-                  style={{ ...cardItemStyle, borderTop: '3px solid #58a6ff' }}
-                >
-                  <div style={cardTopStyle}>
-                    <span style={{ fontSize: '1.25rem' }}>🛡️</span>
-                    <span style={cardCostStyle}>1⚡</span>
-                  </div>
-                  <div>
-                    <div style={cardNameStyle}>Shield Wall</div>
-                    <div style={cardEffectStyle}>Absorbs one capture attempt.</div>
-                  </div>
-                </div>
-
-                {/* Spatial Warp */}
-                <div
-                  className="home-card-item"
-                  style={{ ...cardItemStyle, borderTop: '3px solid #A855F7' }}
-                >
-                  <div style={cardTopStyle}>
-                    <span style={{ fontSize: '1.25rem' }}>🌀</span>
-                    <span style={cardCostStyle}>3⚡</span>
-                  </div>
-                  <div>
-                    <div style={cardNameStyle}>Spatial Warp</div>
-                    <div style={cardEffectStyle}>Swap two friendly non-king pieces.</div>
-                  </div>
-                </div>
-
-                {/* King Decree */}
-                <div
-                  className="home-card-item"
-                  style={{ ...cardItemStyle, borderTop: '3px solid #D4AF37' }}
-                >
-                  <div style={cardTopStyle}>
-                    <span style={{ fontSize: '1.25rem' }}>👑</span>
-                    <span style={cardCostStyle}>2⚡</span>
-                  </div>
-                  <div>
-                    <div style={cardNameStyle}>King Decree</div>
-                    <div style={cardEffectStyle}>Relocate king to safe anchor rank.</div>
-                  </div>
-                </div>
+                ))}
               </div>
 
               {/* Action Buttons Row */}
               <div style={stageActionsRowStyle} className="home-stage-actions">
                 <Link to="/deck-builder" style={primaryActionBtnStyle} className="home-btn-primary">
-                  Play Deck Builder →
+                  Enter Deck Builder Matchmaking →
                 </Link>
                 <Link to="/deck-builder" style={secondaryActionBtnStyle} className="home-btn-secondary">
                   Solo Practice
@@ -315,17 +337,18 @@ export const HomePage: React.FC = () => {
   );
 };
 
-// Styles following Wormhole Chess Design System Tokens
+// Styles following Medieval Village & Wormhole Chess Design System Tokens
 const containerStyle: React.CSSProperties = {
   minHeight: '100vh',
   width: '100%',
   maxWidth: '100vw',
   overflowX: 'hidden',
   boxSizing: 'border-box',
-  backgroundColor: '#191B1D',
+  backgroundColor: '#1A1C1E',
   color: '#FAF9F6',
   display: 'flex',
   flexDirection: 'column',
+  position: 'relative',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif',
 };
 
@@ -338,6 +361,8 @@ const mainContentStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: '2.25rem',
+  position: 'relative',
+  zIndex: 1,
 };
 
 const heroSectionStyle: React.CSSProperties = {
@@ -370,23 +395,23 @@ const heroTitleStyle: React.CSSProperties = {
 
 const heroSubtitleStyle: React.CSSProperties = {
   fontSize: '1.05rem',
-  color: '#8B7E74',
+  color: '#D1CCC7',
   maxWidth: '520px',
   margin: 0,
   lineHeight: 1.4,
 };
 
 const stageCardStyle: React.CSSProperties = {
-  backgroundColor: '#24272A',
-  border: '1px solid rgba(139, 126, 116, 0.22)',
+  backgroundColor: '#2D3033',
+  border: '1px solid rgba(140, 109, 83, 0.35)',
   borderRadius: '6px',
-  boxShadow: '0 16px 36px rgba(0, 0, 0, 0.35)',
+  boxShadow: '0 16px 36px rgba(0, 0, 0, 0.45)',
   overflow: 'hidden',
 };
 
 const stageNavBarStyle: React.CSSProperties = {
   backgroundColor: '#1C1E20',
-  borderBottom: '1px solid rgba(139, 126, 116, 0.2)',
+  borderBottom: '1px solid rgba(140, 109, 83, 0.25)',
   display: 'flex',
   alignItems: 'center',
   padding: '0.4rem 0.75rem',
@@ -400,7 +425,7 @@ const tabBtnStyle: React.CSSProperties = {
   borderRadius: '4px',
   border: '1px solid transparent',
   backgroundColor: 'transparent',
-  color: '#8B7E74',
+  color: '#D1CCC7',
   cursor: 'pointer',
   display: 'flex',
   alignItems: 'center',
@@ -412,14 +437,15 @@ const activeTabBtnStyle: React.CSSProperties = {
   ...tabBtnStyle,
   backgroundColor: '#24272A',
   color: '#FAF9F6',
-  border: '1px solid rgba(139, 126, 116, 0.25)',
+  border: '1px solid rgba(140, 109, 83, 0.35)',
 };
 
 const activeStatusPillStyle: React.CSSProperties = {
   fontSize: '0.65rem',
   fontWeight: 700,
-  color: '#D4AF37',
-  backgroundColor: 'rgba(212, 175, 55, 0.12)',
+  color: '#5B8C5A',
+  backgroundColor: 'rgba(91, 140, 90, 0.15)',
+  border: '1px solid rgba(91, 140, 90, 0.3)',
   padding: '0.1rem 0.35rem',
   borderRadius: '2px',
 };
@@ -449,69 +475,8 @@ const stageTitleStyle: React.CSSProperties = {
 
 const stageDescStyle: React.CSSProperties = {
   fontSize: '0.92rem',
-  color: '#8B7E74',
+  color: '#D1CCC7',
   margin: 0,
-};
-
-const energyPillStyle: React.CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '0.4rem',
-  padding: '0.35rem 0.65rem',
-  backgroundColor: '#191B1D',
-  border: '1px solid rgba(212, 175, 55, 0.3)',
-  borderRadius: '4px',
-  fontSize: '0.78rem',
-  fontWeight: 600,
-  color: '#D4AF37',
-  fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
-};
-
-const cardsGridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-  gap: '1rem',
-};
-
-const cardItemStyle: React.CSSProperties = {
-  backgroundColor: '#191B1D',
-  border: '1px solid rgba(139, 126, 116, 0.25)',
-  borderRadius: '5px',
-  padding: '1rem 0.9rem',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'space-between',
-  minHeight: '140px',
-  boxSizing: 'border-box',
-};
-
-const cardTopStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-};
-
-const cardCostStyle: React.CSSProperties = {
-  fontSize: '0.72rem',
-  fontWeight: 700,
-  color: '#D4AF37',
-  backgroundColor: 'rgba(212, 175, 55, 0.1)',
-  padding: '0.15rem 0.4rem',
-  borderRadius: '2px',
-  fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-};
-
-const cardNameStyle: React.CSSProperties = {
-  fontSize: '0.88rem',
-  fontWeight: 600,
-  color: '#FAF9F6',
-  margin: '0.5rem 0 0.2rem',
-};
-
-const cardEffectStyle: React.CSSProperties = {
-  fontSize: '0.75rem',
-  lineHeight: 1.35,
-  color: '#8B7E74',
 };
 
 const stageActionsRowStyle: React.CSSProperties = {
@@ -519,18 +484,18 @@ const stageActionsRowStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '0.85rem',
   paddingTop: '0.5rem',
-  borderTop: '1px solid rgba(139, 126, 116, 0.15)',
+  borderTop: '1px solid rgba(140, 109, 83, 0.25)',
   flexWrap: 'wrap',
 };
 
 const primaryActionBtnStyle: React.CSSProperties = {
   height: '42px',
   padding: '0 1.75rem',
-  backgroundColor: '#4C5C4C',
+  background: 'linear-gradient(135deg, #5B8C5A, #4D7C4D)',
   color: '#FAF9F6',
   fontSize: '0.88rem',
   fontWeight: 600,
-  border: 'none',
+  border: '1px solid rgba(91, 140, 90, 0.5)',
   borderRadius: '4px',
   cursor: 'pointer',
   display: 'inline-flex',
@@ -538,14 +503,14 @@ const primaryActionBtnStyle: React.CSSProperties = {
   justifyContent: 'center',
   gap: '0.5rem',
   textDecoration: 'none',
-  transition: 'background-color 0.15s ease',
+  transition: 'all 0.15s ease',
 };
 
 const secondaryActionBtnStyle: React.CSSProperties = {
   height: '42px',
   padding: '0 1.25rem',
-  backgroundColor: '#191B1D',
-  border: '1px solid rgba(139, 126, 116, 0.25)',
+  backgroundColor: '#1A1C1E',
+  border: '1px solid rgba(140, 109, 83, 0.35)',
   color: '#FAF9F6',
   fontSize: '0.85rem',
   fontWeight: 600,
