@@ -1,13 +1,13 @@
 ---
 milestone: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 version: 3.0.0
-updated: 2026-10-21T12:43:00-05:00
+updated: 2026-10-24T14:52:00-05:00
 ---
 
 # Roadmap
 
 > **Current Milestone:** v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-> **Current Phase:** Phase 5 — Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (The Causeway)
+> **Current Phase:** Phase 5 — Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & 36-Card Copywriting Polish
 > **Status:** 🔄 Ready for Planning & Execution (Phases 1–4 Complete & Verified)
 
 ## Milestone Goal
@@ -23,7 +23,9 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 - [x] **Deck Builder Main Menu Hub & Multi-Profile Switcher (Phase 3)**: Vibrant main menu at `/deck-builder` with `Campaign`, `Multiplayer`, `My Profile` + `Switch Profile` (multi-slot local profiles), and a right-hand Player Stats (`Gold Coins`, `Level`) + Aesthetic Canvas area.
 - [x] **Multiplayer & AI Playtest Prototype (Phase 3)**: 36-card Deck Builder loadout screen, Private Room Matchmaking (`/play/:code`), and Custom AI Playtest mode to test cards and tune AI opponents.
 - [x] **Gameplay Bugfixes, 36-Card Audit & Mobile Ergonomics (Phase 4)**: Sleek standard move vs empowered card move choice, full 36-card mechanics/condition audit (including perpendicular R1 step-aside), mobile horizontal card scroll wheels, and auto-sorting spent cards to hand end.
-- [ ] **Campaign Engine, Town Tavern & Worlds 1–7 (Phases 5–7)**: Build the Castle Map UI, Town Tavern 0-card bot hustle, Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), and the 7-World Campaign puzzle sequences.
+- [ ] **Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & Copywriting (Phase 5)**: Purge lingering "energy" mentions across home page and menus, integrate rich atmospheric tabletop and castle hall visuals, rename Deck Builder Stage to Deck Builder Matchmaking, and refine condition/effect copywriting across all 36 cards.
+- [ ] **Grandmaster Card-Aware AI Engine, Campaign Hints & 30M Deck Simulation (Phase 6)**: Build latent threat heatmap card anticipation into AI search, create 3-tier campaign hint engine, and author headless multi-worker Monte Carlo tournament simulation harness with tier reports.
+- [ ] **Campaign Engine, Town Tavern & Worlds 1–7 (Phases 7–9)**: Build the Castle Map UI, Town Tavern 0-card bot hustle, Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), and the 7-World Campaign puzzle sequences.
 
 ---
 
@@ -59,21 +61,38 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 
 ---
 
-### Phase 5: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
-**Status:** 🔄 Next Up
-**Objective:** Build the Campaign Map & Puzzle Engine (`Foreshadow -> Officer Duel -> Forced-Slot` cycle), Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), "Back to Town" Tavern Hustle (0-card Towny bots for Gold Coins), and World 1 (`The Causeway` — 7 Cards: `P1, P2, P3, N1, B1, N2, R1`).
+### Phase 5: Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & 36-Card Copywriting Polish
+**Status:** 🔄 Ready for Planning
+**Objective:** Purge lingering legacy "energy" mentions and UI relics across `HomePage.tsx`, `DeckBuilderView.tsx`, and matchmaking headers; rename "Deck Builder Stage" to "Deck Builder Matchmaking"; integrate rich atmospheric environmental visual assets (weathered tabletop, castle backdrop, ornate elements) to make the interface lived-in and tactile; and perform a comprehensive card-by-card copywriting review and polish on all 36 release roster cards.
+**Dependencies:** Phase 4 (Complete)
 
 ---
 
-### Phase 6: World 2 (`Outer Courtyard`) & Concurrent Castle Wings (`Worlds 3–6`)
+### Phase 6: Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix
+**Status:** ⬜ Not Started
+**Objective:** Upgrade `DeckChessAI.ts` from naive standard-move search to a modular Grandmaster engine that computes latent threat heatmaps from opponent's unspent card hands; implement a 3-tier Campaign Hint Engine (Concept -> Target -> Solution); and build a headless multi-threaded Monte Carlo tournament simulation harness to evaluate deck balance and card win-rate contribution across the 30M+ deck permutation space.
+**Dependencies:** Phase 4 (36-Card Engine), Phase 5 (Copywriting & Asset Polish)
+
+---
+
+### Phase 7: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
+**Status:** ⬜ Not Started
+**Objective:** Build the Campaign Map & Puzzle Engine (`Foreshadow -> Officer Duel -> Forced-Slot` cycle), Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), "Back to Town" Tavern Hustle (0-card Towny bots for Gold Coins), and World 1 (`The Causeway` — 7 Cards: `P1, P2, P3, N1, B1, N2, R1`).
+**Dependencies:** Phase 6
+
+---
+
+### Phase 8: World 2 (`Outer Courtyard`) & Concurrent Castle Wings (`Worlds 3–6`)
 **Status:** ⬜ Not Started
 **Objective:** Author and verify the puzzle cycles, Wing Keys, and Boss Duels across World 2 (`N3, R2, B2, R3`) and the 4 Concurrent Wings off the Central Rotunda: World 3 (`The Barracks`), World 4 (`The Chapel`), World 5 (`The Armory`), and World 6 (`The Royal Court`).
+**Dependencies:** Phase 7
 
 ---
 
-### Phase 7: World 7 (`The Throne Room`), The Jester Final Boss & Release Audit
+### Phase 9: World 7 (`The Throne Room`), The Jester Final Boss & Release Audit
 **Status:** ⬜ Not Started
 **Objective:** Author and verify World 7 (`N7, P8, B7, Q4, K4`), the Iron King Boss Duel, and the True Final Boss showdown against the Scheming Jester (36-card Master AI), followed by full UX verification and Milestone v3.0 release.
+**Dependencies:** Phase 8
 
 ---
 
