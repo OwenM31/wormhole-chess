@@ -160,8 +160,8 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
       <div
         style={{
           position: 'relative',
-          backgroundColor: '#1E2225',
-          borderBottom: '1px solid rgba(139, 126, 116, 0.25)',
+          backgroundColor: '#2D3033',
+          borderBottom: '1px solid rgba(140, 109, 83, 0.35)',
           padding: '0.75rem 1.25rem',
           display: 'flex',
           flexWrap: 'wrap',
@@ -171,8 +171,8 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
           zIndex: 20,
         }}
       >
-        {/* Left: Back to Main Menu Button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* Left: Back to Main Menu Button & Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button
             type="button"
             onClick={onBackToMenu}
@@ -182,9 +182,9 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
               alignItems: 'center',
               gap: '0.4rem',
               padding: '0.5rem 0.85rem',
-              backgroundColor: '#24272A',
+              backgroundColor: '#1A1C1E',
               color: '#FAF9F6',
-              border: '1px solid rgba(139, 126, 116, 0.25)',
+              border: '1px solid rgba(140, 109, 83, 0.3)',
               borderRadius: '4px',
               fontSize: '0.8rem',
               fontWeight: 600,
@@ -196,12 +196,29 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
               e.currentTarget.style.backgroundColor = '#2C3034';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'rgba(139, 126, 116, 0.25)';
-              e.currentTarget.style.backgroundColor = '#24272A';
+              e.currentTarget.style.borderColor = 'rgba(140, 109, 83, 0.3)';
+              e.currentTarget.style.backgroundColor = '#1A1C1E';
             }}
           >
             <span>←</span> Main Menu
           </button>
+
+          {/* Matchmaking Lobby Title / Breadcrumb */}
+          <div
+            data-testid="matchmaking-lobby-title"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              color: '#FAF9F6',
+              fontWeight: 700,
+              fontSize: '0.95rem',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            <span style={{ color: '#D4AF37' }}>⚔️</span>
+            <span>Deck Builder Matchmaking</span>
+          </div>
 
           {/* Active Profile Telemetry Capsule */}
           <div
@@ -210,8 +227,8 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.4rem 0.75rem',
-              backgroundColor: '#191B1D',
-              border: '1px solid rgba(139, 126, 116, 0.2)',
+              backgroundColor: '#1A1C1E',
+              border: '1px solid rgba(140, 109, 83, 0.25)',
               borderRadius: '4px',
               fontSize: '0.8rem',
             }}
@@ -222,7 +239,8 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 padding: '0.1rem 0.35rem',
-                backgroundColor: '#3C493F',
+                backgroundColor: '#4D7C4D',
+                color: '#FAF9F6',
                 borderRadius: '2px',
               }}
             >
@@ -373,15 +391,15 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
         data-testid="character-backdrop-stage"
         style={{
           position: 'relative',
-          backgroundColor: '#191B1D',
-          borderBottom: '1px solid rgba(139, 126, 116, 0.2)',
+          backgroundColor: '#1A1C1E',
+          borderBottom: '1px solid rgba(140, 109, 83, 0.35)',
           padding: '1rem',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
           backgroundImage:
-            'linear-gradient(180deg, rgba(36, 39, 42, 0.82) 0%, rgba(25, 27, 29, 0.94) 100%), url(/assets/backgrounds/village-backdrop.jpg)',
+            'linear-gradient(180deg, rgba(45, 48, 51, 0.78) 0%, rgba(26, 28, 30, 0.92) 100%), url(/assets/backgrounds/village-backdrop.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center 50%',
         }}
@@ -449,12 +467,12 @@ export const MultiplayerCharacterStage: React.FC<MultiplayerCharacterStageProps>
             <div
               style={{
                 fontSize: '0.7rem',
-                color: '#8B7E74',
+                color: '#D1CCC7',
                 letterSpacing: '0.06em',
                 textTransform: 'uppercase',
               }}
             >
-              Living Hero · Stage Room
+              Living Hero · Matchmaking Room
             </div>
             <div
               style={{

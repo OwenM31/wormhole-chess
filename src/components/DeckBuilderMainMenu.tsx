@@ -356,7 +356,7 @@ export const DeckBuilderMainMenu: React.FC<DeckBuilderMainMenuProps> = ({
                     marginTop: '0.2rem',
                   }}
                 >
-                  Deck Builder Stage · Offline & Online
+                  Deck Builder Matchmaking · Offline & Online
                 </div>
               </div>
               <span style={{ fontSize: '1.25rem', color: '#8B7E74' }}>→</span>

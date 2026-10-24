@@ -48,8 +48,16 @@ export const TabletopArena: React.FC<TabletopArenaProps> = ({
           background-size: 100% 100%;
           background-repeat: no-repeat;
           border-radius: 10px;
-          box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(139, 126, 116, 0.25);
+          box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(140, 109, 83, 0.35);
           overflow: hidden;
+        }
+        .tabletop-arena-stage::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 50% 48%, rgba(0, 0, 0, 0) 30%, rgba(26, 18, 12, 0.35) 80%, rgba(10, 8, 6, 0.65) 100%);
+          pointer-events: none;
+          border-radius: 10px;
         }
         .tabletop-board-inscribed {
           position: absolute;
@@ -60,6 +68,7 @@ export const TabletopArena: React.FC<TabletopArenaProps> = ({
           display: flex;
           align-items: center;
           justify-content: center;
+          z-index: 1;
         }
         @media (max-width: 600px) {
           .tabletop-arena-stage {
