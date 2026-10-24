@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-24T16:22:00-05:00
+updated: 2026-10-24T16:23:00-05:00
 ---
 
 # Project State
@@ -8,33 +8,28 @@ updated: 2026-10-24T16:22:00-05:00
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 - **Phase**: Phase 5 — *Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & 36-Card Copywriting Polish*
-- **Task**: Planning complete (Plans 5.1–5.5 created across 3 waves)
-- **Status**: Ready for execution
-- **Roadmap Status**: Phases 1–4 Complete & Verified; Phase 5 Planned
+- **Task**: Ready for Execution (`@[.agent/workflows/execute.md] 5`)
+- **Status**: Paused at 2026-10-24 16:23
+- **Roadmap Status**: Phases 1–4 Complete & Verified; Phase 5 Planned across 5 atomic plans (3 waves)
 
 ## Last Session Summary
-1. **Investigated & Confirmed Generalized Ambiguity Architecture**:
-   - Analyzed 3-Knight "Flanking Support" ambiguity resolution.
-   - Verified that the `TargetOption` -> `extraSquare` -> `disambiguationPrompt` -> candidate pulsing -> `previewFen` confirmation pipeline is fully generalized across the engine and turn flow state machine.
-2. **Fixed Mobile Move Log Scroll Jump**:
-   - Replaced `moveLogEndRef.current?.scrollIntoView()` with container-level `.scrollTop = .scrollHeight` in `src/pages/DeckBuilderPage.tsx`.
-   - Verified on mobile viewport (375x667) that page window remains completely anchored (`scrollY: 0`).
-3. **Implemented Game Over "Review Board" Mode & Dismissal**:
-   - Added `showGameOverModal` state in `src/pages/DeckBuilderPage.tsx` and `src/pages/PlayRoomPage.tsx`.
-   - Added top-right `✕` dismiss button and `"Review Board"` button to the Game Over overlay.
-   - Added `"Back to Matchmaking"` button navigating directly to the Matchmaking / Forge Stage.
-   - Built a sleek, floating status banner at the top of the board when the modal is dismissed, allowing full read-only board review with a `"Show Results"` button to restore the modal.
-4. **Generalized Disambiguation Tile Badge Labels**:
-   - Replaced hardcoded `"STEP ASIDE"` label in `src/components/DeckChessBoard.tsx` with dynamic contextual tags (`REINFORCE`, `STEP ASIDE`, `SACRIFICE`, `DEFEND`, `EXECUTE`, `CHOOSE`).
-5. **E2E & Automated Verification**:
-   - Authored `scripts/verify-game-over-and-scroll.mjs` verifying mobile scroll stability (`scrollY: 0`), Game Over modal appearance, Review Board dismiss, board visibility, Show Results modal restoration, and Back to Matchmaking routing.
-   - Verified 43/43 unit edge cases passing (`scripts/verify-36-mechanics-edge-cases.ts`).
-   - Full-stack typecheck 0 errors (`npm run typecheck:all`).
-   - Production build clean (`npm run build`).
+1. **Roadmap Phase Insertion**:
+   - Inserted Phase 5 (*Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & 36-Card Copywriting Polish*) and Phase 6 (*Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix*).
+   - Renumbered subsequent campaign phases: Phase 7 (*The Causeway & Campaign Engine*), Phase 8 (*World 2 & Concurrent Wings 3–6*), Phase 9 (*World 7 & Jester Final Boss*).
+2. **Phase 5 Scoping & Architectural Discussion (`DECISION-034`)**:
+   - Confirmed complete removal of legacy energy mechanic from both engine (`DeckChessEngine.ts`) and all UI components.
+   - Renamed "Deck Builder Stage" to "Deck Builder Matchmaking".
+   - Locked in "Medieval Village" aesthetic palette: soft grassy greens (`#5B8C5A`, `#4D7C4D`), warm woody browns (`#8C6D53`, `#5A412F`), and weathered cobblestone grays (`#D1CCC7`, `#2D3033`).
+   - Selected Option A for `HomePage.tsx`: Live 36-Card Roster Showcase with real `<PlayingCard />` components, replacing 4 outdated mock cards.
+   - Refined punchy active-voice copy for P1–P8 and N1–N2; parked mechanical balance retcons for Phase 6 simulation.
+3. **Phase 5 Research & Execution Planning**:
+   - Authored `.agent/state/phases/5/RESEARCH.md`.
+   - Created 5 atomic plans across 3 execution waves (`5.1-PLAN.md` through `5.5-PLAN.md`).
+   - Verified plan integrity and committed to git (`fa1b61b`).
 
 ## In-Progress Work
 
-- Files modified: None (all fixes and tests committed to git).
+- Files modified: None (working tree clean, plans and docs committed).
 - Tests status: Passing 100% green across all unit, integration, and E2E suites.
 
 ## Blockers
@@ -44,23 +39,23 @@ None.
 ## Context Dump
 
 ### Decisions Made
-- `[DECISION-028]`: Authoritative FEN Synchronization & Dual-Mode Transport for Private Matches (`BroadcastChannel` local fallback + Cloudflare `GameRoomDO` Durable Objects).
-- `[DECISION-029]`: Turn Flow & Card Arming Decoupling (Option A) — clicking a piece on the board exclusively displays and executes standard chess moves. Cards must be explicitly tapped in hand to arm empowered moves; tapping again or clicking an unrelated piece immediately disarms.
-- `[DECISION-030]`: R1 "Make Way" Redesign — friendly blocking pawn steps aside perpendicular to the Rook's line onto an empty tile (`extraSquare`); Rook slides to any open square along the opened file (`to`).
-- `[DECISION-031]`: Count-Aware Hand Display & Mobile Horizontal Scroll — pure `buildHandDisplay` utility placing spent cards at tail while preserving unspent order; fluid clamp sizing + scroll snap preventing mobile squish.
-- `[DECISION-032]`: Pre-Game Deck Randomization — 1 copy per card constraint enforced via `new Set()` deduplication and Fisher-Yates shuffle over full 36-card pool in `usePlayerProfiles.ts`.
-- `[DECISION-033]`: Non-Intrusive Game-Over Review & Container-Scoped Scroll — game-over modal is dismissible via `✕` / "Review Board" into a floating top banner with "Show Results" and "Back to Matchmaking"; move logs strictly scroll internal container without page jumping.
+- `[DECISION-034]`: Complete Engine/UI Energy Purge, Medieval Village Palette, Live Landing Card Showcase, and Batched Copywriting Review.
+- `[DECISION-033]`: Non-Intrusive Game-Over Review & Container-Scoped Scroll.
+- `[DECISION-032]`: Pre-Game Deck Randomization with 1 copy per card constraint.
+- `[DECISION-031]`: Count-Aware Hand Display & Mobile Horizontal Scroll.
+- `[DECISION-030]`: R1 "Make Way" Redesign — perpendicular pawn step-aside.
+- `[DECISION-029]`: Turn Flow & Card Arming Decoupling (Option A).
 
 ### Files of Interest
-- `.agent/state/phases/4/VERIFICATION.md`: Phase 4 verification report (PASS).
-- `src/hooks/useDeckChessGame.ts`: Decoupled turn flow & card-armed state machine.
-- `src/components/DeckChessBoard.tsx`: Dynamic disambiguation badges and board render.
-- `src/pages/DeckBuilderPage.tsx`: Arena view with dismissible modal, Review Board banner, container scroll.
-- `src/pages/PlayRoomPage.tsx`: Multiplayer room with dismissible modal and Review Board banner.
-- `scripts/verify-game-over-and-scroll.mjs`: E2E verification test for game over and scroll fixes.
+- `.agent/state/phases/5/RESEARCH.md`: Architecture for energy purge, palette tokens, and live card showcase.
+- `.agent/state/phases/5/5.1-PLAN.md`: Plan 5.1 (Engine & UI Energy Purge).
+- `.agent/state/phases/5/5.2-PLAN.md`: Plan 5.2 (36-Card Copywriting Polish & Playbook Sync).
+- `.agent/state/phases/5/5.3-PLAN.md`: Plan 5.3 (Medieval Village Theme Palette & Matchmaking Rename).
+- `.agent/state/phases/5/5.4-PLAN.md`: Plan 5.4 (Landing Page UI Revamp & Live Card Showcase).
+- `.agent/state/phases/5/5.5-PLAN.md`: Plan 5.5 (End-to-End Visual & Functional Verification).
 
 ## Next Steps
 
-1. Execute Phase 5 plans via `@[.agent/workflows/execute.md] 5`.
-2. Formally verify Phase 5 via `@[.agent/workflows/verify.md] 5`.
+1. Run `@[.agent/workflows/execute.md] 5` to execute Phase 5 plans.
+2. Conduct Phase 5 verification via `@[.agent/workflows/verify.md] 5`.
 3. Proceed to Phase 6: *Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix*.
