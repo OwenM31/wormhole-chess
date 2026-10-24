@@ -4,6 +4,56 @@
 
 ---
 
+### Session: 2026-10-24 09:45
+
+#### Objective
+Complete Phase 4 execution (Plans 4.1–4.4), conduct formal verification against must-haves, close Phase 4 with passing verdict, and add pre-release pre-game deck builder shuffle/randomization button with strict 1 copy per card constraint.
+
+#### Accomplished
+- ✅ Executed Plan 4.1 (Wave 1):
+  - Redesigned R1 "Make Way" perpendicular pawn step-aside movement and file-sliding destinations.
+  - Implemented snapshot rollback mechanism in `DeckChessEngine.makeEmpoweredMove` to strictly reject card moves that leave friendly King in check.
+  - Guarded non-King target rules in `n4_pin_swap`, `b5_take_my_place`, and `p7_protect_the_king`.
+- ✅ Executed Plan 4.2 (Wave 1):
+  - Created pure count-aware `buildHandDisplay` function in `src/utils/handOrder.ts` with 11/11 tests passing.
+  - Upgraded `PlayingCard.tsx` with responsive clamp sizing `clamp(5.75rem, 24vw, 6rem)` + `aspect-[5/7]` without hardcoded height, pointer events isolated to mouse (`e.pointerType === 'mouse'`), and hover popouts scoped to `[@media(hover:hover)]`.
+  - Upgraded `TacticalHandBar.tsx` with single horizontal swipeable row (< `lg`) and desktop 2×4 fan (`lg+`).
+  - Converted equipped slots grid in `MultiplayerCharacterStage.tsx` to horizontal scroll snap track.
+- ✅ Executed Plan 4.3 (Wave 2):
+  - Upgraded `useDeckChessGame.ts` to Option A Decoupled Card-Armed State Machine: piece clicks only show and execute standard chess moves instantly; cards must be explicitly tapped to arm and re-tapped to disarm; clicking an unrelated piece auto-disarms the card.
+  - Added multi-step staging for R1 Make Way perpendicular choices.
+  - Upgraded `DeckChessBoard.tsx` to never suppress standard move indicators when disarmed and show pulsing step-aside indicators during disambiguation staging.
+- ✅ Executed Plan 4.4 (Wave 3):
+  - Authored `scripts/verify-36-mechanics-edge-cases.ts` with 43/43 unit test assertions across 5 suites.
+  - Authored `scripts/verify-phase4-gameplay-fixes.mjs` verifying all 5 browser scenarios in Playwright E2E.
+- ✅ Verified Phase 4 Must-Haves (`@[.agent/workflows/verify.md] 4`):
+  - 4/4 must-haves verified with 100% test traceability, full entrypoint wiring, and empirical browser/CLI proof.
+  - Authored `.agent/state/phases/4/VERIFICATION.md` with verdict **PASS**.
+  - Updated `ROADMAP.md` and `STATE.md`.
+- ✅ Implemented Pre-Game Deck Randomization:
+  - Added "🎲 Randomize" button to `MultiplayerCharacterStage.tsx` and `DeckBuilderView.tsx`.
+  - Added `randomizeHand` to `usePlayerProfiles.ts` with deduplication and Fisher-Yates shuffle guaranteeing 1 copy per card.
+  - Verified via Playwright E2E (`scripts/verify-randomize-hand.mjs`) confirming 8 unique cards and in-game match integration.
+
+#### Verification
+- [x] All 43 edge case assertions passing in `scripts/verify-36-mechanics-edge-cases.ts`.
+- [x] All 5 Playwright E2E scenarios passing in `scripts/verify-phase4-gameplay-fixes.mjs`.
+- [x] 11/11 hand display order tests passing in `scripts/verify-hand-order.ts`.
+- [x] 167/167 playbook tests passing in `scripts/verify-36-playbook.ts`.
+- [x] Full-stack typecheck clean across client, functions, worker (`npm run typecheck:all`).
+- [x] Production build passes cleanly with Vite in 1.36s (`npm run build`).
+- [x] Pre-game deck randomization verified with 8 unique cards via `scripts/verify-randomize-hand.mjs`.
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`). Phase 4 is 100% completed, verified, and closed out. Ready for Phase 5.
+
+#### Handoff Notes
+- Working tree is clean and committed to git.
+- All Phase 4 artifacts and verification reports saved in `.agent/state/phases/4/`.
+- Upon resuming (`/resume`), proceed to **`@[.agent/workflows/plan.md] 5`** to plan Phase 5 (*Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 ("The Causeway")*).
+
+---
+
 ### Session: 2026-10-23 11:31
 
 #### Objective
