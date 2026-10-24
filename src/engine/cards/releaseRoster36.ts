@@ -43,22 +43,22 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     world: 1,
     energyCost: 0,
     artId: 'p1_sidestep',
-    conditionText: 'Enemy piece is directly in front of this Pawn.',
-    effectText: 'Step 1 square horizontally (left or right) onto an empty square.',
-    description: 'Blocked frontally: Step 1 square horizontally left or right onto an empty square.',
+    conditionText: 'Pawn has enemy piece directly in front.',
+    effectText: 'Step Pawn 1 square horizontally (left or right) onto an empty square.',
+    description: 'Pawn blocked frontally: Step 1 square horizontally onto an empty square.',
     visualTheme: PIECE_COLOR_THEMES.pawn
   },
   {
     id: 'p2_head_on',
     code: 'P2',
-    name: 'Head On',
+    name: 'Attack Head On',
     anchor: 'pawn',
     world: 1,
     energyCost: 0,
     artId: 'p2_head_on',
-    conditionText: 'Enemy Pawn is directly in front of this Pawn.',
-    effectText: 'Capture that enemy Pawn straight ahead.',
-    description: 'Enemy Pawn directly in front: Capture that enemy Pawn straight ahead.',
+    conditionText: 'Pawn has enemy Pawn directly in front.',
+    effectText: 'Capture enemy Pawn straight ahead.',
+    description: 'Enemy Pawn directly ahead: Capture that Pawn straight forward.',
     visualTheme: PIECE_COLOR_THEMES.pawn
   },
   {
@@ -69,9 +69,9 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     world: 1,
     energyCost: 0,
     artId: 'p3_follow_me',
-    conditionText: 'Friendly piece is directly behind this Pawn and square in front is empty.',
-    effectText: 'Move both this Pawn and the friendly piece behind it 1 square straight forward.',
-    description: 'Ally directly behind and front empty: Advance both pieces 1 square forward.',
+    conditionText: 'Pawn has ally piece directly behind.',
+    effectText: 'Move both ally Pawn and ally piece 1 square forward.',
+    description: 'Ally directly behind: Advance both Pawn and trailing ally 1 square forward.',
     visualTheme: PIECE_COLOR_THEMES.pawn
   },
   {
@@ -82,9 +82,9 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     world: 1,
     energyCost: 0,
     artId: 'n1_adrenaline_jump',
-    conditionText: 'This Knight is currently under attack by an enemy piece.',
-    effectText: 'Jump 3 squares in one orthogonal direction and 1 square perpendicular (3x1 jump, move or capture).',
-    description: 'Under attack: Leap 3 squares orthogonal and 1 perpendicular to move or capture.',
+    conditionText: 'Knight is under attack.',
+    effectText: 'Jump 3 squares in one direction and 1 square perpendicular. (3x1 jump)',
+    description: 'Knight under attack: Leap 3 squares orthogonal and 1 perpendicular (3x1 jump).',
     visualTheme: PIECE_COLOR_THEMES.knight
   },
   {
@@ -108,9 +108,9 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     world: 1,
     energyCost: 0,
     artId: 'n2_swap_with_me',
-    conditionText: 'Friendly piece sits on one of this Knight\'s normal (2,1) L-jump squares.',
-    effectText: 'Swap places with that friendly piece.',
-    description: 'Ally on normal L-jump landing: Swap places with that friendly piece.',
+    conditionText: 'Knight is targeting an ally piece.',
+    effectText: 'Knight and ally piece swap places.',
+    description: 'Targeting ally on L-jump landing: Knight and ally piece swap places.',
     visualTheme: PIECE_COLOR_THEMES.knight
   },
   {
@@ -190,9 +190,9 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     world: 3,
     energyCost: 0,
     artId: 'p4_attack_together',
-    conditionText: 'This Pawn is defended by a friendly Pawn on a rear-diagonal square.',
-    effectText: 'Capture enemy piece diagonally, and move defending friendly Pawn into square vacated.',
-    description: 'Defended by rear Pawn: Capture diagonally and advance defending Pawn into vacated square.',
+    conditionText: 'Pawn is threatening enemy piece and defended by ally Pawn.',
+    effectText: 'Capture enemy piece and move defending ally Pawn into vacated square.',
+    description: 'Defended by rear Pawn: Capture diagonally and step defending Pawn into origin.',
     visualTheme: PIECE_COLOR_THEMES.pawn
   },
   {
@@ -257,9 +257,9 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     world: 4,
     energyCost: 0,
     artId: 'p5_get_behind_me',
-    conditionText: 'Friendly piece on rear diagonal behind Pawn, and square directly behind Pawn is empty.',
-    effectText: 'Move that friendly piece 1 square horizontally into empty square directly behind Pawn.',
-    description: 'Ally on rear diagonal with square behind empty: Pull ally horizontally behind this Pawn.',
+    conditionText: 'Pawn has ally piece on rear diagonal and empty square behind.',
+    effectText: 'Move ally piece into empty square behind ally Pawn.',
+    description: 'Ally on rear diagonal: Shift ally horizontally behind this Pawn.',
     visualTheme: PIECE_COLOR_THEMES.pawn
   },
   {
@@ -324,9 +324,9 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     world: 5,
     energyCost: 0,
     artId: 'p6_tag_out',
-    conditionText: 'Friendly piece is directly in front of this Pawn.',
-    effectText: 'Swap places with that friendly piece.',
-    description: 'Ally directly in front: Swap places with that friendly piece.',
+    conditionText: 'Pawn has ally piece directly in front.',
+    effectText: 'Pawn and ally piece swap places.',
+    description: 'Ally directly in front: Pawn and ally piece swap places.',
     visualTheme: PIECE_COLOR_THEMES.pawn
   },
   {
@@ -391,9 +391,9 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     world: 6,
     energyCost: 0,
     artId: 'p7_protect_the_king',
-    conditionText: 'This Pawn is pinned to your King.',
-    effectText: 'Destroy enemy non-King piece on forward-diagonal capture square without moving Pawn.',
-    description: 'Pawn pinned to King: Strike enemy piece on forward-diagonal capture square without moving.',
+    conditionText: 'Pawn is pinned to your king.',
+    effectText: "Destroy enemy piece on Pawn's forward diagonal without moving Pawn.",
+    description: 'Pawn pinned to King: Destroy forward-diagonal enemy piece without moving.',
     visualTheme: PIECE_COLOR_THEMES.pawn
   },
   {
@@ -471,9 +471,9 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     world: 7,
     energyCost: 0,
     artId: 'p8_call_reserves',
-    conditionText: 'Pawn is on Ranks 5-7, has horizontal friendly piece, and square behind is empty.',
-    effectText: 'Spawn friendly Pawn onto empty square directly behind this Pawn.',
-    description: 'Advanced Pawn with flank ally: Call reserve Pawn onto empty square directly behind.',
+    conditionText: 'Pawn is in enemy territory and has an ally piece to left or right and an empty square behind.',
+    effectText: 'Spawn additional Pawn into empty square behind Pawn.',
+    description: 'Pawn in enemy half with flank ally: Spawn reserve Pawn directly behind.',
     visualTheme: PIECE_COLOR_THEMES.pawn
   },
   {
