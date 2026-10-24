@@ -38,7 +38,6 @@ console.log('━━━━━━━━━━━━━━━━━━━━━━�
 console.log('Suite 1: Core Engine & Turn Lifecycle');
 {
   const engine = new DeckChessEngine();
-  assert(engine.getEnergy() === 3, 'Initial energy is 3');
   assert(!engine.hasPlayedCardThisTurn(), 'Card window is open at turn start');
   assert(engine.getTurn() === 'w', 'White begins the game');
   assert(engine.getTurnNumber() === 1, 'Initial turn number is 1');
@@ -47,7 +46,6 @@ console.log('Suite 1: Core Engine & Turn Lifecycle');
   const moveRes = engine.makeMove({ from: 'e2', to: 'e4' });
   assert(moveRes.success === true, 'Standard pawn move e2->e4 succeeds');
   assert(engine.getTurn() === 'b', 'Turn passes to Black');
-  assert(engine.getEnergy() === 3, 'Energy resets to 3 for Black');
   assert(!engine.hasPlayedCardThisTurn(), 'Card window is reopened for Black');
 
   // Black makes countermove
@@ -73,7 +71,6 @@ console.log('\nSuite 2: Card [pawn_vanguard] (Vanguard Advance)');
   assert(cardRes.success === true, 'Pawn Vanguard activates successfully on e2->e5');
   assert(engine.getPiece('e2') === undefined, 'e2 square is vacated');
   assert(engine.getPiece('e5')?.type === 'p' && engine.getPiece('e5')?.color === 'w', 'Pawn now exists at e5');
-  assert(engine.getEnergy() === 2, '1 Energy deducted (have 2 left)');
   assert(engine.hasPlayedCardThisTurn() === true, 'Card played flag set to true (PRE_MOVE_WINDOW closed)');
 
   // Attempt to play a second card in same turn
@@ -84,7 +81,6 @@ console.log('\nSuite 2: Card [pawn_vanguard] (Vanguard Advance)');
   const moveRes = engine.makeMove({ from: 'g1', to: 'f3' });
   assert(moveRes.success === true, 'Normal chess move g1->f3 completes turn after card play');
   assert(engine.getTurn() === 'b', 'Turn successfully passed to Black');
-  assert(engine.getEnergy() === 3, 'Black has 3 energy restored');
 
   // FEN and clone validation
   let cloneOk = true;
@@ -114,7 +110,6 @@ console.log('\nSuite 3: Card [pawn_scuttle] (Abandon Ship)');
   assert(scuttleRes.success === true, 'Scuttle activates successfully on d4');
   assert(engine.getPiece('d4') === undefined, 'Scuttled pawn is removed from d4');
   assert(engine.getGraveyard().w.p === 1, 'White graveyard pawn count incremented to 1');
-  assert(engine.getEnergy() === 2, '1 energy deducted');
 
   // Resolve check with c2->c3
   const blockMove = engine.makeMove({ from: 'c2', to: 'c3' });
@@ -415,7 +410,6 @@ console.log('\nSuite 12: 6x6 Taxonomy & 90-Card Canonical Catalog Contract');
     from: 'e2',
     to: 'e4',
     cardId: 'pawn_bayonet_charge',
-    energyCost: 2,
     actionType: 'move' as const,
     metadata: { test: true }
   };
@@ -423,7 +417,6 @@ console.log('\nSuite 12: 6x6 Taxonomy & 90-Card Canonical Catalog Contract');
     typeof sampleEmpoweredMove.from === 'string' &&
     typeof sampleEmpoweredMove.to === 'string' &&
     typeof sampleEmpoweredMove.cardId === 'string' &&
-    typeof sampleEmpoweredMove.energyCost === 'number' &&
     sampleEmpoweredMove.actionType === 'move',
     'EmpoweredMove contract matches unified action model specification'
   );
@@ -439,14 +432,12 @@ console.log('\nSuite 13: Unified Move Generation & Invariants');
   const camelMoves = camelEngine.getEmpoweredMoves('b1');
   const camelTargets = camelMoves.map(m => m.to);
   assert(camelTargets.includes('a4') && camelTargets.includes('c4'), 'Knight at b1 gets Camel (3,1) leaps to a4 and c4');
-  assert(camelMoves[0].energyCost === 2, 'Cavalry Charge requires 2 energy');
 
   const execCamel = camelEngine.makeEmpoweredMove(camelMoves.find(m => m.to === 'c4')!);
   assert(execCamel.success === true, 'Executing Camel leap c4 succeeds');
   assert(camelEngine.getPiece('b1') === undefined, 'b1 vacated');
   assert(camelEngine.getPiece('c4')?.type === 'n', 'Knight arrived at c4');
   assert(camelEngine.getTurn() === 'b', 'Turn advanced to Black atomically');
-  assert(camelEngine.getEnergy() === 3, 'Energy reset to 3 for Black');
   assert(!camelEngine.getWhiteHand().includes('knight_cavalry_charge'), 'Card consumed from White hand');
 
   // 2. Zebra leap (3,2) for Knight (knight_spring_vault)
