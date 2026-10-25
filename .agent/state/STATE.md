@@ -7,10 +7,10 @@ updated: 2026-10-25T12:20:00-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-- **Phase**: Phase 5 — *Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & 36-Card Copywriting Polish* (Completed & Formally Verified) + Post-Phase 5 Mobile Modal Fix
-- **Task**: Ready for Phase 6 Planning (`@[.agent/workflows/plan.md] 6`)
-- **Status**: Paused at 2026-10-25 12:20
-- **Roadmap Status**: Phases 1–5 Complete & Verified; Phase 6 Ready for Planning
+- **Phase**: Phase 6 — *Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix*
+- **Task**: Phase 6 Research Complete (`RESEARCH.md`) — Ready for `@[.agent/workflows/plan.md] 6`
+- **Status**: Active (resumed 2026-10-25 12:20)
+- **Roadmap Status**: Phases 1–5 Complete & Verified; Phase 6 Research & Contracts Complete
 
 ## Last Session Summary
 1. **Post-Phase 5 Mobile UX & Modal Viewport Fix**:
@@ -36,6 +36,7 @@ None.
 ## Context Dump
 
 ### Decisions Made
+- `[DECISION-035]`: Unified Card-Aware AI with Pre-Condition Shaping, Direct Best-Move Hint & Live Side Eval Bar, and Simulation-First Card Tuning.
 - `[DECISION-034]`: Complete Engine/UI Energy Purge, Medieval Village Palette, Live Landing Card Showcase, and Batched Copywriting Review.
 - `[DECISION-033]`: Non-Intrusive Game-Over Review & Container-Scoped Scroll.
 - `[DECISION-032]`: Pre-Game Deck Randomization with 1 copy per card constraint.

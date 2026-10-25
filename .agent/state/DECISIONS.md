@@ -796,4 +796,35 @@ During `/discuss-phase 5`, we reviewed the UI revamp scope for the Landing Page 
 
 ---
 
-*Last updated: 2026-10-24*
+### [DECISION-035] Phase 6 Decisions: Unified Card-Aware AI with Pre-Condition Shaping, Direct Best-Move Hint & Live Side Eval Bar, and Simulation-First Card Tuning
+
+**Date**: 2026-10-25
+**Status**: Accepted
+
+#### Context
+During `/discuss-phase 6`, we clarified the design of the Grandmaster Card-Aware AI Engine, how the AI should conserve cards while actively maneuvering toward positions that unlock its own cards, the scope and branding of the Hint & Evaluation system (for both offline matches and online game review), and the workflow for the Monte Carlo deck balance simulation and card tuning.
+
+#### Decision
+1. **Unified Card-Aware Search, Card Conservation & Pre-Condition Shaping (`DeckChessAI.ts`)**:
+   - **Unified Alpha-Beta Tree**: Search both standard chess moves (`getLegalMoves`) and 36-Playbook empowered moves (`getEmpoweredMoves`) inside the Alpha-Beta minimax loop so the AI evaluates multi-ply consequences (and never plays a card to win a Pawn if it hangs a Queen on the reply).
+   - **Card Conservation Value**: Assign an intrinsic hand-retention value (~`75cp` per unspent card in hand) inside `evaluateBoard()` so the AI does not waste cards on trivial positional nudges; a card play must generate a net tactical/positional gain exceeding the conservation threshold (or force checkmate / save a major piece).
+   - **Proactive Card Setup ("Pre-Condition Shaping")**: The AI works toward positions where its own unspent cards become advantageous via two complementary mechanisms:
+     1. *Multi-Ply Horizon Discovery*: At depth $\ge 3$, a standard move on Ply 1 that unlocks a high-impact card move on Ply 3 naturally bubbles up as the principal variation.
+     2. *Hand-Synergy Positional Bonuses*: `evaluateBoard()` awards small positional shaping bonuses (`+15cp` to `+35cp`) when friendly pieces move into geometric alignments required by the specific unspent cards in the AI's hand (e.g., placing a Rook on a main diagonal when holding `R3 Cut Across`, aligning two Rooks when holding `R4 Move in Unison`, centralizing a Bishop on `d4/d5/e4/e5` when holding `B6 Come This Way`, forming Pawn-ally batteries for `P3/P5/P6`, or keeping a Knight on `a/h` files for `N6`).
+   - **Opponent Latent Card Threat Awareness**: Penalize frontier positions where high-value pieces (Queen/Rook/King) are left vulnerable to the opponent's known unspent cards.
+2. **Direct Best-Move Engine Hint & Live Side Evaluation Bar (`EvalBar.tsx`)**:
+   - **Drop "Jester's Whisper" Branding**: Keep the naming clean and chess-native (`Hint` / `Best Move` / `Eval Bar`) so it serves seamlessly in both Offline Matches and Online Game Review.
+   - **Direct Best-Move Hint (Chess Engine Style)**: Rather than a multi-step riddle, clicking **`Hint`** computes and displays the single best move at the current position (whether a standard chess move or an empowered card move, highlighting the `from ➔ to` squares and card in hand) from which other analysis features can be bootstrapped.
+   - **Live Side Evaluation Bar (`EvalBar.tsx`)**: Implement a vertical Chess.com/Lichess-style evaluation bar alongside the board displaying the live card-aware centipawn / mate evaluation (`+1.5`, `-0.8`, `M2`) with smooth White/Black bar fill transitions, active in Offline Matches and Post-Game / Historical Match Review.
+3. **Simulation-First Balance Workflow (Workflow A)**:
+   - Build and run the multi-threaded Monte Carlo deck balance simulation harness (`scripts/simulate-deck-balance.mjs`) across the 36-card roster first.
+   - Generate an empirical balance report measuring **Trigger Rate**, **Play Conversion Rate**, **Average Centipawn Swing**, and **Win-Rate Delta** for all 36 cards, and use those metrics to guide any mechanical retcons or copy refinements.
+
+#### Consequences
+- Gives the AI genuine strategic intent: it holds cards until they matter and maneuvers pieces to set up its own hand's combos.
+- Provides players with a clean, familiar chess-engine **Side Eval Bar** and **Best-Move Hint** button usable in both Offline Playtest and Match Review.
+- Grounds card balance discussions in empirical multi-thousand-game simulation metrics.
+
+---
+
+*Last updated: 2026-10-25*
