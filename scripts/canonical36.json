@@ -1,0 +1,254 @@
+[
+  {
+    "id": "p1_sidestep",
+    "code": "P1",
+    "name": "Sidestep",
+    "anchor": "pawn",
+    "world": 1
+  },
+  {
+    "id": "p2_head_on",
+    "code": "P2",
+    "name": "Attack Head On",
+    "anchor": "pawn",
+    "world": 1
+  },
+  {
+    "id": "p3_follow_me",
+    "code": "P3",
+    "name": "Follow Me",
+    "anchor": "pawn",
+    "world": 1
+  },
+  {
+    "id": "n1_adrenaline_jump",
+    "code": "N1",
+    "name": "Adrenaline Jump",
+    "anchor": "knight",
+    "world": 1
+  },
+  {
+    "id": "b1_let_me_through",
+    "code": "B1",
+    "name": "Let Me Through",
+    "anchor": "bishop",
+    "world": 1
+  },
+  {
+    "id": "n2_swap_with_me",
+    "code": "N2",
+    "name": "Swap With Me",
+    "anchor": "knight",
+    "world": 1
+  },
+  {
+    "id": "r1_make_way",
+    "code": "R1",
+    "name": "Make Way",
+    "anchor": "rook",
+    "world": 1
+  },
+  {
+    "id": "n3_trample",
+    "code": "N3",
+    "name": "Trample",
+    "anchor": "knight",
+    "world": 2
+  },
+  {
+    "id": "r2_ive_got_your_back",
+    "code": "R2",
+    "name": "I've Got Your Back",
+    "anchor": "rook",
+    "world": 2
+  },
+  {
+    "id": "b2_pierce",
+    "code": "B2",
+    "name": "Pierce",
+    "anchor": "bishop",
+    "world": 2
+  },
+  {
+    "id": "r3_cut_across",
+    "code": "R3",
+    "name": "Cut Across",
+    "anchor": "rook",
+    "world": 2
+  },
+  {
+    "id": "p4_attack_together",
+    "code": "P4",
+    "name": "Attack Together",
+    "anchor": "pawn",
+    "world": 3
+  },
+  {
+    "id": "n4_pin_swap",
+    "code": "N4",
+    "name": "Pin Swap",
+    "anchor": "knight",
+    "world": 3
+  },
+  {
+    "id": "b3_ricochet",
+    "code": "B3",
+    "name": "Ricochet",
+    "anchor": "bishop",
+    "world": 3
+  },
+  {
+    "id": "n6_flanking_support",
+    "code": "N6",
+    "name": "Flanking Support",
+    "anchor": "knight",
+    "world": 3
+  },
+  {
+    "id": "k2_royal_knighting",
+    "code": "K2",
+    "name": "Royal Knighting",
+    "anchor": "king",
+    "world": 3
+  },
+  {
+    "id": "p5_get_behind_me",
+    "code": "P5",
+    "name": "Get Behind Me",
+    "anchor": "pawn",
+    "world": 4
+  },
+  {
+    "id": "b4_change_color",
+    "code": "B4",
+    "name": "Change Color",
+    "anchor": "bishop",
+    "world": 4
+  },
+  {
+    "id": "n5_get_to_the_king",
+    "code": "N5",
+    "name": "Get to the King",
+    "anchor": "knight",
+    "world": 4
+  },
+  {
+    "id": "b5_take_my_place",
+    "code": "B5",
+    "name": "Take My Place",
+    "anchor": "bishop",
+    "world": 4
+  },
+  {
+    "id": "b6_come_this_way",
+    "code": "B6",
+    "name": "Come This Way",
+    "anchor": "bishop",
+    "world": 4
+  },
+  {
+    "id": "p6_tag_out",
+    "code": "P6",
+    "name": "Tag Out",
+    "anchor": "pawn",
+    "world": 5
+  },
+  {
+    "id": "r4_move_in_unison",
+    "code": "R4",
+    "name": "Move in Unison",
+    "anchor": "rook",
+    "world": 5
+  },
+  {
+    "id": "q1_royal_summons",
+    "code": "Q1",
+    "name": "Royal Summons",
+    "anchor": "queen",
+    "world": 5
+  },
+  {
+    "id": "r5_catapult",
+    "code": "R5",
+    "name": "Catapult",
+    "anchor": "rook",
+    "world": 5
+  },
+  {
+    "id": "k1_conscription",
+    "code": "K1",
+    "name": "Conscription",
+    "anchor": "king",
+    "world": 5
+  },
+  {
+    "id": "p7_protect_the_king",
+    "code": "P7",
+    "name": "Protect the King",
+    "anchor": "pawn",
+    "world": 6
+  },
+  {
+    "id": "q2_the_queens_gambit",
+    "code": "Q2",
+    "name": "The Queen's Gambit",
+    "anchor": "queen",
+    "world": 6
+  },
+  {
+    "id": "r6_garrison",
+    "code": "R6",
+    "name": "Garrison",
+    "anchor": "rook",
+    "world": 6
+  },
+  {
+    "id": "q3_all_rise",
+    "code": "Q3",
+    "name": "All Rise",
+    "anchor": "queen",
+    "world": 6
+  },
+  {
+    "id": "k3_royal_execution",
+    "code": "K3",
+    "name": "Royal Execution",
+    "anchor": "king",
+    "world": 6
+  },
+  {
+    "id": "n7_outpost_support",
+    "code": "N7",
+    "name": "Outpost Support",
+    "anchor": "knight",
+    "world": 7
+  },
+  {
+    "id": "p8_call_reserves",
+    "code": "P8",
+    "name": "Call Reserves",
+    "anchor": "pawn",
+    "world": 7
+  },
+  {
+    "id": "b7_bishops_blessing",
+    "code": "B7",
+    "name": "Bishop's Blessing",
+    "anchor": "bishop",
+    "world": 7
+  },
+  {
+    "id": "q4_one_fell_swoop",
+    "code": "Q4",
+    "name": "One Fell Swoop",
+    "anchor": "queen",
+    "world": 7
+  },
+  {
+    "id": "k4_banish",
+    "code": "K4",
+    "name": "Banish",
+    "anchor": "king",
+    "world": 7
+  }
+]
