@@ -348,7 +348,12 @@ export const PlayRoomPage: React.FC = () => {
 
         {/* GAME OVER MODAL & REVIEW BOARD BANNER */}
         {state?.status === 'finished' && showGameOverModal && (
-          <div style={styles.modalOverlay}>
+          <div
+            style={styles.modalOverlay}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowGameOverModal(false);
+            }}
+          >
             <div style={{ ...styles.modalCard, position: 'relative' }}>
               <button
                 type="button"
@@ -422,7 +427,7 @@ export const PlayRoomPage: React.FC = () => {
           <div
             style={{
               position: 'fixed',
-              top: '1rem',
+              top: '60px',
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 900,
@@ -810,16 +815,17 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: '1rem',
     zIndex: 1000,
   },
   modalCard: {
     backgroundColor: '#24272A',
     border: '1px solid rgba(139, 126, 116, 0.3)',
-    borderRadius: '6px',
-    padding: '2.5rem',
+    borderRadius: '8px',
+    padding: '2rem 1.5rem',
     textAlign: 'center',
     maxWidth: '420px',
-    width: '90%',
+    width: '100%',
     boxShadow: '0 16px 48px rgba(0, 0, 0, 0.8)',
   },
   modalTrophy: {

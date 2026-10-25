@@ -273,104 +273,6 @@ export const DeckBuilderPage: React.FC = () => {
                     activeModifiers={game.activeModifiers}
                     inCheck={game.inCheck}
                   />
-
-                  {/* Game Over Modal Overlay & Review Board Banner */}
-                  {game.isGameOver && showGameOverModal && (
-                    <div className="absolute inset-0 bg-[#141618]/90 backdrop-blur-md rounded-md flex flex-col items-center justify-center p-6 text-center z-40 border border-[#D4AF37]/50 shadow-2xl relative animate-in fade-in">
-                      {/* Close button to review board */}
-                      <button
-                        type="button"
-                        onClick={() => setShowGameOverModal(false)}
-                        aria-label="Close modal to review board"
-                        className="absolute top-3 right-3 p-1.5 text-[#8B7E74] hover:text-[#FAF9F6] bg-[#191B1D]/60 hover:bg-[#24272A] rounded-full border border-[rgba(139,126,116,0.3)] transition-colors cursor-pointer"
-                        title="Review Board"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-
-                      <span className="text-4xl mb-2">
-                        {game.winner === 'draw'
-                          ? '🤝'
-                          : game.winner === playerColor
-                          ? '🏆'
-                          : '💀'}
-                      </span>
-                      <h2
-                        className={`text-xl font-bold tracking-tight ${
-                          game.winner === playerColor ? 'text-[#D4AF37]' : 'text-[#FAF9F6]'
-                        }`}
-                      >
-                        {game.winner === 'draw'
-                          ? 'Draw'
-                          : game.winner === playerColor
-                          ? 'Victory!'
-                          : 'Defeat'}
-                      </h2>
-                      <p className="text-xs text-[#8B7E74] mt-1 capitalize font-mono">
-                        Reason: {game.finishReason ? game.finishReason.replace('_', ' ') : 'Match Concluded'}
-                      </p>
-
-                      <div className="mt-4 flex flex-wrap justify-center gap-2">
-                        <button
-                          onClick={() => handleStartNewMatch(playerColor, aiDifficulty)}
-                          className="px-4 py-2 bg-[#4C5C4C] hover:bg-[#5C6C5C] text-[#FAF9F6] text-xs font-bold rounded transition-colors shadow cursor-pointer"
-                        >
-                          Rematch
-                        </button>
-                        <button
-                          onClick={() => setShowGameOverModal(false)}
-                          className="px-4 py-2 bg-[#191B1D] hover:bg-[#24272A] text-[#FAF9F6] border border-[rgba(139,126,116,0.35)] text-xs font-medium rounded transition-colors cursor-pointer"
-                        >
-                          Review Board
-                        </button>
-                        <button
-                          onClick={() => setScreen('multiplayer')}
-                          className="px-4 py-2 bg-[#24272A] hover:bg-[#282B2E] text-[#D4AF37] border border-[#D4AF37]/40 text-xs font-semibold rounded transition-colors cursor-pointer"
-                        >
-                          Back to Matchmaking
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Compact Board Review Banner when game over modal is dismissed */}
-                  {game.isGameOver && !showGameOverModal && (
-                    <div className="absolute top-2 left-2 right-2 z-40 bg-[#141618]/95 backdrop-blur-md rounded-md p-2 border border-[#D4AF37]/50 shadow-xl flex items-center justify-between text-xs animate-in fade-in">
-                      <div className="flex items-center gap-2 truncate mr-2">
-                        <span className="text-base shrink-0">
-                          {game.winner === 'draw' ? '🤝' : game.winner === playerColor ? '🏆' : '💀'}
-                        </span>
-                        <span className={`font-bold shrink-0 ${game.winner === playerColor ? 'text-[#D4AF37]' : 'text-[#FAF9F6]'}`}>
-                          {game.winner === 'draw' ? 'Draw' : game.winner === playerColor ? 'Victory!' : 'Defeat'}
-                        </span>
-                        <span className="hidden sm:inline text-[#8B7E74] font-mono text-[11px] truncate">
-                          ({game.finishReason ? game.finishReason.replace('_', ' ') : 'Finished'})
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          onClick={() => handleStartNewMatch(playerColor, aiDifficulty)}
-                          className="px-2.5 py-1 bg-[#4C5C4C] hover:bg-[#5C6C5C] text-[#FAF9F6] text-[11px] font-bold rounded shadow transition-colors cursor-pointer"
-                        >
-                          Rematch
-                        </button>
-                        <button
-                          onClick={() => setScreen('multiplayer')}
-                          className="px-2.5 py-1 bg-[#24272A] hover:bg-[#282B2E] text-[#D4AF37] border border-[#D4AF37]/40 text-[11px] font-semibold rounded transition-colors cursor-pointer"
-                        >
-                          Back to Matchmaking
-                        </button>
-                        <button
-                          onClick={() => setShowGameOverModal(true)}
-                          className="px-2 py-1 text-[#8B7E74] hover:text-[#FAF9F6] text-[11px] font-medium underline cursor-pointer"
-                        >
-                          Show Results
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </TabletopArena>
               </div>
 
@@ -534,6 +436,117 @@ export const DeckBuilderPage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Game Over Modal Overlay (Fixed Viewport Centered) */}
+          {game.isGameOver && showGameOverModal && (
+            <div
+              onClick={(e) => {
+                if (e.target === e.currentTarget) setShowGameOverModal(false);
+              }}
+              className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in"
+            >
+              <div
+                className="relative w-full max-w-sm sm:max-w-md bg-[#24272A] border border-[#D4AF37]/60 rounded-xl p-6 sm:p-8 text-center shadow-2xl animate-in zoom-in-95"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="game-over-title"
+              >
+                {/* Close button to review board */}
+                <button
+                  type="button"
+                  onClick={() => setShowGameOverModal(false)}
+                  aria-label="Close modal to review board"
+                  className="absolute top-3 right-3 p-1.5 text-[#8B7E74] hover:text-[#FAF9F6] bg-[#191B1D]/60 hover:bg-[#24272A] rounded-full border border-[rgba(139,126,116,0.3)] transition-colors cursor-pointer"
+                  title="Review Board"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+
+                <div className="text-4xl mb-2">
+                  {game.winner === 'draw'
+                    ? '🤝'
+                    : game.winner === playerColor
+                    ? '🏆'
+                    : '💀'}
+                </div>
+                <h2
+                  id="game-over-title"
+                  className={`text-xl sm:text-2xl font-bold tracking-tight ${
+                    game.winner === playerColor ? 'text-[#D4AF37]' : 'text-[#FAF9F6]'
+                  }`}
+                >
+                  {game.winner === 'draw'
+                    ? 'Draw'
+                    : game.winner === playerColor
+                    ? 'Victory!'
+                    : 'Defeat'}
+                </h2>
+                <p className="text-xs sm:text-sm text-[#8B7E74] mt-1 capitalize font-mono">
+                  Reason: {game.finishReason ? game.finishReason.replace('_', ' ') : 'Match Concluded'}
+                </p>
+
+                <div className="mt-5 flex flex-wrap justify-center gap-2 sm:gap-3">
+                  <button
+                    onClick={() => handleStartNewMatch(playerColor, aiDifficulty)}
+                    className="px-4 py-2 bg-[#4C5C4C] hover:bg-[#5C6C5C] text-[#FAF9F6] text-xs sm:text-sm font-bold rounded transition-colors shadow cursor-pointer"
+                  >
+                    Rematch
+                  </button>
+                  <button
+                    onClick={() => setShowGameOverModal(false)}
+                    className="px-4 py-2 bg-[#191B1D] hover:bg-[#24272A] text-[#FAF9F6] border border-[rgba(139,126,116,0.35)] text-xs sm:text-sm font-medium rounded transition-colors cursor-pointer"
+                  >
+                    Review Board
+                  </button>
+                  <button
+                    onClick={() => setScreen('multiplayer')}
+                    className="px-4 py-2 bg-[#24272A] hover:bg-[#282B2E] text-[#D4AF37] border border-[#D4AF37]/40 text-xs sm:text-sm font-semibold rounded transition-colors cursor-pointer"
+                  >
+                    Back to Matchmaking
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Compact Board Review Banner when game over modal is dismissed */}
+          {game.isGameOver && !showGameOverModal && (
+            <div className="fixed top-[60px] left-1/2 -translate-x-1/2 z-[150] bg-[#141618]/95 backdrop-blur-md rounded-full px-4 py-2 border border-[#D4AF37]/60 shadow-2xl flex items-center gap-2 sm:gap-3 text-xs max-w-[95vw] animate-in fade-in">
+              <div className="flex items-center gap-2 truncate mr-1">
+                <span className="text-base shrink-0">
+                  {game.winner === 'draw' ? '🤝' : game.winner === playerColor ? '🏆' : '💀'}
+                </span>
+                <span className={`font-bold shrink-0 ${game.winner === playerColor ? 'text-[#D4AF37]' : 'text-[#FAF9F6]'}`}>
+                  {game.winner === 'draw' ? 'Draw' : game.winner === playerColor ? 'Victory!' : 'Defeat'}
+                </span>
+                <span className="hidden sm:inline text-[#8B7E74] font-mono text-[11px] truncate">
+                  ({game.finishReason ? game.finishReason.replace('_', ' ') : 'Finished'})
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => handleStartNewMatch(playerColor, aiDifficulty)}
+                  className="px-2.5 py-1 bg-[#4C5C4C] hover:bg-[#5C6C5C] text-[#FAF9F6] text-[11px] font-bold rounded shadow transition-colors cursor-pointer"
+                >
+                  Rematch
+                </button>
+                <button
+                  onClick={() => setScreen('multiplayer')}
+                  className="px-2.5 py-1 bg-[#24272A] hover:bg-[#282B2E] text-[#D4AF37] border border-[#D4AF37]/40 text-[11px] font-semibold rounded transition-colors cursor-pointer"
+                >
+                  Back to Matchmaking
+                </button>
+                <button
+                  onClick={() => setShowGameOverModal(true)}
+                  className="px-2 py-1 text-[#8B7E74] hover:text-[#FAF9F6] text-[11px] font-medium underline cursor-pointer"
+                >
+                  Show Results
+                </button>
+              </div>
+            </div>
+          )}
         </main>
       )}
     </div>
