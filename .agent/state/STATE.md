@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-24T16:43:00-05:00
+updated: 2026-10-25T12:20:00-05:00
 ---
 
 # Project State
@@ -7,27 +7,27 @@ updated: 2026-10-24T16:43:00-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-- **Phase**: Phase 5 — *Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & 36-Card Copywriting Polish* (Completed & Formally Verified)
+- **Phase**: Phase 5 — *Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & 36-Card Copywriting Polish* (Completed & Formally Verified) + Post-Phase 5 Mobile Modal Fix
 - **Task**: Ready for Phase 6 Planning (`@[.agent/workflows/plan.md] 6`)
-- **Status**: Complete & Verified (All 5 plans executed across 3 waves)
+- **Status**: Paused at 2026-10-25 12:20
 - **Roadmap Status**: Phases 1–5 Complete & Verified; Phase 6 Ready for Planning
 
 ## Last Session Summary
-1. **Phase 5 Execution**:
-   - **Plan 5.1 (Wave 1)**: Complete engine & UI energy purge. Removed `energy` state, methods, deduction, and restoration from `DeckChessEngine.ts`. Purged energy UI pills and labels from `HomePage.tsx`, `DeckBuilderView.tsx`, `TacticalHandBar.tsx`, `HistoricalMatchViewer.tsx`, and matchmaking views.
-   - **Plan 5.2 (Wave 1)**: 36-card copywriting polish in `releaseRoster36.ts`. Updated P1–P8 and N1–N2 with active-voice rule formulas. Renamed P2 to "Attack Head On". All 169 playbook assertions and 43 mechanics edge-case tests pass 100% green.
-   - **Plan 5.3 (Wave 2)**: Medieval Village theme tokens declared in `src/index.css` (`--village-grass-bright`, `--village-wood-warm`, `--village-stone-dark`, etc.) and utility classes. Renamed "Deck Builder Stage" to "Deck Builder Matchmaking" across menus and breadcrumb headers. Added tabletop vignette to `TabletopArena.tsx`.
-   - **Plan 5.4 (Wave 2)**: Landing page revamped with Medieval Village palette and atmospheric background. Purged all energy pills and mock cards. Built Live 36-Card Roster Showcase with real `<PlayingCard />` components (P2, N1, B1, R1, Q2, K2). Updated CTA to "Enter Deck Builder Matchmaking →".
-   - **Plan 5.5 (Wave 3)**: Authored and executed Playwright E2E verification suite (`scripts/verify-phase5-ui-and-energy.mjs`) verifying all 4 scenarios across desktop and mobile (375px) with zero horizontal overflow.
-2. **Phase 5 Verification**:
-   - Formally verified all must-haves with 100% pass rate.
-   - Authored `.agent/state/phases/5/VERIFICATION.md` with verdict **PASS**.
-   - Updated `ROADMAP.md` and `STATE.md`.
+1. **Post-Phase 5 Mobile UX & Modal Viewport Fix**:
+   - Diagnosed mobile Game Over modal clipping issue: on mobile viewports (375x667), modal heading was shifted off-screen (`x: 329px, y: -86px`) due to being nested inside `<TabletopArena>` within the 41.4% inscribed board container (`overflow: hidden`) and conflicting `relative` classes.
+   - Refactored `DeckBuilderPage.tsx`: moved Game Over modal overlay and floating review banner to the viewport root of the arena screen.
+   - Set modal overlay to `fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm`.
+   - Added backdrop click-to-dismiss (`onClick={(e) => { if (e.target === e.currentTarget) setShowGameOverModal(false); }}`) alongside the top-right `✕` close button and "Review Board" button.
+   - Anchored floating review banner at `top-[60px] z-[150]` so it sits right below the sticky navigation bar without intercepting navigation events.
+   - Mirrored dismissibility and mobile padding adjustments in `PlayRoomPage.tsx`.
+   - Built and ran headless Chromium test `scripts/test-game-over-modal-mobile.mjs`: confirmed modal dialog center X is `187.5px` on a `375px` viewport (exactly centered), `y: 212.5px` (vertically centered), with zero clipping or overflow.
+   - Verified that regression test suite `scripts/verify-game-over-and-scroll.mjs` passes 100%.
+   - Full TypeScript checks (`npm run typecheck:all`) pass with 0 errors. Committed in `3cdf5b5`.
 
 ## In-Progress Work
 
-- Files modified: None (working tree clean, all plans, tests, and summaries committed).
-- Tests status: Passing 100% green across all unit, integration, and E2E suites (4/4 E2E scenarios, 169/169 playbook tests, 43/43 mechanics edge cases, 0 typecheck errors, production build in 1.40s).
+- Files modified: None (working tree clean, committed in `3cdf5b5`).
+- Tests status: Passing 100% green across all unit, integration, and E2E suites (4/4 E2E scenarios, 169/169 playbook tests, 43/43 mechanics edge cases, mobile modal position assertions, 0 typecheck errors, clean production build).
 
 ## Blockers
 
@@ -44,11 +44,11 @@ None.
 - `[DECISION-029]`: Turn Flow & Card Arming Decoupling (Option A).
 
 ### Files of Interest
+- `src/pages/DeckBuilderPage.tsx`: Arena screen with fixed viewport Game Over modal and floating review banner.
+- `src/pages/PlayRoomPage.tsx`: Multiplayer room with parity modal overlay dismiss and review banner.
+- `scripts/test-game-over-modal-mobile.mjs`: Mobile viewport modal centering and interaction test.
+- `scripts/verify-game-over-and-scroll.mjs`: E2E suite for scroll anchoring and modal review banner.
 - `.agent/state/phases/5/VERIFICATION.md`: Formal verification report for Phase 5.
-- `scripts/verify-phase5-ui-and-energy.mjs`: E2E verification suite for zero-energy, live showcase, and matchmaking rename.
-- `src/pages/HomePage.tsx`: Medieval Village landing page with live 36-card roster showcase.
-- `src/components/MultiplayerCharacterStage.tsx`: Deck Builder Matchmaking lobby.
-- `src/engine/cards/releaseRoster36.ts`: Canonical 36-card roster with active-voice copywriting.
 
 ## Next Steps
 
