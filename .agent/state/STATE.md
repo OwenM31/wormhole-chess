@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-25T12:20:00-05:00
+updated: 2026-10-25T14:32:12-05:00
 ---
 
 # Project State
@@ -8,26 +8,24 @@ updated: 2026-10-25T12:20:00-05:00
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 - **Phase**: Phase 6 — *Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix*
-- **Task**: Planning complete (`6.1-PLAN.md` to `6.5-PLAN.md` across 3 waves)
-- **Status**: Ready for execution (`@[.agent/workflows/execute.md] 6`)
-- **Roadmap Status**: Phases 1–5 Complete & Verified; Phase 6 Planned & Verified
+- **Task**: Phase 6 Discussion, Research & Planning Complete (`6.1-PLAN.md` to `6.5-PLAN.md` across 3 waves) — Ready for Execution (`@[.agent/workflows/execute.md] 6`)
+- **Status**: Paused at 2026-10-25 14:32
+- **Roadmap Status**: Phases 1–5 Complete & Verified; Phase 6 Planned & Ready for Execution
 
 ## Last Session Summary
-1. **Post-Phase 5 Mobile UX & Modal Viewport Fix**:
-   - Diagnosed mobile Game Over modal clipping issue: on mobile viewports (375x667), modal heading was shifted off-screen (`x: 329px, y: -86px`) due to being nested inside `<TabletopArena>` within the 41.4% inscribed board container (`overflow: hidden`) and conflicting `relative` classes.
-   - Refactored `DeckBuilderPage.tsx`: moved Game Over modal overlay and floating review banner to the viewport root of the arena screen.
-   - Set modal overlay to `fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm`.
-   - Added backdrop click-to-dismiss (`onClick={(e) => { if (e.target === e.currentTarget) setShowGameOverModal(false); }}`) alongside the top-right `✕` close button and "Review Board" button.
-   - Anchored floating review banner at `top-[60px] z-[150]` so it sits right below the sticky navigation bar without intercepting navigation events.
-   - Mirrored dismissibility and mobile padding adjustments in `PlayRoomPage.tsx`.
-   - Built and ran headless Chromium test `scripts/test-game-over-modal-mobile.mjs`: confirmed modal dialog center X is `187.5px` on a `375px` viewport (exactly centered), `y: 212.5px` (vertically centered), with zero clipping or overflow.
-   - Verified that regression test suite `scripts/verify-game-over-and-scroll.mjs` passes 100%.
-   - Full TypeScript checks (`npm run typecheck:all`) pass with 0 errors. Committed in `3cdf5b5`.
+1. **Phase 6 Discussion (`@[.agent/workflows/discuss-phase.md] 6`) & `[DECISION-035]`**:
+   - **Unified Card-Aware AI with Card Conservation & Pre-Condition Shaping**: Unify standard moves (`getLegalMoves`) and 36-Playbook empowered moves (`getEmpoweredMoves`) inside the Alpha-Beta search tree; enforce class-weighted Card Retention Value (`55cp–100cp` per unspent card) so the AI never wastes cards on trivial nudges; and implement `evaluateHandSynergy()` (`+14cp–38cp` primed/proximity bonuses) so the AI actively maneuvers pieces toward formations that unlock its own unspent cards.
+   - **Chess-Native Best-Move Hint & Live Side Evaluation Bar (`EvalBar.tsx`)**: Dropped "Jester's Whisper" branding in favor of clean chess-engine terminology (`Hint` / `Best Move` / `Eval Bar`) usable across Offline Matches and Online/Historical Game Review; clicking `Hint` highlights the single best move on the board (`from ➔ to` + card/disambiguation); `<EvalBar />` displays live card-aware centipawn / mate evaluation alongside the board.
+   - **Simulation-First Balance Workflow (Workflow A)**: Build and run the multi-worker Monte Carlo deck simulation harness (`scripts/simulate-deck-balance.mjs`) first to generate empirical Trigger Rate, Play Conversion Rate, Centipawn Swing, and Win-Rate Delta metrics across all 36 cards before tuning outlier cards.
+2. **Phase 6 Deep Research (`@[.agent/workflows/research-phase.md] 6`)**:
+   - Authored `.agent/state/phases/6/RESEARCH.md` with 5-layer contracts, state transition matrix, immutable invariants, logistic sigmoid EvalBar formula, and stratified block deck sampling specification. Committed in `f0f71e7`.
+3. **Phase 6 Planning (`@[.agent/workflows/plan.md] 6`)**:
+   - Authored and validated 5 atomic execution plans (`6.1-PLAN.md` through `6.5-PLAN.md`) across 3 waves with 100% disjoint same-wave file ownership. Committed in `4467a3a`.
 
 ## In-Progress Work
 
-- Files modified: None (working tree clean, committed in `3cdf5b5`).
-- Tests status: Passing 100% green across all unit, integration, and E2E suites (4/4 E2E scenarios, 169/169 playbook tests, 43/43 mechanics edge cases, mobile modal position assertions, 0 typecheck errors, clean production build).
+- Files modified: None (working tree clean, committed in `4467a3a`).
+- Tests status: Passing 100% green across all unit, integration, and E2E suites.
 
 ## Blockers
 
@@ -45,14 +43,13 @@ None.
 - `[DECISION-029]`: Turn Flow & Card Arming Decoupling (Option A).
 
 ### Files of Interest
-- `src/pages/DeckBuilderPage.tsx`: Arena screen with fixed viewport Game Over modal and floating review banner.
-- `src/pages/PlayRoomPage.tsx`: Multiplayer room with parity modal overlay dismiss and review banner.
-- `scripts/test-game-over-modal-mobile.mjs`: Mobile viewport modal centering and interaction test.
-- `scripts/verify-game-over-and-scroll.mjs`: E2E suite for scroll anchoring and modal review banner.
-- `.agent/state/phases/5/VERIFICATION.md`: Formal verification report for Phase 5.
+- `.agent/state/phases/6/RESEARCH.md`: Phase 6 technical architecture, 5-layer contracts, and mathematical formulas.
+- `.agent/state/phases/6/6.1-PLAN.md` – `6.5-PLAN.md`: Atomic execution plans across Waves 1–3.
+- `src/engine/DeckChessAI.ts`: Target for unified Alpha-Beta search, Card Conservation, and `evaluateHandSynergy()`.
+- `src/components/TabletopArena.tsx` & `src/pages/DeckBuilderPage.tsx`: Target for `<EvalBar />` and `💡 Hint` integration.
 
 ## Next Steps
 
 1. Run `@[.agent/workflows/execute.md] 6` to execute all 5 plans across Waves 1–3.
-2. Review `.agent/state/phases/6/BALANCE_REPORT.md` together with the user to inspect empirical Trigger Rate & Win-Rate metrics across all 36 cards.
+2. Inspect `.agent/state/phases/6/BALANCE_REPORT.md` with the user to review the 36-card Trigger Rate & Win-Rate leaderboard and apply any desired card retcons.
 3. Run `@[.agent/workflows/verify.md] 6` to formally verify Phase 6.

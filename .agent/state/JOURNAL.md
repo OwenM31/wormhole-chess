@@ -4,6 +4,41 @@
 
 ---
 
+### Session: 2026-10-25 14:32
+
+#### Objective
+Resume session context (`@[.agent/workflows/resume.md]`), conduct Phase 6 discussion (`@[.agent/workflows/discuss-phase.md] 6`), perform deep architectural research (`@[.agent/workflows/research-phase.md] 6`), author all Phase 6 atomic execution plans (`@[.agent/workflows/plan.md] 6`), and pause cleanly (`@[.agent/workflows/pause.md]`).
+
+#### Accomplished
+- ✅ **Phase 6 Discussion (`[DECISION-035]` in `DECISIONS.md`)**:
+  - Locked Unified Alpha-Beta Card-Aware AI architecture combining class-weighted Card Retention Value (`55cp–100cp` per unspent card so the AI never wastes cards on trivial moves) with `evaluateHandSynergy()` (`+14cp–38cp` bonuses for primed conditions and geometric piece setups so the AI actively maneuvers toward unlocking its own cards).
+  - Dropped "Jester's Whisper" branding in favor of clean chess-native **`Hint`** / **`Best Move`** and a live Chess.com/Lichess-style **Side Evaluation Bar (`<EvalBar />`)** usable in both Offline Matches and Online/Historical Game Review.
+  - Selected **Workflow A (Simulation-First)** for card balance tuning: build the AI and run the multi-worker Monte Carlo tournament simulation across all 36 cards first, then inspect the empirical Trigger Rate & Win-Rate leaderboard together.
+- ✅ **Phase 6 Research (`.agent/state/phases/6/RESEARCH.md`)**:
+  - Identified and resolved the 0-ply greedy card loop in `useDeckChessGame.ts` and duplicate card simulation overhead in `DeckChessEngine.getEmpoweredMoves()`.
+  - Formulated the 5-layer contracts, state transition matrix, 4 immutable system invariants, logistic sigmoid EvalBar mapping, and stratified balanced block deck sampling design (`f0f71e7`).
+- ✅ **Phase 6 Execution Plans (`6.1-PLAN.md` to `6.5-PLAN.md`)**:
+  - **Plan 6.1 (Wave 1)**: Unified Card-Aware AI Engine, Card Conservation & Pre-Condition Shaping + TDD contract suite `scripts/verify-phase6-ai-engine.ts`.
+  - **Plan 6.2 (Wave 1)**: Live Side Evaluation Bar Component (`EvalBar.tsx`) & Tabletop Arena Slot.
+  - **Plan 6.3 (Wave 2)**: Best-Move Hint System, Live Eval Bar Wiring & Replay Analysis (`useDeckChessGame.ts`, `DeckChessBoard.tsx`, `DeckBuilderPage.tsx`, `HistoricalMatchViewer.tsx`).
+  - **Plan 6.4 (Wave 2)**: Multi-Worker Monte Carlo Deck Balance Simulation Harness (`scripts/simulate-deck-balance.mjs` & `BALANCE_REPORT.md`).
+  - **Plan 6.5 (Wave 3)**: End-to-End Browser & Engine Verification (`scripts/verify-phase6-e2e.mjs`).
+  - Committed all plans in `4467a3a`.
+
+#### Verification
+- [x] `[DECISION-035]` documented in `.agent/state/DECISIONS.md`.
+- [x] `.agent/state/phases/6/RESEARCH.md` authored with 5-layer contracts, state matrix, and invariants.
+- [x] All 5 execution plans (`6.1-PLAN.md` – `6.5-PLAN.md`) validated against Plan Checker (0 blockers, 100% disjoint wave file ownership).
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) at clean boundary between Phase 6 planning and Phase 6 execution.
+
+#### Handoff Notes
+- Working tree is 100% clean and committed to git.
+- Upon resuming (`/resume`), proceed directly to **`@[.agent/workflows/execute.md] 6`** to execute Waves 1–3 and generate the 36-Card Balance Report.
+
+---
+
 ### Session: 2026-10-25 12:20
 
 #### Objective
