@@ -8,9 +8,9 @@ updated: 2026-10-25T12:20:00-05:00
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 - **Phase**: Phase 6 — *Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix*
-- **Task**: Phase 6 Research Complete (`RESEARCH.md`) — Ready for `@[.agent/workflows/plan.md] 6`
-- **Status**: Active (resumed 2026-10-25 12:20)
-- **Roadmap Status**: Phases 1–5 Complete & Verified; Phase 6 Research & Contracts Complete
+- **Task**: Planning complete (`6.1-PLAN.md` to `6.5-PLAN.md` across 3 waves)
+- **Status**: Ready for execution (`@[.agent/workflows/execute.md] 6`)
+- **Roadmap Status**: Phases 1–5 Complete & Verified; Phase 6 Planned & Verified
 
 ## Last Session Summary
 1. **Post-Phase 5 Mobile UX & Modal Viewport Fix**:
@@ -53,5 +53,6 @@ None.
 
 ## Next Steps
 
-1. Run `@[.agent/workflows/plan.md] 6` to plan Phase 6 (*Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix*).
-2. Execute Phase 6 plans via `@[.agent/workflows/execute.md] 6`.
+1. Run `@[.agent/workflows/execute.md] 6` to execute all 5 plans across Waves 1–3.
+2. Review `.agent/state/phases/6/BALANCE_REPORT.md` together with the user to inspect empirical Trigger Rate & Win-Rate metrics across all 36 cards.
+3. Run `@[.agent/workflows/verify.md] 6` to formally verify Phase 6.
