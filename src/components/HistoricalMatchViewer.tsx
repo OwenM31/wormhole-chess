@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { MatchRecord } from '../services/api';
 import { DeckChessBoard } from './DeckChessBoard';
+import { EvalBar } from './EvalBar';
+import { DeckChessEngine } from '../engine/DeckChessEngine';
+import { evaluatePosition, computeBestTurn } from '../engine/DeckChessAI';
 import { getCardById, PIECE_COLOR_THEMES } from '../engine/cardGraph';
 import { playMoveSound, playCardSound } from '../utils/soundEffects';
 
@@ -60,6 +63,15 @@ export const HistoricalMatchViewer: React.FC<HistoricalMatchViewerProps> = ({
   const currentFen = currentMove?.fenAfter || currentMove?.resultingFen || STARTING_FEN;
   const currentCard = currentMove?.cardAction ? getCardById(currentMove.cardAction.cardId) : null;
   const cardTheme = currentCard ? PIECE_COLOR_THEMES[currentCard.anchor] : null;
+
+  const [showReplayBestMove, setShowReplayBestMove] = useState<boolean>(false);
+  const replayEngine = useMemo(() => new DeckChessEngine(currentFen), [currentFen]);
+  const replayEval = useMemo(() => evaluatePosition(replayEngine), [replayEngine]);
+  const replayHint = useMemo(() => {
+    if (!showReplayBestMove) return null;
+    if (replayEngine.isGameOver()) return null;
+    return computeBestTurn(replayEngine, replayEngine.getTurn(), 'tactical');
+  }, [showReplayBestMove, replayEngine]);
 
   const handleStep = (targetIndex: number) => {
     const clamped = Math.max(-1, Math.min(moves.length - 1, targetIndex));
@@ -193,17 +205,28 @@ export const HistoricalMatchViewer: React.FC<HistoricalMatchViewerProps> = ({
               </div>
             )}
 
-            {/* Chess Board */}
-            <div style={styles.boardFrame}>
-              <DeckChessBoard
-                fen={currentFen}
-                orientation={isFlipped ? 'b' : 'w'}
-                selectedSquare={currentMove?.chessMove?.from}
-                legalMoves={currentMove?.chessMove?.to ? [currentMove.chessMove.to] : []}
-                validAnchorSquares={currentMove?.cardAction?.anchorSquare ? [currentMove.cardAction.anchorSquare] : []}
-                validTargetSquares={currentMove?.cardAction?.targetSquare ? [currentMove.cardAction.targetSquare] : []}
-                onSquareClick={() => {}}
-              />
+            {/* Chess Board & Live Side EvalBar */}
+            <div style={{ ...styles.boardFrame, display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: '8px' }}>
+              <div style={{ width: '20px', flexShrink: 0 }}>
+                <EvalBar
+                  whiteCp={replayEval.whiteCp}
+                  whiteWinPct={replayEval.whiteWinPct}
+                  displayLabel={replayEval.displayLabel}
+                  orientation={isFlipped ? 'b' : 'w'}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <DeckChessBoard
+                  fen={currentFen}
+                  orientation={isFlipped ? 'b' : 'w'}
+                  selectedSquare={currentMove?.chessMove?.from}
+                  legalMoves={currentMove?.chessMove?.to ? [currentMove.chessMove.to] : []}
+                  validAnchorSquares={currentMove?.cardAction?.anchorSquare ? [currentMove.cardAction.anchorSquare] : []}
+                  validTargetSquares={currentMove?.cardAction?.targetSquare ? [currentMove.cardAction.targetSquare] : []}
+                  hintMove={showReplayBestMove ? replayHint : null}
+                  onSquareClick={() => {}}
+                />
+              </div>
             </div>
 
             {/* Replay Controls Toolbar */}
@@ -258,6 +281,20 @@ export const HistoricalMatchViewer: React.FC<HistoricalMatchViewerProps> = ({
                   title="Flip Board"
                 >
                   ⟲ Flip
+                </button>
+                <button
+                  type="button"
+                  data-testid="replay-best-move-btn"
+                  onClick={() => setShowReplayBestMove((prev) => !prev)}
+                  style={{
+                    ...styles.toolBtn,
+                    backgroundColor: showReplayBestMove ? 'rgba(56, 189, 248, 0.25)' : styles.toolBtn.backgroundColor,
+                    borderColor: showReplayBestMove ? '#38BDF8' : styles.toolBtn.borderColor,
+                    color: showReplayBestMove ? '#38BDF8' : styles.toolBtn.color,
+                  }}
+                  title="Toggle Engine Best Move Analysis"
+                >
+                  💡 Best Move
                 </button>
               </div>
             </div>

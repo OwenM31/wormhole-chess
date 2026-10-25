@@ -10,9 +10,12 @@ import {
   PieceColor,
   TargetingStage,
   EmpoweredMove,
+  AiDifficulty,
+  PositionEvaluation,
+  BestTurnResult,
 } from '../types/deckChess';
 import { DeckChessEngine, DeckChessEngineState } from '../engine/DeckChessEngine';
-import { computeBestTurn, evaluateBoard } from '../engine/DeckChessAI';
+import { computeBestTurn, evaluatePosition } from '../engine/DeckChessAI';
 import { getCardById } from '../engine/cardGraph';
 import { api } from '../services/api';
 import {
@@ -45,7 +48,7 @@ export interface RecordedTurn {
 export interface UseDeckChessGameOptions {
   mode?: 'ai' | 'multiplayer' | 'pass_and_play';
   playerColor?: PieceColor;
-  aiDifficulty?: 'easy' | 'medium' | 'tactical';
+  aiDifficulty?: AiDifficulty;
   whiteDeck?: string[];
   blackDeck?: string[];
   onTurnComplete?: (payload: DeckChessTurnPayload) => void;
@@ -128,6 +131,13 @@ export function useDeckChessGame({
     []
   );
 
+  // Best-Move Hint & Live Evaluation state
+  const [hintMove, setHintMove] = useState<BestTurnResult | null>(null);
+
+  const evaluation: PositionEvaluation = useMemo(() => {
+    return evaluatePosition(engineRef.current);
+  }, [gameState.fen, gameState.whiteHand.length, gameState.blackHand.length, gameState.isGameOver]);
+
   // Clear piece selection
   const clearPieceSelection = useCallback(() => {
     setSelectedSquare(null);
@@ -142,6 +152,7 @@ export function useDeckChessGame({
     setSelectedCardId(null);
     setSelectedCard(null);
     setTargetingStage('none');
+    setHintMove(null);
     clearPieceSelection();
   }, [clearPieceSelection]);
 
@@ -264,7 +275,7 @@ export function useDeckChessGame({
     ]
   );
 
-  // Trigger AI turn execution (with Card-Aware 36-Playbook evaluation)
+  // Trigger AI turn execution (with Card-Aware 36-Playbook unified evaluation)
   const triggerAiTurn = useCallback(() => {
     if (gameState.isGameOver) return;
     const aiColor = playerColor === 'w' ? 'b' : 'w';
@@ -279,35 +290,17 @@ export function useDeckChessGame({
           return;
         }
 
-        // 1. Evaluate tactical 36-Playbook empowered moves
-        const empoweredMoves = engine.getEmpoweredMoves();
-        const currentScore = evaluateBoard(engine, aiColor);
-        let bestEmpowered: EmpoweredMove | null = null;
-        let bestEmpoweredGain = 0;
+        // Unified Card-Aware Alpha-Beta Decision
+        const decision = computeBestTurn(engine, aiColor, aiDifficulty);
 
-        if (aiDifficulty !== 'easy' && empoweredMoves.length > 0) {
-          for (const emp of empoweredMoves) {
-            const sim = engine.clone();
-            const res = sim.makeEmpoweredMove(emp);
-            if (res.success && !sim.isCheckmate()) {
-              const evalAfter = evaluateBoard(sim, aiColor);
-              const gain = evalAfter - currentScore;
-              if (gain > bestEmpoweredGain && gain >= 30) {
-                bestEmpoweredGain = gain;
-                bestEmpowered = emp;
-              }
-            }
-          }
-        }
-
-        // 2. If a favorable empowered card move is found, execute it!
-        if (bestEmpowered && bestEmpoweredGain >= 30) {
-          const empRes = engine.makeEmpoweredMove(bestEmpowered);
+        if (decision.type === 'empowered' && decision.empoweredMove) {
+          const emp = decision.empoweredMove;
+          const empRes = engine.makeEmpoweredMove(emp);
           if (empRes.success) {
             playCardSound();
-            const cardName = bestEmpowered.metadata?.cardName || bestEmpowered.cardId;
+            const cardName = emp.metadata?.cardName || emp.cardId;
             addLog(
-              `AI Bot played [${cardName}] ➔ ${bestEmpowered.to}`,
+              `AI Bot played [${cardName}] ➔ ${emp.to}`,
               'card',
               aiColor
             );
@@ -327,15 +320,15 @@ export function useDeckChessGame({
             const turnRecord: RecordedTurn = {
               turnNumber: engine.getTurnNumber(),
               player: aiColor,
-              chessMove: { from: bestEmpowered.from, to: bestEmpowered.to },
+              chessMove: { from: emp.from, to: emp.to },
               cardAction: {
-                cardId: bestEmpowered.cardId,
-                anchorSquare: bestEmpowered.from,
-                targetSquare: bestEmpowered.to,
-                extraSquare: bestEmpowered.extraSquare,
+                cardId: emp.cardId,
+                anchorSquare: emp.from,
+                targetSquare: emp.to,
+                extraSquare: emp.extraSquare,
               },
               fenAfter: engine.getFen(),
-              combatText: `AI Bot played [${cardName}] ➔ ${bestEmpowered.to}`,
+              combatText: `AI Bot played [${cardName}] ➔ ${emp.to}`,
               timestamp: Date.now(),
             };
             setRecordedTurns((prev) => [...prev, turnRecord]);
@@ -345,31 +338,22 @@ export function useDeckChessGame({
           }
         }
 
-        // 3. Otherwise compute standard chess move via Minimax
-        const decision = computeBestTurn(engine, aiColor, aiDifficulty);
-
-        if (decision.cardToPlay) {
-          const { cardId, anchorSquare, targetSquare, extraSquare } = decision.cardToPlay;
-          const cardDef = getCardById(cardId);
-          engine.activateCard(cardId, anchorSquare, targetSquare, extraSquare);
-          playCardSound();
-          addLog(
-            `AI Bot played [${cardDef?.name || cardId}] on ${anchorSquare}${targetSquare ? ` ➔ ${targetSquare}` : ''}`,
-            'card',
-            aiColor
-          );
-        }
-
+        // Standard chess move execution
         const moveRes = engine.makeMove(decision.move);
         if (moveRes.success && moveRes.move) {
           const moveDesc = moveRes.move.san || `${decision.move.from}-${decision.move.to}`;
-          addLog(`AI Bot moved ${moveDesc}`, 'move', aiColor);
-
           if (moveRes.move.captured) {
             playCaptureSound();
+            addLog(
+              `AI Bot captured ${moveRes.move.captured.toUpperCase()} with ${moveDesc}`,
+              'move',
+              aiColor
+            );
           } else {
             playMoveSound();
+            addLog(`AI Bot moved ${moveDesc}`, 'move', aiColor);
           }
+
           if (engine.inCheck()) {
             setTimeout(playCheckSound, 120);
           }
@@ -386,14 +370,7 @@ export function useDeckChessGame({
             turnNumber: engine.getTurnNumber(),
             player: aiColor,
             chessMove: decision.move,
-            cardAction: decision.cardToPlay
-              ? {
-                  cardId: decision.cardToPlay.cardId,
-                  anchorSquare: decision.cardToPlay.anchorSquare,
-                  targetSquare: decision.cardToPlay.targetSquare,
-                  extraSquare: decision.cardToPlay.extraSquare,
-                }
-              : undefined,
+            cardAction: decision.cardToPlay,
             fenAfter: engine.getFen(),
             combatText: `AI Bot moved ${moveDesc}`,
             timestamp: Date.now(),
@@ -407,7 +384,7 @@ export function useDeckChessGame({
       } finally {
         setIsAiThinking(false);
       }
-    }, 400);
+    }, 200);
   }, [gameState.isGameOver, playerColor, aiDifficulty, addLog, syncState]);
 
   // Execute standard chess move (immediate on click, no confirmation prompt)
@@ -866,6 +843,45 @@ export function useDeckChessGame({
     [addLog, syncState]
   );
 
+  // Best-Move Hint Actions
+  const requestHint = useCallback(() => {
+    if (hintMove) {
+      setHintMove(null);
+      return;
+    }
+    const engine = engineRef.current;
+    if (engine.isGameOver()) return;
+    const best = computeBestTurn(engine, engine.getTurn(), 'tactical');
+    setHintMove(best);
+  }, [hintMove]);
+
+  const clearHint = useCallback(() => {
+    setHintMove(null);
+  }, []);
+
+  const applyHintMove = useCallback(() => {
+    if (!hintMove) return;
+    const engine = engineRef.current;
+    if (hintMove.type === 'empowered' && hintMove.empoweredMove) {
+      let emp = hintMove.empoweredMove;
+      if (!emp.previewFen) {
+        const fullEmpowered = engine.getEmpoweredMoves(emp.from);
+        const match = fullEmpowered.find(
+          (m) =>
+            m.cardId === emp.cardId &&
+            m.to === emp.to &&
+            (!emp.extraSquare || m.extraSquare === emp.extraSquare)
+        );
+        if (match) emp = match;
+      }
+      setPendingCardMove(emp);
+      setHintMove(null);
+    } else if (hintMove.type === 'standard' && hintMove.move) {
+      makeMove(hintMove.move.from, hintMove.move.to, hintMove.move.promotion);
+      setHintMove(null);
+    }
+  }, [hintMove, makeMove]);
+
   // Auto-trigger AI turn whenever it is the AI's turn
   useEffect(() => {
     if (
@@ -966,6 +982,13 @@ export function useDeckChessGame({
     // Combat Log & Match Records
     combatLog,
     recordedTurns,
+
+    // Evaluation & Hints
+    evaluation,
+    hintMove,
+    requestHint,
+    clearHint,
+    applyHintMove,
 
     // Actions
     handleSquareClick,

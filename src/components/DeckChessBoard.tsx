@@ -1,5 +1,5 @@
 import React from 'react';
-import { BoardModifier, PieceColor, Square, EmpoweredMove } from '../types/deckChess';
+import { BoardModifier, PieceColor, Square, EmpoweredMove, BestTurnResult } from '../types/deckChess';
 import { CANONICAL_36_CARDS, PIECE_COLOR_THEMES } from '../engine/cards/releaseRoster36';
 import { getCardById } from '../engine/cardGraph';
 
@@ -13,9 +13,12 @@ export interface DeckChessBoardProps {
   selectedCardId?: string | null;
   disambiguationCandidates?: EmpoweredMove[] | null;
   pendingCardMove?: EmpoweredMove | null;
+  hintMove?: BestTurnResult | null;
   onSquareClick: (square: string) => void;
   onConfirmCardMove?: () => void;
   onCancelCardMove?: () => void;
+  onApplyHint?: () => void;
+  onDismissHint?: () => void;
   validAnchorSquares?: string[];
   validTargetSquares?: string[];
   activeModifiers?: BoardModifier[];
@@ -159,9 +162,12 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
   selectedCardId,
   disambiguationCandidates,
   pendingCardMove,
+  hintMove,
   onSquareClick,
   onConfirmCardMove,
   onCancelCardMove,
+  onApplyHint,
+  onDismissHint,
   validAnchorSquares = [],
   validTargetSquares = [],
   activeModifiers = [],
@@ -268,6 +274,47 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
         </div>
       )}
 
+      {/* Engine Best-Move Hint Banner */}
+      {hintMove && !pendingCardMove && (
+        <div
+          data-testid="engine-hint-banner"
+          className={
+            embedded
+              ? 'absolute top-2 inset-x-2 z-30 py-1.5 px-3 bg-[#1E293B]/95 border border-[#38BDF8] rounded flex items-center justify-between text-xs text-[#FAF9F6] shadow-xl backdrop-blur-sm'
+              : 'w-full py-1.5 px-3 bg-[#1E293B] border border-[#38BDF8] rounded flex items-center justify-between text-xs text-[#FAF9F6] shadow-md'
+          }
+        >
+          <div className="flex items-center gap-2 truncate mr-2">
+            <span className="font-bold text-[#38BDF8] truncate">
+              {hintMove.explanation}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {onApplyHint && (
+              <button
+                type="button"
+                data-testid="apply-hint-btn"
+                onClick={onApplyHint}
+                className="px-2.5 py-0.5 bg-[#38BDF8] hover:bg-[#0284C7] text-[#0F172A] font-bold text-[11px] rounded transition-colors shadow-sm cursor-pointer"
+              >
+                {hintMove.type === 'empowered' ? 'Stage' : 'Play'}
+              </button>
+            )}
+            {onDismissHint && (
+              <button
+                type="button"
+                data-testid="dismiss-hint-btn"
+                onClick={onDismissHint}
+                className="text-[#94A3B8] hover:text-[#FAF9F6] text-xs px-1 cursor-pointer font-bold"
+                title="Dismiss Hint"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 8x8 Chess Grid */}
       <div
         data-testid="chessboard-grid"
@@ -304,6 +351,23 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
             const isPreviewFrom = pendingCardMove && pendingCardMove.from === squareName;
             const isPreviewTo = pendingCardMove && pendingCardMove.to === squareName;
             const isPreviewExtra = pendingCardMove && pendingCardMove.extraSquare === squareName;
+
+            // Engine Hint Highlights
+            const isHintFrom = Boolean(
+              hintMove &&
+                !pendingCardMove &&
+                (hintMove.empoweredMove?.from === squareName || hintMove.move?.from === squareName)
+            );
+            const isHintTo = Boolean(
+              hintMove &&
+                !pendingCardMove &&
+                (hintMove.empoweredMove?.to === squareName || hintMove.move?.to === squareName)
+            );
+            const isHintExtra = Boolean(
+              hintMove &&
+                !pendingCardMove &&
+                hintMove.empoweredMove?.extraSquare === squareName
+            );
 
             // Modifiers on this square
             const barrier = activeModifiers.find((m) => m.type === 'barrier' && m.square === squareName);
@@ -359,6 +423,31 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
 
                 {/* Live Outcome Preview Extra Square Highlight */}
                 {isPreviewExtra && (
+                  <div className="absolute inset-0 border-2 border-[#D4AF37] bg-[#D4AF37]/30 shadow-[0_0_10px_#D4AF37] animate-pulse rounded-sm pointer-events-none z-15" />
+                )}
+
+                {/* Engine Best-Move Origin Highlight */}
+                {isHintFrom && (
+                  <div
+                    data-testid={`hint-from-${squareName}`}
+                    className="absolute inset-0 border-2 border-dashed border-[#38BDF8] bg-[#38BDF8]/25 rounded-sm pointer-events-none z-15"
+                  />
+                )}
+
+                {/* Engine Best-Move Destination Highlight */}
+                {isHintTo && (
+                  <div
+                    data-testid={`hint-to-${squareName}`}
+                    className="absolute inset-0 border-2 border-[#38BDF8] bg-[#38BDF8]/35 shadow-[0_0_12px_#38BDF8] animate-pulse rounded-sm pointer-events-none z-15 flex items-start justify-end p-0.5"
+                  >
+                    <span className="text-[8px] font-mono font-extrabold bg-[#0284C7] text-white px-1 py-0.2 rounded shadow-sm">
+                      BEST
+                    </span>
+                  </div>
+                )}
+
+                {/* Engine Best-Move Extra Highlight */}
+                {isHintExtra && (
                   <div className="absolute inset-0 border-2 border-[#D4AF37] bg-[#D4AF37]/30 shadow-[0_0_10px_#D4AF37] animate-pulse rounded-sm pointer-events-none z-15" />
                 )}
 

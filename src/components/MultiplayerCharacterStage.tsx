@@ -2,12 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayerProfiles } from '../hooks/usePlayerProfiles';
 import { CANONICAL_36_CARDS, PIECE_COLOR_THEMES } from '../engine/cards/releaseRoster36';
-import { CardDefinition, PieceAnchor, PieceColor } from '../types/deckChess';
+import { CardDefinition, PieceAnchor, PieceColor, AiDifficulty } from '../types/deckChess';
 import { PlayingCard } from './PlayingCard';
 
 export interface OfflineMatchConfig {
   playerColor: PieceColor;
-  aiDifficulty: 'easy' | 'medium' | 'tactical';
+  aiDifficulty: AiDifficulty;
   handSize: number;
   aiDeckMode: 'random' | 'mirror' | 'towny';
 }

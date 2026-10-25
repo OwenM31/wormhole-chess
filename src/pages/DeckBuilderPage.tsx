@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Navigation from '../components/Navigation';
 import { DeckChessBoard } from '../components/DeckChessBoard';
 import { TabletopArena } from '../components/TabletopArena';
+import { EvalBar } from '../components/EvalBar';
 import { TacticalHandBar } from '../components/TacticalHandBar';
 import { DeckBuilderView } from '../components/DeckBuilderView';
 import { DeckBuilderMainMenu } from '../components/DeckBuilderMainMenu';
@@ -9,7 +10,7 @@ import { MultiplayerCharacterStage, OfflineMatchConfig } from '../components/Mul
 import { useDeckChessGame } from '../hooks/useDeckChessGame';
 import { usePlayerProfiles } from '../hooks/usePlayerProfiles';
 import { useAuth } from '../context/AuthContext';
-import { PieceColor } from '../types/deckChess';
+import { PieceColor, AiDifficulty } from '../types/deckChess';
 import { CANONICAL_36_CARDS } from '../engine/cards/releaseRoster36';
 
 type TopScreen = 'menu' | 'multiplayer' | 'arena' | 'forge';
@@ -27,7 +28,7 @@ export const DeckBuilderPage: React.FC = () => {
 
   // Match setup state
   const [playerColor, setPlayerColor] = useState<PieceColor>('w');
-  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'tactical'>('medium');
+  const [aiDifficulty, setAiDifficulty] = useState<AiDifficulty>('medium');
   const [showGameOverModal, setShowGameOverModal] = useState<boolean>(true);
 
   // Auto-scroll container ref for move history
@@ -103,7 +104,7 @@ export const DeckBuilderPage: React.FC = () => {
     setScreen('arena');
   };
 
-  const handleStartNewMatch = (color: PieceColor, diff: 'easy' | 'medium' | 'tactical') => {
+  const handleStartNewMatch = (color: PieceColor, diff: AiDifficulty) => {
     setPlayerColor(color);
     setAiDifficulty(diff);
     setShowGameOverModal(true);
@@ -251,9 +252,18 @@ export const DeckBuilderPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Tavern Tabletop Stage with Inscribed Chessboard */}
+              {/* Tavern Tabletop Stage with Inscribed Chessboard & Live Side EvalBar */}
               <div className="relative w-full max-w-[820px] flex flex-col items-center">
-                <TabletopArena>
+                <TabletopArena
+                  evalBar={
+                    <EvalBar
+                      whiteCp={game.evaluation.whiteCp}
+                      whiteWinPct={game.evaluation.whiteWinPct}
+                      displayLabel={game.evaluation.displayLabel}
+                      orientation={playerColor}
+                    />
+                  }
+                >
                   <DeckChessBoard
                     embedded
                     fen={game.fen}
@@ -265,9 +275,12 @@ export const DeckBuilderPage: React.FC = () => {
                     selectedCardId={game.selectedCardId}
                     disambiguationCandidates={game.disambiguationCandidates}
                     pendingCardMove={game.pendingCardMove}
+                    hintMove={game.hintMove}
                     onSquareClick={game.handleSquareClick}
                     onConfirmCardMove={game.confirmPendingCardMove}
                     onCancelCardMove={game.cancelPendingCardMove}
+                    onApplyHint={game.applyHintMove}
+                    onDismissHint={game.clearHint}
                     validAnchorSquares={game.validAnchorSquares}
                     validTargetSquares={game.validTargetSquares}
                     activeModifiers={game.activeModifiers}
@@ -409,8 +422,22 @@ export const DeckBuilderPage: React.FC = () => {
                 )}
               </div>
 
-              {/* ACTION FOOTER: Resign · New Game · My Deck */}
+              {/* ACTION FOOTER: Hint · Resign · New Game · My Deck */}
               <div className="pt-2.5 border-t border-[rgba(139,126,116,0.16)] flex items-center gap-1.5">
+                <button
+                  type="button"
+                  data-testid="hint-btn"
+                  onClick={game.requestHint}
+                  disabled={game.isAiThinking}
+                  className={`flex-1 py-1.5 border rounded text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1 ${
+                    game.hintMove
+                      ? 'bg-[#38BDF8]/20 border-[#38BDF8] text-[#38BDF8]'
+                      : 'bg-[#24272A] hover:bg-[#282B2E] border-[rgba(139,126,116,0.25)] text-[#FAF9F6]'
+                  } disabled:opacity-40`}
+                  title="Ask engine for best move"
+                >
+                  💡 Hint
+                </button>
                 <button
                   type="button"
                   onClick={() => game.resign(playerColor)}
