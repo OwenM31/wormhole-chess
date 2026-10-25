@@ -7,8 +7,8 @@ updated: 2026-10-24T14:52:00-05:00
 # Roadmap
 
 > **Current Milestone:** v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-> **Current Phase:** Phase 6 — Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix
-> **Status:** 🔄 Ready for Planning (Phases 1–5 Complete & Verified)
+> **Current Phase:** Phase 7 — Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
+> **Status:** 🔄 Ready for Planning (Phases 1–6 Complete & Verified)
 
 ## Milestone Goal
 
@@ -24,7 +24,7 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 - [x] **Multiplayer & AI Playtest Prototype (Phase 3)**: 36-card Deck Builder loadout screen, Private Room Matchmaking (`/play/:code`), and Custom AI Playtest mode to test cards and tune AI opponents.
 - [x] **Gameplay Bugfixes, 36-Card Audit & Mobile Ergonomics (Phase 4)**: Sleek standard move vs empowered card move choice, full 36-card mechanics/condition audit (including perpendicular R1 step-aside), mobile horizontal card scroll wheels, and auto-sorting spent cards to hand end.
 - [x] **Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & Copywriting (Phase 5)**: Purge lingering "energy" mentions across home page and menus, integrate rich atmospheric tabletop and castle hall visuals, rename Deck Builder Stage to Deck Builder Matchmaking, and refine condition/effect copywriting across all 36 cards.
-- [ ] **Grandmaster Card-Aware AI Engine, Campaign Hints & 30M Deck Simulation (Phase 6)**: Build latent threat heatmap card anticipation into AI search, create 3-tier campaign hint engine, and author headless multi-worker Monte Carlo tournament simulation harness with tier reports.
+- [x] **Grandmaster Card-Aware AI Engine, Campaign Hints & 30M Deck Simulation (Phase 6)**: Unified Alpha-Beta search combining standard and 36-playbook moves, class-weighted Card Retention (`55cp–100cp`), `evaluateHandSynergy()` (`+14cp–38cp`), Live Side Evaluation Bar (`<EvalBar />`), 1-click Best-Move `Hint` system with board square highlights, and multi-worker Monte Carlo tournament harness (`BALANCE_REPORT.md` / `balance-metrics.json`).
 - [ ] **Campaign Engine, Town Tavern & Worlds 1–7 (Phases 7–9)**: Build the Castle Map UI, Town Tavern 0-card bot hustle, Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), and the 7-World Campaign puzzle sequences.
 
 ---
@@ -69,8 +69,8 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 ---
 
 ### Phase 6: Grandmaster Card-Aware AI Engine, Campaign Hint System & Deck Balance Simulation Matrix
-**Status:** ⬜ Not Started
-**Objective:** Upgrade `DeckChessAI.ts` from naive standard-move search to a modular Grandmaster engine that computes latent threat heatmaps from opponent's unspent card hands; implement a 3-tier Campaign Hint Engine (Concept -> Target -> Solution); and build a headless multi-threaded Monte Carlo tournament simulation harness to evaluate deck balance and card win-rate contribution across the 30M+ deck permutation space.
+**Status:** ✅ Complete
+**Objective:** Unified Alpha-Beta search combining standard and 36-playbook moves, class-weighted Card Retention (`55cp–100cp`), `evaluateHandSynergy()` (`+14cp–38cp`), Live Side Evaluation Bar (`<EvalBar />`), 1-click Best-Move `Hint` system with board square highlights, and multi-worker Monte Carlo tournament harness (`BALANCE_REPORT.md` / `balance-metrics.json`).
 **Dependencies:** Phase 4 (36-Card Engine), Phase 5 (Copywriting & Asset Polish)
 
 ---
