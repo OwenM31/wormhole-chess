@@ -765,10 +765,11 @@ export class DeckChessEngine {
 
   // --- Unified Action Model: Empowered Card Moves ---
 
-  public getEmpoweredMoves(square?: string): EmpoweredMove[] {
+  public getEmpoweredMoves(square?: string, skipPreviewFen: boolean = false): EmpoweredMove[] {
     if (this.cardPlayedThisTurn) return [];
     const currentTurn = this.getTurn();
     const hand = this.getHandForColor(currentTurn);
+    const uniqueHand = Array.from(new Set(hand));
     const moves: EmpoweredMove[] = [];
 
     const squaresToCheck = square
@@ -806,7 +807,7 @@ export class DeckChessEngine {
           ? 'queen'
           : 'king';
 
-      for (const cardId of hand) {
+      for (const cardId of uniqueHand) {
         const card = getCardById(cardId);
         if (!card || card.anchor !== pieceAnchor) continue;
 
@@ -867,19 +868,16 @@ export class DeckChessEngine {
               continue;
             }
 
-            // Simulate turn advancement to generate exact outcome preview FEN
-            const fenParts = sim.getFen().split(' ');
-            fenParts[1] = oppColor;
-            fenParts[3] = '-';
-            if (currentTurn === 'b') {
-              fenParts[5] = String(parseInt(fenParts[5] || '1', 10) + 1);
-            }
-            const previewFen = fenParts.join(' ');
-            try {
-              const testC = new Chess();
-              testC.load(previewFen, { skipValidation: true });
-            } catch {
-              continue;
+            let previewFen: string | undefined = undefined;
+            if (!skipPreviewFen) {
+              // Simulate turn advancement to generate exact outcome preview FEN
+              const fenParts = sim.getFen().split(' ');
+              fenParts[1] = oppColor;
+              fenParts[3] = '-';
+              if (currentTurn === 'b') {
+                fenParts[5] = String(parseInt(fenParts[5] || '1', 10) + 1);
+              }
+              previewFen = fenParts.join(' ');
             }
 
             moves.push({

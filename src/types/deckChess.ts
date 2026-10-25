@@ -213,3 +213,40 @@ export type GameFinishReason =
   | 'resignation'
   | 'timeout'
   | 'insufficient_material';
+
+export type AiDifficulty = 'easy' | 'medium' | 'tactical' | 'grandmaster';
+
+export interface PositionEvaluation {
+  whiteCp: number;
+  whiteWinPct: number; // 0 to 100
+  displayLabel: string; // e.g. "+1.4", "0.0", "-0.8", "M1"
+  mateIn?: number;
+}
+
+export interface BestTurnResult {
+  type: 'standard' | 'empowered';
+  move: DeckChessMove;
+  empoweredMove?: EmpoweredMove;
+  cardToPlay?: DeckChessCardAction;
+  evalScore: number;
+  whiteEvalCp: number;
+  mateIn?: number;
+  explanation: string;
+}
+
+export interface CardBalanceMetric {
+  cardId: string;
+  code: string;
+  name: string;
+  anchor: PieceAnchor;
+  world: number;
+  appearances: number;
+  turnsHeld: number;
+  turnsConditionMet: number;
+  triggerRate: number;
+  timesPlayed: number;
+  playRate: number;
+  avgSwingCp: number;
+  winRate: number;
+  winRateDelta: number;
+}
