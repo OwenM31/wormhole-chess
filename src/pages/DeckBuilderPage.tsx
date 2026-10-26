@@ -275,10 +275,13 @@ export const DeckBuilderPage: React.FC = () => {
                     selectedCardId={game.selectedCardId}
                     disambiguationCandidates={game.disambiguationCandidates}
                     pendingCardMove={game.pendingCardMove}
+                    pendingPromotionMove={game.pendingPromotionMove}
                     hintMove={game.hintMove}
                     onSquareClick={game.handleSquareClick}
                     onConfirmCardMove={game.confirmPendingCardMove}
                     onCancelCardMove={game.cancelPendingCardMove}
+                    onSelectPromotion={game.selectPromotion}
+                    onChangeCardPromotion={game.changeCardPromotion}
                     onApplyHint={game.applyHintMove}
                     onDismissHint={game.clearHint}
                     validAnchorSquares={game.validAnchorSquares}

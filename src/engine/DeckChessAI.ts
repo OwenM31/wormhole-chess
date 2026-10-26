@@ -1,7 +1,5 @@
 import type {
   PieceColor,
-  DeckChessCardAction,
-  DeckChessMove,
   Square,
   EmpoweredMove,
   AiDifficulty,
@@ -11,7 +9,7 @@ import type {
 import { DeckChessEngine } from './DeckChessEngine';
 import { Move, PieceSymbol } from 'chess.js';
 import { getCardById } from './cardGraph';
-import { getCardHandler } from './cards/cardRegistry';
+import { getCardHandler, FriendlyPieceSummary } from './cards/cardRegistry';
 
 export type { BestTurnResult };
 
@@ -25,8 +23,60 @@ export const MATERIAL_VALUES: Record<string, number> = {
   k: 20000,
 };
 
-// Simplified Piece-Square Tables (PST) from Tomasz Michniewski
-// Indexed by [rank 0..7][file 0..7] from white's perspective (rank 0 = rank 1, rank 7 = rank 8)
+/**
+ * Parameterized Evaluation Weights (Tunable via Self-Play SPSA / Evolutionary Optimization)
+ */
+export interface EvalParams {
+  retentionByClass: {
+    pawn: number;
+    knight: number;
+    bishop: number;
+    rook: number;
+    queen: number;
+    king: number;
+  };
+  /** Bonus fraction on each Knight/Bishop/Rook card when 2+ anchors are alive (lost when dropping 2 -> 1) */
+  spareAnchorBonusPct: number;
+  /** Standard chess Bishop Pair bonus (in centipawns) */
+  bishopPairBonus: number;
+  /** Controls hyperbolic non-linear scarcity curve for Pawns (8 -> 1) */
+  pawnScarcityAlpha: number;
+  /** Fraction of an orphaned card's value retained if revivable via Rank-7 pawn promotion or K2 in hand */
+  revivalRank7Factor: number;
+  /** Fraction of an orphaned card's value retained if revivable via Rank-6 pawn promotion */
+  revivalRank6Factor: number;
+  /** Bonus when a card in hand is legally playable right now */
+  primedCardBonus: number;
+  /** Bonus when a card in hand threatens a legal capture right now */
+  primedCaptureBonus: number;
+  /** Multiplier on modular card-handler evaluateSetup() heuristics */
+  setupWeight: number;
+  /** Centipawn penalty for repeating a previously visited board position */
+  repetitionContempt: number;
+}
+
+export const DEFAULT_EVAL_PARAMS: EvalParams = {
+  retentionByClass: {
+    pawn: 55,
+    knight: 70,
+    bishop: 70,
+    rook: 85,
+    queen: 100,
+    king: 100,
+  },
+  spareAnchorBonusPct: 0.30,
+  bishopPairBonus: 30,
+  pawnScarcityAlpha: 0.90,
+  revivalRank7Factor: 0.55,
+  revivalRank6Factor: 0.25,
+  primedCardBonus: 22,
+  primedCaptureBonus: 35,
+  setupWeight: 1.0,
+  repetitionContempt: 45,
+};
+
+// Piece-Square Tables (PST) from Tomasz Michniewski
+// Row 0 = Rank 8 (opponent back rank from White's POV), Row 7 = Rank 1 (White's home back rank)
 const PAWN_PST = [
   [0, 0, 0, 0, 0, 0, 0, 0],
   [50, 50, 50, 50, 50, 50, 50, 50],
@@ -82,7 +132,7 @@ const QUEEN_PST = [
   [-20, -10, -10, -5, -5, -10, -10, -20],
 ];
 
-const KING_PST = [
+const KING_MIDGAME_PST = [
   [-30, -40, -40, -50, -50, -40, -40, -30],
   [-30, -40, -40, -50, -50, -40, -40, -30],
   [-30, -40, -40, -50, -50, -40, -40, -30],
@@ -93,250 +143,202 @@ const KING_PST = [
   [20, 30, 10, 0, 0, 10, 30, 20],
 ];
 
+const KING_ENDGAME_PST = [
+  [-50, -40, -30, -20, -20, -30, -40, -50],
+  [-30, -20, -10, 0, 0, -10, -20, -30],
+  [-30, -10, 20, 30, 30, 20, -10, -30],
+  [-30, -10, 30, 40, 40, 30, -10, -30],
+  [-30, -10, 30, 40, 40, 30, -10, -30],
+  [-30, -10, 20, 30, 30, 20, -10, -30],
+  [-30, -30, 0, 0, 0, 0, -30, -30],
+  [-50, -30, -30, -30, -30, -30, -30, -50],
+];
+
 const PST_MAP: Record<string, number[][]> = {
   p: PAWN_PST,
   n: KNIGHT_PST,
   b: BISHOP_PST,
   r: ROOK_PST,
   q: QUEEN_PST,
-  k: KING_PST,
+  k: KING_MIDGAME_PST,
 };
 
 /**
  * Class-weighted intrinsic retention value per unspent card in hand.
- * Prevents AI from burning cards on trivial 0cp moves.
  */
-export function getCardRetentionValue(cardId: string): number {
+export function getCardRetentionValue(
+  cardId: string,
+  params: EvalParams = DEFAULT_EVAL_PARAMS
+): number {
   const card = getCardById(cardId);
   if (!card) return 60;
-  switch (card.anchor) {
+  return params.retentionByClass[card.anchor] ?? 60;
+}
+
+function anchorToPieceSymbol(anchor: string): PieceSymbol {
+  switch (anchor) {
     case 'pawn':
-      return 55;
+      return 'p';
     case 'knight':
+      return 'n';
     case 'bishop':
-      return 70;
+      return 'b';
     case 'rook':
-      return 85;
+      return 'r';
     case 'queen':
-    case 'king':
-      return 100;
+      return 'q';
     default:
-      return 60;
+      return 'k';
   }
 }
 
 /**
- * Evaluates tactical hand synergy & pre-condition geometric setup.
- * Rewards AI for maneuvering pieces into configurations that unlock its own unspent cards.
+ * Evaluates Non-Linear Piece Scarcity, Card Orphaning, and Promotion/Spawn Revival.
+ *
+ * Key properties:
+ * 1. If anchor count < handler.minAnchorsRequired (e.g. 0 Queens for a Queen card, or 1 Rook for R4),
+ *    the card is ORPHANED: its value collapses to 0cp unless revivable via a Rank 6/7 pawn promotion
+ *    or a spawn/promotion card in hand (such as K2 Royal Knighting).
+ * 2. For 1-of-2 piece classes (Knight, Bishop, Rook), having 2 alive grants a spare-anchor flexibility
+ *    bonus (+30%), so losing 2 -> 1 costs a moderate penalty while losing 1 -> 0 loses the entire card value.
+ * 3. For Pawns (up to 8), scarcity follows a hyperbolic curve: losing 8 -> 7 costs ~1cp per Pawn card,
+ *    while losing down to the last 1-2 pawns costs the bulk of the card's value.
  */
-export function evaluateHandSynergy(engine: DeckChessEngine, color: PieceColor): number {
+export function evaluateCardScarcityAndHand(
+  friendlyPieces: FriendlyPieceSummary[],
+  hand: string[],
+  color: PieceColor,
+  params: EvalParams = DEFAULT_EVAL_PARAMS
+): number {
+  if (hand.length === 0) return 0;
+
+  const counts: Record<PieceSymbol, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
+  let hasRank7Pawn = false;
+  let hasRank6Pawn = false;
+
+  for (const p of friendlyPieces) {
+    counts[p.type]++;
+    if (p.type === 'p') {
+      const relRank = color === 'w' ? p.rank : 7 - p.rank;
+      if (relRank === 6) hasRank7Pawn = true; // 0-indexed rank 6 = Rank 7 (1 step from promotion)
+      else if (relRank === 5) hasRank6Pawn = true; // 0-indexed rank 5 = Rank 6
+    }
+  }
+
+  // Detect if hand contains any playable card that spawns/promotes a piece type (e.g. K2 -> 'n')
+  const revivableByCard = new Set<PieceSymbol>();
+  for (const cid of hand) {
+    const cDef = getCardById(cid);
+    const h = getCardHandler(cid);
+    if (cDef && h?.spawnsPieceType) {
+      const spawnerAnchor = anchorToPieceSymbol(cDef.anchor);
+      if (counts[spawnerAnchor] >= (h.minAnchorsRequired ?? 1)) {
+        // K2 also needs at least 1 pawn on board to knight
+        if (h.spawnsPieceType !== 'n' || counts.p > 0) {
+          revivableByCard.add(h.spawnsPieceType);
+        }
+      }
+    }
+  }
+
+  let totalHandValue = 0;
+
+  for (const cardId of hand) {
+    const card = getCardById(cardId);
+    if (!card) continue;
+    const handler = getCardHandler(cardId);
+    const baseVal = getCardRetentionValue(cardId, params);
+    const anchorType = anchorToPieceSymbol(card.anchor);
+    const minReq = handler?.minAnchorsRequired ?? 1;
+    const alive = counts[anchorType];
+
+    if (alive < minReq) {
+      // Card is currently ORPHANED (missing required anchor piece(s))
+      const deficit = minReq - alive;
+      let revivalFactor = 0;
+
+      if (deficit === 1) {
+        if (revivableByCard.has(anchorType)) {
+          revivalFactor = Math.max(revivalFactor, params.revivalRank7Factor);
+        }
+        if (anchorType === 'q' || anchorType === 'r' || anchorType === 'b' || anchorType === 'n') {
+          if (hasRank7Pawn) {
+            revivalFactor = Math.max(revivalFactor, params.revivalRank7Factor);
+          } else if (hasRank6Pawn) {
+            revivalFactor = Math.max(revivalFactor, params.revivalRank6Factor);
+          }
+        }
+      }
+
+      totalHandValue += Math.round(baseVal * revivalFactor);
+      continue;
+    }
+
+    // Card has its required anchor pieces alive on the board
+    if (anchorType === 'p') {
+      // Non-linear hyperbolic scarcity curve for Pawns (normalized so n = 8 - minReq + 1 is 1.0)
+      const surplus = alive - minReq + 1; // 1..8
+      const maxSurplus = 8 - minReq + 1;
+      const rawUtility = 1 - params.pawnScarcityAlpha / Math.pow(surplus + 0.65, 1.8);
+      const normUtility = 1 - params.pawnScarcityAlpha / Math.pow(maxSurplus + 0.65, 1.8);
+      const ratio = Math.min(1, Math.max(0.25, rawUtility / normUtility));
+      totalHandValue += Math.round(baseVal * ratio);
+    } else if (anchorType === 'n' || anchorType === 'b' || anchorType === 'r') {
+      if (minReq >= 2) {
+        // Pair-dependent card (R4, N6) with 2+ pieces alive
+        totalHandValue += Math.round(baseVal * (1 + params.spareAnchorBonusPct));
+      } else if (alive >= 2) {
+        // Single-anchor card with 2 pieces alive (spare anchor flexibility bonus)
+        totalHandValue += Math.round(baseVal * (1 + params.spareAnchorBonusPct));
+      } else {
+        // Down to last surviving Knight/Bishop/Rook (1 -> 0 brink)
+        totalHandValue += baseVal;
+      }
+    } else {
+      // Queen or King (1-of-1 piece)
+      totalHandValue += baseVal;
+    }
+  }
+
+  return totalHandValue;
+}
+
+/**
+ * Evaluates tactical hand synergy & modular handler pre-condition setup.
+ * Zero hardcoded card IDs: delegates directly to each card's registered CardBehaviorHandler.
+ */
+export function evaluateHandSynergy(
+  engine: DeckChessEngine,
+  color: PieceColor,
+  params: EvalParams = DEFAULT_EVAL_PARAMS,
+  precomputedPieces?: FriendlyPieceSummary[]
+): number {
   const hand = engine.getHandForColor(color);
   if (hand.length === 0) return 0;
   const uniqueCards = Array.from(new Set(hand));
   let synergy = 0;
 
-  // Cache pieces for color and opponent
-  const board = engine.getBoard();
-  const friendlyPieces: { sq: Square; type: PieceSymbol; file: number; rank: number }[] = [];
-
-  for (let r = 0; r < 8; r++) {
-    for (let f = 0; f < 8; f++) {
-      const p = board[r][f];
-      if (!p) continue;
-      // In chess.js, row 0 is rank 8 (index 7), row 7 is rank 1 (index 0)
-      const rankIdx = 7 - r;
-      const sq = DeckChessEngine.coordsToSquare(f, rankIdx);
-      if (!sq) continue;
-      if (p.color === color) {
-        friendlyPieces.push({ sq, type: p.type, file: f, rank: rankIdx });
+  let friendlyPieces = precomputedPieces;
+  if (!friendlyPieces) {
+    const board = engine.getBoard();
+    friendlyPieces = [];
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const p = board[r][f];
+        if (!p || p.color !== color) continue;
+        const rankIdx = 7 - r;
+        const sq = DeckChessEngine.coordsToSquare(f, rankIdx);
+        if (sq) {
+          friendlyPieces.push({ sq, type: p.type, file: f, rank: rankIdx });
+        }
       }
     }
   }
 
   for (const cardId of uniqueCards) {
-    const card = getCardById(cardId);
-    if (!card) continue;
     const handler = getCardHandler(cardId);
-
-    // 1. Primed Threat Bonus (+22cp to +35cp)
-    const anchorType =
-      card.anchor === 'pawn'
-        ? 'p'
-        : card.anchor === 'knight'
-        ? 'n'
-        : card.anchor === 'bishop'
-        ? 'b'
-        : card.anchor === 'rook'
-        ? 'r'
-        : card.anchor === 'queen'
-        ? 'q'
-        : 'k';
-
-    const anchorPieces = friendlyPieces.filter((p) => p.type === anchorType);
-    let cardIsPrimed = false;
-    let cardHasCapture = false;
-
-    for (const p of anchorPieces) {
-      if (!handler) continue;
-      if (handler.evaluateConditions && !handler.evaluateConditions(engine, p.sq)) {
-        continue;
-      }
-      const targets = handler.getTargets(engine, p.sq);
-      if (targets.length > 0) {
-        cardIsPrimed = true;
-        for (const t of targets) {
-          const dest = typeof t === 'string' ? t : t.to;
-          const targetPiece = engine.getPiece(dest);
-          if (targetPiece && targetPiece.color !== color) {
-            cardHasCapture = true;
-            break;
-          }
-        }
-        if (cardHasCapture) break;
-      }
-    }
-
-    if (cardHasCapture) {
-      synergy += 35;
-    } else if (cardIsPrimed) {
-      synergy += 22;
-    }
-
-    // 2. Geometric Pre-Condition Shaping Bonuses (+12cp to +24cp)
-    switch (cardId) {
-      case 'b6_come_this_way': {
-        // Bishop on d4, d5, e4, e5 (+20cp)
-        const inCenter = friendlyPieces.some(
-          (p) => p.type === 'b' && (p.sq === 'd4' || p.sq === 'd5' || p.sq === 'e4' || p.sq === 'e5')
-        );
-        if (inCenter) synergy += 20;
-        break;
-      }
-      case 'r3_cut_across': {
-        // Rook on main diagonal (a1-h8 or a8-h1) (+18cp)
-        const onDiag = friendlyPieces.some(
-          (p) => p.type === 'r' && (p.file === p.rank || p.file + p.rank === 7)
-        );
-        if (onDiag) synergy += 18;
-        break;
-      }
-      case 'r4_move_in_unison': {
-        // Two friendly Rooks sharing an unobstructed rank or file (+24cp)
-        const rooks = friendlyPieces.filter((p) => p.type === 'r');
-        if (rooks.length >= 2) {
-          for (let i = 0; i < rooks.length; i++) {
-            for (let j = i + 1; j < rooks.length; j++) {
-              if (rooks[i].file === rooks[j].file || rooks[i].rank === rooks[j].rank) {
-                synergy += 24;
-                break;
-              }
-            }
-          }
-        }
-        break;
-      }
-      case 'r1_make_way':
-      case 'r2_ive_got_your_back':
-      case 'r5_catapult': {
-        // Rook aligned on rank/file with friendly Pawn or non-King ally (+15cp)
-        const rooks = friendlyPieces.filter((p) => p.type === 'r');
-        const allies = friendlyPieces.filter((p) => p.type === 'p' || p.type === 'n' || p.type === 'b');
-        let aligned = false;
-        for (const r of rooks) {
-          for (const a of allies) {
-            if (r.file === a.file || r.rank === a.rank) {
-              aligned = true;
-              break;
-            }
-          }
-          if (aligned) break;
-        }
-        if (aligned) synergy += 15;
-        break;
-      }
-      case 'r6_garrison': {
-        // Rook orthogonally adjacent to friendly King (+18cp)
-        const king = friendlyPieces.find((p) => p.type === 'k');
-        const rooks = friendlyPieces.filter((p) => p.type === 'r');
-        if (king && rooks.some((r) => Math.abs(r.file - king.file) + Math.abs(r.rank - king.rank) === 1)) {
-          synergy += 18;
-        }
-        break;
-      }
-      case 'n6_flanking_support': {
-        // Friendly Knight on file a or h with a second friendly Knight alive (+18cp)
-        const knights = friendlyPieces.filter((p) => p.type === 'n');
-        if (knights.length >= 2 && knights.some((k) => k.file === 0 || k.file === 7)) {
-          synergy += 18;
-        }
-        break;
-      }
-      case 'n7_outpost_support':
-      case 'p8_call_reserves': {
-        // Knight/Pawn in enemy territory with friendly adjacency (+20cp)
-        const isEnemyTerritory = (rank: number) => (color === 'w' ? rank >= 4 : rank <= 3);
-        const forwardPieces = friendlyPieces.filter(
-          (p) => (p.type === 'n' || p.type === 'p') && isEnemyTerritory(p.rank)
-        );
-        if (forwardPieces.length > 0) synergy += 20;
-        break;
-      }
-      case 'p3_follow_me':
-      case 'p5_get_behind_me':
-      case 'p6_tag_out':
-      case 'b1_let_me_through': {
-        // Friendly piece-Pawn battery adjacency (+14cp)
-        const pawns = friendlyPieces.filter((p) => p.type === 'p');
-        const pieces = friendlyPieces.filter((p) => p.type !== 'p' && p.type !== 'k');
-        let adjacent = false;
-        for (const pw of pawns) {
-          for (const pc of pieces) {
-            if (Math.max(Math.abs(pw.file - pc.file), Math.abs(pw.rank - pc.rank)) === 1) {
-              adjacent = true;
-              break;
-            }
-          }
-          if (adjacent) break;
-        }
-        if (adjacent) synergy += 14;
-        break;
-      }
-      case 'q1_royal_summons':
-      case 'q4_one_fell_swoop': {
-        // Queen sharing rank/file/diagonal with friendly Rook/Bishop/Pawn (+18cp)
-        const queen = friendlyPieces.find((p) => p.type === 'q');
-        const allies = friendlyPieces.filter((p) => p.type !== 'q' && p.type !== 'k');
-        if (
-          queen &&
-          allies.some(
-            (a) =>
-              a.file === queen.file ||
-              a.rank === queen.rank ||
-              Math.abs(a.file - queen.file) === Math.abs(a.rank - queen.rank)
-          )
-        ) {
-          synergy += 18;
-        }
-        break;
-      }
-      case 'k1_conscription':
-      case 'k2_royal_knighting':
-      case 'k3_royal_execution': {
-        // King corner proximity (k1) or adjacent to friendly pawn (k2) / ally (k3) (+15cp)
-        const king = friendlyPieces.find((p) => p.type === 'k');
-        if (king) {
-          if (cardId === 'k1_conscription') {
-            const homeRank = color === 'w' ? 0 : 7;
-            if (king.rank === homeRank && (king.file <= 2 || king.file >= 5)) synergy += 15;
-          } else {
-            const allies = friendlyPieces.filter((p) => p.type !== 'k');
-            if (allies.some((a) => Math.max(Math.abs(a.file - king.file), Math.abs(a.rank - king.rank)) === 1)) {
-              synergy += 15;
-            }
-          }
-        }
-        break;
-      }
+    if (handler?.evaluateSetup) {
+      synergy += Math.round(handler.evaluateSetup(friendlyPieces, color) * params.setupWeight);
     }
   }
 
@@ -344,29 +346,78 @@ export function evaluateHandSynergy(engine: DeckChessEngine, color: PieceColor):
 }
 
 /**
- * Static position evaluation for AI
- * Returns score from perspective of `povColor` (positive = favorable for povColor)
+ * Static position evaluation for AI.
+ * Returns score from perspective of `povColor` (positive = favorable for povColor).
  */
 export function evaluateBoard(
   engine: DeckChessEngine,
   povColor: PieceColor,
-  depthRemaining: number = 0
+  depthRemaining: number = 0,
+  params: EvalParams = DEFAULT_EVAL_PARAMS,
+  fastMode: boolean = false
 ): number {
-  if (engine.isCheckmate()) {
-    const winner = engine.getWinner();
-    return winner === povColor
-      ? 100000 + depthRemaining * 100
-      : -100000 - depthRemaining * 100;
-  }
+  if (fastMode) {
+    if (engine.inCheck() && engine.isCheckmate()) {
+      const winner = engine.getTurn() === 'w' ? 'b' : 'w';
+      return winner === povColor
+        ? 100000 + depthRemaining * 100
+        : -100000 - depthRemaining * 100;
+    }
+    if (
+      engine.getPositionRepeatCount() >= 3 ||
+      engine.getInternalChess().isInsufficientMaterial()
+    ) {
+      return 0;
+    }
+  } else {
+    if (engine.isCheckmate()) {
+      const winner = engine.getWinner();
+      return winner === povColor
+        ? 100000 + depthRemaining * 100
+        : -100000 - depthRemaining * 100;
+    }
 
-  if (engine.isDraw() || engine.isStalemate()) {
-    return 0;
+    if (engine.isDraw() || engine.isStalemate()) {
+      return 0;
+    }
   }
 
   let whiteScore = 0;
   const board = engine.getBoard();
 
-  // 1. Material & Piece-Square Tables
+  const whitePieces: FriendlyPieceSummary[] = [];
+  const blackPieces: FriendlyPieceSummary[] = [];
+  let nonPawnMaterial = 0;
+  let whiteBishops = 0;
+  let blackBishops = 0;
+
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const piece = board[r][f];
+      if (!piece) continue;
+      const rankFrom1 = 7 - r;
+      const sq = DeckChessEngine.coordsToSquare(f, rankFrom1);
+      if (sq) {
+        if (piece.color === 'w') {
+          whitePieces.push({ sq, type: piece.type, file: f, rank: rankFrom1 });
+          if (piece.type === 'b') whiteBishops++;
+        } else {
+          blackPieces.push({ sq, type: piece.type, file: f, rank: rankFrom1 });
+          if (piece.type === 'b') blackBishops++;
+        }
+      }
+      if (piece.type !== 'p' && piece.type !== 'k') {
+        nonPawnMaterial += MATERIAL_VALUES[piece.type] || 0;
+      }
+    }
+  }
+
+  const isEndgame = nonPawnMaterial <= 2600;
+
+  // 1. Material & Correctly Oriented Piece-Square Tables
+  // Note: PST arrays have Row 0 = Rank 8 and Row 7 = Rank 1.
+  // In chess.js board[r][f], r = 0 is Rank 8 and r = 7 is Rank 1.
+  // Therefore, for White, pstRow is `r`; for Black (mirrored), pstRow is `7 - r`!
   for (let r = 0; r < 8; r++) {
     for (let f = 0; f < 8; f++) {
       const piece = board[r][f];
@@ -376,12 +427,10 @@ export function evaluateBoard(
       const color = piece.color as PieceColor;
       const baseVal = MATERIAL_VALUES[type] || 0;
 
-      // r=0 is rank 8 in board array, r=7 is rank 1
-      const rankFrom1 = 7 - r;
-      const rankIdx = color === 'w' ? rankFrom1 : 7 - rankFrom1;
-      const fileIdx = f;
-
-      const pstVal = PST_MAP[type]?.[rankIdx]?.[fileIdx] || 0;
+      const pstRow = color === 'w' ? r : 7 - r;
+      const pstTable =
+        type === 'k' ? (isEndgame ? KING_ENDGAME_PST : KING_MIDGAME_PST) : PST_MAP[type];
+      const pstVal = pstTable?.[pstRow]?.[f] || 0;
       const totalPieceVal = baseVal + pstVal;
 
       if (color === 'w') {
@@ -392,6 +441,10 @@ export function evaluateBoard(
     }
   }
 
+  // Bishop pair bonus
+  if (whiteBishops >= 2) whiteScore += params.bishopPairBonus;
+  if (blackBishops >= 2) whiteScore -= params.bishopPairBonus;
+
   // 2. Active Shields
   for (const mod of engine.getActiveModifiers()) {
     if (mod.type === 'shield') {
@@ -400,21 +453,25 @@ export function evaluateBoard(
     }
   }
 
-  // 3. Hand Retention Value
-  let whiteRetention = 0;
-  for (const cardId of engine.getWhiteHand()) {
-    whiteRetention += getCardRetentionValue(cardId);
-  }
-  let blackRetention = 0;
-  for (const cardId of engine.getBlackHand()) {
-    blackRetention += getCardRetentionValue(cardId);
-  }
-  whiteScore += (whiteRetention - blackRetention);
+  // 3. Non-Linear Card Scarcity, Orphaning & Revival Valuation
+  const whiteScarcityVal = evaluateCardScarcityAndHand(
+    whitePieces,
+    engine.getWhiteHand(),
+    'w',
+    params
+  );
+  const blackScarcityVal = evaluateCardScarcityAndHand(
+    blackPieces,
+    engine.getBlackHand(),
+    'b',
+    params
+  );
+  whiteScore += whiteScarcityVal - blackScarcityVal;
 
-  // 4. Hand Synergy & Pre-Condition Shaping
-  const whiteSynergy = evaluateHandSynergy(engine, 'w');
-  const blackSynergy = evaluateHandSynergy(engine, 'b');
-  whiteScore += (whiteSynergy - blackSynergy);
+  // 4. Modular Hand Synergy & Pre-Condition Setup
+  const whiteSynergy = evaluateHandSynergy(engine, 'w', params, whitePieces);
+  const blackSynergy = evaluateHandSynergy(engine, 'b', params, blackPieces);
+  whiteScore += whiteSynergy - blackSynergy;
 
   return povColor === 'w' ? whiteScore : -whiteScore;
 }
@@ -423,7 +480,10 @@ export function evaluateBoard(
  * Computes live position evaluation and win percentage.
  * Sigmoid mapping: P_white(c) = clamp(50 + 50 * (2 / (1 + exp(-0.0035 * c)) - 1), 3, 97)
  */
-export function evaluatePosition(engine: DeckChessEngine): PositionEvaluation {
+export function evaluatePosition(
+  engine: DeckChessEngine,
+  params: EvalParams = DEFAULT_EVAL_PARAMS
+): PositionEvaluation {
   if (engine.isGameOver()) {
     const winner = engine.getWinner();
     if (winner === 'w') {
@@ -435,9 +495,8 @@ export function evaluatePosition(engine: DeckChessEngine): PositionEvaluation {
     }
   }
 
-  const whiteCp = evaluateBoard(engine, 'w');
+  const whiteCp = evaluateBoard(engine, 'w', 0, params, false);
 
-  // Sigmoid win percentage calculation
   const expVal = Math.exp(-0.0035 * whiteCp);
   const rawWinPct = 50 + 50 * (2 / (1 + expVal) - 1);
   const whiteWinPct = Math.min(97, Math.max(3, Math.round(rawWinPct * 10) / 10));
@@ -472,43 +531,175 @@ interface CandidateAction {
   orderScore: number;
 }
 
-function getCandidateActions(
-  engine: DeckChessEngine,
-  includeCards: boolean,
-  color: PieceColor
-): CandidateAction[] {
+function getStandardCandidates(engine: DeckChessEngine): CandidateAction[] {
   const candidates: CandidateAction[] = [];
-
-  // 1. Standard moves
   const legalMoves = engine.getLegalMoves();
   for (const m of legalMoves) {
     let orderScore = 0;
     if (m.captured) {
-      orderScore = 1000 + (MATERIAL_VALUES[m.captured] || 50) * 10 - (MATERIAL_VALUES[m.piece] || 10);
+      orderScore += 1000 + (MATERIAL_VALUES[m.captured] || 50) * 10 - (MATERIAL_VALUES[m.piece] || 10);
+    }
+    if (m.promotion) {
+      orderScore += 900 + (MATERIAL_VALUES[m.promotion] || 300);
+    }
+    if (m.san.includes('+')) {
+      orderScore += 350;
+    }
+    const toCoords = DeckChessEngine.squareToCoords(m.to);
+    if (toCoords.file >= 2 && toCoords.file <= 5 && toCoords.rank >= 2 && toCoords.rank <= 5) {
+      orderScore += 25;
     }
     candidates.push({ type: 'standard', move: m, orderScore });
   }
-
-  // 2. Empowered card moves
-  if (includeCards && !engine.hasPlayedCardThisTurn()) {
-    const empMoves = engine.getEmpoweredMoves(undefined, true);
-    for (const em of empMoves) {
-      const destPiece = engine.getPiece(em.to);
-      let orderScore = 100;
-      if (destPiece && destPiece.color !== color) {
-        orderScore = 1200 + (MATERIAL_VALUES[destPiece.type] || 50) * 10;
-      }
-      candidates.push({ type: 'empowered', empoweredMove: em, orderScore });
-    }
-  }
-
-  // Sort descending by orderScore for Alpha-Beta cutoffs
   candidates.sort((a, b) => b.orderScore - a.orderScore);
   return candidates;
 }
 
+function getEmpoweredCandidates(
+  engine: DeckChessEngine,
+  color: PieceColor,
+  isRootNode: boolean = false
+): CandidateAction[] {
+  if (engine.hasPlayedCardThisTurn()) return [];
+  const empMoves = engine.getEmpoweredMoves(undefined, true, isRootNode);
+  const cardCandidates: CandidateAction[] = [];
+
+  for (const em of empMoves) {
+    const destPiece = engine.getPiece(em.to);
+    let orderScore = 150;
+    const isCapture = Boolean(destPiece && destPiece.color !== color) || em.actionType === 'ranged_capture';
+    if (isCapture) {
+      const victimVal = destPiece ? MATERIAL_VALUES[destPiece.type] || 100 : 250;
+      orderScore = 1300 + victimVal * 10;
+    }
+    if (em.promotion) {
+      orderScore += 850 + (MATERIAL_VALUES[em.promotion] || 300);
+    }
+    if (em.actionType === 'spawn' || em.cardId === 'k2_royal_knighting') {
+      orderScore += 450;
+    }
+    const toCoords = DeckChessEngine.squareToCoords(em.to);
+    const relRank = color === 'w' ? toCoords.rank : 7 - toCoords.rank;
+    orderScore += relRank * 12;
+    cardCandidates.push({ type: 'empowered', empoweredMove: em, orderScore });
+  }
+
+  cardCandidates.sort((a, b) => b.orderScore - a.orderScore);
+  if (isRootNode) return cardCandidates;
+
+  const filtered: CandidateAction[] = [];
+  const limit = Math.min(cardCandidates.length, 5);
+  for (let i = 0; i < cardCandidates.length; i++) {
+    if (i < limit || cardCandidates[i].orderScore >= 400) {
+      filtered.push(cardCandidates[i]);
+    }
+  }
+  return filtered;
+}
+
+function getCandidateActions(
+  engine: DeckChessEngine,
+  includeCards: boolean,
+  color: PieceColor,
+  isRootNode: boolean = false
+): CandidateAction[] {
+  const candidates = getStandardCandidates(engine);
+  if (includeCards) {
+    candidates.push(...getEmpoweredCandidates(engine, color, isRootNode));
+    candidates.sort((a, b) => b.orderScore - a.orderScore);
+  }
+  return candidates;
+}
+
 /**
- * Minimax search with Alpha-Beta pruning supporting unified actions
+ * Capture Quiescence Search to prevent horizon-effect blunders at depth 0.
+ */
+function quiescence(
+  engine: DeckChessEngine,
+  alpha: number,
+  beta: number,
+  isMaximizing: boolean,
+  povColor: PieceColor,
+  qDepth: number,
+  params: EvalParams
+): number {
+  const standPat = evaluateBoard(engine, povColor, 0, params, true);
+  if (Math.abs(standPat) >= 90000 || qDepth <= 0) {
+    return standPat;
+  }
+
+  if (isMaximizing) {
+    if (standPat >= beta) return beta;
+    if (standPat > alpha) alpha = standPat;
+
+    const tacticalMoves = engine
+      .getLegalMoves()
+      .filter((m) => m.captured || m.promotion)
+      .sort(
+        (a, b) =>
+          (MATERIAL_VALUES[b.captured || 'p'] || 100) * 10 -
+          (MATERIAL_VALUES[b.piece] || 100) -
+          ((MATERIAL_VALUES[a.captured || 'p'] || 100) * 10 - (MATERIAL_VALUES[a.piece] || 100))
+      );
+
+    for (const m of tacticalMoves) {
+      // Delta pruning: if even capturing +200cp margin cannot raise standPat to alpha, skip
+      const gain =
+        (m.captured ? MATERIAL_VALUES[m.captured] || 100 : 0) +
+        (m.promotion ? MATERIAL_VALUES[m.promotion] || 800 : 0) +
+        220;
+      if (standPat + gain < alpha) continue;
+
+      const clone = engine.clone();
+      const res = clone.makeMove({ from: m.from, to: m.to, promotion: m.promotion });
+      if (!res.success) continue;
+
+      const score = quiescence(clone, alpha, beta, false, povColor, qDepth - 1, params);
+      if (score >= beta) return beta;
+      if (score > alpha) alpha = score;
+    }
+    return alpha;
+  } else {
+    if (standPat <= alpha) return alpha;
+    if (standPat < beta) beta = standPat;
+
+    const tacticalMoves = engine
+      .getLegalMoves()
+      .filter((m) => m.captured || m.promotion)
+      .sort(
+        (a, b) =>
+          (MATERIAL_VALUES[b.captured || 'p'] || 100) * 10 -
+          (MATERIAL_VALUES[b.piece] || 100) -
+          ((MATERIAL_VALUES[a.captured || 'p'] || 100) * 10 - (MATERIAL_VALUES[a.piece] || 100))
+      );
+
+    for (const m of tacticalMoves) {
+      const gain =
+        (m.captured ? MATERIAL_VALUES[m.captured] || 100 : 0) +
+        (m.promotion ? MATERIAL_VALUES[m.promotion] || 800 : 0) +
+        220;
+      if (standPat - gain > beta) continue;
+
+      const clone = engine.clone();
+      const res = clone.makeMove({ from: m.from, to: m.to, promotion: m.promotion });
+      if (!res.success) continue;
+
+      const score = quiescence(clone, alpha, beta, true, povColor, qDepth - 1, params);
+      if (score <= alpha) return alpha;
+      if (score < beta) beta = score;
+    }
+    return beta;
+  }
+}
+
+interface TTEntry {
+  depth: number;
+  score: number;
+  flag: 'EXACT' | 'LOWERBOUND' | 'UPPERBOUND';
+}
+
+/**
+ * Minimax search with Alpha-Beta pruning, Multi-Ply Card Search, Repetition Contempt & Quiescence.
  */
 export function minimax(
   engine: DeckChessEngine,
@@ -517,24 +708,66 @@ export function minimax(
   beta: number,
   isMaximizing: boolean,
   povColor: PieceColor,
-  includeCards: boolean = true
+  includeCards: boolean = true,
+  params: EvalParams = DEFAULT_EVAL_PARAMS,
+  tt?: Map<string, TTEntry>,
+  lastMoveTarget?: Square,
+  wasTactical?: boolean
 ): { score: number; move?: Move; empoweredMove?: EmpoweredMove } {
-  if (depth <= 0 || engine.isGameOver()) {
-    return { score: evaluateBoard(engine, povColor, depth) };
+  if (
+    engine.getPositionRepeatCount() >= 3 ||
+    engine.getInternalChess().isInsufficientMaterial()
+  ) {
+    return { score: 0 };
   }
 
-  const currentTurn = engine.getTurn();
-  const candidates = getCandidateActions(engine, includeCards, currentTurn);
+  if (depth <= 0) {
+    const sideToMove = engine.getTurn();
+    const targetUnderFire =
+      lastMoveTarget && engine.getInternalChess().isAttacked(lastMoveTarget, sideToMove);
+    if (wasTactical || targetUnderFire) {
+      return { score: quiescence(engine, alpha, beta, isMaximizing, povColor, 1, params) };
+    }
+    return { score: evaluateBoard(engine, povColor, 0, params, true) };
+  }
 
-  if (candidates.length === 0) {
-    return { score: evaluateBoard(engine, povColor, depth) };
+  const ttKey = tt
+    ? `${engine.getPositionKey()}|${engine.getWhiteHand().join(',')}|${engine.getBlackHand().join(',')}|${depth}|${isMaximizing ? 1 : 0}`
+    : '';
+  if (tt && ttKey) {
+    const cached = tt.get(ttKey);
+    if (cached && cached.depth >= depth) {
+      if (cached.flag === 'EXACT') return { score: cached.score };
+      if (cached.flag === 'LOWERBOUND') alpha = Math.max(alpha, cached.score);
+      else if (cached.flag === 'UPPERBOUND') beta = Math.min(beta, cached.score);
+      if (alpha >= beta) return { score: cached.score };
+    }
+  }
+
+  const origAlpha = alpha;
+  const origBeta = beta;
+  const currentTurn = engine.getTurn();
+  const stdCandidates = getStandardCandidates(engine);
+
+  if (stdCandidates.length === 0) {
+    const empCheckSaves = includeCards ? getEmpoweredCandidates(engine, currentTurn, false) : [];
+    if (empCheckSaves.length === 0) {
+      if (engine.inCheck()) {
+        const winner = currentTurn === 'w' ? 'b' : 'w';
+        return {
+          score: winner === povColor ? 100000 + depth * 100 : -100000 - depth * 100,
+        };
+      }
+      return { score: 0 };
+    }
+    stdCandidates.push(...empCheckSaves);
   }
 
   if (isMaximizing) {
     let maxScore = -Infinity;
-    let bestCand = candidates[0];
+    let bestCand = stdCandidates[0];
 
-    for (const cand of candidates) {
+    const evalCand = (cand: CandidateAction): boolean => {
       const clone = engine.clone();
       let success = false;
       if (cand.type === 'standard' && cand.move) {
@@ -549,16 +782,31 @@ export function minimax(
         success = res.success;
       }
 
-      if (!success) continue;
+      if (!success) return false;
 
       let score: number;
-      if (clone.isCheckmate()) {
+      if (clone.inCheck() && clone.isCheckmate()) {
         score = 100000 + depth * 100;
-      } else if (clone.isGameOver()) {
-        score = 0;
       } else {
-        const next = minimax(clone, depth - 1, alpha, beta, false, povColor, false);
+        const destSq = (cand.move?.to || cand.empoweredMove?.to) as Square | undefined;
+        const isTact = Boolean(cand.move?.captured || cand.move?.promotion);
+        const next = minimax(
+          clone,
+          depth - 1,
+          alpha,
+          beta,
+          false,
+          povColor,
+          includeCards,
+          params,
+          tt,
+          destSq,
+          isTact
+        );
         score = next.score;
+        if (clone.getPositionRepeatCount() >= 2 && score > -150) {
+          score -= params.repetitionContempt;
+        }
       }
 
       if (score > maxScore) {
@@ -567,17 +815,40 @@ export function minimax(
       }
 
       alpha = Math.max(alpha, maxScore);
-      if (beta <= alpha) {
-        break; // Alpha-beta cutoff
+      return beta <= alpha;
+    };
+
+    let cutOff = false;
+    for (const cand of stdCandidates) {
+      if (evalCand(cand)) {
+        cutOff = true;
+        break;
       }
+    }
+
+    if (!cutOff && includeCards) {
+      const empCandidates = getEmpoweredCandidates(engine, currentTurn, false);
+      for (const cand of empCandidates) {
+        if (evalCand(cand)) {
+          break;
+        }
+      }
+    }
+
+    if (tt && ttKey) {
+      const flag =
+        maxScore <= origAlpha ? 'UPPERBOUND' : maxScore >= origBeta ? 'LOWERBOUND' : 'EXACT';
+      tt.set(ttKey, { depth, score: maxScore, flag });
     }
 
     return { score: maxScore, move: bestCand.move, empoweredMove: bestCand.empoweredMove };
   } else {
     let minScore = Infinity;
-    let bestCand = candidates[0];
+    let bestCand = stdCandidates[0];
+    let moveIdx = 0;
 
-    for (const cand of candidates) {
+    const evalCand = (cand: CandidateAction): boolean => {
+      moveIdx++;
       const clone = engine.clone();
       let success = false;
       if (cand.type === 'standard' && cand.move) {
@@ -592,16 +863,33 @@ export function minimax(
         success = res.success;
       }
 
-      if (!success) continue;
+      if (!success) return false;
 
       let score: number;
-      if (clone.isCheckmate()) {
+      if (clone.inCheck() && clone.isCheckmate()) {
         score = -100000 - depth * 100;
-      } else if (clone.isGameOver()) {
-        score = 0;
       } else {
-        const next = minimax(clone, depth - 1, alpha, beta, true, povColor, false);
+        const destSq = (cand.move?.to || cand.empoweredMove?.to) as Square | undefined;
+        const isTact = Boolean(cand.move?.captured || cand.move?.promotion);
+        const childCards =
+          includeCards && (moveIdx < 6 || cand.orderScore >= 300 || cand.type === 'empowered');
+        const next = minimax(
+          clone,
+          depth - 1,
+          alpha,
+          beta,
+          true,
+          povColor,
+          childCards,
+          params,
+          tt,
+          destSq,
+          isTact
+        );
         score = next.score;
+        if (clone.getPositionRepeatCount() >= 2 && score < 150) {
+          score += params.repetitionContempt;
+        }
       }
 
       if (score < minScore) {
@@ -610,9 +898,30 @@ export function minimax(
       }
 
       beta = Math.min(beta, minScore);
-      if (beta <= alpha) {
-        break; // Alpha-beta cutoff
+      return beta <= alpha;
+    };
+
+    let cutOff = false;
+    for (const cand of stdCandidates) {
+      if (evalCand(cand)) {
+        cutOff = true;
+        break;
       }
+    }
+
+    if (!cutOff && includeCards) {
+      const empCandidates = getEmpoweredCandidates(engine, currentTurn, false);
+      for (const cand of empCandidates) {
+        if (evalCand(cand)) {
+          break;
+        }
+      }
+    }
+
+    if (tt && ttKey) {
+      const flag =
+        minScore <= origAlpha ? 'UPPERBOUND' : minScore >= origBeta ? 'LOWERBOUND' : 'EXACT';
+      tt.set(ttKey, { depth, score: minScore, flag });
     }
 
     return { score: minScore, move: bestCand.move, empoweredMove: bestCand.empoweredMove };
@@ -620,13 +929,14 @@ export function minimax(
 }
 
 /**
- * Top-level tactical AI turn decision
+ * Top-level tactical AI turn decision.
  * Supports 'easy', 'medium', 'tactical', and 'grandmaster' difficulties.
  */
 export function computeBestTurn(
   engine: DeckChessEngine,
   aiColor: PieceColor,
-  difficulty: AiDifficulty = 'medium'
+  difficulty: AiDifficulty = 'medium',
+  params: EvalParams = DEFAULT_EVAL_PARAMS
 ): BestTurnResult {
   const currentTurn = engine.getTurn();
 
@@ -637,17 +947,20 @@ export function computeBestTurn(
   const maxDepth = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3;
   const includeCards = difficulty !== 'easy';
 
-  const candidates = getCandidateActions(engine, includeCards, aiColor);
+  const candidates = getCandidateActions(engine, includeCards, aiColor, true);
   if (candidates.length === 0) {
     throw new Error('No legal moves available for AI');
   }
 
+  const tt = new Map<string, TTEntry>();
   let bestScore = -Infinity;
   let bestCandidate = candidates[0];
   let alpha = -Infinity;
   const beta = Infinity;
 
+  let rootIdx = 0;
   for (const candidate of candidates) {
+    rootIdx++;
     const clone = engine.clone();
     let success = false;
 
@@ -666,21 +979,71 @@ export function computeBestTurn(
     if (!success) continue;
 
     let score: number;
-    if (clone.isCheckmate()) {
+    if (clone.inCheck() && clone.isCheckmate()) {
       score = 100000 + maxDepth * 100;
-    } else if (clone.isGameOver()) {
-      score = 0;
     } else {
-      const next = minimax(
-        clone,
-        maxDepth - 1,
-        alpha,
-        beta,
-        false,
-        aiColor,
-        includeCards && maxDepth > 2
-      );
-      score = next.score;
+      const destSq = (candidate.move?.to || candidate.empoweredMove?.to) as Square | undefined;
+      const isTact = Boolean(candidate.move?.captured || candidate.move?.promotion);
+      // Late Move Reduction (LMR) at Root for depth >= 3:
+      // Search top 10 moves + all tactical moves at full depth; reduce quiet late moves to depth 1 first
+      const canReduce =
+        maxDepth >= 3 &&
+        rootIdx > 10 &&
+        !isTact &&
+        candidate.orderScore < 350 &&
+        alpha > -50000;
+
+      if (canReduce) {
+        const reduced = minimax(
+          clone,
+          1,
+          alpha,
+          beta,
+          false,
+          aiColor,
+          includeCards,
+          params,
+          tt,
+          destSq,
+          isTact
+        );
+        score = reduced.score;
+        if (score > alpha) {
+          const full = minimax(
+            clone,
+            maxDepth - 1,
+            alpha,
+            beta,
+            false,
+            aiColor,
+            includeCards,
+            params,
+            tt,
+            destSq,
+            isTact
+          );
+          score = full.score;
+        }
+      } else {
+        const next = minimax(
+          clone,
+          maxDepth - 1,
+          alpha,
+          beta,
+          false,
+          aiColor,
+          includeCards,
+          params,
+          tt,
+          destSq,
+          isTact
+        );
+        score = next.score;
+      }
+      // Repetition contempt at Root: never shuffle Ra8-b8-a8-b8 when not losing
+      if (clone.getPositionRepeatCount() >= 2 && score > -150) {
+        score -= params.repetitionContempt;
+      }
     }
 
     if (score > bestScore) {
@@ -699,10 +1062,11 @@ export function computeBestTurn(
     const emp = bestCandidate.empoweredMove;
     const cardDef = getCardById(emp.cardId);
     const cardName = emp.metadata?.cardName || cardDef?.name || emp.cardId;
+    const promoSuffix = emp.promotion ? `=${emp.promotion.toUpperCase()}` : '';
     const explanation =
       bestScore >= 90000
-        ? `💡 Best Move: [${cardName}] ${emp.from} ➔ ${emp.to} (Checkmate in 1)`
-        : `💡 Best Move: [${cardName}] ${emp.from} ➔ ${emp.to} (${prefix}${scoreFormatted})`;
+        ? `💡 Best Move: [${cardName}] ${emp.from} ➔ ${emp.to}${promoSuffix} (Checkmate)`
+        : `💡 Best Move: [${cardName}] ${emp.from} ➔ ${emp.to}${promoSuffix} (${prefix}${scoreFormatted})`;
 
     return {
       type: 'empowered',
@@ -731,10 +1095,11 @@ export function computeBestTurn(
     throw new Error('No legal move available');
   }
 
+  const promoSuffix = sm.promotion ? `=${sm.promotion.toUpperCase()}` : '';
   const explanation =
     bestScore >= 90000
-      ? `💡 Best Move: ${sm.from} ➔ ${sm.to} (Checkmate in 1)`
-      : `💡 Best Move: ${sm.from} ➔ ${sm.to} (${prefix}${scoreFormatted})`;
+      ? `💡 Best Move: ${sm.from} ➔ ${sm.to}${promoSuffix} (Checkmate)`
+      : `💡 Best Move: ${sm.from} ➔ ${sm.to}${promoSuffix} (${prefix}${scoreFormatted})`;
 
   return {
     type: 'standard',

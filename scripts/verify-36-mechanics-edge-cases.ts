@@ -179,6 +179,20 @@ console.log('\nSuite 5: Black Player Orientation Symmetry');
   assert(blackPromoEngine.getPiece('e1')?.type === 'q' && blackPromoEngine.getPiece('e1')?.color === 'b', 'Black pawn promoted to Black Queen on Rank 1');
 }
 
+// ==========================================
+// Suite 6: Q2 The Queen's Gambit Attack-Ray Strictness (1. c4 Regression)
+// ==========================================
+console.log('\nSuite 6: Q2 The Queen\'s Gambit Attack-Ray Strictness');
+{
+  const openingQ2 = new DeckChessEngine(undefined, [], ['q2_the_queens_gambit']);
+  openingQ2.makeMove({ from: 'c2', to: 'c4' });
+  const q2MovesAfterC4 = openingQ2.getEmpoweredMoves('d8');
+  assert(
+    q2MovesAfterC4.length === 0,
+    'Black Q2 Queen\'s Gambit generates 0 moves after 1. c4 (White Queen on d1 does NOT attack c7/d7/e7)'
+  );
+}
+
 console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 console.log(` RESULTS: ${passed} / ${passed + failed} PASSED (${failed} FAILED)`);
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');

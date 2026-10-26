@@ -11,8 +11,21 @@ import { getCardById, CANONICAL_180_CARDS } from '../cardGraph';
 
 export type TargetOption = string | { to: string; extraSquare?: string; disambiguationPrompt?: string };
 
+export interface FriendlyPieceSummary {
+  sq: Square;
+  type: PieceSymbol;
+  file: number;
+  rank: number;
+}
+
 export interface CardBehaviorHandler<T extends TargetOption = string> {
   cardId: string;
+  // Minimum friendly pieces of this card's anchor class required on board (default: 1; e.g. 2 for R4, N6, P4)
+  minAnchorsRequired?: number;
+  // Optional piece type spawned or promoted by this card (e.g. 'n' for K2, 'p' for K1/R6/N7/P8)
+  spawnsPieceType?: PieceSymbol;
+  // Optional fast zero-clone board setup heuristic (0..25cp) co-located with the card handler
+  evaluateSetup?(friendlyPieces: FriendlyPieceSummary[], color: PieceColor): number;
   // Specific condition evaluation beyond generic primitives
   evaluateConditions?(engine: DeckChessEngine, anchorSquare: string): boolean;
   // Get primary target squares for card activation
@@ -96,8 +109,14 @@ export const CardUtils = {
 
     const kCoords = DeckChessEngine.squareToCoords(kingSquare);
     const pCoords = DeckChessEngine.squareToCoords(square);
-    const df = Math.sign(pCoords.file - kCoords.file);
-    const dr = Math.sign(pCoords.rank - kCoords.rank);
+    const fileDiff = pCoords.file - kCoords.file;
+    const rankDiff = pCoords.rank - kCoords.rank;
+    const isOrth = fileDiff === 0 || rankDiff === 0;
+    const isDiag = Math.abs(fileDiff) === Math.abs(rankDiff);
+    if (!isOrth && !isDiag) return null;
+
+    const df = Math.sign(fileDiff);
+    const dr = Math.sign(rankDiff);
 
     const ray: string[] = [];
     let step = 1;
@@ -111,7 +130,11 @@ export const CardUtils = {
       }
       const p = engine.getPiece(sq);
       if (p) {
-        if (p.color === oppColor && (p.type === 'r' || p.type === 'b' || p.type === 'q')) {
+        if (
+          p.color === oppColor &&
+          ((isOrth && (p.type === 'r' || p.type === 'q')) ||
+            (isDiag && (p.type === 'b' || p.type === 'q')))
+        ) {
           return ray;
         }
         break;

@@ -13,10 +13,13 @@ export interface DeckChessBoardProps {
   selectedCardId?: string | null;
   disambiguationCandidates?: EmpoweredMove[] | null;
   pendingCardMove?: EmpoweredMove | null;
+  pendingPromotionMove?: { from: string; to: string } | null;
   hintMove?: BestTurnResult | null;
   onSquareClick: (square: string) => void;
   onConfirmCardMove?: () => void;
   onCancelCardMove?: () => void;
+  onSelectPromotion?: (piece: 'q' | 'r' | 'b' | 'n') => void;
+  onChangeCardPromotion?: (piece: 'q' | 'r' | 'b' | 'n') => void;
   onApplyHint?: () => void;
   onDismissHint?: () => void;
   validAnchorSquares?: string[];
@@ -162,10 +165,13 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
   selectedCardId,
   disambiguationCandidates,
   pendingCardMove,
+  pendingPromotionMove,
   hintMove,
   onSquareClick,
   onConfirmCardMove,
   onCancelCardMove,
+  onSelectPromotion,
+  onChangeCardPromotion,
   onApplyHint,
   onDismissHint,
   validAnchorSquares = [],
@@ -567,8 +573,27 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
             </div>
           </div>
 
-          {/* Right: Big Green Check ✓ and Big Red X ✕ Buttons */}
+          {/* Right: Optional Promotion Selector + Big Green Check ✓ and Big Red X ✕ Buttons */}
           <div className="flex items-center gap-2 flex-shrink-0">
+            {pendingCardMove.promotion && onChangeCardPromotion && (
+              <div className="flex items-center gap-1 mr-1 bg-[#141618] p-1 rounded border border-[#D4AF37]/40">
+                {(['q', 'n', 'r', 'b'] as const).map((promo) => (
+                  <button
+                    key={promo}
+                    type="button"
+                    data-testid={`card-promo-${promo}`}
+                    onClick={() => onChangeCardPromotion(promo)}
+                    className={`px-1.5 py-0.5 text-[10px] font-bold uppercase rounded cursor-pointer transition-colors ${
+                      pendingCardMove.promotion === promo
+                        ? 'bg-[#D4AF37] text-[#141618]'
+                        : 'text-[#8B7E74] hover:text-[#FAF9F6]'
+                    }`}
+                  >
+                    {promo.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            )}
             {/* Big Green Check Button (✓ Confirm) */}
             <button
               type="button"
@@ -588,6 +613,51 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
             >
               <span>✕</span> Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Standard Pawn Promotion Picker Bar (Q / N / R / B) */}
+      {pendingPromotionMove && onSelectPromotion && (
+        <div
+          data-testid="promotion-picker-bar"
+          className={
+            embedded
+              ? 'absolute bottom-2 inset-x-2 z-30 p-2.5 bg-[#1C1E20]/95 border-2 border-[#D4AF37] rounded-md flex items-center justify-between gap-2 shadow-[0_4px_20px_rgba(0,0,0,0.7)] backdrop-blur-sm animate-fade-in'
+              : 'relative z-30 w-full p-2.5 bg-[#24272A] border-2 border-[#D4AF37] rounded flex items-center justify-between gap-2 shadow-2xl animate-fade-in'
+          }
+        >
+          <span className="text-xs font-bold text-[#D4AF37] truncate">
+            👑 Promote Pawn ({pendingPromotionMove.from} ➔ {pendingPromotionMove.to}):
+          </span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {(
+              [
+                { id: 'q', label: '♕ Queen' },
+                { id: 'n', label: '♘ Knight' },
+                { id: 'r', label: '♖ Rook' },
+                { id: 'b', label: '♗ Bishop' },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                data-testid={`promote-to-${opt.id}`}
+                onClick={() => onSelectPromotion(opt.id)}
+                className="px-2.5 py-1 bg-[#24272A] hover:bg-[#D4AF37] hover:text-[#141618] text-[#FAF9F6] border border-[#D4AF37]/60 rounded text-xs font-bold transition-colors cursor-pointer"
+              >
+                {opt.label}
+              </button>
+            ))}
+            {onCancelCardMove && (
+              <button
+                type="button"
+                onClick={onCancelCardMove}
+                className="px-2 py-1 text-xs text-[#8B7E74] hover:text-[#FAF9F6] cursor-pointer"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
       )}

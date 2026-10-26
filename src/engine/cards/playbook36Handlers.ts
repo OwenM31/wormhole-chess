@@ -1,7 +1,37 @@
 import { Chess, PieceSymbol, Square } from 'chess.js';
-import { CardBehaviorHandler, TargetOption, registerCardHandler, CardUtils } from './cardRegistry';
+import {
+  CardBehaviorHandler,
+  FriendlyPieceSummary,
+  TargetOption,
+  registerCardHandler,
+  CardUtils,
+} from './cardRegistry';
 import { DeckChessEngine } from '../DeckChessEngine';
 import { PieceColor } from '../../types/deckChess';
+
+function hasPiecePawnAdjacency(friendlyPieces: FriendlyPieceSummary[]): boolean {
+  const pawns = friendlyPieces.filter((p) => p.type === 'p');
+  const pieces = friendlyPieces.filter((p) => p.type !== 'p' && p.type !== 'k');
+  for (const pw of pawns) {
+    for (const pc of pieces) {
+      if (Math.max(Math.abs(pw.file - pc.file), Math.abs(pw.rank - pc.rank)) === 1) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function hasRookAllyAlignment(friendlyPieces: FriendlyPieceSummary[]): boolean {
+  const rooks = friendlyPieces.filter((p) => p.type === 'r');
+  const allies = friendlyPieces.filter((p) => p.type === 'p' || p.type === 'n' || p.type === 'b');
+  for (const r of rooks) {
+    for (const a of allies) {
+      if (r.file === a.file || r.rank === a.rank) return true;
+    }
+  }
+  return false;
+}
 
 function isPinnedToKing(engine: DeckChessEngine, square: string): boolean {
   return CardUtils.getPinRay(engine, square) !== null;
@@ -94,6 +124,9 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'p3_follow_me',
+    evaluateSetup(friendlyPieces) {
+      return hasPiecePawnAdjacency(friendlyPieces) ? 14 : 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -138,6 +171,7 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler<TargetOption>({
     cardId: 'p4_attack_together',
+    minAnchorsRequired: 2,
     getTargets(engine: DeckChessEngine, anchorSquare: string): TargetOption[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -208,6 +242,9 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler<TargetOption>({
     cardId: 'p5_get_behind_me',
+    evaluateSetup(friendlyPieces) {
+      return hasPiecePawnAdjacency(friendlyPieces) ? 14 : 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): TargetOption[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -259,6 +296,9 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'p6_tag_out',
+    evaluateSetup(friendlyPieces) {
+      return hasPiecePawnAdjacency(friendlyPieces) ? 14 : 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -336,6 +376,13 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'p8_call_reserves',
+    spawnsPieceType: 'p',
+    evaluateSetup(friendlyPieces, color) {
+      const inEnemyHalf = friendlyPieces.some(
+        (p) => p.type === 'p' && (color === 'w' ? p.rank >= 4 : p.rank <= 3)
+      );
+      return inEnemyHalf ? 20 : 0;
+    },
     evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -654,6 +701,11 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler<TargetOption>({
     cardId: 'n6_flanking_support',
+    minAnchorsRequired: 2,
+    evaluateSetup(friendlyPieces) {
+      const knights = friendlyPieces.filter((p) => p.type === 'n');
+      return knights.length >= 2 && knights.some((k) => k.file === 0 || k.file === 7) ? 18 : 0;
+    },
     evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
       const { file } = CardUtils.getCoords(anchorSquare);
       if (file !== 0 && file !== 7) return false;
@@ -746,6 +798,13 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'n7_outpost_support',
+    spawnsPieceType: 'p',
+    evaluateSetup(friendlyPieces, color) {
+      const inEnemyHalf = friendlyPieces.some(
+        (p) => p.type === 'n' && (color === 'w' ? p.rank >= 4 : p.rank <= 3)
+      );
+      return inEnemyHalf ? 20 : 0;
+    },
     evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -798,6 +857,9 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'b1_let_me_through',
+    evaluateSetup(friendlyPieces) {
+      return hasPiecePawnAdjacency(friendlyPieces) ? 14 : 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -1068,6 +1130,13 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'b6_come_this_way',
+    evaluateSetup(friendlyPieces) {
+      return friendlyPieces.some(
+        (p) => p.type === 'b' && (p.sq === 'd4' || p.sq === 'd5' || p.sq === 'e4' || p.sq === 'e5')
+      )
+        ? 20
+        : 0;
+    },
     evaluateConditions(_engine: DeckChessEngine, anchorSquare: string): boolean {
       return ['d4', 'd5', 'e4', 'e5'].includes(anchorSquare);
     },
@@ -1192,6 +1261,9 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'r1_make_way',
+    evaluateSetup(friendlyPieces) {
+      return hasRookAllyAlignment(friendlyPieces) ? 15 : 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): TargetOption[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -1317,6 +1389,9 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'r2_ive_got_your_back',
+    evaluateSetup(friendlyPieces) {
+      return hasRookAllyAlignment(friendlyPieces) ? 15 : 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -1372,6 +1447,11 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'r3_cut_across',
+    evaluateSetup(friendlyPieces) {
+      return friendlyPieces.some((p) => p.type === 'r' && (p.file === p.rank || p.file + p.rank === 7))
+        ? 18
+        : 0;
+    },
     evaluateConditions(_engine: DeckChessEngine, anchorSquare: string): boolean {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       return file === rank || file + rank === 7;
@@ -1428,6 +1508,16 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler<TargetOption>({
     cardId: 'r4_move_in_unison',
+    minAnchorsRequired: 2,
+    evaluateSetup(friendlyPieces) {
+      const rooks = friendlyPieces.filter((p) => p.type === 'r');
+      for (let i = 0; i < rooks.length; i++) {
+        for (let j = i + 1; j < rooks.length; j++) {
+          if (rooks[i].file === rooks[j].file || rooks[i].rank === rooks[j].rank) return 24;
+        }
+      }
+      return 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): TargetOption[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -1521,18 +1611,14 @@ export function registerPlaybook36Handlers(): void {
       const chosenExtra = typeof match === 'string' ? extraSquare : (match.extraSquare || extraSquare);
       if (!chosenExtra) return { success: false, error: 'Missing paired rook target' };
 
-      // Find the second rook
+      // Find the second rook using the exact displacement vector (df, dr)
       const turn = engine.getTurn();
-      let otherRookOrigin: string | null = null;
-      for (let r = 0; r < 8; r++) {
-        for (let f = 0; f < 8; f++) {
-          const s = CardUtils.getSquare(f, r);
-          if (s && s !== anchorSquare) {
-            const p = engine.getPiece(s);
-            if (p && p.color === turn && p.type === 'r') otherRookOrigin = s;
-          }
-        }
-      }
+      const cAnchor = CardUtils.getCoords(anchorSquare);
+      const cTarget = CardUtils.getCoords(targetSquare);
+      const cExtra = CardUtils.getCoords(chosenExtra);
+      const df = cTarget.file - cAnchor.file;
+      const dr = cTarget.rank - cAnchor.rank;
+      const otherRookOrigin = CardUtils.getSquare(cExtra.file - df, cExtra.rank - dr);
       if (!otherRookOrigin) return { success: false, error: 'Second rook not found' };
 
       const r1 = engine.getPiece(anchorSquare);
@@ -1563,6 +1649,9 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'r5_catapult',
+    evaluateSetup(friendlyPieces) {
+      return hasRookAllyAlignment(friendlyPieces) ? 15 : 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -1625,6 +1714,14 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'r6_garrison',
+    spawnsPieceType: 'p',
+    evaluateSetup(friendlyPieces) {
+      const king = friendlyPieces.find((p) => p.type === 'k');
+      const rooks = friendlyPieces.filter((p) => p.type === 'r');
+      return king && rooks.some((r) => Math.abs(r.file - king.file) + Math.abs(r.rank - king.rank) === 1)
+        ? 18
+        : 0;
+    },
     evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -1665,6 +1762,19 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'q1_royal_summons',
+    evaluateSetup(friendlyPieces) {
+      const queen = friendlyPieces.find((p) => p.type === 'q');
+      const allies = friendlyPieces.filter((p) => p.type !== 'q' && p.type !== 'k');
+      return queen &&
+        allies.some(
+          (a) =>
+            a.file === queen.file ||
+            a.rank === queen.rank ||
+            Math.abs(a.file - queen.file) === Math.abs(a.rank - queen.rank)
+        )
+        ? 18
+        : 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -1775,16 +1885,27 @@ export function registerPlaybook36Handlers(): void {
                     attacks = true;
                   }
                 } else if (ep.type === 'b' || ep.type === 'r' || ep.type === 'q') {
-                  const isDiag = Math.abs(edf) === Math.abs(edr);
-                  const isOrth = edf === 0 || edr === 0;
-                  if ((ep.type === 'b' && isDiag) || (ep.type === 'r' && isOrth) || ep.type === 'q') {
+                  const isDiag = Math.abs(edf) === Math.abs(edr) && edf !== 0;
+                  const isOrth = (edf === 0 || edr === 0) && (edf !== 0 || edr !== 0);
+                  if (
+                    (ep.type === 'b' && isDiag) ||
+                    (ep.type === 'r' && isOrth) ||
+                    (ep.type === 'q' && (isDiag || isOrth))
+                  ) {
                     const stepF = Math.sign(edf);
                     const stepR = Math.sign(edr);
                     let s = 1;
-                    let clear = true;
+                    let clear = false;
                     while (true) {
                       const testSq = CardUtils.getSquare(cE.file + stepF * s, cE.rank + stepR * s);
-                      if (!testSq || testSq === allySq) break;
+                      if (!testSq || engine.isSquareBlockedByBarrier(testSq)) {
+                        clear = false;
+                        break;
+                      }
+                      if (testSq === allySq) {
+                        clear = true;
+                        break;
+                      }
                       if (engine.getPiece(testSq)) {
                         clear = false;
                         break;
@@ -1919,6 +2040,19 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'q4_one_fell_swoop',
+    evaluateSetup(friendlyPieces) {
+      const queen = friendlyPieces.find((p) => p.type === 'q');
+      const allies = friendlyPieces.filter((p) => p.type !== 'q' && p.type !== 'k');
+      return queen &&
+        allies.some(
+          (a) =>
+            a.file === queen.file ||
+            a.rank === queen.rank ||
+            Math.abs(a.file - queen.file) === Math.abs(a.rank - queen.rank)
+        )
+        ? 18
+        : 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -2015,6 +2149,12 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'k1_conscription',
+    spawnsPieceType: 'p',
+    evaluateSetup(friendlyPieces, color) {
+      const king = friendlyPieces.find((p) => p.type === 'k');
+      const homeRank = color === 'w' ? 0 : 7;
+      return king && king.rank === homeRank && (king.file <= 2 || king.file >= 5) ? 15 : 0;
+    },
     evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
       const turn = engine.getTurn();
       const corners = turn === 'w' ? ['a1', 'h1'] : ['a8', 'h8'];
@@ -2048,6 +2188,14 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler({
     cardId: 'k2_royal_knighting',
+    spawnsPieceType: 'n',
+    evaluateSetup(friendlyPieces) {
+      const king = friendlyPieces.find((p) => p.type === 'k');
+      const pawns = friendlyPieces.filter((p) => p.type === 'p');
+      return king && pawns.some((p) => Math.max(Math.abs(p.file - king.file), Math.abs(p.rank - king.rank)) === 1)
+        ? 18
+        : 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
@@ -2086,6 +2234,13 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   registerCardHandler<TargetOption>({
     cardId: 'k3_royal_execution',
+    evaluateSetup(friendlyPieces) {
+      const king = friendlyPieces.find((p) => p.type === 'k');
+      const allies = friendlyPieces.filter((p) => p.type !== 'k');
+      return king && allies.some((a) => Math.max(Math.abs(a.file - king.file), Math.abs(a.rank - king.rank)) === 1)
+        ? 15
+        : 0;
+    },
     getTargets(engine: DeckChessEngine, anchorSquare: string): TargetOption[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();

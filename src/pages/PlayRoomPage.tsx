@@ -242,9 +242,12 @@ export const PlayRoomPage: React.FC = () => {
                             selectedCardId={deckGame.selectedCardId}
                             disambiguationCandidates={deckGame.disambiguationCandidates}
                             pendingCardMove={deckGame.pendingCardMove}
+                            pendingPromotionMove={deckGame.pendingPromotionMove}
                             onSquareClick={deckGame.handleSquareClick}
                             onConfirmCardMove={deckGame.confirmPendingCardMove}
                             onCancelCardMove={deckGame.cancelPendingCardMove}
+                            onSelectPromotion={deckGame.selectPromotion}
+                            onChangeCardPromotion={deckGame.changeCardPromotion}
                             inCheck={deckGame.inCheck}
                             activeModifiers={deckGame.activeModifiers}
                           />

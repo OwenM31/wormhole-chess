@@ -217,7 +217,7 @@ export const HomePage: React.FC = () => {
                 <div>
                   <h2 style={stageTitleStyle}>Deck Builder Chess</h2>
                   <p style={stageDescStyle}>
-                    Standard chess rules empowered by bespoke tactical cards — 1 card per turn, zero energy clutter, infinite tactical depth.
+                    Bring 8 cards into your chess match to unleash special attacks on your opponent.
                   </p>
                 </div>
                 <div

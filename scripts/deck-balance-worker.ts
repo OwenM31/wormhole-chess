@@ -45,7 +45,7 @@ export function simulateMatch(pair: MatchDeckPair): {
   }[];
 } {
   const engine = new DeckChessEngine(undefined, pair.whiteDeck, pair.blackDeck);
-  const MAX_PLIES = 64;
+  const MAX_PLIES = 42;
 
   const matchStats: Record<
     string,
@@ -113,9 +113,9 @@ export function simulateMatch(pair: MatchDeckPair): {
   } else {
     // Adjudicate at MAX_PLIES by material + position
     const evalCp = evaluateBoard(engine, 'w');
-    if (evalCp >= 250) {
+    if (evalCp >= 140) {
       winner = 'w';
-    } else if (evalCp <= -250) {
+    } else if (evalCp <= -140) {
       winner = 'b';
     } else {
       winner = 'draw';
@@ -199,7 +199,7 @@ export function runBatch(pairs: MatchDeckPair[], workerId: number = 0): WorkerBa
       }
     }
 
-    if ((g + 1) % 5 === 0 || g + 1 === pairs.length) {
+    if ((g + 1) % 2 === 0 || g + 1 === pairs.length) {
       console.log(`[Worker ${workerId}] Completed game ${g + 1}/${pairs.length}`);
     }
   }

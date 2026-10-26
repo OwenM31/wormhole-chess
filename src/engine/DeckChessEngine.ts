@@ -43,6 +43,7 @@ export class DeckChessEngine {
   private activeModifiers: BoardModifier[];
   private winner: PieceColor | 'draw' | null = null;
   private finishReason: GameFinishReason | null = null;
+  private positionHistory: string[] = [];
   public limitPawnsTo8: boolean = false;
 
   constructor(initialFen?: string, whiteDeck?: string[], blackDeck?: string[]) {
@@ -60,11 +61,27 @@ export class DeckChessEngine {
       b: { p: 0, n: 0, b: 0, r: 0, q: 0 },
     };
     this.activeModifiers = [];
+    this.positionHistory = [this.getPositionKey()];
+  }
+
+  public getPositionKey(): string {
+    const parts = this.chess.fen().split(' ');
+    return `${parts[0]} ${parts[1]}`;
+  }
+
+  public getPositionRepeatCount(key?: string): number {
+    const target = key ?? this.getPositionKey();
+    let count = 0;
+    for (let i = 0; i < this.positionHistory.length; i++) {
+      if (this.positionHistory[i] === target) count++;
+    }
+    return count;
   }
 
   public loadFen(fen: string): boolean {
     try {
       this.chess.load(fen, { skipValidation: true });
+      this.positionHistory.push(this.getPositionKey());
       return true;
     } catch {
       return false;
@@ -88,14 +105,18 @@ export class DeckChessEngine {
     return count < 8;
   }
 
-  public sweepPromotions(): void {
+  public sweepPromotions(promotionPiece: PieceSymbol = 'q'): boolean {
+    const promoType: PieceSymbol =
+      promotionPiece === 'r' || promotionPiece === 'b' || promotionPiece === 'n' ? promotionPiece : 'q';
+    let promoted = false;
     for (let f = 0; f < 8; f++) {
       const wSq = DeckChessEngine.coordsToSquare(f, 7); // Rank 8 for White
       if (wSq) {
         const p = this.chess.get(wSq);
         if (p && p.type === 'p' && p.color === 'w') {
           this.chess.remove(wSq);
-          this.chess.put({ type: 'q', color: 'w' }, wSq);
+          this.chess.put({ type: promoType, color: 'w' }, wSq);
+          promoted = true;
         }
       }
       const bSq = DeckChessEngine.coordsToSquare(f, 0); // Rank 1 for Black
@@ -103,10 +124,12 @@ export class DeckChessEngine {
         const p = this.chess.get(bSq);
         if (p && p.type === 'p' && p.color === 'b') {
           this.chess.remove(bSq);
-          this.chess.put({ type: 'q', color: 'b' }, bSq);
+          this.chess.put({ type: promoType, color: 'b' }, bSq);
+          promoted = true;
         }
       }
     }
+    return promoted;
   }
 
   // --- Board & Turn State Getters ---
@@ -175,11 +198,13 @@ export class DeckChessEngine {
   }
 
   public isDraw(): boolean {
+    if (this.getPositionRepeatCount() >= 3) return true;
     return this.chess.isDraw();
   }
 
   public isGameOver(): boolean {
     if (this.winner !== null) return true;
+    if (this.getPositionRepeatCount() >= 3) return true;
     return this.chess.isGameOver();
   }
 
@@ -188,7 +213,7 @@ export class DeckChessEngine {
     if (this.chess.isCheckmate()) {
       return this.chess.turn() === 'w' ? 'b' : 'w';
     }
-    if (this.chess.isDraw() || this.chess.isStalemate()) {
+    if (this.isDraw() || this.chess.isStalemate()) {
       return 'draw';
     }
     return null;
@@ -198,7 +223,7 @@ export class DeckChessEngine {
     if (this.finishReason) return this.finishReason;
     if (this.chess.isCheckmate()) return 'checkmate';
     if (this.chess.isStalemate()) return 'stalemate';
-    if (this.chess.isDraw()) return 'draw';
+    if (this.isDraw()) return 'draw';
     return null;
   }
 
@@ -239,6 +264,7 @@ export class DeckChessEngine {
     cloned.winner = this.winner;
     cloned.finishReason = this.finishReason;
     cloned.limitPawnsTo8 = this.limitPawnsTo8;
+    cloned.positionHistory = [...this.positionHistory];
     return cloned;
   }
 
@@ -748,6 +774,8 @@ export class DeckChessEngine {
       this.turnNumber += 1;
     }
 
+    this.positionHistory.push(this.getPositionKey());
+
     // Check game termination
     if (this.chess.isCheckmate()) {
       this.winner = previousTurn;
@@ -755,7 +783,7 @@ export class DeckChessEngine {
     } else if (this.chess.isStalemate()) {
       this.winner = 'draw';
       this.finishReason = 'stalemate';
-    } else if (this.chess.isDraw()) {
+    } else if (this.isDraw()) {
       this.winner = 'draw';
       this.finishReason = 'draw';
     }
@@ -765,7 +793,11 @@ export class DeckChessEngine {
 
   // --- Unified Action Model: Empowered Card Moves ---
 
-  public getEmpoweredMoves(square?: string, skipPreviewFen: boolean = false): EmpoweredMove[] {
+  public getEmpoweredMoves(
+    square?: string,
+    skipPreviewFen: boolean = false,
+    includeUnderpromotions: boolean = false
+  ): EmpoweredMove[] {
     if (this.cardPlayedThisTurn) return [];
     const currentTurn = this.getTurn();
     const hand = this.getHandForColor(currentTurn);
@@ -841,13 +873,43 @@ export class DeckChessEngine {
             actionType = 'wall';
           }
 
-          // Check King Safety Simulation & Outcome Preview
+          if (skipPreviewFen) {
+            const mightPromote =
+              piece.type === 'p' &&
+              ((currentTurn === 'w' && target[1] === '8') ||
+                (currentTurn === 'b' && target[1] === '1'));
+            const promoChoices: Array<string | undefined> =
+              mightPromote && includeUnderpromotions ? ['q', 'n', 'r', 'b'] : [mightPromote ? 'q' : undefined];
+
+            for (const promoChoice of promoChoices) {
+              moves.push({
+                from: sq,
+                to: target,
+                cardId: card.id,
+                actionType,
+                extraSquare,
+                promotion: promoChoice,
+                disambiguationPrompt,
+                metadata: {
+                  cardName: card.name,
+                  piece: card.piece,
+                  conditionGenre: card.condition_type,
+                  conditionExact: card.condition_exact,
+                  effectGenre: card.effect_type,
+                  effectExact: card.effect_exact,
+                },
+              });
+            }
+            continue;
+          }
+
+          // Check King Safety Simulation & Outcome Preview (for UI & full validation)
           const sim = this.clone();
           const simHandler = getCardHandler(cardId);
           if (simHandler) {
             const res = simHandler.execute(sim, sq, target, extraSquare);
             if (!res.success) continue;
-            sim.sweepPromotions();
+            const didPromote = sim.sweepPromotions('q');
 
             const oppColor = (currentTurn === 'w' ? 'b' : 'w') as Color;
             let kingSq: string | null = null;
@@ -868,35 +930,38 @@ export class DeckChessEngine {
               continue;
             }
 
-            let previewFen: string | undefined = undefined;
-            if (!skipPreviewFen) {
-              // Simulate turn advancement to generate exact outcome preview FEN
-              const fenParts = sim.getFen().split(' ');
-              fenParts[1] = oppColor;
-              fenParts[3] = '-';
-              if (currentTurn === 'b') {
-                fenParts[5] = String(parseInt(fenParts[5] || '1', 10) + 1);
-              }
-              previewFen = fenParts.join(' ');
+            // Simulate turn advancement to generate exact outcome preview FEN
+            const fenParts = sim.getFen().split(' ');
+            fenParts[1] = oppColor;
+            fenParts[3] = '-';
+            if (currentTurn === 'b') {
+              fenParts[5] = String(parseInt(fenParts[5] || '1', 10) + 1);
             }
+            const previewFen = fenParts.join(' ');
 
-            moves.push({
-              from: sq,
-              to: target,
-              cardId: card.id,
-              actionType,
-              extraSquare,
-              previewFen,
-              disambiguationPrompt,
-              metadata: {
-                cardName: card.name,
-                piece: card.piece,
-                conditionGenre: card.condition_type,
-                conditionExact: card.condition_exact,
-                effectGenre: card.effect_type,
-                effectExact: card.effect_exact,
-              },
-            });
+            const promoChoices: Array<string | undefined> =
+              didPromote && includeUnderpromotions ? ['q', 'n', 'r', 'b'] : [didPromote ? 'q' : undefined];
+
+            for (const promoChoice of promoChoices) {
+              moves.push({
+                from: sq,
+                to: target,
+                cardId: card.id,
+                actionType,
+                extraSquare,
+                promotion: promoChoice,
+                previewFen,
+                disambiguationPrompt,
+                metadata: {
+                  cardName: card.name,
+                  piece: card.piece,
+                  conditionGenre: card.condition_type,
+                  conditionExact: card.condition_exact,
+                  effectGenre: card.effect_type,
+                  effectExact: card.effect_exact,
+                },
+              });
+            }
           }
         }
       }
@@ -937,8 +1002,8 @@ export class DeckChessEngine {
       return execResult;
     }
 
-    // Global promotion rank sweep
-    this.sweepPromotions();
+    // Global promotion rank sweep supporting underpromotions
+    this.sweepPromotions((move.promotion as PieceSymbol) || 'q');
 
     // King safety check: Own king cannot be in check after card move
     const oppColor = (currentTurn === 'w' ? 'b' : 'w') as Color;
@@ -1002,6 +1067,7 @@ export class DeckChessEngine {
     }
     const nextFen = fenParts.join(' ');
     this.chess.load(nextFen, { skipValidation: true });
+    this.positionHistory.push(this.getPositionKey());
 
     // End-of-turn reset: card window reopened
     this.cardPlayedThisTurn = false;
@@ -1013,7 +1079,7 @@ export class DeckChessEngine {
     } else if (this.chess.isStalemate()) {
       this.winner = 'draw';
       this.finishReason = 'stalemate';
-    } else if (this.chess.isDraw()) {
+    } else if (this.isDraw()) {
       this.winner = 'draw';
       this.finishReason = 'draw';
     }

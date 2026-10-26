@@ -80,6 +80,7 @@ export function useDeckChessGame({
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const [disambiguationCandidates, setDisambiguationCandidates] = useState<EmpoweredMove[] | null>(null);
   const [pendingCardMove, setPendingCardMove] = useState<EmpoweredMove[] | null | any>(null);
+  const [pendingPromotionMove, setPendingPromotionMove] = useState<{ from: string; to: string } | null>(null);
 
   // Legacy targeting state preserved for backwards compatibility
   const [selectedCard, setSelectedCard] = useState<CardDefinition | null>(null);
@@ -148,6 +149,7 @@ export function useDeckChessGame({
   // Cancel any pending card move or selection
   const cancelPendingCardMove = useCallback(() => {
     setPendingCardMove(null);
+    setPendingPromotionMove(null);
     setDisambiguationCandidates(null);
     setSelectedCardId(null);
     setSelectedCard(null);
@@ -636,8 +638,18 @@ export function useDeckChessGame({
       // 3. CASE A: NO CARD ARMED (selectedCardId === null)
       // Standard chess moves execute immediately without any card interception
       if (!selectedCardId) {
-        // Standard legal move executed instantly
+        // Standard legal move executed instantly (or opens promotion picker if pawn reaches back rank)
         if (legalMovesForSelected.includes(square)) {
+          const movingPiece = engineRef.current.getPiece(selectedSquare);
+          const isPawnPromotion =
+            movingPiece &&
+            movingPiece.type === 'p' &&
+            ((movingPiece.color === 'w' && square[1] === '8') ||
+              (movingPiece.color === 'b' && square[1] === '1'));
+          if (isPawnPromotion) {
+            setPendingPromotionMove({ from: selectedSquare, to: square });
+            return;
+          }
           makeMove(selectedSquare, square);
           return;
         }
@@ -843,6 +855,28 @@ export function useDeckChessGame({
     [addLog, syncState]
   );
 
+  // Select standard pawn promotion piece
+  const selectPromotion = useCallback(
+    (piece: 'q' | 'r' | 'b' | 'n') => {
+      if (!pendingPromotionMove) return false;
+      const { from, to } = pendingPromotionMove;
+      setPendingPromotionMove(null);
+      return makeMove(from, to, piece);
+    },
+    [pendingPromotionMove, makeMove]
+  );
+
+  // Change promotion piece on a pending card move
+  const changeCardPromotion = useCallback(
+    (piece: 'q' | 'r' | 'b' | 'n') => {
+      setPendingCardMove((prev: EmpoweredMove | null) => {
+        if (!prev) return prev;
+        return { ...prev, promotion: piece };
+      });
+    },
+    []
+  );
+
   // Best-Move Hint Actions
   const requestHint = useCallback(() => {
     if (hintMove) {
@@ -969,6 +1003,7 @@ export function useDeckChessGame({
     setHoveredCard: setHoveredCardId,
     disambiguationCandidates,
     pendingCardMove,
+    pendingPromotionMove,
     targetingStage,
     selectedAnchorSquare,
     selectedTargetSquare,
@@ -997,6 +1032,8 @@ export function useDeckChessGame({
     confirmPendingCardMove,
     cancelPendingCardMove,
     cancelCardSelection,
+    selectPromotion,
+    changeCardPromotion,
     makeMove,
     makeEmpoweredMove: confirmPendingCardMove,
     applyRemoteTurn,

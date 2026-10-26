@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-25T15:40:40-05:00
+updated: 2026-10-25T16:53:00-05:00
 ---
 
 # Project State
@@ -8,18 +8,21 @@ updated: 2026-10-25T15:40:40-05:00
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 - **Phase**: Phase 7 — *Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (The Causeway)*
-- **Task**: Phase 6 Complete & Verified (`VERIFICATION.md`) — Ready for Phase 7 Discussion & Planning (`@[.agent/workflows/discuss-phase.md] 7` or `@[.agent/workflows/plan.md] 7`)
-- **Status**: Paused at 2026-10-25 15:40
+- **Task**: Phase 6 V2 Strategic Engine Upgrade Complete & Verified — Ready for Phase 7 (`@[.agent/workflows/discuss-phase.md] 7` or `@[.agent/workflows/plan.md] 7`)
+- **Status**: Active (updated 2026-10-25 16:53)
 - **Roadmap Status**: Phases 1–6 Complete & Verified; Phase 7 Next
 
 ## Last Session Summary
-1. **Phase 6 Execution (`@[.agent/workflows/execute.md] 6`) Complete**:
-   - **Plan 6.1 (Wave 1)**: Unified Alpha-Beta search combining standard and 36-playbook moves, class-weighted Card Retention (`55cp–100cp`), and `evaluateHandSynergy()` (`+14cp–38cp`). Passing 18/18 TDD contract assertions (`3293d16`).
-   - **Plan 6.2 (Wave 1)**: Live Side Evaluation Bar (`<EvalBar />`) component with smooth height fill transition, sigmoid win% mapping, and dedicated responsive layout slot in `<TabletopArena />` (`7cd3b02`).
-   - **Plan 6.3 (Wave 2)**: Direct Best-Move `Hint` system with board square highlights (`hint-from-*`, `hint-to-*`, `BEST` badge) and 1-click execution across `useDeckChessGame.ts`, `DeckChessBoard.tsx`, `DeckBuilderPage.tsx`, and `HistoricalMatchViewer.tsx` (`5eb88d6`).
-   - **Plan 6.4 (Wave 2)**: Diagnosed worker ESM loader resolution failure (`ERR_MODULE_NOT_FOUND`), re-architected tournament harness into robust multi-process architecture (`scripts/simulate-deck-balance.mjs` and `scripts/deck-balance-worker.ts`), executed tournament across 8 CPU cores with zero sampling bias, and generated `.agent/state/phases/6/balance-metrics.json` and `BALANCE_REPORT.md` (`3abe2e7`).
-   - **Plan 6.5 (Wave 3)**: Playwright E2E browser verification (`scripts/verify-phase6-e2e.mjs`) passing 4/4 scenarios (desktop eval bar, hint banner and board highlights, AI reply with dynamic eval bar update, and mobile 375px zero overflow). Full regression matrix green (18/18 AI, 169/169 Playbook, 43/43 Mechanics, typecheck 0 errors, build 3.05s) (`53c38bb`).
-   - **Verification**: Authored `.agent/state/phases/6/VERIFICATION.md` confirming all must-haves with PASS verdict and updated roadmap (`e52d858`).
+1. **Phase 6 V2 Strategic AI Engine Upgrade (`src/engine/DeckChessAI.ts`, `src/engine/DeckChessEngine.ts`, `src/engine/cards/playbook36Handlers.ts`)**:
+   - **Root Cause Cured (`Ra8-b8-a8-b8` Opening Shuffling & 77.8% Draw Rate)**: Fixed the upside-down Piece-Square Table (`PST`) row indexing bug (`pstRow = color === 'w' ? r : 7 - r`), preserved `positionHistory` across `DeckChessEngine.clone()`, enforced 3-fold repetition draws, and added repetition contempt (`-45cp`).
+   - **Non-Linear Piece Scarcity, Card Orphaning & Offensive Anchor Hunting**: Implemented `evaluateCardScarcityAndHand()` with non-linear pawn scarcity, pair-card (`R4`/`N6`/`P4`) `minAnchorsRequired: 2` orphaning, Rank 6/7 pawn promotion & `K2 Royal Knighting` revival valuation, and symmetric opponent anchor hunting.
+   - **Full Underpromotion Support (`Q, R, B, N`)**: Added underpromotion support across `DeckChessEngine.ts`, `DeckChessAI.ts`, `useDeckChessGame.ts`, `DeckChessBoard.tsx`, `DeckBuilderPage.tsx`, and `PlayRoomPage.tsx`.
+   - **Modular Card Handler Architecture**: Co-located `minAnchorsRequired`, `spawnsPieceType`, and fast zero-clone `evaluateSetup` directly on `CardBehaviorHandler` objects in `playbook36Handlers.ts` (zero hardcoded `cardId` switches in `DeckChessAI.ts`).
+   - **Multi-Ply Card Search, Selective Quiescence & Fast Terminal Checks**: Enabled inner-ply card search (`Ply 2` opponent card defense + `Ply 3` 2-turn combo discovery), selective capture quiescence, and eliminated redundant `chess._moves()` calls inside `evaluateBoard` / `minimax`.
+   - **Empirical Verification**:
+     - `scripts/verify-phase6-ai-engine.ts`: **33/33 assertions PASSED** across 9 Grandmaster suites.
+     - `scripts/benchmark-v2-vs-v1.ts`: V2 defeated V1 **9W - 0L - 7D (78.1% score, +221 Elo advantage)** across 16 duplicate-deck games.
+     - `scripts/simulate-deck-balance.mjs`: Draw rate dropped from **77.8% down to 11.1%** (88.9% decisive games) in `.agent/state/phases/6/BALANCE_REPORT.md`.
 
 ## In-Progress Work
 

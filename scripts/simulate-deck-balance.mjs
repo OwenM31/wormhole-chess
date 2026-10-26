@@ -73,7 +73,7 @@ async function main() {
   fs.mkdirSync(tempDir, { recursive: true });
 
   const pairsPerWorker = Math.ceil(allPairs.length / numCores);
-  const workerScriptPath = path.resolve(__dirname, 'deck-balance-worker.ts');
+  const workerScriptPath = 'scripts/deck-balance-worker.ts';
   const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
   const startTime = Date.now();
@@ -83,8 +83,8 @@ async function main() {
     const slice = allPairs.slice(i * pairsPerWorker, (i + 1) * pairsPerWorker);
     if (slice.length === 0) continue;
 
-    const batchPath = path.join(tempDir, `batch_${i}.json`);
-    const resultPath = path.join(tempDir, `result_${i}.json`);
+    const batchPath = `.agent/state/phases/6/temp_batches/batch_${i}.json`;
+    const resultPath = `.agent/state/phases/6/temp_batches/result_${i}.json`;
 
     fs.writeFileSync(batchPath, JSON.stringify({ workerId: i, pairs: slice }), 'utf-8');
 
