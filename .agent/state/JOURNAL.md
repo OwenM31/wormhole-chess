@@ -4,6 +4,48 @@
 
 ---
 
+### Session: 2026-10-26 14:37
+
+#### Objective
+Upgrade the Phase 6 Grandmaster AI engine (`V2`) to eliminate the `Ra8-b8-a8-b8` opening shuffling bug and `77.8%` tournament draw rate, add full underpromotion (`Q, R, B, N`), non-linear piece scarcity, card orphaning, offensive anchor hunting, modular card-handler AI metadata, and multi-ply card search; fix the `Q2: The Queen's Gambit` ray-geometry bug and audit all 36 card handlers; update `HomePage.tsx` copy and deploy to Cloudflare Pages; and pause cleanly (`@[.agent/workflows/pause.md]`).
+
+#### Accomplished
+- ✅ **V2 Strategic AI Engine Upgrade (`src/engine/DeckChessAI.ts`, `src/engine/DeckChessEngine.ts`, `src/engine/cards/playbook36Handlers.ts`)**:
+  - Fixed upside-down Piece-Square Table (`PST`) row indexing (`pstRow = color === 'w' ? r : 7 - r`), preserved `positionHistory` across `DeckChessEngine.clone()`, enforced 3-fold repetition draws, and added `-45cp` repetition contempt.
+  - Added non-linear piece scarcity, card orphaning (`minAnchorsRequired: 2` for `P4`, `N6`, `R4`), Rank 6/7 pawn promotion & `K2 Royal Knighting` revival valuation, and symmetric offensive anchor hunting (`evaluateCardScarcityAndHand`).
+  - Added full underpromotion (`Q, R, B, N`) across engine, AI search, and UI (`useDeckChessGame.ts`, `DeckChessBoard.tsx`, `DeckBuilderPage.tsx`, `PlayRoomPage.tsx`).
+  - Co-located `minAnchorsRequired`, `spawnsPieceType`, and fast zero-clone `evaluateSetup` onto `CardBehaviorHandler` objects in `playbook36Handlers.ts` (zero hardcoded `cardId` switches in `DeckChessAI.ts`).
+  - Added multi-ply card search (`Ply 2` opponent card defense + `Ply 3` 2-turn combo discovery), selective capture quiescence, Late Move Reductions (LMR), and eliminated redundant `chess.js` `isDraw()`/`isStalemate()` (`_moves()`) calls inside search.
+- ✅ **Empirical Verification & Balance Tournament (`scripts/verify-phase6-ai-engine.ts`, `scripts/benchmark-v2-vs-v1.ts`, `scripts/simulate-deck-balance.mjs`)**:
+  - `npx tsx scripts/verify-phase6-ai-engine.ts`: **33/33 assertions PASSED** across 9 Grandmaster suites.
+  - `npx tsx scripts/benchmark-v2-vs-v1.ts`: V2 defeated V1 **9W - 0L - 7D (78.1% score, +221 Elo advantage)** across 16 duplicate-deck games.
+  - `node scripts/simulate-deck-balance.mjs --games=36`: Updated `.agent/state/phases/6/BALANCE_REPORT.md` and `balance-metrics.json` — draw rate dropped from **77.8% down to 11.1%** (88.9% decisive games).
+- ✅ **`Q2: The Queen's Gambit` Attack-Ray Bug Fix & 36-Card Handler Audit (`src/engine/cards/playbook36Handlers.ts`, `src/engine/cards/cardRegistry.ts`)**:
+  - Fixed `q2_the_queens_gambit` where `ep.type === 'q'` was missing `&& (isDiag || isOrth)` and the ray loop treated walking off the board (`!testSq`) as `clear = true`, which previously allowed Black's Queen to falsely claim White's `d1` Queen attacked `c7` after `1. c4` and capture `d1` on Turn 1.
+  - Hardened `r4_move_in_unison` (`execute` computes paired Rook origin via exact displacement vector `(df, dr)`) and `CardUtils.getPinRay` (enforces `isOrth || isDiag` geometry).
+  - Added Suite 6 to `scripts/verify-36-mechanics-edge-cases.ts` (`44/44 assertions PASSED`) and verified `scripts/verify-36-playbook.ts` (`169/169 PASSED`).
+- ✅ **HomePage Copy Update & Production Deployment (`src/pages/HomePage.tsx`, `fcd8786`)**:
+  - Updated Deck Builder Chess landing page copy to `"Bring 8 cards into your chess match to unleash special attacks on your opponent."`
+  - Built (`npm run build`), committed, pushed to `origin/master`, and deployed to Cloudflare Pages (`npm run deploy:pages`).
+
+#### Verification
+- [x] AI Engine V2 TDD Suite: 33/33 passing (`scripts/verify-phase6-ai-engine.ts`)
+- [x] V2 vs V1 Duplicate-Deck Gauntlet: 9W - 0L - 7D, 78.1% score, +221 Elo (`scripts/benchmark-v2-vs-v1.ts`)
+- [x] Tournament Balance Report: Draw rate reduced from 77.8% to 11.1% (`.agent/state/phases/6/BALANCE_REPORT.md`)
+- [x] Mechanics Edge Cases (incl. Q2 & R4 regressions): 44/44 passing (`scripts/verify-36-mechanics-edge-cases.ts`)
+- [x] 36-Card Playbook: 169/169 passing (`scripts/verify-36-playbook.ts`)
+- [x] Production Build & Cloudflare Pages Deployment: Clean build (`npm run build`) and live deploy (`npm run deploy:pages`)
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) following completion of the V2 AI engine upgrade, `Q2: The Queen's Gambit` bug fix, HomePage copy update, and Cloudflare Pages deployment.
+
+#### Handoff Notes
+- Working tree is 100% clean, pushed to `origin/master`, and deployed to Cloudflare Pages.
+- Roadmap position is at **Phase 7: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)**.
+- Upon resuming (`/resume`), discuss or plan Phase 7 via `@[.agent/workflows/discuss-phase.md] 7` or `@[.agent/workflows/plan.md] 7`.
+
+---
+
 ### Session: 2026-10-25 15:40
 
 #### Objective
