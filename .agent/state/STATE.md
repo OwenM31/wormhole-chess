@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-26T14:37:00-05:00
+updated: 2026-10-27T14:19:00-05:00
 ---
 
 # Project State
@@ -7,10 +7,10 @@ updated: 2026-10-26T14:37:00-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-- **Phase**: Phase 7 — *Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (The Causeway)*
-- **Task**: Phase 6 V2 Strategic Engine Upgrade, Q2 Ray Bug Fix & HomePage Copy Complete — Ready for Phase 7 (`@[.agent/workflows/discuss-phase.md] 7` or `@[.agent/workflows/plan.md] 7`)
-- **Status**: Paused at 2026-10-26 14:37
-- **Roadmap Status**: Phases 1–6 Complete & Verified; Phase 7 Next
+- **Phase**: Phase 7 — *36-Card Ability Overhaul, Board Preview Arrows & Tournament Re-Simulation*
+- **Task**: Phase 7 Inserted (Phases 8–10 Renumbered) — Ready for Phase 7 Planning (`@[.agent/workflows/plan.md] 7`)
+- **Status**: Active (resumed 2026-10-26 15:16)
+- **Roadmap Status**: Phases 1–6 Complete & Verified; Phase 7 Next (Phases 8–10 Campaign)
 
 ## Last Session Summary
 1. **Phase 6 V2 Strategic AI Engine Upgrade (`src/engine/DeckChessAI.ts`, `src/engine/DeckChessEngine.ts`, `src/engine/cards/playbook36Handlers.ts`)**:

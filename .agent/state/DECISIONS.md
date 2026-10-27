@@ -827,4 +827,62 @@ During `/discuss-phase 6`, we clarified the design of the Grandmaster Card-Aware
 
 ---
 
-*Last updated: 2026-10-25*
+### [DECISION-036] Phase 7 Decisions: 36-Card Ability Overhaul Around Natural Piece Strengths/Weaknesses & Board Preview Arrows
+
+**Date**: 2026-10-27
+**Status**: Accepted
+
+#### Context
+Following the Phase 6 tournament balance simulation (`BALANCE_REPORT.md`), we reviewed all 36 cards class-by-class (`P1–P8, N1–N7, B1–B7, R1–R6, Q1–Q4, K1–K4`) to eliminate contrived conditions (such as `0.0%` corner-camp triggers or redundant passive king-pin checks) and replace counter-productive effects with abilities that either overcome each piece's classic chess frustration or amplify its natural strength.
+
+#### Decision
+1. **Pawns (`P1–P8`)**:
+   - **`P1: Sidestep`**: Condition: Pawn is blocked directly in front by any piece. Effect: Step 1 square diagonally forward onto an empty square.
+   - **`P2: Attack Head On`** *(Unchanged)*: Condition: Enemy Pawn directly in front. Effect: Capture that enemy Pawn straight ahead.
+   - **`P3: March Together`** *(Replaces `Follow Me`)*: Condition: Two friendly Pawns stand horizontally adjacent on the same rank with empty squares directly in front of both. Effect: Advance both friendly Pawns 1 square straight forward together.
+   - **`P4: Attack Together`**: Condition: Pawn can capture an enemy piece and has an adjacent friendly Pawn in its 8 surrounding squares. Effect: Capture the enemy piece and move the adjacent friendly Pawn into the vacated square.
+   - **`P5: Get Behind Me`**: Condition: Friendly non-Pawn piece directly in front (or on a forward diagonal) of this Pawn is under attack. Effect: Swap places with that attacked friendly piece.
+   - **`P6: Double Time`** *(Replaces `Tag Out`)*: Condition: Pawn is on Rank 3, 4, or 5 with 2 empty squares directly in front. Effect: Advance this Pawn 2 squares straight forward.
+   - **`P7: Protect the King`**: Condition: Pawn has your friendly King in its 8 surrounding squares. Effect: Slide this Pawn any number of unobstructed squares diagonally to move or capture (like a Bishop).
+   - **`P8: Call Reserves`**: Condition: Pawn is in enemy territory (Ranks 5–7) with an empty rear-diagonal square. Effect: Spawn a friendly Pawn onto an empty rear-diagonal square behind this Pawn (creating a Pawn Chain).
+2. **Knights (`N1–N7`)**:
+   - **`N1: Adrenaline Jump`** *(Unchanged)*: Condition: Knight is under attack. Effect: `3x1` jump.
+   - **`N2: Springboard`** *(Replaces `Swap With Me`)*: Condition: Friendly piece occupies one of this Knight's L-jump squares. Effect: Bounce off that friendly piece's square to make a second full Knight L-jump (move or capture).
+   - **`N3: Trample`**: Condition: Enemy Pawn lies on the 2-square straight leg of either the `2x1` or `1x2` L-jump path. Effect: Jump (move or capture) and destroy enemy Pawn(s) on the chosen L-path (with semi-transparent L-path arrows rendered underneath pieces).
+   - **`N4: Square Jump`** *(Replaces `Pin Swap`)*: Condition: Knight is defended by any friendly piece. Effect: Jump 2 squares diagonally in any direction (leaping over intermediate pieces to move or capture).
+   - **`N5: Get to the King`**: Condition: Knight can L-jump (move or capture) onto an unthreatened square `S1` (not attacked by any standard enemy move) that forks the enemy King + at least 1 other enemy piece. Effect: Jump to `S1`, then immediately make a second L-jump from `S1` to any valid square `S2` (move or capture), confirmed via 2-click UI (`Knight → S1 → S2`).
+   - **`N6: Flanking Support`**: Condition: Knight is on the `a, b, g, or h` file and you have another friendly Knight on the board. Effect: Make a normal jump with this Knight, and move the other friendly Knight into the vacated square.
+   - **`N7: Outpost Support`**: Condition: Knight is on Ranks 5–8 with an empty rear-diagonal square. Effect: Spawn a friendly Pawn onto an empty rear-diagonal square behind this Knight.
+3. **Bishops (`B1–B7`)**:
+   - **`B1: Let Me Through`**: Condition: Friendly Pawn blocks this Bishop along a forward diagonal. Effect: Slide cleanly *through* that friendly Pawn to move or capture along the diagonal beyond it.
+   - **`B2: Pierce`**: Condition: 1 enemy Pawn on unobstructed diagonal. Effect: Slide through and destroy that enemy Pawn, then move to an empty square or capture an enemy piece along the diagonal beyond it.
+   - **`B3: Ricochet`** *(Unchanged)*: Bounce 90° inward off `a` or `h` file rim.
+   - **`B4: Change Color`**: Condition: Enemy piece is orthogonally adjacent (`N/S/E/W`) to this Bishop. Effect: Step 1 square orthogonally to an empty square or capture that enemy, permanently switching square color.
+   - **`B5: Take My Place`**: Condition: This Bishop is under attack. Effect: Swap places with any friendly non-King piece along this Bishop's unobstructed diagonals.
+   - **`B6: Diagonal Launch`** *(Replaces `Come This Way`)*: Condition: Friendly Pawn sits on any of the 3 squares in the rank directly ahead of this Bishop (`front-left`, `front-center`, `front-right`). Effect: Launch that Pawn any number of unobstructed squares along the Pawn's forward diagonals (move or capture).
+   - **`B7: Bishop's Blessing`**: Condition: Friendly non-Bishop piece is in this Bishop's 8 surrounding squares. Effect: Move that friendly piece unobstructed along the diagonals of its current square (move or capture).
+4. **Rooks (`R1–R6`)**:
+   - **`R1: Make Way`** *(Unchanged)*.
+   - **`R2: I've Got Your Back`**: Condition: Friendly unit on same rank unobstructed. Effect: Push friendly unit 1 square forward (to an empty square or enemy capture) and slide Rook into the square it vacated.
+   - **`R3: Cut Across`** *(Unchanged)*.
+   - **`R4: Move in Unison`**: Condition: Two friendly Rooks can see each other along an unobstructed rank or file. Effect: Move one Rook along its rank/file (move or capture) and move the second Rook into its vacated square.
+   - **`R5: Catapult`**: Condition: Friendly non-King piece is directly in front of Rook (`N/S/E/W`) and an enemy non-King lies along the unobstructed ray ahead. Effect: Launch that friendly piece along the ray to capture that enemy unit (Rook stays).
+   - **`R6: Garrison`**: Condition: Rook is orthogonally adjacent (`N/E/S/W`) to your King and the square 1 rank in front of the Rook is empty. Effect: Spawn 1 friendly Pawn 1 rank in front of the Rook.
+5. **Queens (`Q1–Q4`)**:
+   - **`Q1: Royal Summons`**: Condition: Friendly non-King piece lies in Queen's 8-directional line of sight at `distance >= 2`. Effect: Pull that friendly piece along the ray onto the empty square adjacent to the Queen.
+   - **`Q2: The Queen's Gambit`**: Condition: Friendly non-King piece in Queen's sight is under attack. Effect: Sacrifice that ally and move Queen onto the attacker's square, rendering board preview arrows for `Queen → Ally` and `Ally → Attacker` underneath the pieces.
+   - **`Q3: Royal Shield`** *(Replaces `All Rise`)*: Condition: Friendly Pawn is 1 square away from Queen along any of the 8 movement rays. Effect: Slide Queen along that ray behind the Pawn—the Pawn lands on the target square (move or capture) as a shield, and the Queen stops 1 square behind it.
+   - **`Q4: One Fell Swoop`**: Condition: Queen supported from behind by `R/B/Q` along shared ray (with any number of empty squares between them) and enemy units ahead. Effect: Sweep ray and capture all enemies along path.
+6. **Kings (`K1–K4`)**:
+   - **`K1: Conscription`**: Condition: King is anywhere on Rank 1 with empty orthogonally adjacent (`N/E/W`) square(s). Effect: Spawn friendly Pawn(s) onto all empty orthogonally adjacent squares (valid to block orthogonal check).
+   - **`K2: Royal Knighting`** *(Unchanged)*.
+   - **`K3: Royal Execution`**: Condition: Enemy piece is in King's 8-directional line of sight and friendly piece is in King's 8 surrounding squares. Effect: Launch that adjacent friendly piece onto the enemy's square to capture it.
+   - **`K4: Turncoat`** *(Replaces `Banish`)*: Condition: Enemy Pawn is in your King's 8 surrounding squares. Effect: Convert that enemy Pawn into a friendly Pawn under your control.
+
+#### Consequences
+- Aligns all 36 cards with organic chess piece strengths and frustrations while eliminating `0.0%` dead triggers.
+- Adds clear visual path/sight arrows underneath board pieces for multi-entity cards (`N3`, `N5`, `Q2`).
+
+---
+
+*Last updated: 2026-10-27*

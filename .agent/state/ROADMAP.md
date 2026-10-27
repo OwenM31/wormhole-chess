@@ -1,13 +1,13 @@
 ---
 milestone: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 version: 3.0.0
-updated: 2026-10-24T14:52:00-05:00
+updated: 2026-10-27T14:18:00-05:00
 ---
 
 # Roadmap
 
 > **Current Milestone:** v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-> **Current Phase:** Phase 7 — Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
+> **Current Phase:** Phase 7 — 36-Card Ability Overhaul, Board Preview Arrows & Tournament Re-Simulation
 > **Status:** 🔄 Ready for Planning (Phases 1–6 Complete & Verified)
 
 ## Milestone Goal
@@ -22,10 +22,11 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 - [x] **36-Card Engine & Global Invariants (Phase 3)**: Implement all 36 bespoke card handlers in `cardRegistry.ts` and global rules in `DeckChessEngine.ts` (1 card per turn / no Energy cost, Rank 1 Pawn legalization, Rank 8 instant promotion, relaxed Bishop color switching, `limitPawnsTo8` toggle).
 - [x] **Deck Builder Main Menu Hub & Multi-Profile Switcher (Phase 3)**: Vibrant main menu at `/deck-builder` with `Campaign`, `Multiplayer`, `My Profile` + `Switch Profile` (multi-slot local profiles), and a right-hand Player Stats (`Gold Coins`, `Level`) + Aesthetic Canvas area.
 - [x] **Multiplayer & AI Playtest Prototype (Phase 3)**: 36-card Deck Builder loadout screen, Private Room Matchmaking (`/play/:code`), and Custom AI Playtest mode to test cards and tune AI opponents.
-- [x] **Gameplay Bugfixes, 36-Card Audit & Mobile Ergonomics (Phase 4)**: Sleek standard move vs empowered card move choice, full 36-card mechanics/condition audit (including perpendicular R1 step-aside), mobile horizontal card scroll wheels, and auto-sorting spent cards to hand end.
+- [x] **Gameplay Bugfixes, 36-Card Audit & Mobile Ergonomics (Phase 4)**: Sleek standard move vs empowered card move choice, full 36-card mechanics/condition audit (including perpendicular R1 step-aside), mobile horizontal scroll wheels, and auto-sorting spent cards to hand end.
 - [x] **Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & Copywriting (Phase 5)**: Purge lingering "energy" mentions across home page and menus, integrate rich atmospheric tabletop and castle hall visuals, rename Deck Builder Stage to Deck Builder Matchmaking, and refine condition/effect copywriting across all 36 cards.
 - [x] **Grandmaster Card-Aware AI Engine, Campaign Hints & 30M Deck Simulation (Phase 6)**: Unified Alpha-Beta search combining standard and 36-playbook moves, class-weighted Card Retention (`55cp–100cp`), `evaluateHandSynergy()` (`+14cp–38cp`), Live Side Evaluation Bar (`<EvalBar />`), 1-click Best-Move `Hint` system with board square highlights, and multi-worker Monte Carlo tournament harness (`BALANCE_REPORT.md` / `balance-metrics.json`).
-- [ ] **Campaign Engine, Town Tavern & Worlds 1–7 (Phases 7–9)**: Build the Castle Map UI, Town Tavern 0-card bot hustle, Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), and the 7-World Campaign puzzle sequences.
+- [ ] **36-Card Ability Overhaul, Board Preview Arrows & Tournament Re-Simulation (Phase 7)**: Overhaul 27 of the 36 release cards around natural piece strengths/frustrations, add board preview arrow overlays (`N3` L-paths, `N5` 2-click fork + second jump, `Q2` sight/attack arrows), update unit/E2E suites, and re-run the multi-worker tournament balance simulation.
+- [ ] **Campaign Engine, Town Tavern & Worlds 1–7 (Phases 8–10)**: Build the Castle Map UI, Town Tavern 0-card bot hustle, Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), and the 7-World Campaign puzzle sequences.
 
 ---
 
@@ -75,24 +76,31 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 
 ---
 
-### Phase 7: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
+### Phase 7: 36-Card Ability Overhaul, Board Preview Arrows & Tournament Re-Simulation
 **Status:** ⬜ Not Started
-**Objective:** Build the Campaign Map & Puzzle Engine (`Foreshadow -> Officer Duel -> Forced-Slot` cycle), Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), "Back to Town" Tavern Hustle (0-card Towny bots for Gold Coins), and World 1 (`The Causeway` — 7 Cards: `P1, P2, P3, N1, B1, N2, R1`).
-**Dependencies:** Phase 6
+**Objective:** Overhaul 27 of the 36 release cards (`P1, P3–P8, N2–N7, B1, B2, B4–B7, R2, R4–R6, Q1, Q3, Q4, K1, K3, K4`) across `releaseRoster36.ts`, `playbook36Handlers.ts`, `STORYBOARD.md`, and `DeckChessAI.ts` to align conditions and effects with natural piece strengths and frustrations; add board preview arrow overlays and multi-step UI staging for `N3 (Trample)` (`2x1` vs `1x2` L-paths), `N5 (Get to the King)` (2-click safe fork + second jump), and `Q2 (The Queen's Gambit)` (`Queen -> Ally` and `Ally -> Attacker` arrows); update all unit and edge-case test suites; and re-run the multi-worker Monte Carlo tournament simulation (`BALANCE_REPORT.md`).
+**Dependencies:** Phase 6 (Complete)
 
 ---
 
-### Phase 8: World 2 (`Outer Courtyard`) & Concurrent Castle Wings (`Worlds 3–6`)
+### Phase 8: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
 **Status:** ⬜ Not Started
-**Objective:** Author and verify the puzzle cycles, Wing Keys, and Boss Duels across World 2 (`N3, R2, B2, R3`) and the 4 Concurrent Wings off the Central Rotunda: World 3 (`The Barracks`), World 4 (`The Chapel`), World 5 (`The Armory`), and World 6 (`The Royal Court`).
+**Objective:** Build the Campaign Map & Puzzle Engine (`Foreshadow -> Officer Duel -> Forced-Slot` cycle), Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), "Back to Town" Tavern Hustle (0-card Towny bots for Gold Coins), and World 1 (`The Causeway` — 7 Cards: `P1, P2, P3, N1, B1, N2, R1`).
 **Dependencies:** Phase 7
 
 ---
 
-### Phase 9: World 7 (`The Throne Room`), The Jester Final Boss & Release Audit
+### Phase 9: World 2 (`Outer Courtyard`) & Concurrent Castle Wings (`Worlds 3–6`)
+**Status:** ⬜ Not Started
+**Objective:** Author and verify the puzzle cycles, Wing Keys, and Boss Duels across World 2 (`N3, R2, B2, R3`) and the 4 Concurrent Wings off the Central Rotunda: World 3 (`The Barracks`), World 4 (`The Chapel`), World 5 (`The Armory`), and World 6 (`The Royal Court`).
+**Dependencies:** Phase 8
+
+---
+
+### Phase 10: World 7 (`The Throne Room`), The Jester Final Boss & Release Audit
 **Status:** ⬜ Not Started
 **Objective:** Author and verify World 7 (`N7, P8, B7, Q4, K4`), the Iron King Boss Duel, and the True Final Boss showdown against the Scheming Jester (36-card Master AI), followed by full UX verification and Milestone v3.0 release.
-**Dependencies:** Phase 8
+**Dependencies:** Phase 9
 
 ---
 
