@@ -4,6 +4,37 @@
 
 ---
 
+### Session: 2026-10-27 14:28
+
+#### Objective
+Resume session context (`@[.agent/workflows/resume.md]`), review the 36 card abilities against empirical simulation data from `.agent/state/phases/6/BALANCE_REPORT.md`, redesign underperforming cards class-by-class around natural chess piece strengths and frustrations (`[DECISION-036]`), insert Phase 7 (`@[.agent/workflows/insert-phase.md]`), create all Phase 7 execution plans (`@[.agent/workflows/plan.md] 7`), and pause cleanly (`@[.agent/workflows/pause.md]`).
+
+#### Accomplished
+- ✅ **Piece-by-Piece 36-Card Ability Overhaul (`[DECISION-036]` in `DECISIONS.md`)**:
+  - Reviewed all 36 cards across Pawns (`P1–P8`), Knights (`N1–N7`), Bishops (`B1–B7`), Rooks (`R1–R6`), Queens (`Q1–Q4`), and Kings (`K1–K4`) using empirical Trigger Rate and Play Rate metrics from `BALANCE_REPORT.md`.
+  - Kept the 9 top-performing cards (`P2, N1, B3, R1, R3, Q2, K2` + core mechanics) and redesigned 27 cards so every condition happens organically and every effect either overcomes a piece's classic frustration or amplifies its natural strength.
+  - Designed under-piece SVG board preview arrows (`z-[6]` below `z-10` piece SVGs) and multi-step staging for `N3: Trample` (`2x1` vs `1x2` L-paths), `N5: Get to the King` (2-click safe Royal Fork `S1` -> `S2`), and `Q2: The Queen's Gambit` (`Queen -> Ally` sight arrow + `Ally -> Attacker` arrow).
+- ✅ **Phase 7 Inserted & Renumbered (`96fbb0f`)**:
+  - Inserted **Phase 7: 36-Card Ability Overhaul, Board Preview Arrows & Tournament Re-Simulation** into `ROADMAP.md` and renumbered Campaign phases to **Phases 8–10**.
+- ✅ **Phase 7 Research & Execution Plans (`2d7cc22`)**:
+  - Authored `.agent/state/phases/7/RESEARCH.md` with the complete 36-card matrix, `BoardPreviewArrow` contract, and `extraSquareFirst` vs `toFirst` staging architecture.
+  - Authored and verified 4 atomic execution plans across 3 waves (`7.1-PLAN.md` through `7.4-PLAN.md`) in `.agent/state/phases/7/`.
+
+#### Verification
+- [x] `[DECISION-036]` documented in `.agent/state/DECISIONS.md`.
+- [x] Phase 7 inserted in `.agent/state/ROADMAP.md` (Campaign phases renumbered to 8–10).
+- [x] `.agent/state/phases/7/RESEARCH.md` and `7.1-PLAN.md` – `7.4-PLAN.md` validated against Plan Checker (0 blockers, 100% disjoint Wave 2 file ownership).
+- [ ] Execute Phase 7 (`@[.agent/workflows/execute.md] 7`) in next session.
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) at clean boundary between Phase 7 planning and Phase 7 execution.
+
+#### Handoff Notes
+- Working tree is 100% clean and committed to git.
+- Upon resuming (`/resume`), proceed directly to **`@[.agent/workflows/execute.md] 7`** to execute Plans 7.1–7.4 across Waves 1–3 and generate the updated 36-card `BALANCE_REPORT.md`.
+
+---
+
 ### Session: 2026-10-26 14:37
 
 #### Objective
