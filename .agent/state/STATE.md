@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-28T14:50:00-05:00
+updated: 2026-10-28T15:05:30-05:00
 ---
 
 # Project State
@@ -7,10 +7,10 @@ updated: 2026-10-28T14:50:00-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-- **Phase**: Phase 8 — *Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness* (Complete & Verified)
-- **Task**: Phase 8 Finished; Ready for Phase 9 Planning (`@[.agent/workflows/plan.md] 9`)
-- **Status**: Paused at 2026-10-28 14:50
-- **Roadmap Status**: Phases 1–8 Complete & Verified; Phases 9–11 Next (Campaign Engine, Jester Shop & World Keys)
+- **Phase**: Phase 9 — *In-Game Read-Only Rewind Scrubber & Interactive Move Log* (Ready for Planning)
+- **Task**: Phase 9 Inserted; Ready for Phase 9 Planning (`@[.agent/workflows/plan.md] 9`)
+- **Status**: Active (resumed 2026-10-28 14:53)
+- **Roadmap Status**: Phases 1–8 Complete & Verified; Phase 9 Next (In-Game Rewind & Interactive Move Log); Phases 10–12 (Campaign Engine, Jester Shop & World Keys)
 
 ## Last Session Summary
 1. **Plan 8.1 (Search Speedup, Low-Determinism AI & Retention Decay)**:
@@ -56,5 +56,6 @@ updated: 2026-10-28T14:50:00-05:00
 
 ## Next Steps
 
-1. Resume session (`@[.agent/workflows/resume.md]`).
-2. Plan Phase 9 (`@[.agent/workflows/plan.md] 9`): Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`).
+1. Plan Phase 9 (`@[.agent/workflows/plan.md] 9`): In-Game Read-Only Rewind Scrubber & Interactive Move Log.
+2. Execute Phase 9 (`@[.agent/workflows/execute.md] 9`).
+3. Proceed to Phase 10: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`).
