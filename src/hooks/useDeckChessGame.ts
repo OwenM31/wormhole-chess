@@ -837,8 +837,8 @@ export function useDeckChessGame({
 
   // Reset or initialize new match
   const resetGame = useCallback(
-    (newWhiteDeck?: string[], newBlackDeck?: string[]) => {
-      engineRef.current = new DeckChessEngine(undefined, newWhiteDeck, newBlackDeck);
+    (newWhiteDeck?: string[], newBlackDeck?: string[], initialFen?: string) => {
+      engineRef.current = new DeckChessEngine(initialFen, newWhiteDeck, newBlackDeck);
       cancelPendingCardMove();
       setIsAiThinking(false);
       gameStartedAtRef.current = Date.now();
@@ -857,6 +857,20 @@ export function useDeckChessGame({
     },
     [cancelPendingCardMove, syncState]
   );
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__DECK_CHESS_GAME__ = {
+        getEngine: () => engineRef.current,
+        resetGame,
+        syncState,
+        selectCard: selectCardFromHand,
+        cancelPendingCardMove,
+        confirmPendingCardMove,
+        handleSquareClick,
+      };
+    }
+  }, [resetGame, syncState, selectCardFromHand, cancelPendingCardMove, confirmPendingCardMove, handleSquareClick]);
 
   // Resign match
   const resign = useCallback(
