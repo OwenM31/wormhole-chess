@@ -4,6 +4,45 @@
 
 ---
 
+### Session: 2026-10-28 16:10
+
+#### Objective
+Resume session context (`@[.agent/workflows/resume.md]`), execute Phase 9 (`@[.agent/workflows/execute.md] 9`) across Plans 9.1 and 9.2, implement timeline state snapshots and SAN move notation, build `<MoveStreamMobile />` horizontal tape and `<MoveTableDesktop />` 2-column move table, integrate board rewind highlights and 1-click return banner into `DeckBuilderPage.tsx` and `PlayRoomPage.tsx`, verify with 63-assertion contract suite and multi-viewport Playwright E2E tests, and cleanly pause the session (`@[.agent/workflows/pause.md]`).
+
+#### Accomplished
+- ✅ **Plan 9.1 (Wave 1) — Timeline State Machine, Mobile Move Stream & Desktop 2-Column Table (`8276715`, `2e2f30a`, `9df9541`, `acf0647`)**:
+  - Authored `src/utils/moveNotation.ts` and `scripts/verify-phase9-rewind-state.ts` (63/63 passing) covering 36-card codes, piece-card colors, SAN formatting, engine state snapshots, timeline boundary clamping, and 2-column row grouping.
+  - Implemented timeline snapshot state machine in `src/hooks/useDeckChessGame.ts` (`initialStateSnapshotRef`, `viewIndex`, `displayedState`, `activeMoveIndex`, `isViewingHistory`, `stepBackward`, `stepForward`, `stepToMove`, `jumpToLive`).
+  - Added historical evaluation computation and read-only guards preventing board clicks during history inspection.
+  - Built `src/components/MoveStreamMobile.tsx` with edge fade gradient mask, single-step `[ ‹ ]` and `[ › ]` controls, tactical green (`#3FB950`) active pills, piece-colored card tags, and horizontal container auto-scroll centering.
+  - Built `src/components/MoveTableDesktop.tsx` with 2-column `Turn | White | Black` layout, cell-by-cell moving green highlight box, clickable cell navigation, keyboard arrow listener, and `[ ‹ ] [ LIVE ] [ › ]` bottom transport bar.
+- ✅ **Plan 9.2 (Wave 2) — Arena Integration & Playwright E2E Verification (`902efe4`, `868e0d3`, `bec5bc9`, `07f2f49`)**:
+  - Wired `MoveStreamMobile` directly below the Hand on mobile (`< lg`) and `MoveTableDesktop` into the Right Column's Moves tab on desktop (`>= lg`) in `src/pages/DeckBuilderPage.tsx` and `src/pages/PlayRoomPage.tsx`.
+  - Added tactical green move origin/destination square highlights (`lastMoveFrom`, `lastMoveTo`) and 1-click `"⏪ Viewing Past Move — Click to Return Live"` banner to `src/components/DeckChessBoard.tsx`.
+  - Resolved window scrolling side effect by converting element `scrollIntoView()` calls to container-scoped `container.scrollTo()`, guaranteeing `window.scrollY === 0` on mobile.
+  - Authored and verified `scripts/verify-phase9-e2e.mjs` in headless Chromium across Mobile (`375x667`) and Desktop (`1280x800`) viewports with zero console errors. Captured proof screenshots `phase9_mobile_move_stream.png` and `phase9_desktop_move_table.png`.
+  - Authored `VERIFICATION.md` signing off Phase 9 as PASS, and updated `ROADMAP.md` and `STATE.md`.
+
+#### Verification
+- [x] Phase 9 Contract Test Suite: 63/63 passing (`scripts/verify-phase9-rewind-state.ts`)
+- [x] Phase 9 Playwright E2E Browser Suite: All scenarios passing (`scripts/verify-phase9-e2e.mjs`)
+- [x] Unit Test Suite: 43/43 passing (`npm test`)
+- [x] Production Build: Clean Vite bundle in 1.57s (`npm run build`)
+- [x] TypeScript: 0 errors across frontend, functions, and workers (`npm run typecheck:all`)
+- [x] Visual Proof Screenshots: `phase9_mobile_move_stream.png` and `phase9_desktop_move_table.png`
+- [x] Phase 9 Sign-Off: PASS documented in `.agent/state/phases/9/VERIFICATION.md`
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) following complete execution and verification of Phase 9.
+
+#### Handoff Notes
+- Working tree is 100% clean and committed on `master`.
+- Production build is verified and ready for deployment (`git push`).
+- Roadmap position is at **Phase 10: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)**.
+- Next session can immediately resume with `/resume` and run `@[.agent/workflows/plan.md] 10`.
+
+---
+
 ### Session: 2026-10-28 15:31
 
 #### Objective
