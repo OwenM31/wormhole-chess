@@ -92,12 +92,12 @@ console.log('\nSuite 2: King Check Invariant Enforcement');
 // ==========================================
 console.log('\nSuite 3: Pin Safety & Non-King Target Guards');
 {
-  // 1. N4 Pin Swap: White King on e1, White Knight on e2 (pinned by Rook e8).
-  // Friendly king at e1 is adjacent to e2, but MUST NOT be a swap target!
-  const n4Engine = new DeckChessEngine('4r3/8/8/8/8/8/4N3/3PK3 w - - 0 1', ['n4_pin_swap']);
-  const n4Moves = n4Engine.getEmpoweredMoves('e2');
-  assert(!n4Moves.some(m => m.to === 'e1'), 'N4 Pin Swap STRICTLY EXCLUDES friendly King as target');
-  assert(n4Moves.some(m => m.to === 'd1'), 'N4 Pin Swap targets friendly pawn at d1');
+  // 1. N4 Square Jump: White King on e1, White Knight on d4 defended by friendly Pawn at c3.
+  // Can leap (±2, ±2) diagonally to b6, f6, b2, f2
+  const n4Engine = new DeckChessEngine('4k3/8/8/8/3N4/2P5/8/4K3 w - - 0 1', ['n4_pin_swap']);
+  const n4Moves = n4Engine.getEmpoweredMoves('d4');
+  assert(n4Moves.some(m => m.to === 'f6'), 'N4 Square Jump leaps to f6');
+  assert(n4Moves.some(m => m.to === 'b6'), 'N4 Square Jump leaps to b6');
 
   // 2. B5 Take My Place: White King on e1, White Bishop on e2 (pinned by Rook e8).
   // King on e1 is diagonally adjacent to f2 / d2.
@@ -117,23 +117,22 @@ console.log('\nSuite 3: Pin Safety & Non-King Target Guards');
 // ==========================================
 console.log('\nSuite 4: Universal Rank-8 Pawn Promotion');
 {
-  // 1. P3 Follow Me: White Pawn on e7, White Rook on e6. Pushing e7->e8 promotes pawn to Queen!
-  const p3Engine = new DeckChessEngine('7k/4P3/4R3/8/8/8/8/4K3 w - - 0 1', ['p3_follow_me']);
-  const p3Moves = p3Engine.getEmpoweredMoves('e7');
-  assert(p3Moves.some(m => m.to === 'e8'), 'P3 Follow Me advances pawn to rank 8');
+  // 1. P3 March Together: White Pawns on d7 and e7. Pushing d7->d8 (with e7->e8) promotes pawn to Queen!
+  const p3Engine = new DeckChessEngine('7k/3PP3/8/8/8/8/8/4K3 w - - 0 1', ['p3_follow_me']);
+  const p3Moves = p3Engine.getEmpoweredMoves('d7');
+  assert(p3Moves.some(m => m.to === 'd8'), 'P3 March Together advances pawns to rank 8');
   const p3Res = p3Engine.makeEmpoweredMove(p3Moves[0]);
-  assert(p3Res.success === true, 'P3 Follow Me executed to rank 8');
-  assert(p3Engine.getPiece('e8')?.type === 'q', 'Pawn promoted to Queen on rank 8');
-  assert(p3Engine.getPiece('e7')?.type === 'r', 'Rook advanced to e7 behind Queen');
+  assert(p3Res.success === true, 'P3 March Together executed to rank 8');
+  assert(p3Engine.getPiece('d8')?.type === 'q', 'Pawn promoted to Queen on rank 8');
+  assert(p3Engine.getPiece('e8')?.type === 'q', 'Partner pawn promoted to Queen on rank 8');
 
-  // 2. P6 Tag Out: Pawn on e7, Bishop on e8. Swapping places puts pawn on e8, promoting to Queen!
-  const p6Engine = new DeckChessEngine('4B2k/4P3/8/8/8/8/8/4K3 w - - 0 1', ['p6_tag_out']);
-  const p6Moves = p6Engine.getEmpoweredMoves('e7');
-  assert(p6Moves.some(m => m.to === 'e8'), 'P6 Tag Out offers swap with frontally adjacent bishop at e8');
-  const p6Res = p6Engine.makeEmpoweredMove(p6Moves[0]);
-  assert(p6Res.success === true, 'P6 Tag Out executed');
-  assert(p6Engine.getPiece('e8')?.type === 'q', 'Pawn tagged out onto Rank 8 instantly promotes to Queen');
-  assert(p6Engine.getPiece('e7')?.type === 'b', 'Bishop now at e7');
+  // 2. P1 Sidestep onto Rank 8: Pawn on e7 blocked by enemy Rook at e8 sidesteps to d8 promoting to Queen!
+  const p1PromoEngine = new DeckChessEngine('4r2k/4P3/8/8/8/8/8/1K6 w - - 0 1', ['p1_sidestep']);
+  const p1PromoMoves = p1PromoEngine.getEmpoweredMoves('e7');
+  assert(p1PromoMoves.some(m => m.to === 'd8'), 'P1 Sidestep offers diagonal step to d8 on rank 8');
+  const p1Res = p1PromoEngine.makeEmpoweredMove(p1PromoMoves.find(m => m.to === 'd8')!);
+  assert(p1Res.success === true, 'P1 Sidestep executed to rank 8');
+  assert(p1PromoEngine.getPiece('d8')?.type === 'q', 'Sidestepped pawn promotes to Queen on rank 8');
 }
 
 // ==========================================
@@ -141,11 +140,11 @@ console.log('\nSuite 4: Universal Rank-8 Pawn Promotion');
 // ==========================================
 console.log('\nSuite 5: Black Player Orientation Symmetry');
 {
-  // 1. Black P1 Sidestep: Black pawn on e7 blocked by White pawn on e6 sidesteps horizontally to d7 and f7
+  // 1. Black P1 Sidestep: Black pawn on e7 blocked by White pawn on e6 sidesteps diagonally forward to d6 and f6
   const blackP1 = new DeckChessEngine('4k3/4p3/4P3/8/8/8/8/4K3 b - - 0 1', [], ['p1_sidestep']);
   const p1BlackMoves = blackP1.getEmpoweredMoves('e7');
-  assert(p1BlackMoves.some(m => m.to === 'd7'), 'Black P1 Sidestep offers d7 (horizontal sidestep)');
-  assert(p1BlackMoves.some(m => m.to === 'f7'), 'Black P1 Sidestep offers f7 (horizontal sidestep)');
+  assert(p1BlackMoves.some(m => m.to === 'd6'), 'Black P1 Sidestep offers d6 (diagonal sidestep)');
+  assert(p1BlackMoves.some(m => m.to === 'f6'), 'Black P1 Sidestep offers f6 (diagonal sidestep)');
 
   // 2. Black P2 Head On: Black pawn on e5 captures enemy pawn on e4 straight ahead
   const blackP2 = new DeckChessEngine('4k3/8/8/4p3/4P3/8/8/4K3 b - - 0 1', [], ['p2_head_on']);
@@ -170,13 +169,13 @@ console.log('\nSuite 5: Black Player Orientation Symmetry');
   assert(blackR1.getPiece('d7')?.type === 'p' && blackR1.getPiece('d7')?.color === 'b', 'Black Pawn stepped to d7');
 
   // 4. Black promotion on Rank 1 (sweepPromotions bSq)
-  // Black pawn at e2, Black rook at e3, White King safely at a1: P3 Follow Me pushes pawn e2->e1 and rook e3->e2
-  const blackPromoEngine = new DeckChessEngine('7k/8/8/8/8/4r3/4p3/K7 b - - 0 1', [], ['p3_follow_me']);
-  const promoMoves = blackPromoEngine.getEmpoweredMoves('e2');
-  assert(promoMoves.some(m => m.to === 'e1'), 'Black P3 Follow Me advances pawn to Rank 1');
+  // Black pawns on d2 and e2: P3 March Together pushes d2->d1 and e2->e1, promoting to Queen!
+  const blackPromoEngine = new DeckChessEngine('7k/8/8/8/8/8/3pp3/K7 b - - 0 1', [], ['p3_follow_me']);
+  const promoMoves = blackPromoEngine.getEmpoweredMoves('d2');
+  assert(promoMoves.some(m => m.to === 'd1'), 'Black P3 March Together advances pawns to Rank 1');
   const promoRes = blackPromoEngine.makeEmpoweredMove(promoMoves[0]);
-  assert(promoRes.success === true, 'Black P3 Follow Me executed to Rank 1');
-  assert(blackPromoEngine.getPiece('e1')?.type === 'q' && blackPromoEngine.getPiece('e1')?.color === 'b', 'Black pawn promoted to Black Queen on Rank 1');
+  assert(promoRes.success === true, 'Black P3 March Together executed to Rank 1');
+  assert(blackPromoEngine.getPiece('d1')?.type === 'q' && blackPromoEngine.getPiece('d1')?.color === 'b', 'Black pawn promoted to Black Queen on Rank 1');
 }
 
 // ==========================================
