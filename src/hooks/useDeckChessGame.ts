@@ -54,6 +54,12 @@ export interface UseDeckChessGameOptions {
   onTurnComplete?: (payload: DeckChessTurnPayload) => void;
 }
 
+function isExtraSquareFirstCard(moves: EmpoweredMove[]): boolean {
+  return moves.some(
+    (m) => m.stageExtraSquareFirst || m.cardId === 'r1_make_way' || m.cardId === 'n5_get_to_the_king'
+  );
+}
+
 export function useDeckChessGame({
   mode = 'ai',
   playerColor = 'w',
@@ -180,6 +186,31 @@ export function useDeckChessGame({
     return Array.from(set);
   }, [selectedSquare, selectedCardId, gameState.fen]);
 
+  // Helper to configure empowered moves and staging for an anchor piece
+  const setupAnchorCardMoves = useCallback((moves: EmpoweredMove[]) => {
+    setEmpoweredMovesForSelected(moves);
+    if (isExtraSquareFirstCard(moves)) {
+      if (moves.some((m) => m.cardId === 'n5_get_to_the_king')) {
+        // For N5, always stage safe fork square S1 first
+        setDisambiguationCandidates(moves);
+      } else {
+        // E.g. R1 Make Way
+        const extraSquares = Array.from(new Set(moves.map((m) => m.extraSquare).filter(Boolean)));
+        if (extraSquares.length > 1) {
+          setDisambiguationCandidates(moves);
+        } else {
+          setDisambiguationCandidates(null);
+        }
+      }
+    } else {
+      // to-first cards (N3, Q2, P4, K3, B6, B7): show destination squares directly
+      setDisambiguationCandidates(null);
+      if (moves.length === 1 && !moves[0].extraSquare) {
+        setPendingCardMove(moves[0]);
+      }
+    }
+  }, []);
+
   // Card selection from tactical hand bar (Card-First Flow & Arm/Disarm Toggle)
   const selectCardFromHand = useCallback(
     (cardId: string) => {
@@ -231,13 +262,7 @@ export function useDeckChessGame({
       if (selectedSquare) {
         const pieceMoves = allCardMoves.filter((m) => m.from === selectedSquare);
         if (pieceMoves.length > 0) {
-          setEmpoweredMovesForSelected(pieceMoves);
-          const extraSquares = Array.from(new Set(pieceMoves.map((m) => m.extraSquare).filter(Boolean)));
-          if (extraSquares.length > 1) {
-            setDisambiguationCandidates(pieceMoves);
-          } else if (pieceMoves.length === 1 && !pieceMoves[0].extraSquare) {
-            setPendingCardMove(pieceMoves[0]);
-          }
+          setupAnchorCardMoves(pieceMoves);
           return;
         }
       }
@@ -250,13 +275,7 @@ export function useDeckChessGame({
         const legalStandard = engineRef.current.getLegalMoves(singleAnchor).map((m) => m.to);
         setLegalMovesForSelected(legalStandard);
         const anchorMoves = allCardMoves.filter((m) => m.from === singleAnchor);
-        setEmpoweredMovesForSelected(anchorMoves);
-        const extraSquares = Array.from(new Set(anchorMoves.map((m) => m.extraSquare).filter(Boolean)));
-        if (extraSquares.length > 1) {
-          setDisambiguationCandidates(anchorMoves);
-        } else if (anchorMoves.length === 1 && !anchorMoves[0].extraSquare) {
-          setPendingCardMove(anchorMoves[0]);
-        }
+        setupAnchorCardMoves(anchorMoves);
       } else {
         // Multiple candidate pieces on the board
         clearPieceSelection();
@@ -706,7 +725,7 @@ export function useDeckChessGame({
       // Check if clicking an empowered destination square
       const matchingEmpowered = empoweredMovesForSelected.filter((m) => m.to === square);
       if (matchingEmpowered.length > 0) {
-        if (matchingEmpowered.length === 1 && (!matchingEmpowered[0].disambiguationPrompt || matchingEmpowered[0].extraSquare)) {
+        if (matchingEmpowered.length === 1) {
           setPendingCardMove(matchingEmpowered[0]);
           return;
         }
@@ -728,13 +747,7 @@ export function useDeckChessGame({
           setSelectedSquare(square);
           const legalStandard = engineRef.current.getLegalMoves(square).map((m) => m.to);
           setLegalMovesForSelected(legalStandard);
-          setEmpoweredMovesForSelected(newPieceEmpowered);
-          const extraSquares = Array.from(new Set(newPieceEmpowered.map((m) => m.extraSquare).filter(Boolean)));
-          if (extraSquares.length > 1) {
-            setDisambiguationCandidates(newPieceEmpowered);
-          } else {
-            setDisambiguationCandidates(null);
-          }
+          setupAnchorCardMoves(newPieceEmpowered);
         } else {
           // Unrelated piece clicked -> automatically disarm card and select piece for standard moves!
           cancelPendingCardMove();
