@@ -77,7 +77,7 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 ---
 
 ### Phase 7: 36-Card Ability Overhaul, Board Preview Arrows & Tournament Re-Simulation
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 **Objective:** Overhaul 27 of the 36 release cards (`P1, P3–P8, N2–N7, B1, B2, B4–B7, R2, R4–R6, Q1, Q3, Q4, K1, K3, K4`) across `releaseRoster36.ts`, `playbook36Handlers.ts`, `STORYBOARD.md`, and `DeckChessAI.ts` to align conditions and effects with natural piece strengths and frustrations; add board preview arrow overlays and multi-step UI staging for `N3 (Trample)` (`2x1` vs `1x2` L-paths), `N5 (Get to the King)` (2-click safe fork + second jump), and `Q2 (The Queen's Gambit)` (`Queen -> Ally` and `Ally -> Attacker` arrows); update all unit and edge-case test suites; and re-run the multi-worker Monte Carlo tournament simulation (`BALANCE_REPORT.md`).
 **Dependencies:** Phase 6 (Complete)
 
