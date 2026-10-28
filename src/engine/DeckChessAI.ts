@@ -5,13 +5,28 @@ import type {
   AiDifficulty,
   PositionEvaluation,
   BestTurnResult,
+  AiSearchOptions,
 } from '../types/deckChess';
 import { DeckChessEngine } from './DeckChessEngine';
 import { Move, PieceSymbol } from 'chess.js';
 import { getCardById } from './cardGraph';
 import { getCardHandler, FriendlyPieceSummary } from './cards/cardRegistry';
 
-export type { BestTurnResult };
+export type { BestTurnResult, AiSearchOptions };
+
+/**
+ * 32-bit deterministic seeded pseudo-random number generator (Mulberry32).
+ * Returns floats in [0, 1).
+ */
+export function mulberry32(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 // Base piece values in centipawns
 export const MATERIAL_VALUES: Record<string, number> = {
@@ -936,7 +951,8 @@ export function computeBestTurn(
   engine: DeckChessEngine,
   aiColor: PieceColor,
   difficulty: AiDifficulty = 'medium',
-  params: EvalParams = DEFAULT_EVAL_PARAMS
+  params: EvalParams = DEFAULT_EVAL_PARAMS,
+  options?: AiSearchOptions
 ): BestTurnResult {
   const currentTurn = engine.getTurn();
 

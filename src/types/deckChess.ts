@@ -225,6 +225,13 @@ export type GameFinishReason =
 
 export type AiDifficulty = 'easy' | 'medium' | 'tactical' | 'grandmaster';
 
+export interface AiSearchOptions {
+  seed?: number;
+  deterministic?: boolean;
+  contenderMarginCp?: number;
+  temperature?: number;
+}
+
 export interface PositionEvaluation {
   whiteCp: number;
   whiteWinPct: number; // 0 to 100
@@ -241,6 +248,10 @@ export interface BestTurnResult {
   whiteEvalCp: number;
   mateIn?: number;
   explanation: string;
+  bestStandardScore?: number;
+  bestEmpoweredScore?: number;
+  cardLiftCp?: number;
+  contenderCount?: number;
 }
 
 export interface CardBalanceMetric {
