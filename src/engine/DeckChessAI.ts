@@ -147,7 +147,7 @@ const QUEEN_PST = [
   [-20, -10, -10, -5, -5, -10, -10, -20],
 ];
 
-const KING_MIDGAME_PST = [
+export const KING_MIDGAME_PST = [
   [-30, -40, -40, -50, -50, -40, -40, -30],
   [-30, -40, -40, -50, -50, -40, -40, -30],
   [-30, -40, -40, -50, -50, -40, -40, -30],
@@ -158,7 +158,7 @@ const KING_MIDGAME_PST = [
   [20, 30, 10, 0, 0, 10, 30, 20],
 ];
 
-const KING_ENDGAME_PST = [
+export const KING_ENDGAME_PST = [
   [-50, -40, -30, -20, -20, -30, -40, -50],
   [-30, -20, -10, 0, 0, -10, -20, -30],
   [-30, -10, 20, 30, 30, 20, -10, -30],
@@ -169,7 +169,7 @@ const KING_ENDGAME_PST = [
   [-50, -30, -30, -30, -30, -30, -30, -50],
 ];
 
-const PST_MAP: Record<string, number[][]> = {
+export const PST_MAP: Record<string, number[][]> = {
   p: PAWN_PST,
   n: KNIGHT_PST,
   b: BISHOP_PST,
