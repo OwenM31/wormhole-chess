@@ -855,6 +855,8 @@ export class DeckChessEngine {
           const target = typeof rawTarget === 'string' ? rawTarget : rawTarget.to;
           const extraSquare = typeof rawTarget === 'string' ? undefined : rawTarget.extraSquare;
           const disambiguationPrompt = typeof rawTarget === 'string' ? undefined : rawTarget.disambiguationPrompt;
+          const arrows = typeof rawTarget === 'string' ? undefined : rawTarget.arrows;
+          const stageExtraSquareFirst = typeof rawTarget === 'string' ? undefined : rawTarget.stageExtraSquareFirst;
 
           let actionType: EmpoweredMove['actionType'] = 'move';
           if (
@@ -890,6 +892,8 @@ export class DeckChessEngine {
                 extraSquare,
                 promotion: promoChoice,
                 disambiguationPrompt,
+                arrows,
+                stageExtraSquareFirst,
                 metadata: {
                   cardName: card.name,
                   piece: card.piece,
@@ -897,6 +901,8 @@ export class DeckChessEngine {
                   conditionExact: card.condition_exact,
                   effectGenre: card.effect_type,
                   effectExact: card.effect_exact,
+                  arrows,
+                  stageExtraSquareFirst,
                 },
               });
             }
@@ -952,6 +958,8 @@ export class DeckChessEngine {
                 promotion: promoChoice,
                 previewFen,
                 disambiguationPrompt,
+                arrows,
+                stageExtraSquareFirst,
                 metadata: {
                   cardName: card.name,
                   piece: card.piece,
@@ -959,6 +967,8 @@ export class DeckChessEngine {
                   conditionExact: card.condition_exact,
                   effectGenre: card.effect_type,
                   effectExact: card.effect_exact,
+                  arrows,
+                  stageExtraSquareFirst,
                 },
               });
             }

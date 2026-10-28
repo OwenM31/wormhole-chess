@@ -5,11 +5,20 @@ import {
   DeckChessCardAction,
   PieceColor,
   PieceAnchor,
+  BoardPreviewArrow,
 } from '../../types/deckChess';
 import { DeckChessEngine } from '../DeckChessEngine';
 import { getCardById, CANONICAL_180_CARDS } from '../cardGraph';
 
-export type TargetOption = string | { to: string; extraSquare?: string; disambiguationPrompt?: string };
+export type TargetOption =
+  | string
+  | {
+      to: string;
+      extraSquare?: string;
+      disambiguationPrompt?: string;
+      arrows?: BoardPreviewArrow[];
+      stageExtraSquareFirst?: boolean;
+    };
 
 export interface FriendlyPieceSummary {
   sq: Square;
