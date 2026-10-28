@@ -7,8 +7,8 @@ updated: 2026-10-28T10:13:00-05:00
 # Roadmap
 
 > **Current Milestone:** v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-> **Current Phase:** Phase 8 — Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness
-> **Status:** 🔄 Ready for Planning (Phases 1–7 Complete & Verified)
+> **Current Phase:** Phase 9 — Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)
+> **Status:** 🔄 Ready for Planning (Phases 1–8 Complete & Verified)
 
 ## Milestone Goal
 
@@ -26,7 +26,7 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 - [x] **Home & Deck Builder Matchmaking UI Revamp, Atmospheric Assets & Copywriting (Phase 5)**: Purge lingering "energy" mentions across home page and menus, integrate rich atmospheric tabletop and castle hall visuals, rename Deck Builder Stage to Deck Builder Matchmaking, and refine condition/effect copywriting across all 36 cards.
 - [x] **Grandmaster Card-Aware AI Engine, Campaign Hints & 30M Deck Simulation (Phase 6)**: Unified Alpha-Beta search combining standard and 36-playbook moves, class-weighted Card Retention (`55cp–100cp`), `evaluateHandSynergy()` (`+14cp–38cp`), Live Side Evaluation Bar (`<EvalBar />`), 1-click Best-Move `Hint` system with board square highlights, and multi-worker Monte Carlo tournament harness (`BALANCE_REPORT.md` / `balance-metrics.json`).
 - [x] **36-Card Ability Overhaul, Board Preview Arrows & Tournament Re-Simulation (Phase 7)**: Overhaul 27 of the 36 release cards around natural piece strengths/frustrations, add board preview arrow overlays (`N3` L-paths, `N5` 2-click fork + second jump, `Q2` sight/attack arrows), update unit/E2E suites, and re-run the multi-worker tournament balance simulation.
-- [ ] **Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness (Phase 8)**: Achieve 5x–10x zero-loss search speedup, implement Iterative Deepening + Top-$K$ exact-window contender pool + seeded Clipped Softmax move selection with game-phase decaying card retention, build an atomic resumable JSONL match simulation harness with de-confounded metrics (Search-Backed Card Lift, Color-Swapped Pairs, Ridge/Logistic Marginal Win Credit), and calibrate outlier cards.
+- [x] **Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness (Phase 8)**: Achieve 5x–10x zero-loss search speedup, implement Iterative Deepening + Top-$K$ exact-window contender pool + seeded Clipped Softmax move selection with game-phase decaying card retention, build an atomic resumable JSONL match simulation harness with de-confounded metrics (Search-Backed Card Lift, Color-Swapped Pairs, Ridge/Logistic Marginal Win Credit), and calibrate outlier cards.
 - [ ] **Campaign Engine, Town Tavern & Worlds 1–7 (Phases 9–11)**: Build the Castle Map UI, Town Tavern 0-card bot hustle, Jester's Coat Shop (`Rewind`, `Hint`, `Carbon Copy`, `+1 Slot`), and the 7-World Campaign puzzle sequences.
 
 ---
@@ -85,9 +85,10 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 ---
 
 ### Phase 8: Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 **Objective:** Achieve 5x–10x zero-loss search speedup in `DeckChessEngine.ts` and `DeckChessAI.ts` (fast search execution path skipping redundant legal-move regeneration, single-pass `evaluateBoard`, Transposition Table best-move ordering with Iterative Deepening); replace deterministic tie-breaking and flat card hoarding with Top-$K$ exact-window contender evaluation, seeded Clipped Softmax move selection (preserving 100% deterministic `Hint` and `<EvalBar />`), and per-card + game-phase decaying retention weights; and build an atomic, stoppable/resumable JSONL single-match simulation harness with color-swapped pairs, natural game termination, Search-Backed Card Lift, and Ridge/Logistic Marginal Win Credit to run a high-sample tournament and calibrate outlier cards.
 **Dependencies:** Phase 7 (Complete)
+**Verification:** Complete (111/111 assertions, 180-match tournament, VERIFICATION.md)
 
 ---
 
