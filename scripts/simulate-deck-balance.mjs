@@ -44,10 +44,14 @@ function generateStratifiedBlocks(numBlocks) {
 async function main() {
   const args = process.argv.slice(2);
   let requestedGames = 360;
+  let outPhase = '7';
 
   for (const arg of args) {
     if (arg.startsWith('--games=')) {
       requestedGames = parseInt(arg.replace('--games=', ''), 10) || requestedGames;
+    }
+    if (arg.startsWith('--phase=')) {
+      outPhase = arg.replace('--phase=', '');
     }
   }
 
@@ -66,7 +70,7 @@ async function main() {
   console.log(`Distributing simulation across ${numCores} worker processes...\n`);
 
   // Setup temp directory
-  const tempDir = path.resolve('.agent/state/phases/6/temp_batches');
+  const tempDir = path.resolve(`.agent/state/phases/${outPhase}/temp_batches`);
   if (fs.existsSync(tempDir)) {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
@@ -83,8 +87,8 @@ async function main() {
     const slice = allPairs.slice(i * pairsPerWorker, (i + 1) * pairsPerWorker);
     if (slice.length === 0) continue;
 
-    const batchPath = `.agent/state/phases/6/temp_batches/batch_${i}.json`;
-    const resultPath = `.agent/state/phases/6/temp_batches/result_${i}.json`;
+    const batchPath = `.agent/state/phases/${outPhase}/temp_batches/batch_${i}.json`;
+    const resultPath = `.agent/state/phases/${outPhase}/temp_batches/result_${i}.json`;
 
     fs.writeFileSync(batchPath, JSON.stringify({ workerId: i, pairs: slice }), 'utf-8');
 
@@ -209,7 +213,7 @@ async function main() {
   metrics.sort((a, b) => b.winRateDelta - a.winRateDelta);
 
   // Save JSON telemetry
-  const targetDir = path.resolve('.agent/state/phases/6');
+  const targetDir = path.resolve(`.agent/state/phases/${outPhase}`);
   if (!fs.existsSync(targetDir)) {
     fs.mkdirSync(targetDir, { recursive: true });
   }
@@ -244,7 +248,7 @@ async function main() {
   const dominant = metrics.filter((m) => m.winRate > 0.56 || m.playRate > 0.7);
   const playmakers = metrics.filter((m) => m.avgSwingCp >= 60);
 
-  const markdown = `# Phase 6: 36-Card Deck Balance Simulation Report
+  const markdown = `# Phase ${outPhase}: 36-Card Deck Balance Simulation Report
 
 > **Simulated At**: ${new Date().toISOString()}  
 > **Harness**: Multi-Worker Monte Carlo Tournament (\`scripts/simulate-deck-balance.mjs\`)  

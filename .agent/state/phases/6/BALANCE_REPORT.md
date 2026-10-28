@@ -1,5 +1,8 @@
 # Phase 6: 36-Card Deck Balance Simulation Report
 
+> [!NOTE]
+> **Superseded by Phase 7**: The 27 underperforming cards identified in this report were overhauled in Phase 7 (`[DECISION-036]`). See updated telemetry in [.agent/state/phases/7/BALANCE_REPORT.md](../7/BALANCE_REPORT.md) where average cards played increased from 1.0 to 4.4 cards/match and active playmakers increased from 7 to 20 cards.
+
 > **Simulated At**: 2026-10-25T21:52:04.750Z  
 > **Harness**: Multi-Worker Monte Carlo Tournament (`scripts/simulate-deck-balance.mjs`)  
 > **Tournament Size**: 36 Matches across 8 Cores (226.67s execution)

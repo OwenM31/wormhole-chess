@@ -16,7 +16,7 @@
   {
     "id": "p3_follow_me",
     "code": "P3",
-    "name": "Follow Me",
+    "name": "March Together",
     "anchor": "pawn",
     "world": 1
   },
@@ -37,7 +37,7 @@
   {
     "id": "n2_swap_with_me",
     "code": "N2",
-    "name": "Swap With Me",
+    "name": "Springboard",
     "anchor": "knight",
     "world": 1
   },
@@ -86,7 +86,7 @@
   {
     "id": "n4_pin_swap",
     "code": "N4",
-    "name": "Pin Swap",
+    "name": "Square Jump",
     "anchor": "knight",
     "world": 3
   },
@@ -142,14 +142,14 @@
   {
     "id": "b6_come_this_way",
     "code": "B6",
-    "name": "Come This Way",
+    "name": "Diagonal Launch",
     "anchor": "bishop",
     "world": 4
   },
   {
     "id": "p6_tag_out",
     "code": "P6",
-    "name": "Tag Out",
+    "name": "Double Time",
     "anchor": "pawn",
     "world": 5
   },
@@ -205,7 +205,7 @@
   {
     "id": "q3_all_rise",
     "code": "Q3",
-    "name": "All Rise",
+    "name": "Royal Shield",
     "anchor": "queen",
     "world": 6
   },
@@ -247,7 +247,7 @@
   {
     "id": "k4_banish",
     "code": "K4",
-    "name": "Banish",
+    "name": "Turncoat",
     "anchor": "king",
     "world": 7
   }
