@@ -23,13 +23,16 @@ export const MoveStreamMobile: React.FC<MoveStreamMobileProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const activeItemRef = useRef<HTMLButtonElement | null>(null);
 
-  // Auto-scroll active pill into horizontal center on move change
+  // Auto-scroll active pill into horizontal center on move change without affecting window scroll
   useEffect(() => {
     if (activeItemRef.current && scrollContainerRef.current) {
-      activeItemRef.current.scrollIntoView({
+      const container = scrollContainerRef.current;
+      const item = activeItemRef.current;
+      const itemOffset = item.offsetLeft - container.offsetLeft;
+      const scrollPos = itemOffset - container.clientWidth / 2 + item.clientWidth / 2;
+      container.scrollTo({
+        left: Math.max(0, scrollPos),
         behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest',
       });
     }
   }, [activeMoveIndex]);

@@ -33,12 +33,16 @@ export const MoveTableDesktop: React.FC<MoveTableDesktopProps> = ({
   // Group recorded turns into 2-column turns
   const rows: TurnRow[] = groupTurnsIntoRows(recordedTurns);
 
-  // Auto-scroll active cell into view
+  // Auto-scroll active cell into view without window scrolling
   useEffect(() => {
     if (activeCellRef.current && tableBodyRef.current) {
-      activeCellRef.current.scrollIntoView({
+      const container = tableBodyRef.current;
+      const item = activeCellRef.current;
+      const itemOffset = item.offsetTop - container.offsetTop;
+      const scrollPos = itemOffset - container.clientHeight / 2 + item.clientHeight / 2;
+      container.scrollTo({
+        top: Math.max(0, scrollPos),
         behavior: 'smooth',
-        block: 'nearest',
       });
     }
   }, [activeMoveIndex]);
