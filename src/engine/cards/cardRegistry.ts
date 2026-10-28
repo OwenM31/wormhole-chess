@@ -6,6 +6,7 @@ import {
   PieceColor,
   PieceAnchor,
   BoardPreviewArrow,
+  EmpoweredMove,
 } from '../../types/deckChess';
 import { DeckChessEngine } from '../DeckChessEngine';
 import { getCardById, CANONICAL_180_CARDS } from '../cardGraph';
@@ -18,6 +19,7 @@ export type TargetOption =
       disambiguationPrompt?: string;
       arrows?: BoardPreviewArrow[];
       stageExtraSquareFirst?: boolean;
+      actionType?: EmpoweredMove['actionType'];
     };
 
 export interface FriendlyPieceSummary {

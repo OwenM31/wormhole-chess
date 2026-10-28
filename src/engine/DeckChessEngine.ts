@@ -858,21 +858,24 @@ export class DeckChessEngine {
           const arrows = typeof rawTarget === 'string' ? undefined : rawTarget.arrows;
           const stageExtraSquareFirst = typeof rawTarget === 'string' ? undefined : rawTarget.stageExtraSquareFirst;
 
-          let actionType: EmpoweredMove['actionType'] = 'move';
-          if (
-            card.effect_type === 'Special Captures' &&
-            (card.effect_exact?.includes('Ranged') ||
-              card.effect_exact?.includes('Snipe') ||
-              card.effect_exact?.includes('Cannon Strike') ||
-              card.effect_exact?.includes('Bolt'))
-          ) {
-            actionType = 'ranged_capture';
-          } else if (card.effect_type === 'Special Captures' && card.effect_exact?.includes('In-Place')) {
-            actionType = 'in_place';
-          } else if (card.effect_type === 'Spawning') {
-            actionType = 'spawn';
-          } else if (card.effect_type === 'Walls & Shields') {
-            actionType = 'wall';
+          let actionType: EmpoweredMove['actionType'] =
+            (typeof rawTarget !== 'string' && rawTarget.actionType) || 'move';
+          if (!(typeof rawTarget !== 'string' && rawTarget.actionType)) {
+            if (
+              card.effect_type === 'Special Captures' &&
+              (card.effect_exact?.includes('Ranged') ||
+                card.effect_exact?.includes('Snipe') ||
+                card.effect_exact?.includes('Cannon Strike') ||
+                card.effect_exact?.includes('Bolt'))
+            ) {
+              actionType = 'ranged_capture';
+            } else if (card.effect_type === 'Special Captures' && card.effect_exact?.includes('In-Place')) {
+              actionType = 'in_place';
+            } else if (card.effect_type === 'Spawning') {
+              actionType = 'spawn';
+            } else if (card.effect_type === 'Walls & Shields') {
+              actionType = 'wall';
+            }
           }
 
           if (skipPreviewFen) {
