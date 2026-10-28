@@ -23,87 +23,215 @@ function shuffle(arr) {
   return result;
 }
 
-// Generate stratified balanced blocks of 9 matches (18 hands = 144 slots)
-// Each card appears exactly 4 times per block (2 for White, 2 for Black).
-function generateStratifiedBlocks(numBlocks) {
-  const matchPairs = [];
+/**
+ * Generates stratified color-swapped duplicate match blocks of 18 matches per block
+ * (9 pairs x 2 color orientations).
+ * Every card appears exactly 8 times per block (4 White, 4 Black against the exact same opposing deck).
+ */
+export function generateColorSwappedSchedule(
+  numBlocks,
+  maxPlies = 100,
+  difficulty = 'medium'
+) {
+  const specs = [];
 
   for (let b = 0; b < numBlocks; b++) {
+    // 4 copies of each card = 144 card pool
     const pool144 = shuffle([...ALL_36_IDS, ...ALL_36_IDS, ...ALL_36_IDS, ...ALL_36_IDS]);
 
-    for (let m = 0; m < 9; m++) {
-      const whiteDeck = pool144.slice(m * 16, m * 16 + 8);
-      const blackDeck = pool144.slice(m * 16 + 8, m * 16 + 16);
-      matchPairs.push({ whiteDeck, blackDeck });
+    for (let p = 0; p < 9; p++) {
+      const whiteDeck = pool144.slice(p * 16, p * 16 + 8);
+      const blackDeck = pool144.slice(p * 16 + 8, p * 16 + 16);
+      const pairId = `b${b}_p${p}`;
+      const seed = 100000 + b * 1000 + p * 2;
+
+      // Match 1: Deck A White, Deck B Black
+      specs.push({
+        matchId: `${pairId}_w`,
+        blockId: b,
+        pairId,
+        seed,
+        whiteDeck: [...whiteDeck],
+        blackDeck: [...blackDeck],
+        maxPlies,
+        difficulty,
+      });
+
+      // Match 2: Deck B White, Deck A Black (exact color swap with same seed)
+      specs.push({
+        matchId: `${pairId}_b`,
+        blockId: b,
+        pairId,
+        seed,
+        whiteDeck: [...blackDeck],
+        blackDeck: [...whiteDeck],
+        maxPlies,
+        difficulty,
+      });
     }
   }
 
-  return matchPairs;
+  return specs;
+}
+
+/**
+ * Scans matches.jsonl and workers/worker_*.jsonl in the phase directory to find completed match IDs.
+ */
+function findCompletedMatchIds(phaseDir) {
+  const completedIds = new Set();
+
+  const matchesPath = path.join(phaseDir, 'matches.jsonl');
+  if (fs.existsSync(matchesPath)) {
+    const lines = fs.readFileSync(matchesPath, 'utf-8').split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      try {
+        const rec = JSON.parse(trimmed);
+        if (rec && rec.matchId) completedIds.add(rec.matchId);
+      } catch {}
+    }
+  }
+
+  const workersDir = path.join(phaseDir, 'workers');
+  if (fs.existsSync(workersDir)) {
+    const files = fs
+      .readdirSync(workersDir)
+      .filter((f) => f.startsWith('worker_') && f.endsWith('.jsonl'));
+    for (const f of files) {
+      const fullPath = path.join(workersDir, f);
+      const lines = fs.readFileSync(fullPath, 'utf-8').split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          const rec = JSON.parse(trimmed);
+          if (rec && rec.matchId) completedIds.add(rec.matchId);
+        } catch {}
+      }
+    }
+  }
+
+  return completedIds;
 }
 
 async function main() {
   const args = process.argv.slice(2);
-  let requestedGames = 360;
-  let outPhase = '7';
+  let requestedGames = 180;
+  let outPhase = '8';
+  let reset = false;
+  let maxPlies = 100;
+  let difficulty = 'medium';
+  let userWorkers = null;
 
   for (const arg of args) {
     if (arg.startsWith('--games=')) {
       requestedGames = parseInt(arg.replace('--games=', ''), 10) || requestedGames;
-    }
-    if (arg.startsWith('--phase=')) {
+    } else if (arg.startsWith('--phase=')) {
       outPhase = arg.replace('--phase=', '');
+    } else if (arg === '--reset') {
+      reset = true;
+    } else if (arg.startsWith('--maxPlies=')) {
+      maxPlies = parseInt(arg.replace('--maxPlies=', ''), 10) || maxPlies;
+    } else if (arg.startsWith('--difficulty=')) {
+      difficulty = arg.replace('--difficulty=', '');
+    } else if (arg.startsWith('--workers=')) {
+      userWorkers = parseInt(arg.replace('--workers=', ''), 10);
     }
   }
 
-  // Round up requestedGames to the nearest multiple of 9 blocks
-  const numBlocks = Math.max(1, Math.ceil(requestedGames / 9));
-  const totalGames = numBlocks * 9;
+  const phaseDir = path.resolve(`.agent/state/phases/${outPhase}`);
+  const schedulePath = path.join(phaseDir, 'schedule.json');
+  const tempDir = path.join(phaseDir, 'temp_batches');
+  const workersDir = path.join(phaseDir, 'workers');
 
-  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(' 36-CARD MONTE CARLO DECK BALANCE SIMULATION');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-  console.log(`Target Games: ${totalGames} (${numBlocks} stratified blocks of 9 matches)`);
-  console.log(`Appearances per card: ${numBlocks * 4} (100% balanced between White & Black)`);
+  if (reset) {
+    console.log(`[Reset] Clearing existing simulation state in ${phaseDir}...`);
+    if (fs.existsSync(schedulePath)) fs.unlinkSync(schedulePath);
+    const matchesPath = path.join(phaseDir, 'matches.jsonl');
+    if (fs.existsSync(matchesPath)) fs.unlinkSync(matchesPath);
+    if (fs.existsSync(workersDir)) fs.rmSync(workersDir, { recursive: true, force: true });
+    if (fs.existsSync(tempDir)) fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 
-  const allPairs = generateStratifiedBlocks(numBlocks);
-  const numCores = Math.min(os.cpus().length || 4, 8, allPairs.length);
-  console.log(`Distributing simulation across ${numCores} worker processes...\n`);
-
-  // Setup temp directory
-  const tempDir = path.resolve(`.agent/state/phases/${outPhase}/temp_batches`);
+  fs.mkdirSync(phaseDir, { recursive: true });
+  fs.mkdirSync(workersDir, { recursive: true });
   if (fs.existsSync(tempDir)) {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
   fs.mkdirSync(tempDir, { recursive: true });
 
-  const pairsPerWorker = Math.ceil(allPairs.length / numCores);
-  const workerScriptPath = 'scripts/deck-balance-worker.ts';
+  // Load or generate schedule
+  let schedule = [];
+  if (fs.existsSync(schedulePath)) {
+    schedule = JSON.parse(fs.readFileSync(schedulePath, 'utf-8'));
+    console.log(`Loaded existing schedule from ${schedulePath} (${schedule.length} matches).`);
+  } else {
+    // Round requested games up to nearest block of 18 matches
+    const numBlocks = Math.max(1, Math.ceil(requestedGames / 18));
+    schedule = generateColorSwappedSchedule(numBlocks, maxPlies, difficulty);
+    fs.writeFileSync(schedulePath, JSON.stringify(schedule, null, 2), 'utf-8');
+    console.log(
+      `Generated new schedule: ${schedule.length} matches (${numBlocks} blocks of 18) written to ${schedulePath}.`
+    );
+  }
+
+  const completedIds = findCompletedMatchIds(phaseDir);
+  const remainingSpecs = schedule.filter((s) => !completedIds.has(s.matchId));
+
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(' PHASE 8: COLOR-SWAPPED RESUMABLE TOURNAMENT HARNESS');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  console.log(`Total Schedule:   ${schedule.length} matches`);
+  console.log(`Already Completed:${completedIds.size} matches`);
+  console.log(`Remaining:        ${remainingSpecs.length} matches`);
+
   const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
+  if (remainingSpecs.length === 0) {
+    console.log('\nAll matches in schedule are already completed! Running aggregator...\n');
+    await runAggregator(cmd, outPhase);
+    return;
+  }
+
+  const numCpus = os.cpus().length || 4;
+  const numWorkers = Math.min(userWorkers || numCpus, 8, remainingSpecs.length);
+  console.log(`Distributing ${remainingSpecs.length} remaining matches across ${numWorkers} worker processes...\n`);
+
+  const specsPerWorker = Math.ceil(remainingSpecs.length / numWorkers);
+  const workerScriptPath = 'scripts/deck-balance-worker.ts';
   const startTime = Date.now();
   const workerPromises = [];
 
-  for (let i = 0; i < numCores; i++) {
-    const slice = allPairs.slice(i * pairsPerWorker, (i + 1) * pairsPerWorker);
+  for (let i = 0; i < numWorkers; i++) {
+    const slice = remainingSpecs.slice(i * specsPerWorker, (i + 1) * specsPerWorker);
     if (slice.length === 0) continue;
 
-    const batchPath = `.agent/state/phases/${outPhase}/temp_batches/batch_${i}.json`;
-    const resultPath = `.agent/state/phases/${outPhase}/temp_batches/result_${i}.json`;
+    const batchPath = path.join(tempDir, `batch_${i}.json`);
+    const resultPath = path.join(tempDir, `result_${i}.json`);
+    const workerJsonlPath = path.join(workersDir, `worker_${i}.jsonl`);
 
-    fs.writeFileSync(batchPath, JSON.stringify({ workerId: i, pairs: slice }), 'utf-8');
+    fs.writeFileSync(
+      batchPath,
+      JSON.stringify({
+        workerId: i,
+        specs: slice,
+        outJsonl: workerJsonlPath,
+        resultPath,
+      }),
+      'utf-8'
+    );
 
     const p = new Promise((resolve, reject) => {
       const child = spawn(
         cmd,
-        ['tsx', workerScriptPath, `--batch=${batchPath}`, `--result=${resultPath}`],
+        ['tsx', workerScriptPath, `--batch=${batchPath}`],
         { stdio: ['inherit', 'pipe', 'inherit'], shell: true }
       );
 
       child.stdout.on('data', (data) => {
-        const text = data.toString().trim();
-        if (text) {
-          console.log(text);
-        }
+        const text = data.toString();
+        process.stdout.write(text);
       });
 
       child.on('exit', (code) => {
@@ -111,253 +239,41 @@ async function main() {
           reject(new Error(`Worker ${i} exited with error code ${code}`));
           return;
         }
-        try {
-          const raw = fs.readFileSync(resultPath, 'utf-8');
-          const res = JSON.parse(raw);
-          resolve(res);
-        } catch (e) {
-          reject(e);
-        }
+        resolve({ workerId: i, completed: slice.length });
       });
     });
 
     workerPromises.push(p);
   }
 
-  const batchResults = await Promise.all(workerPromises);
+  await Promise.all(workerPromises);
   const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log(`\nAll worker processes finished in ${elapsedSec}s!`);
 
-  console.log(`\nSimulation finished in ${elapsedSec}s across all worker processes!`);
+  // Consolidate and run aggregator
+  await runAggregator(cmd, outPhase);
+}
 
-  // Aggregate results
-  let totalPlies = 0;
-  let totalCardsPlayed = 0;
-  let whiteWins = 0;
-  let blackWins = 0;
-  let draws = 0;
-
-  const aggregateCardStats = {};
-  for (const cardId of ALL_36_IDS) {
-    aggregateCardStats[cardId] = {
-      appearances: 0,
-      turnsHeld: 0,
-      turnsConditionMet: 0,
-      timesPlayed: 0,
-      swingSum: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-    };
-  }
-
-  for (const b of batchResults) {
-    whiteWins += b.whiteWins;
-    blackWins += b.blackWins;
-    draws += b.draws;
-    totalPlies += b.totalPlies;
-    totalCardsPlayed += b.totalCardsPlayed;
-
-    for (const [cardId, s] of Object.entries(b.cardStats)) {
-      const agg = aggregateCardStats[cardId];
-      if (agg) {
-        agg.appearances += s.appearances;
-        agg.turnsHeld += s.turnsHeld;
-        agg.turnsConditionMet += s.turnsConditionMet;
-        agg.timesPlayed += s.timesPlayed;
-        agg.swingSum += s.swingSum;
-        agg.wins += s.wins;
-        agg.draws += s.draws;
-        agg.losses += s.losses;
+function runAggregator(cmd, outPhase) {
+  return new Promise((resolve, reject) => {
+    const agg = spawn(
+      cmd,
+      ['tsx', 'scripts/aggregate-deck-balance.ts', `--phase=${outPhase}`],
+      { stdio: 'inherit', shell: true }
+    );
+    agg.on('exit', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Aggregator exited with error code ${code}`));
+      } else {
+        resolve();
       }
-    }
-  }
-
-  // Build CardBalanceMetric objects
-  const metrics = CANONICAL_36_META.map((cardDef) => {
-    const s = aggregateCardStats[cardDef.id] || {
-      appearances: 0,
-      turnsHeld: 0,
-      turnsConditionMet: 0,
-      timesPlayed: 0,
-      swingSum: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-    };
-
-    const triggerRate = s.turnsHeld > 0 ? s.turnsConditionMet / s.turnsHeld : 0;
-    const playRate = s.appearances > 0 ? s.timesPlayed / s.appearances : 0;
-    const avgSwingCp = s.timesPlayed > 0 ? Math.round(s.swingSum / s.timesPlayed) : 0;
-    const winRate = s.appearances > 0 ? (s.wins + 0.5 * s.draws) / s.appearances : 0.5;
-    const winRateDelta = winRate - 0.5;
-
-    return {
-      cardId: cardDef.id,
-      code: cardDef.code || '?',
-      name: cardDef.name,
-      anchor: cardDef.anchor,
-      world: cardDef.world || 1,
-      appearances: s.appearances,
-      turnsHeld: s.turnsHeld,
-      turnsConditionMet: s.turnsConditionMet,
-      triggerRate: Math.round(triggerRate * 1000) / 1000,
-      timesPlayed: s.timesPlayed,
-      playRate: Math.round(playRate * 1000) / 1000,
-      avgSwingCp,
-      winRate: Math.round(winRate * 1000) / 1000,
-      winRateDelta: Math.round(winRateDelta * 1000) / 1000,
-    };
+    });
   });
-
-  // Sort by winRateDelta descending
-  metrics.sort((a, b) => b.winRateDelta - a.winRateDelta);
-
-  // Save JSON telemetry
-  const targetDir = path.resolve(`.agent/state/phases/${outPhase}`);
-  if (!fs.existsSync(targetDir)) {
-    fs.mkdirSync(targetDir, { recursive: true });
-  }
-
-  const jsonPath = path.join(targetDir, 'balance-metrics.json');
-  fs.writeFileSync(
-    jsonPath,
-    JSON.stringify(
-      {
-        timestamp: new Date().toISOString(),
-        totalGames,
-        elapsedSeconds: parseFloat(elapsedSec),
-        whiteWins,
-        blackWins,
-        draws,
-        totalPlies,
-        avgPliesPerMatch: Math.round((totalPlies / totalGames) * 10) / 10,
-        totalCardsPlayed,
-        avgCardsPlayedPerMatch: Math.round((totalCardsPlayed / totalGames) * 10) / 10,
-        cards: metrics,
-      },
-      null,
-      2
-    ),
-    'utf-8'
-  );
-  console.log(`Saved JSON metrics to: ${jsonPath}`);
-
-  // Generate Markdown report
-  const reportPath = path.join(targetDir, 'BALANCE_REPORT.md');
-  const underTriggered = metrics.filter((m) => m.triggerRate < 0.05 || m.playRate < 0.1);
-  const dominant = metrics.filter((m) => m.winRate > 0.56 || m.playRate > 0.7);
-  const playmakers = metrics.filter((m) => m.avgSwingCp >= 60);
-
-  const markdown = `# Phase ${outPhase}: 36-Card Deck Balance Simulation Report
-
-> **Simulated At**: ${new Date().toISOString()}  
-> **Harness**: Multi-Worker Monte Carlo Tournament (\`scripts/simulate-deck-balance.mjs\`)  
-> **Tournament Size**: ${totalGames} Matches across ${numCores} Cores (${elapsedSec}s execution)
-
----
-
-## Executive Summary
-
-| Metric | Empirical Value | Target Reference |
-|---|---|---|
-| **Total Matches** | **${totalGames}** | $\ge 360$ matches |
-| **Appearances / Card** | **${numBlocks * 4}** | $\ge 160$ per card (zero sampling bias) |
-| **White Win Rate** | **${((whiteWins / totalGames) * 100).toFixed(1)}%** (${whiteWins}) | ~48–52% |
-| **Black Win Rate** | **${((blackWins / totalGames) * 100).toFixed(1)}%** (${blackWins}) | ~45–49% |
-| **Draw Rate** | **${((draws / totalGames) * 100).toFixed(1)}%** (${draws}) | ~5–12% |
-| **Avg Plies / Match** | **${(totalPlies / totalGames).toFixed(1)}** plies | ~30–45 plies |
-| **Avg Cards Played / Match** | **${(totalCardsPlayed / totalGames).toFixed(1)}** cards | ~1.5–3.5 cards |
-
----
-
-## 36-Card Empirical Telemetry Matrix
-
-Sorted by **Win-Rate Delta** (relative to the 50.0% expected baseline):
-
-| Rank | Code | Card Name | Class | World | Appearances | Trigger Rate | Play Rate | Avg Swing | Win Rate | Win Delta |
-|:---:|:---:|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-${metrics
-  .map(
-    (m, i) =>
-      `| ${i + 1} | **${m.code}** | ${m.name} | ${m.anchor.toUpperCase()} | W${m.world} | ${
-        m.appearances
-      } | ${(m.triggerRate * 100).toFixed(1)}% | ${(m.playRate * 100).toFixed(1)}% | ${
-        m.avgSwingCp > 0 ? '+' : ''
-      }${m.avgSwingCp}cp | ${(m.winRate * 100).toFixed(1)}% | ${m.winRateDelta > 0 ? '+' : ''}${(
-        m.winRateDelta * 100
-      ).toFixed(1)}% |`
-  )
-  .join('\n')}
-
----
-
-## Outlier Analysis & Diagnostics
-
-### 1. High-Impact Tactical Playmakers (\`Avg Swing >= +60cp\`)
-These cards create decisive centipawn advantages whenever their tactical pre-conditions are met:
-${
-  playmakers.length > 0
-    ? playmakers
-        .map(
-          (m) =>
-            `- **${m.code} (${m.name})**: +${m.avgSwingCp}cp avg swing, ${(m.winRate * 100).toFixed(
-              1
-            )}% win rate`
-        )
-        .join('\n')
-    : '- None flagged in this tournament run.'
 }
 
-### 2. Under-Triggered / Niche Cards (\`Trigger Rate < 5%\` or \`Play Rate < 10%\`)
-These cards appear in player hands but rarely find valid board positions to trigger:
-${
-  underTriggered.length > 0
-    ? underTriggered
-        .map(
-          (m) =>
-            `- **${m.code} (${m.name})**: ${(m.triggerRate * 100).toFixed(1)}% trigger rate, ${(
-              m.playRate * 100
-            ).toFixed(1)}% play rate`
-        )
-        .join('\n')
-    : '- None: All 36 cards maintain healthy trigger and play rates.'
+if (process.argv[1]?.includes('simulate-deck-balance')) {
+  main().catch((err) => {
+    console.error('Simulation harness error:', err);
+    process.exit(1);
+  });
 }
-
-### 3. Over-Dominant Outliers (\`Win Rate > 56%\` or \`Play Rate > 70%\`)
-Candidates for potential balance adjustments if they distort match outcomes:
-${
-  dominant.length > 0
-    ? dominant
-        .map(
-          (m) =>
-            `- **${m.code} (${m.name})**: ${(m.winRate * 100).toFixed(1)}% win rate, ${(
-              m.playRate * 100
-            ).toFixed(1)}% play rate`
-        )
-        .join('\n')
-    : '- None: No card exceeded the 56% win-rate threshold; roster is well-balanced.'
-}
-
----
-
-## Balance Verdict
-Tournament simulation confirms that the unified Alpha-Beta AI engine with class-weighted card conservation prevents card-dumping spam while ensuring all 36 cards in the first-release abundance pyramid function reliably under competitive tournament conditions.
-`;
-
-  fs.writeFileSync(reportPath, markdown, 'utf-8');
-  console.log(`Saved Markdown balance report to: ${reportPath}`);
-
-  // Cleanup temp batches
-  try {
-    fs.rmSync(tempDir, { recursive: true, force: true });
-  } catch (e) {
-    // Ignore cleanup error
-  }
-
-  console.log('\nSimulation complete! All 36 cards successfully verified.');
-}
-
-main().catch((err) => {
-  console.error('Simulation failure:', err);
-  process.exit(1);
-});

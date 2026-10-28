@@ -1,8 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { DeckChessEngine } from '../src/engine/DeckChessEngine';
-import { computeBestTurn, evaluateBoard } from '../src/engine/DeckChessAI';
 import { CANONICAL_36_CARDS } from '../src/engine/cards/releaseRoster36';
+import {
+  playSingleMatch,
+  MatchSpec,
+  MatchRecord,
+  MatchCardTelemetry,
+} from './sim-single-match';
 
 const ALL_36_IDS = CANONICAL_36_CARDS.map((c) => c.id);
 
@@ -32,6 +36,55 @@ export interface WorkerBatchResult {
   cardStats: Record<string, WorkerRawCardStats>;
 }
 
+export interface WorkerBatchConfig {
+  workerId: number;
+  specs?: MatchSpec[];
+  pairs?: MatchDeckPair[];
+  outJsonl?: string;
+  resultPath?: string;
+}
+
+/**
+ * Runs a list of MatchSpecs, writing each MatchRecord to outJsonl immediately upon completion.
+ */
+export function runMatchSpecs(
+  specs: MatchSpec[],
+  workerId: number = 0,
+  outJsonl?: string
+): MatchRecord[] {
+  const records: MatchRecord[] = [];
+  const total = specs.length;
+
+  if (outJsonl) {
+    const dir = path.dirname(outJsonl);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  }
+
+  for (let i = 0; i < total; i++) {
+    const spec = specs[i];
+    const record = playSingleMatch(spec);
+    records.push(record);
+
+    if (outJsonl) {
+      fs.appendFileSync(outJsonl, JSON.stringify(record) + '\n', 'utf-8');
+    }
+
+    const cardsPlayed = Object.values(record.cardTelemetry || {}).reduce(
+      (sum, t) => sum + (t.timesPlayed || 0),
+      0
+    );
+
+    console.log(
+      `[Worker ${workerId}] (${i + 1}/${total}) Match ${spec.matchId}: ${record.winner} won in ${record.plies} plies (${record.finishReason}, ${cardsPlayed} cards played, ${(record.durationMs / 1000).toFixed(1)}s)`
+    );
+  }
+
+  return records;
+}
+
+// Legacy compatibility wrapper
 export function simulateMatch(pair: MatchDeckPair): {
   winner: 'w' | 'b' | 'draw';
   plies: number;
@@ -44,100 +97,56 @@ export function simulateMatch(pair: MatchDeckPair): {
     swingSum: number;
   }[];
 } {
-  const engine = new DeckChessEngine(undefined, pair.whiteDeck, pair.blackDeck);
-  const MAX_PLIES = 42;
+  const spec: MatchSpec = {
+    matchId: `legacy_${Date.now()}_${Math.random()}`,
+    blockId: 0,
+    pairId: 'legacy_pair',
+    seed: Math.floor(Math.random() * 1000000),
+    whiteDeck: pair.whiteDeck,
+    blackDeck: pair.blackDeck,
+    maxPlies: 100,
+    difficulty: 'medium',
+  };
 
-  const matchStats: Record<
-    string,
-    { turnsHeld: number; turnsConditionMet: number; timesPlayed: number; swingSum: number }
-  > = {};
+  const record = playSingleMatch(spec);
+  const cardsPlayed = Object.values(record.cardTelemetry || {}).reduce(
+    (sum, t) => sum + (t.timesPlayed || 0),
+    0
+  );
 
-  for (const c of [...pair.whiteDeck, ...pair.blackDeck]) {
-    if (!matchStats[c]) {
-      matchStats[c] = { turnsHeld: 0, turnsConditionMet: 0, timesPlayed: 0, swingSum: 0 };
-    }
-  }
-
-  let plies = 0;
-  let cardsPlayed = 0;
-
-  while (!engine.isGameOver() && plies < MAX_PLIES) {
-    const turn = engine.getTurn();
-    const hand = engine.getHandForColor(turn);
-    const uniqueHand = Array.from(new Set(hand));
-
-    for (const cardId of uniqueHand) {
-      if (matchStats[cardId]) {
-        matchStats[cardId].turnsHeld += 1;
-      }
-    }
-
-    const legalEmpowered = engine.getEmpoweredMoves(undefined, true);
-    const triggeredCardIds = Array.from(new Set(legalEmpowered.map((m) => m.cardId)));
-    for (const cardId of triggeredCardIds) {
-      if (matchStats[cardId]) {
-        matchStats[cardId].turnsConditionMet += 1;
-      }
-    }
-
-    // AI move decision with slight random tie-breaking
-    const evalBefore = evaluateBoard(engine, turn);
-    const decision = computeBestTurn(engine, turn, 'medium');
-
-    if (decision.type === 'empowered' && decision.empoweredMove) {
-      const cardId = decision.empoweredMove.cardId;
-      const res = engine.makeEmpoweredMove(decision.empoweredMove);
-      if (res.success) {
-        cardsPlayed += 1;
-        const evalAfter = evaluateBoard(engine, turn);
-        const swing = evalAfter - evalBefore;
-        if (matchStats[cardId]) {
-          matchStats[cardId].timesPlayed += 1;
-          matchStats[cardId].swingSum += swing;
-        }
-      }
-    } else if (decision.move) {
-      engine.makeMove(decision.move);
-    } else {
-      break;
-    }
-
-    plies += 1;
-  }
-
-  // Determine winner
-  let winner: 'w' | 'b' | 'draw';
-  if (engine.isGameOver()) {
-    const engWinner = engine.getWinner();
-    winner = engWinner === 'w' ? 'w' : engWinner === 'b' ? 'b' : 'draw';
-  } else {
-    // Adjudicate at MAX_PLIES by material + position
-    const evalCp = evaluateBoard(engine, 'w');
-    if (evalCp >= 140) {
-      winner = 'w';
-    } else if (evalCp <= -140) {
-      winner = 'b';
-    } else {
-      winner = 'draw';
-    }
-  }
-
-  const cardTelemetry = Object.entries(matchStats).map(([cardId, stats]) => ({
-    cardId,
-    ...stats,
+  const cardTelemetry = Object.values(record.cardTelemetry || {}).map((t) => ({
+    cardId: t.cardId,
+    turnsHeld: t.turnsHeld,
+    turnsConditionMet: t.turnsConditionMet,
+    timesPlayed: t.timesPlayed,
+    swingSum: t.swingSum,
   }));
 
   return {
-    winner,
-    plies,
+    winner: record.winner,
+    plies: record.plies,
     cardsPlayed,
     cardTelemetry,
   };
 }
 
+// Legacy batch runner
 export function runBatch(pairs: MatchDeckPair[], workerId: number = 0): WorkerBatchResult {
+  const specs: MatchSpec[] = pairs.map((p, idx) => ({
+    matchId: `legacy_${workerId}_${idx}`,
+    blockId: 0,
+    pairId: `legacy_${idx}`,
+    seed: 100000 + workerId * 1000 + idx,
+    whiteDeck: p.whiteDeck,
+    blackDeck: p.blackDeck,
+    maxPlies: 100,
+    difficulty: 'medium',
+  }));
+
+  const records = runMatchSpecs(specs, workerId);
+
   const result: WorkerBatchResult = {
-    gamesPlayed: pairs.length,
+    gamesPlayed: records.length,
     whiteWins: 0,
     blackWins: 0,
     draws: 0,
@@ -159,48 +168,36 @@ export function runBatch(pairs: MatchDeckPair[], workerId: number = 0): WorkerBa
     };
   }
 
-  for (let g = 0; g < pairs.length; g++) {
-    const pair = pairs[g];
-
-    for (const cardId of pair.whiteDeck) {
-      result.cardStats[cardId].appearances += 1;
-    }
-    for (const cardId of pair.blackDeck) {
-      result.cardStats[cardId].appearances += 1;
-    }
-
-    const sim = simulateMatch(pair);
-
-    result.totalPlies += sim.plies;
-    result.totalCardsPlayed += sim.cardsPlayed;
-
-    if (sim.winner === 'w') result.whiteWins += 1;
-    else if (sim.winner === 'b') result.blackWins += 1;
+  for (const r of records) {
+    result.totalPlies += r.plies;
+    if (r.winner === 'w') result.whiteWins += 1;
+    else if (r.winner === 'b') result.blackWins += 1;
     else result.draws += 1;
 
-    for (const cardId of pair.whiteDeck) {
-      if (sim.winner === 'w') result.cardStats[cardId].wins += 1;
-      else if (sim.winner === 'draw') result.cardStats[cardId].draws += 1;
-      else result.cardStats[cardId].losses += 1;
+    for (const cid of r.whiteDeck) {
+      if (!result.cardStats[cid]) continue;
+      result.cardStats[cid].appearances += 1;
+      if (r.winner === 'w') result.cardStats[cid].wins += 1;
+      else if (r.winner === 'draw') result.cardStats[cid].draws += 1;
+      else result.cardStats[cid].losses += 1;
     }
 
-    for (const cardId of pair.blackDeck) {
-      if (sim.winner === 'b') result.cardStats[cardId].wins += 1;
-      else if (sim.winner === 'draw') result.cardStats[cardId].draws += 1;
-      else result.cardStats[cardId].losses += 1;
+    for (const cid of r.blackDeck) {
+      if (!result.cardStats[cid]) continue;
+      result.cardStats[cid].appearances += 1;
+      if (r.winner === 'b') result.cardStats[cid].wins += 1;
+      else if (r.winner === 'draw') result.cardStats[cid].draws += 1;
+      else result.cardStats[cid].losses += 1;
     }
 
-    for (const t of sim.cardTelemetry) {
-      if (result.cardStats[t.cardId]) {
-        result.cardStats[t.cardId].turnsHeld += t.turnsHeld;
-        result.cardStats[t.cardId].turnsConditionMet += t.turnsConditionMet;
-        result.cardStats[t.cardId].timesPlayed += t.timesPlayed;
-        result.cardStats[t.cardId].swingSum += t.swingSum;
+    for (const [cid, t] of Object.entries(r.cardTelemetry || {})) {
+      if (result.cardStats[cid]) {
+        result.cardStats[cid].turnsHeld += t.turnsHeld;
+        result.cardStats[cid].turnsConditionMet += t.turnsConditionMet;
+        result.cardStats[cid].timesPlayed += t.timesPlayed;
+        result.cardStats[cid].swingSum += t.swingSum;
+        result.totalCardsPlayed += t.timesPlayed;
       }
-    }
-
-    if ((g + 1) % 2 === 0 || g + 1 === pairs.length) {
-      console.log(`[Worker ${workerId}] Completed game ${g + 1}/${pairs.length}`);
     }
   }
 
@@ -212,28 +209,53 @@ async function main() {
   const args = process.argv.slice(2);
   let batchPath = '';
   let resultPath = '';
+  let outJsonl = '';
 
   for (const arg of args) {
     if (arg.startsWith('--batch=')) {
       batchPath = arg.replace('--batch=', '');
     } else if (arg.startsWith('--result=')) {
       resultPath = arg.replace('--result=', '');
+    } else if (arg.startsWith('--out=')) {
+      outJsonl = arg.replace('--out=', '');
     }
   }
 
-  if (!batchPath || !resultPath) {
-    console.error('Usage: tsx deck-balance-worker.ts --batch=<path> --result=<path>');
+  if (!batchPath) {
+    console.error('Usage: tsx deck-balance-worker.ts --batch=<path> [--result=<path>] [--out=<path>]');
     process.exit(1);
   }
 
   const raw = fs.readFileSync(batchPath, 'utf-8');
-  const { workerId, pairs } = JSON.parse(raw) as { workerId: number; pairs: MatchDeckPair[] };
+  const batch = JSON.parse(raw) as WorkerBatchConfig;
+  const workerId = batch.workerId ?? 0;
+  const targetOutJsonl = outJsonl || batch.outJsonl;
+  const targetResultPath = resultPath || batch.resultPath;
 
-  console.log(`[Worker ${workerId}] Starting batch of ${pairs.length} games...`);
-  const result = runBatch(pairs, workerId);
-
-  fs.writeFileSync(resultPath, JSON.stringify(result, null, 2), 'utf-8');
-  console.log(`[Worker ${workerId}] Finished all ${pairs.length} games. Result written.`);
+  if (batch.specs && batch.specs.length > 0) {
+    console.log(`[Worker ${workerId}] Starting ${batch.specs.length} scheduled matches...`);
+    const records = runMatchSpecs(batch.specs, workerId, targetOutJsonl);
+    if (targetResultPath) {
+      fs.writeFileSync(
+        targetResultPath,
+        JSON.stringify({ workerId, completed: records.length }, null, 2),
+        'utf-8'
+      );
+    }
+    console.log(`[Worker ${workerId}] Finished all ${records.length} matches.`);
+  } else if (batch.pairs && batch.pairs.length > 0) {
+    console.log(`[Worker ${workerId}] Starting legacy batch of ${batch.pairs.length} games...`);
+    const result = runBatch(batch.pairs, workerId);
+    if (targetResultPath) {
+      fs.writeFileSync(targetResultPath, JSON.stringify(result, null, 2), 'utf-8');
+    }
+    console.log(`[Worker ${workerId}] Finished all ${batch.pairs.length} games.`);
+  } else {
+    console.log(`[Worker ${workerId}] No matches assigned to this worker.`);
+    if (targetResultPath) {
+      fs.writeFileSync(targetResultPath, JSON.stringify({ workerId, completed: 0 }, null, 2), 'utf-8');
+    }
+  }
 }
 
 if (process.argv[1]?.includes('deck-balance-worker')) {
