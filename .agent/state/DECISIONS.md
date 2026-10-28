@@ -923,32 +923,47 @@ Analysis of Phase 6 and Phase 7 simulations revealed four architectural bottlene
 
 ---
 
-### [DECISION-038] Phase 9 Decisions: Read-Only In-Game Rewind Scrubber, Responsive Above/Below Move Log Placement & Interactive Ply Selection
+### [DECISION-038] Phase 9 Decisions: Chess.com-Style Horizontal Move Stream on Mobile, 2-Column Table on Desktop & Piece-Colored Card Tags
 
 **Date**: 2026-10-28  
 **Status**: Accepted  
 
 #### Context
-Players need an in-game rewind / timeline inspection feature to step backward and forward through earlier moves during a match (and after Game Over in "Review Board" mode), synchronized with the scrolling Move Log and styled ergonomically for both mobile (`< lg`) and desktop (`>= lg`) viewports.
+Following review of the initial transport button variants, the player timeline inspection was redesigned around standard chess move conventions (Chess.com / Lichess style) rather than generic transport buttons or engine jargon ("ply").
 
 #### Decision
-1. **Read-Only Replay & Per-Ply State Snapshot Architecture (`useDeckChessGame.ts`)**:
-   - Stepping backward/forward through the match timeline is **read-only** (it inspects past board states, hands, graveyards, modifiers, move/card square highlights, and live `<EvalBar />` evaluations without overwriting moves or branching the game state).
-   - Store an initial `initialStateSnapshot: DeckChessEngineState` when a match starts/resets, and attach `stateSnapshot: DeckChessEngineState` to every `RecordedTurn` (ply index `0 .. N-1`).
-   - Expose `viewPlyIndex: number | null` (`null` = live latest turn; `-1` = initial board setup before Ply 1; `0 .. recordedTurns.length - 1` = historical ply after `recordedTurns[viewPlyIndex]`), `isViewingHistory: boolean`, `stepToPly(index: number | null)`, `stepBackward()`, `stepForward()`, `jumpToStart()`, and `jumpToLive()`.
-   - While `isViewingHistory === true`, board square clicks, card arming/selection, and `Hint` execution are guarded against mutating the live engine (`isViewingHistory` read-only lock), and any newly completed move automatically resets `viewPlyIndex` to `null` (Live).
-2. **Responsive Rewind Control Bar Placement (Not Inside the Hand Panel)**:
-   - Keep the Rewind Control Bar separate from `TacticalHandBar.tsx`, co-located with the Move Log inside the Arena's Right Panel (`order-3` on mobile, right below the `order-2` Tactical Hand).
-   - **Mobile (`< lg`)**: Render the Rewind Control Bar **above the scrolling Move Log** (`order-1 lg:order-2`), so it sits immediately below the Tactical Hand for thumb reachability without scrolling past the Move Log.
-   - **Desktop (`>= lg`)**: Render the Rewind Control Bar **below the scrolling Move Log** (`order-2 lg:order-1`), anchored directly beneath the latest move at the bottom of the Move Log list and above the Action Footer (`💡 Hint`, `Resign`, `New Game`, `My Deck`).
-3. **Interactive Scrolling Move Log & Auto-Scroll Stability**:
-   - Link each move/card entry in `combatLog` to its `plyIndex: number` (and provide a clickable `"Starting Position"` / initial entry at `plyIndex: -1`).
-   - Clicking any move row in the scrolling Move Log calls `stepToPly(log.plyIndex)`, highlighting the active row in gold (`border-[#D4AF37] bg-[#D4AF37]/15`).
-   - Auto-scroll the Move Log container internally (`container.scrollTop`) to keep the active/viewed move visible without ever triggering window/viewport jumps (`window.scrollY` remains anchored at `0` on mobile).
+1. **Ditch Engine Jargon ("Ply") & Redundant Buttons**:
+   - Moves are presented using standard chess notation and numbering: `1. e4 e5`, `2. Nf3 Nc6`, etc.
+   - Elimination of redundant jump-to-end / return-to-present buttons; a single `‹` (step back) and `›` (step forward / live) button flanking the stream is used.
+   - Use vibrant tactical green (`#3FB950`) instead of gold/yellow for active move highlights and the live indicator.
+2. **Mobile Horizontal Move Tape (`<MoveStreamMobile />`)**:
+   - Located directly below the Tactical Hand (and above Chat/Controls).
+   - Formatted as `[ ‹ ]` + horizontal scroll track with smooth edge fade gradients (`mask-image: linear-gradient(to right, transparent, black 16px, black calc(100% - 16px), transparent)`) + `[ › ]`.
+   - Numbered format: `1. e4`, `e5`, `2. Nf3`, `Nc6`.
+   - Clicking any move jumps the board to that move, highlights the move pill in green (`#3FB950`), and auto-scrolls the tape horizontally to center the active move.
+   - Stepping left before Move 1 displays the initial starting board with no move highlighted.
+3. **Desktop 2-Column Move Table (`<MoveTableDesktop />`)**:
+   - Located in the Right Panel's `Moves` tab:
+     ```
+     Turn   White       Black
+     1.     e4          e5
+     2.     Nf3 [🟩]    Nc6
+     ```
+   - Features a **cell-by-cell moving green highlight** advancing from White's move to Black's move and down row-by-row, matching the exact board state shown on the chessboard.
+   - Clicking any cell jumps to that position.
+   - Clean `[ ‹ ]` `[ LIVE ]` `[ › ]` controls and `ArrowLeft` / `ArrowRight` keyboard support.
+4. **Piece-Colored Card Tags for Empowered Moves**:
+   - Empowered card moves display a compact tag (e.g. `[N1]`, `[P2]`, `[Q2]`) whose font color strictly matches its piece card frame color:
+     - **Pawn (`P1–P8`)**: `#8A9199` (Gray)
+     - **Knight (`N1–N7`)**: `#3FB950` (Green)
+     - **Bishop (`B1–B7`)**: `#3B82F6` (Blue)
+     - **Rook (`R1–R6`)**: `#A855F7` (Purple)
+     - **Queen (`Q1–Q4`)**: `#EF4444` (Red)
+     - **King (`K1–K4`)**: `#D4AF37` (Gold)
+   - Tooltips for card tags and keywords are parked for future enhancement.
 
 #### Consequences
-- Unifies live match timeline inspection and post-game `"Review Board"` analysis in both Offline AI and Online Multiplayer rooms (`DeckBuilderPage.tsx` and `PlayRoomPage.tsx`).
-- Preserves mobile ergonomics by placing the transport bar right below the Hand and above the Move Log on mobile, and below the Move Log on desktop.
+- Eliminates visual clutter, replaces redundant buttons with a single-step control stream, and provides a polished, intuitive chess-native experience on both mobile and desktop.
 
 ---
 

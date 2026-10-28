@@ -1,119 +1,89 @@
-# Phase 9 Research: In-Game Read-Only Rewind Scrubber & Interactive Move Log
+# Phase 9 Research: Chess.com-Style Move Stream & In-Game Timeline Inspection
 
-## 1. Architectural Context & Current State
+## 1. Architectural Overview & Design Synthesis
 
-Currently in `src/hooks/useDeckChessGame.ts`:
-- `recordedTurns: RecordedTurn[]` records each executed ply (`makeMove`, `confirmPendingCardMove`, `triggerAiTurn`, and `applyRemoteTurn`), storing `turnNumber`, `player`, `chessMove`, `cardAction`, `fenAfter`, `combatText`, and `timestamp`.
-- `combatLog: CombatLogEntry[]` records text strings (`type: 'move' | 'card' | 'system'`), but entries do not carry a `plyIndex` linking them to `recordedTurns`.
-- `useDeckChessGame` always returns live `gameState` (`fen`, `whiteHand`, `blackHand`, `graveyard`, `activeModifiers`, `inCheck`) directly from `engineRef.current.getState()`. There is no timeline cursor (`viewPlyIndex`) to inspect earlier plies during or after a match.
-
-In `src/pages/DeckBuilderPage.tsx`:
-- On mobile (`< lg`), the arena layout stacks vertically:
-  1. `order-1`: Center Chessboard Column (Opponent bar, `TabletopArena` + `DeckChessBoard`, Player bar)
-  2. `order-2`: Left Column (`TacticalHandBar`)
-  3. `order-3`: Right Column (`Moves | Chat` panel + Action Footer)
-- On desktop (`>= lg`), the 3 columns sit side-by-side (`Left Hand | Center Board | Right Moves/Chat`).
-- Inside the Right Column (`Moves` tab), `game.combatLog` renders as a static list of `<div>` items without click-to-jump or transport controls (`|◀`, `◀`, `▶`, `▶|`).
+Following user alignment (`[DECISION-038]`):
+- Replace generic VCR transport buttons (`|◀`, `▶|`, etc.) and engine jargon ("ply") with the authentic, chess-native convention used by Chess.com and Lichess.
+- **Mobile (`< lg`)**: Render `<MoveStreamMobile />` directly below the Tactical Hand. A sleek horizontal move tape with `[ ‹ ]` on the left, `[ › ]` on the right, and a horizontally scrolling stream with edge fade gradients. Moves are displayed in numbered chess notation (`1. e4`, `e5`, `2. Nf3`, `Nc6`). Tapping any move jumps the board to that move, highlights the move in tactical green (`#3FB950`), and auto-scrolls the tape to center it. Stepping left before Move 1 shows the initial starting board.
+- **Desktop (`>= lg`)**: Render `<MoveTableDesktop />` inside the Right Column's `Moves` tab as a 2-column move table:
+  ```
+  Turn   White       Black
+  1.     e4          e5
+  2.     Nf3 [🟩]    Nc6
+  ```
+  The green highlight box advances **cell-by-cell** from White's move to Black's move and down row-by-row, matching whichever exact board state is currently being inspected.
+- **Piece-Colored Card Tags**: Empowered card moves render a compact badge (e.g. `[N1]`, `[P2]`, `[Q2]`, `[R1]`) whose font color strictly matches its piece card frame color:
+  - Pawn (`P1–P8`): `#8A9199` (Gray)
+  - Knight (`N1–N7`): `#3FB950` (Green)
+  - Bishop (`B1–B7`): `#3B82F6` (Blue)
+  - Rook (`R1–R6`): `#A855F7` (Purple)
+  - Queen (`Q1–Q4`): `#EF4444` (Red)
+  - King (`K1–K4`): `#D4AF37` (Gold)
 
 ---
 
-## 2. Canonical 5-Layer Data Contracts
+## 2. Data Contracts
 
-### Layer 1: Per-Ply State Snapshot (`RecordedTurn` & `CombatLogEntry`)
+### Layer 1: Recorded Turn & Move Pair Structure
 ```typescript
-export interface CombatLogEntry {
-  id: string;
-  text: string;
-  timestamp: number;
-  type: 'move' | 'card' | 'system';
-  playerColor?: PieceColor;
-  plyIndex?: number; // -1 for initial setup, 0..N-1 for recordedTurns index
-}
-
 export interface RecordedTurn {
-  plyIndex: number; // 0-based index in recordedTurns
-  turnNumber: number;
-  player: PieceColor;
+  turnNumber: number; // 1-based full turn number
+  player: PieceColor; // 'w' | 'b'
   chessMove: DeckChessMove;
   cardAction?: DeckChessCardAction;
+  cardCode?: string; // e.g. "N1", "P2", "Q2"
+  cardPieceType?: 'p' | 'n' | 'b' | 'r' | 'q' | 'k';
+  san?: string; // Standard Algebraic Notation e.g. "Nf3", "e4", "O-O"
   fenAfter: string;
-  stateSnapshot?: DeckChessEngineState; // Full engine snapshot after this ply
-  combatText?: string;
+  stateSnapshot: DeckChessEngineState;
   timestamp: number;
 }
-```
 
-### Layer 2: Timeline Scrubber State & Actions (`useDeckChessGame` Return Contract)
-- `viewPlyIndex: number | null`:
-  - `null`: Live view (tracking the latest state at `recordedTurns.length - 1`, or initial state when `recordedTurns.length === 0`).
-  - `-1`: Viewing the initial board setup before Ply 1 (`initialStateSnapshot`).
-  - `0 .. recordedTurns.length - 1`: Viewing the historical snapshot after `recordedTurns[viewPlyIndex]`.
-- `activePlyIndex: number`:
-  - Resolved integer index currently displayed (`viewPlyIndex !== null ? viewPlyIndex : recordedTurns.length - 1`).
-- `totalPlies: number`:
-  - `recordedTurns.length`.
-- `isViewingHistory: boolean`:
-  - `viewPlyIndex !== null && viewPlyIndex < recordedTurns.length - 1` (true whenever the user is inspecting an earlier state prior to the latest live ply).
-- `viewedMove: RecordedTurn | null`:
-  - The `RecordedTurn` at `activePlyIndex` (when `activePlyIndex >= 0`), used to highlight `from` / `to` / `anchorSquare` / `targetSquare` on `DeckChessBoard` and display card annotations.
-- **Navigation Actions**:
-  - `stepToPly(plyIndex: number | null): void`: Clamps index to `[-1, recordedTurns.length - 1]`; if `plyIndex >= recordedTurns.length - 1` or `plyIndex === null`, sets `viewPlyIndex = null` (Live). Clears any active piece/card selection on the board when entering history view.
-  - `stepBackward(): void`:
-    - If `recordedTurns.length === 0`, no-op.
-    - From `null` (Live), steps to `recordedTurns.length - 2` (or `-1` if `recordedTurns.length === 1`).
-    - From `k > -1`, steps to `k - 1`.
-  - `stepForward(): void`:
-    - If `viewPlyIndex === null`, no-op.
-    - If `viewPlyIndex + 1 >= recordedTurns.length - 1`, sets `viewPlyIndex = null` (returns to Live).
-    - Otherwise sets `viewPlyIndex = viewPlyIndex + 1`.
-  - `jumpToStart(): void`:
-    - If `recordedTurns.length > 0`, sets `viewPlyIndex = -1`.
-  - `jumpToLive(): void`:
-    - Sets `viewPlyIndex = null`.
-
-### Layer 3: Effective Displayed State Projection
-When `isViewingHistory === true`:
-- `displayedState` is resolved from:
-  - `viewPlyIndex === -1`: `initialStateSnapshot`
-  - `viewPlyIndex >= 0`: `recordedTurns[viewPlyIndex].stateSnapshot` (falling back to `{ ...gameState, fen: recordedTurns[viewPlyIndex].fenAfter }`)
-- `fen`, `whiteHand`, `blackHand`, `graveyard`, `activeModifiers`, `inCheck`, and `evaluation` (`EvalBar`) all reflect `displayedState` so the board, side evaluation bar, captured pieces, and hand reflect that exact moment in the match!
-- Last-move square highlights: when `viewedMove` exists and no piece is actively selected, `lastMoveHighlights` (`from` and `to`) can be shown subtly on the board.
-
-### Layer 4: Reusable `<RewindBar />` Component (`src/components/RewindBar.tsx`)
-Props:
-```typescript
-export interface RewindBarProps {
-  activePlyIndex: number; // -1 .. totalPlies - 1
-  totalPlies: number;
-  isViewingHistory: boolean;
-  onJumpToStart: () => void;
-  onStepBackward: () => void;
-  onStepForward: () => void;
-  onJumpToLive: () => void;
-  className?: string;
+export interface TurnRow {
+  turnNumber: number;
+  white?: RecordedTurn;
+  whiteIndex?: number;
+  black?: RecordedTurn;
+  blackIndex?: number;
 }
 ```
-Layout & Responsive Ordering inside the Move Log Panel:
-- **Mobile (`< lg`)**: `order-1 lg:order-2 mb-2 lg:mb-0 lg:mt-2` — renders **above** the scrolling Move Log (and immediately below the Tactical Hand).
-- **Desktop (`>= lg`)**: `order-1 lg:order-2` — renders **below** the scrolling Move Log (and immediately above the Action Footer).
+
+### Layer 2: Timeline Scrubber Hook Contract (`useDeckChessGame.ts`)
+- `viewIndex: number | null`:
+  - `null`: Live view (tracks latest live move at `recordedTurns.length - 1`, or initial state if 0 moves).
+  - `-1`: Starting position before Move 1.
+  - `0 .. recordedTurns.length - 1`: Historical position after `recordedTurns[viewIndex]`.
+- `activeMoveIndex: number`:
+  - `viewIndex !== null ? viewIndex : recordedTurns.length - 1`.
+- `isViewingHistory: boolean`:
+  - `viewIndex !== null && viewIndex < recordedTurns.length - 1`.
+- `stepBackward()`:
+  - Steps back 1 move (`activeMoveIndex - 1`), clamping at `-1`.
+- `stepForward()`:
+  - Steps forward 1 move (`activeMoveIndex + 1`). If reaching `recordedTurns.length - 1`, sets `viewIndex = null` (Live).
+- `stepToMove(index: number | null)`:
+  - Jumps directly to move index `index` (`null` or `-1 .. recordedTurns.length - 1`).
+- `jumpToLive()`:
+  - Sets `viewIndex = null`.
+
+### Layer 3: Piece Color Token Mapping
+```typescript
+export const PIECE_CARD_COLORS: Record<string, string> = {
+  p: '#8A9199', // Pawn - Gray
+  n: '#3FB950', // Knight - Green
+  b: '#3B82F6', // Bishop - Blue
+  r: '#A855F7', // Rook - Purple
+  q: '#EF4444', // Queen - Red
+  k: '#D4AF37', // King - Gold
+};
+```
 
 ---
 
-## 3. State Transition Matrix & Read-Only Guards
+## 3. Invariants
 
-| Current Mode | User / System Action | Transition & Guard Behavior |
-|---|---|---|
-| `LIVE` (`isViewingHistory = false`) | Click `◀` or `\|◀` or earlier Move Log row | Enters `HISTORY` (`viewPlyIndex` set to target ply), cancels any armed card/piece selection, updates board, `EvalBar`, graveyard, and hand to historical snapshot. |
-| `HISTORY` (`isViewingHistory = true`) | Click `▶` reaching `totalPlies - 1`, or click `▶\|`, or click `"Return to Live"` status pill | Exits `HISTORY` (`viewPlyIndex = null`), restores live board, hand, and active turn controls. |
-| `HISTORY` (`isViewingHistory = true`) | Click a board square or card in hand | **Read-Only Guard**: Blocked from executing moves or arming cards while inspecting history (`handleSquareClick` and `selectCardFromHand` return early when `isViewingHistory` is true). |
-| `HISTORY` or `LIVE` | AI or Remote Opponent completes a move, or `resetGame` runs | `resetGame` resets `viewPlyIndex = null` and captures fresh `initialStateSnapshot`. |
-| `GAME_OVER` (`Review Board` active) | Click `\|◀`, `◀`, `▶`, `▶\|`, or Move Log rows | Full timeline scrubbing works identically after Game Over so players can review every turn of the completed match with `<EvalBar />`. |
-
----
-
-## 4. Immutable System Invariants
-
-1. **INV-REW-01 (Read-Only Integrity)**: Scrubbing to any historical ply (`-1 .. totalPlies - 2`) MUST NEVER mutate `engineRef.current`, overwrite `recordedTurns`, or allow piece/card move execution until returning to Live (`isViewingHistory === false`).
-2. **INV-REW-02 (Complete Snapshot Fidelity)**: At any ply index `k` (`-1 .. totalPlies - 1`), `fen`, `whiteHand`, `blackHand`, `graveyard`, `activeModifiers`, `inCheck`, and `evaluation` MUST match the exact state recorded at ply `k`.
-3. **INV-REW-03 (Responsive DOM Ordering)**: On mobile viewports (`< 1024px`), the Rewind Bar bounding box `top` MUST be strictly above the Move Log scroll container `top` (and below the Tactical Hand Bar). On desktop viewports (`>= 1024px`), the Rewind Bar `top` MUST be strictly below the Move Log scroll container `top`.
-4. **INV-REW-04 (Scroll Anchor Stability)**: Clicking move rows or stepping with `◀` / `▶` on mobile MUST auto-scroll the Move Log container internally (`scrollTop`) without shifting `window.scrollY`.
+1. **INV-STREAM-01 (Single-Arrow Step)**: Mobile stream has exactly one left `‹` and one right `›` button. No redundant jump-to-end buttons.
+2. **INV-STREAM-02 (Cell-by-Cell Fidelity)**: On desktop, the active green highlight box is positioned on the exact move cell (`White` or `Black`) corresponding to `activeMoveIndex`.
+3. **INV-STREAM-03 (Edge Fade Transparency)**: Mobile stream container uses CSS mask-image gradient so moves fade out smoothly at the left and right edges.
+4. **INV-STREAM-04 (Read-Only Guard)**: When `isViewingHistory === true`, board clicks are non-mutating until returning to Live.
+5. **INV-STREAM-05 (Piece-Color Card Tag Fidelity)**: Card tags (`[P1]`, `[N1]`, etc.) match their respective piece frame color.
