@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { DeckChessEngine } from '../src/engine/DeckChessEngine';
 import {
   evaluateBoard,
@@ -11,6 +13,14 @@ import {
 } from '../src/engine/DeckChessAI';
 import type { AiSearchOptions, BestTurnResult } from '../src/types/deckChess';
 import type { FriendlyPieceSummary } from '../src/engine/cards/cardRegistry';
+import { playSingleMatch, MatchSpec, MatchRecord } from './sim-single-match';
+import { generateColorSwappedSchedule } from './simulate-deck-balance.mjs';
+import {
+  computeMarginalCredits,
+  aggregateMatchRecords,
+  readAndConsolidateMatches,
+} from './aggregate-deck-balance';
+import { CANONICAL_36_CARDS } from '../src/engine/cards/releaseRoster36';
 
 let passed = 0;
 let failed = 0;
@@ -42,7 +52,7 @@ function getPiecesForColor(engine: DeckChessEngine, color: 'w' | 'b'): FriendlyP
 
 const args = process.argv.slice(2);
 const suiteArg = args.find((a) => a.startsWith('--suite='));
-const targetSuite = suiteArg ? suiteArg.split('=')[1] : 'engine';
+const targetSuite = suiteArg ? suiteArg.split('=')[1] : 'all';
 
 console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 console.log(' PHASE 8: SEARCH PERFORMANCE, LOW-DETERMINISM AI & BALANCE HARNESS');
@@ -308,15 +318,259 @@ async function runEngineSuite() {
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log(` ENGINE SUITE COMPLETE: ${passed} PASSED | ${failed} FAILED`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+}
+
+async function runHarnessSuite() {
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(' HARNESS SUITE: DETERMINISM, SCHEDULE, RESUME & RIDGE RECOVERY');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+  // ==========================================================
+  // Suite H1: playSingleMatch Determinism
+  // ==========================================================
+  console.log('Suite H1: playSingleMatch Determinism & Telemetry Consistency');
+  {
+    const spec: MatchSpec = {
+      matchId: 'harness_det_test',
+      blockId: 0,
+      pairId: 'harness_pair',
+      seed: 88888,
+      whiteDeck: [
+        'p1_sidestep',
+        'p3_follow_me',
+        'n1_adrenaline_jump',
+        'n3_trample',
+        'b1_let_me_through',
+        'r1_make_way',
+        'q1_regal_presence',
+        'k1_bunker_down',
+      ],
+      blackDeck: [
+        'p2_head_on',
+        'p4_rally',
+        'n2_swap_with_me',
+        'n4_high_jump',
+        'b2_break_through',
+        'r2_reinforce',
+        'q2_queens_gambit',
+        'k2_royal_step',
+      ],
+      maxPlies: 30,
+      difficulty: 'medium',
+    };
+
+    const rec1 = playSingleMatch(spec);
+    const rec2 = playSingleMatch(spec);
+
+    assert(rec1.winner === rec2.winner, `Identical winner for seed ${spec.seed}: ${rec1.winner}`);
+    assert(rec1.plies === rec2.plies, `Identical plies for seed ${spec.seed}: ${rec1.plies}`);
+    assert(rec1.finishReason === rec2.finishReason, `Identical finishReason: ${rec1.finishReason}`);
+    assert(
+      JSON.stringify(rec1.openingMoves6) === JSON.stringify(rec2.openingMoves6),
+      `Identical openingMoves6 sequence: ${rec1.openingMoves6.join(' ')}`
+    );
+    assert(
+      JSON.stringify(rec1.cardTelemetry) === JSON.stringify(rec2.cardTelemetry),
+      'Identical cardTelemetry across both runs'
+    );
+  }
+
+  // ==========================================================
+  // Suite H2: Color-Swapped Schedule Invariant
+  // ==========================================================
+  console.log('\nSuite H2: Color-Swapped Schedule Invariant');
+  {
+    const schedule = generateColorSwappedSchedule(2, 50, 'medium');
+    assert(schedule.length === 36, '2 blocks produce exactly 36 matches (18 per block)');
+
+    for (let b = 0; b < 2; b++) {
+      const blockMatches = schedule.filter((m) => m.blockId === b);
+      assert(blockMatches.length === 18, `Block ${b} contains exactly 18 matches`);
+
+      const whiteCounts: Record<string, number> = {};
+      const blackCounts: Record<string, number> = {};
+      for (const m of blockMatches) {
+        for (const cid of m.whiteDeck) {
+          whiteCounts[cid] = (whiteCounts[cid] || 0) + 1;
+        }
+        for (const cid of m.blackDeck) {
+          blackCounts[cid] = (blackCounts[cid] || 0) + 1;
+        }
+      }
+
+      const allWhiteBalanced = CANONICAL_36_CARDS.every((c) => whiteCounts[c.id] === 4);
+      const allBlackBalanced = CANONICAL_36_CARDS.every((c) => blackCounts[c.id] === 4);
+      assert(allWhiteBalanced, `Block ${b}: all 36 cards appear exactly 4 times in White decks`);
+      assert(allBlackBalanced, `Block ${b}: all 36 cards appear exactly 4 times in Black decks`);
+
+      // Verify pair symmetry
+      for (let p = 0; p < 9; p++) {
+        const pairId = `b${b}_p${p}`;
+        const wMatch = blockMatches.find((m) => m.matchId === `${pairId}_w`);
+        const bMatch = blockMatches.find((m) => m.matchId === `${pairId}_b`);
+        assert(!!wMatch && !!bMatch, `Pair ${pairId} has both _w and _b twins`);
+        if (wMatch && bMatch) {
+          assert(
+            JSON.stringify(wMatch.whiteDeck) === JSON.stringify(bMatch.blackDeck),
+            `Pair ${pairId} whiteDeck matches blackDeck in reverse`
+          );
+          assert(
+            JSON.stringify(wMatch.blackDeck) === JSON.stringify(bMatch.whiteDeck),
+            `Pair ${pairId} blackDeck matches whiteDeck in reverse`
+          );
+          assert(
+            wMatch.seed === bMatch.seed,
+            `Pair ${pairId} twins share identical seed for paired comparison`
+          );
+        }
+      }
+    }
+  }
+
+  // ==========================================================
+  // Suite H3: Ridge Regression Marginal Credit Recovery
+  // ==========================================================
+  console.log('\nSuite H3: Ridge Regression Marginal Credit Recovery');
+  {
+    const allIds = CANONICAL_36_CARDS.map((c) => c.id);
+    const otherIds = allIds.filter((id) => id !== 'p7_protect_the_king');
+    const rng = mulberry32(424242);
+
+    function seededShuffle(arr: string[]): string[] {
+      const r = [...arr];
+      for (let i = r.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [r[i], r[j]] = [r[j], r[i]];
+      }
+      return r;
+    }
+
+    const syntheticMatches: MatchRecord[] = [];
+
+    // Simulate 180 matches where 'p7_protect_the_king' provides a massive win lift,
+    // paired alongside passive teammate 'p1_sidestep' and rotating decks
+    for (let i = 0; i < 180; i++) {
+      const p7IsWhite = i % 2 === 0;
+      const shuffled = seededShuffle(otherIds);
+
+      const whiteDeck = p7IsWhite
+        ? ['p7_protect_the_king', ...shuffled.slice(0, 7)]
+        : shuffled.slice(0, 8);
+      const blackDeck = p7IsWhite
+        ? shuffled.slice(8, 16)
+        : ['p7_protect_the_king', ...shuffled.slice(8, 15)];
+
+      const p7Wins = rng() < 0.82;
+      const winner: 'w' | 'b' | 'draw' = p7IsWhite
+        ? p7Wins
+          ? 'w'
+          : 'b'
+        : p7Wins
+        ? 'b'
+        : 'w';
+
+      syntheticMatches.push({
+        matchId: `syn_${i}`,
+        blockId: Math.floor(i / 18),
+        pairId: `syn_p_${Math.floor(i / 2)}`,
+        seed: 7000 + i,
+        whiteDeck,
+        blackDeck,
+        winner,
+        finishReason: 'checkmate',
+        plies: 42,
+        durationMs: 50,
+        finalFen: '',
+        openingMoves6: ['e2-e4', 'e7-e5'],
+        cardTelemetry: {},
+      });
+    }
+
+    const credits = computeMarginalCredits(syntheticMatches, allIds, 8.0);
+    const p7Credit = credits['p7_protect_the_king'] ?? 0;
+    const p1Credit = credits['p1_sidestep'] ?? 0;
+
+    assert(
+      p7Credit >= 0.15,
+      `Ridge assigns strong positive marginal credit to OP card P7: +${(p7Credit * 100).toFixed(1)}% (>= +15%)`
+    );
+    assert(
+      Math.abs(p1Credit) <= 0.08,
+      `Ridge shrinks passive teammate P1 credit near 0: ${(p1Credit * 100).toFixed(1)}% (<= ±8%)`
+    );
+  }
+
+  // ==========================================================
+  // Suite H4: Stop & Resume Idempotency
+  // ==========================================================
+  console.log('\nSuite H4: Stop & Resume Idempotency');
+  {
+    const testPhase = '8-harness-temp';
+    const testDir = path.resolve(`.agent/state/phases/${testPhase}`);
+    const workersDir = path.join(testDir, 'workers');
+
+    // Clean up if exists
+    if (fs.existsSync(testDir)) {
+      fs.rmSync(testDir, { recursive: true, force: true });
+    }
+    fs.mkdirSync(workersDir, { recursive: true });
+
+    // 1. Create a partial run in worker_0.jsonl
+    const sampleSchedule = generateColorSwappedSchedule(1, 25, 'medium').slice(0, 6);
+    const worker0Path = path.join(workersDir, 'worker_0.jsonl');
+    for (const spec of sampleSchedule.slice(0, 3)) {
+      const rec = playSingleMatch(spec);
+      fs.appendFileSync(worker0Path, JSON.stringify(rec) + '\n', 'utf-8');
+    }
+
+    // Read and consolidate partial run
+    const partialConsolidated = readAndConsolidateMatches(testPhase);
+    assert(partialConsolidated.length === 3, 'Partial run successfully consolidated 3 matches');
+
+    // 2. Resume remaining 3 matches into worker_1.jsonl
+    const worker1Path = path.join(workersDir, 'worker_1.jsonl');
+    for (const spec of sampleSchedule.slice(3, 6)) {
+      const rec = playSingleMatch(spec);
+      fs.appendFileSync(worker1Path, JSON.stringify(rec) + '\n', 'utf-8');
+    }
+
+    // Re-read and consolidate
+    const fullConsolidated = readAndConsolidateMatches(testPhase);
+    assert(fullConsolidated.length === 6, 'Resumed run consolidated exactly 6 deduplicated matches');
+
+    const aggResult = aggregateMatchRecords(fullConsolidated);
+    assert(aggResult.summary.totalMatches === 6, 'Aggregator accurately reports 6 total matches');
+
+    // Clean up temporary test directory
+    if (fs.existsSync(testDir)) {
+      fs.rmSync(testDir, { recursive: true, force: true });
+    }
+    assert(!fs.existsSync(testDir), 'Temporary test directory cleaned up cleanly');
+  }
+
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(` HARNESS SUITE COMPLETE: ${passed} PASSED | ${failed} FAILED`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+}
+
+async function main() {
+  if (targetSuite === 'all' || targetSuite === 'engine') {
+    await runEngineSuite();
+  }
+  if (targetSuite === 'all' || targetSuite === 'harness') {
+    await runHarnessSuite();
+  }
+
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(` ALL SUITES FINISHED: ${passed} PASSED | ${failed} FAILED`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   if (failed > 0) {
     process.exit(1);
   }
 }
 
-if (targetSuite === 'engine') {
-  runEngineSuite().catch((err) => {
-    console.error('Unhandled suite error:', err);
-    process.exit(1);
-  });
-}
+main().catch((err) => {
+  console.error('Unhandled suite error:', err);
+  process.exit(1);
+});
