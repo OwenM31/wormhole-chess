@@ -1,5 +1,12 @@
 import React from 'react';
-import { BoardModifier, PieceColor, Square, EmpoweredMove, BestTurnResult } from '../types/deckChess';
+import {
+  BoardModifier,
+  PieceColor,
+  Square,
+  EmpoweredMove,
+  BestTurnResult,
+  BoardPreviewArrow,
+} from '../types/deckChess';
 import { CANONICAL_36_CARDS, PIECE_COLOR_THEMES } from '../engine/cards/releaseRoster36';
 import { getCardById } from '../engine/cardGraph';
 
@@ -241,12 +248,74 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
   const disambiguationBadgeLabel = (() => {
     const lower = disambiguationPromptText.toLowerCase();
     if (lower.includes('step aside') || lower.includes('aside')) return 'STEP ASIDE';
+    if (lower.includes('fork')) return 'FORK';
+    if (lower.includes('trample') || lower.includes('path')) return 'PATH';
+    if (lower.includes('launch')) return 'LAUNCH';
+    if (lower.includes('bless')) return 'BLESS';
+    if (lower.includes('bounce') || lower.includes('springboard')) return 'BOUNCE';
+    if (lower.includes('shield')) return 'SHIELD';
     if (lower.includes('reinforc') || lower.includes('knight')) return 'REINFORCE';
     if (lower.includes('defend') || lower.includes('pawn')) return 'DEFEND';
     if (lower.includes('sacrifice')) return 'SACRIFICE';
     if (lower.includes('ally') || lower.includes('execut')) return 'EXECUTE';
+    if (lower.includes('convert') || lower.includes('turncoat')) return 'CONVERT';
     if (lower.includes('tuck') || lower.includes('behind')) return 'COVER';
     return 'CHOOSE';
+  })();
+
+  // Compute square center in 800x800 coordinate space
+  const getSquareCenter = (sq: string): { x: number; y: number } => {
+    if (!sq || sq.length < 2) return { x: 0, y: 0 };
+    const fileStr = sq[0];
+    const rankStr = sq[1];
+    const fileDisplayIndex = displayFiles.indexOf(fileStr);
+    const rankDisplayIndex = displayRanks.indexOf(rankStr);
+    if (fileDisplayIndex === -1 || rankDisplayIndex === -1) return { x: 0, y: 0 };
+    return {
+      x: fileDisplayIndex * 100 + 50,
+      y: rankDisplayIndex * 100 + 50,
+    };
+  };
+
+  // Collect active preview arrows to render underneath board pieces (z-[6])
+  const activeArrows: BoardPreviewArrow[] = (() => {
+    // 1. Live pending card move preview
+    const pendingArrows = pendingCardMove?.arrows || pendingCardMove?.metadata?.arrows;
+    if (pendingArrows && pendingArrows.length > 0) {
+      return pendingArrows;
+    }
+
+    // 2. Disambiguation candidates (e.g. N3 Trample L-path disambiguation)
+    if (disambiguationCandidates && disambiguationCandidates.length > 0) {
+      const candidateArrows: BoardPreviewArrow[] = [];
+      for (const cand of disambiguationCandidates) {
+        const cArrows = cand.arrows || cand.metadata?.arrows;
+        if (cArrows) {
+          candidateArrows.push(...cArrows);
+        }
+      }
+      if (candidateArrows.length > 0) return candidateArrows;
+    }
+
+    // 3. Empowered moves for selected piece or active card
+    if ((selectedCardId || hoveredCardId) && empoweredMoves.length > 0) {
+      const activeCardMoves = empoweredMoves.filter(
+        (m) => m.cardId === (selectedCardId || hoveredCardId)
+      );
+      const filtered = selectedSquare
+        ? activeCardMoves.filter((m) => m.from === selectedSquare)
+        : activeCardMoves;
+      const moveArrows: BoardPreviewArrow[] = [];
+      for (const m of filtered) {
+        const mArrows = m.arrows || m.metadata?.arrows;
+        if (mArrows) {
+          moveArrows.push(...mArrows);
+        }
+      }
+      return moveArrows;
+    }
+
+    return [];
   })();
 
   return (
@@ -330,6 +399,93 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
             : 'grid grid-cols-8 grid-rows-8 w-full aspect-square rounded overflow-hidden border border-[rgba(139,126,116,0.2)] shadow-inner relative'
         }
       >
+        {/* Under-Piece Board Preview Arrows (z-[6] strictly below z-10 piece SVGs) */}
+        <svg
+          data-testid="board-preview-arrows"
+          viewBox="0 0 800 800"
+          className="absolute inset-0 w-full h-full pointer-events-none z-[6]"
+        >
+          <defs>
+            <marker
+              id="arrow-gold"
+              viewBox="0 0 10 10"
+              refX="6"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#D4AF37" />
+            </marker>
+            <marker
+              id="arrow-green"
+              viewBox="0 0 10 10"
+              refX="6"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#3FB950" />
+            </marker>
+            <marker
+              id="arrow-red"
+              viewBox="0 0 10 10"
+              refX="6"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#F85149" />
+            </marker>
+            <marker
+              id="arrow-cyan"
+              viewBox="0 0 10 10"
+              refX="6"
+              refY="5"
+              markerWidth="6"
+              markerHeight="6"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 1 L 10 5 L 0 9 z" fill="#38BDF8" />
+            </marker>
+          </defs>
+
+          {activeArrows.map((arrow, idx) => {
+            const colorHex =
+              arrow.color === 'green'
+                ? '#3FB950'
+                : arrow.color === 'red'
+                ? '#F85149'
+                : arrow.color === 'cyan'
+                ? '#38BDF8'
+                : '#D4AF37';
+            const markerId = `url(#arrow-${arrow.color || 'gold'})`;
+            const pointsStr = arrow.points
+              .map((sq) => {
+                const pt = getSquareCenter(sq);
+                return `${pt.x},${pt.y}`;
+              })
+              .join(' ');
+
+            return (
+              <polyline
+                key={`preview-arrow-${idx}-${pointsStr}`}
+                points={pointsStr}
+                fill="none"
+                stroke={colorHex}
+                strokeWidth="7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray={arrow.color === 'red' ? '8 6' : undefined}
+                markerEnd={markerId}
+                className="opacity-80 drop-shadow-[0_0_6px_rgba(0,0,0,0.8)] transition-all duration-200"
+              />
+            );
+          })}
+        </svg>
+
         {displayRanks.map((rankStr, rankDisplayIndex) => {
           return displayFiles.map((fileStr, fileDisplayIndex) => {
             const squareName = `${fileStr}${rankStr}` as Square;
