@@ -8,9 +8,9 @@ updated: 2026-10-28T10:13:00-05:00
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 - **Phase**: Phase 8 — *Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness*
-- **Task**: Phase 8 Inserted (Phases 8–10 renumbered to 9–11) — Ready for Phase 8 Planning (`@[.agent/workflows/plan.md] 8`)
-- **Status**: Active (resumed 2026-10-28 09:50)
-- **Roadmap Status**: Phases 1–7 Complete & Verified; Phase 8 Next (Search Speedup, Low-Determinism AI & Atomic Balance Harness); Phases 9–11 Campaign & World Keys
+- **Task**: Phase 8 Planning Complete (`8.1-PLAN.md` – `8.3-PLAN.md` across 3 waves + `RESEARCH.md`) — Ready for Execution (`@[.agent/workflows/execute.md] 8`)
+- **Status**: Ready for execution
+- **Roadmap Status**: Phases 1–7 Complete & Verified; Phase 8 Planned & Ready (`8.1`–`8.3`); Phases 9–11 Next (Campaign, Jester Shop & World Keys)
 
 ## Last Session Summary
 1. **Phase 7 Plan 7.1 (Wave 1) — Roster Definition & Pawns/Bishops Overhaul (`4cdbe36`, `4fb2049`, `30993b4`)**:
@@ -62,6 +62,6 @@ None.
 
 ## Next Steps
 
-1. Resume session (`@[.agent/workflows/resume.md]`).
-2. Run `@[.agent/workflows/plan.md] 8` to plan Phase 8 (*Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)*), or optionally perform fine-tuning on identified outlier cards.
-3. Execute Phase 8 tasks and begin authoring the campaign progression.
+1. Run `@[.agent/workflows/execute.md] 8` to execute Phase 8 (*Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness*).
+2. Review the new de-confounded Top 10 Strongest / Weakest card rankings from `.agent/state/phases/8/BALANCE_REPORT.md`.
+3. Proceed to Phase 9 (*Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)*).
