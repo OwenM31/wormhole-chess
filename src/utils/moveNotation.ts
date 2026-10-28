@@ -1,4 +1,5 @@
-import { PieceAnchor, PieceColor, PieceSymbol } from '../types/deckChess';
+import { PieceAnchor, PieceColor } from '../types/deckChess';
+import { PieceSymbol } from 'chess.js';
 import { getCardById } from '../engine/cardGraph';
 import { DeckChessEngineState } from '../engine/DeckChessEngine';
 

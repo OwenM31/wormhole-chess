@@ -27,22 +27,24 @@ import {
   playDefeatSound,
 } from '../utils/soundEffects';
 
+import {
+  RecordedTurn,
+  TurnRow,
+  PIECE_CARD_COLORS,
+  getCardTag,
+  formatEmpoweredMoveSan,
+  groupTurnsIntoRows,
+} from '../utils/moveNotation';
+
+export type { RecordedTurn, TurnRow };
+export { PIECE_CARD_COLORS, getCardTag, formatEmpoweredMoveSan, groupTurnsIntoRows };
+
 export interface CombatLogEntry {
   id: string;
   text: string;
   timestamp: number;
   type: 'move' | 'card' | 'system';
   playerColor?: PieceColor;
-}
-
-export interface RecordedTurn {
-  turnNumber: number;
-  player: PieceColor;
-  chessMove: DeckChessMove;
-  cardAction?: DeckChessCardAction;
-  fenAfter: string;
-  combatText?: string;
-  timestamp: number;
 }
 
 export interface UseDeckChessGameOptions {
@@ -117,6 +119,25 @@ export function useDeckChessGame({
   const gameStartedAtRef = useRef<number>(Date.now());
   const hasRecordedRef = useRef<boolean>(false);
 
+  // Timeline snapshot state machine (Phase 9)
+  const initialStateSnapshotRef = useRef<DeckChessEngineState>(
+    engineRef.current.getState()
+  );
+  const [viewIndex, setViewIndex] = useState<number | null>(null);
+
+  const activeMoveIndex = viewIndex !== null ? viewIndex : recordedTurns.length - 1;
+  const isViewingHistory = viewIndex !== null && viewIndex < recordedTurns.length - 1;
+
+  const displayedState = useMemo<DeckChessEngineState>(() => {
+    if (viewIndex === -1) {
+      return initialStateSnapshotRef.current;
+    }
+    if (viewIndex !== null && viewIndex >= 0 && viewIndex < recordedTurns.length) {
+      return recordedTurns[viewIndex].stateSnapshot;
+    }
+    return gameState;
+  }, [viewIndex, recordedTurns, gameState]);
+
   // Sync state from engine
   const syncState = useCallback(() => {
     setGameState(engineRef.current.getState());
@@ -138,12 +159,37 @@ export function useDeckChessGame({
     []
   );
 
-  // Best-Move Hint & Live Evaluation state
+  // Best-Move Hint & Live/Historical Evaluation state
   const [hintMove, setHintMove] = useState<BestTurnResult | null>(null);
 
   const evaluation: PositionEvaluation = useMemo(() => {
-    return evaluatePosition(engineRef.current);
-  }, [gameState.fen, gameState.whiteHand.length, gameState.blackHand.length, gameState.isGameOver]);
+    if (!isViewingHistory) {
+      return evaluatePosition(engineRef.current);
+    }
+    try {
+      const histEngine = new DeckChessEngine(
+        displayedState.fen,
+        displayedState.whiteHand,
+        displayedState.blackHand
+      );
+      if (displayedState.activeModifiers?.length) {
+        histEngine.setActiveModifiers(displayedState.activeModifiers);
+      }
+      return evaluatePosition(histEngine);
+    } catch {
+      return evaluatePosition(engineRef.current);
+    }
+  }, [
+    isViewingHistory,
+    displayedState.fen,
+    displayedState.whiteHand.length,
+    displayedState.blackHand.length,
+    displayedState.isGameOver,
+    gameState.fen,
+    gameState.whiteHand.length,
+    gameState.blackHand.length,
+    gameState.isGameOver,
+  ]);
 
   // Clear piece selection
   const clearPieceSelection = useCallback(() => {
@@ -163,6 +209,45 @@ export function useDeckChessGame({
     setHintMove(null);
     clearPieceSelection();
   }, [clearPieceSelection]);
+
+  // Scrubber Navigation Callbacks
+  const stepBackward = useCallback(() => {
+    cancelPendingCardMove();
+    setViewIndex((current) => {
+      const active = current !== null ? current : recordedTurns.length - 1;
+      if (active <= -1) return -1;
+      return active - 1;
+    });
+  }, [recordedTurns.length, cancelPendingCardMove]);
+
+  const stepForward = useCallback(() => {
+    cancelPendingCardMove();
+    setViewIndex((current) => {
+      const active = current !== null ? current : recordedTurns.length - 1;
+      if (active >= recordedTurns.length - 1) return null;
+      const next = active + 1;
+      return next >= recordedTurns.length - 1 ? null : next;
+    });
+  }, [recordedTurns.length, cancelPendingCardMove]);
+
+  const stepToMove = useCallback(
+    (index: number | null) => {
+      cancelPendingCardMove();
+      if (index === null || index >= recordedTurns.length - 1) {
+        setViewIndex(null);
+      } else if (index < -1) {
+        setViewIndex(-1);
+      } else {
+        setViewIndex(index);
+      }
+    },
+    [recordedTurns.length, cancelPendingCardMove]
+  );
+
+  const jumpToLive = useCallback(() => {
+    cancelPendingCardMove();
+    setViewIndex(null);
+  }, [cancelPendingCardMove]);
 
   // Cancel card selection (legacy alias)
   const cancelCardSelection = useCallback(() => {
@@ -214,7 +299,7 @@ export function useDeckChessGame({
   // Card selection from tactical hand bar (Card-First Flow & Arm/Disarm Toggle)
   const selectCardFromHand = useCallback(
     (cardId: string) => {
-      if (gameState.isGameOver || isAiThinking) return;
+      if (gameState.isGameOver || isAiThinking || isViewingHistory) return;
       if (mode === 'ai' && gameState.turn !== playerColor) return;
 
       // Card Arm / Disarm Toggle: Tapping the currently armed card disarms it and reverts to standard moves
@@ -293,6 +378,7 @@ export function useDeckChessGame({
       cancelPendingCardMove,
       clearPieceSelection,
       addLog,
+      isViewingHistory,
     ]
   );
 
@@ -338,6 +424,11 @@ export function useDeckChessGame({
               }
             }
 
+            const cardTag = getCardTag(emp.cardId);
+            const cardDef = getCardById(emp.cardId);
+            const isCapture = Boolean(engine.getPiece(emp.to)) || emp.actionType === 'ranged_capture';
+            const san = formatEmpoweredMoveSan(cardDef?.anchor || 'p', emp.from, emp.to, isCapture);
+
             const turnRecord: RecordedTurn = {
               turnNumber: engine.getTurnNumber(),
               player: aiColor,
@@ -348,10 +439,15 @@ export function useDeckChessGame({
                 targetSquare: emp.to,
                 extraSquare: emp.extraSquare,
               },
+              cardCode: cardTag?.code,
+              cardPieceType: cardTag?.pieceType,
+              san,
               fenAfter: engine.getFen(),
+              stateSnapshot: engine.getState(),
               combatText: `AI Bot played [${cardName}] ➔ ${emp.to}`,
               timestamp: Date.now(),
             };
+            setViewIndex(null);
             setRecordedTurns((prev) => [...prev, turnRecord]);
             syncState();
             setIsAiThinking(false);
@@ -362,7 +458,8 @@ export function useDeckChessGame({
         // Standard chess move execution
         const moveRes = engine.makeMove(decision.move);
         if (moveRes.success && moveRes.move) {
-          const moveDesc = moveRes.move.san || `${decision.move.from}-${decision.move.to}`;
+          const moveSan = moveRes.move.san || `${decision.move.from}-${decision.move.to}`;
+          const moveDesc = moveSan;
           if (moveRes.move.captured) {
             playCaptureSound();
             addLog(
@@ -392,10 +489,13 @@ export function useDeckChessGame({
             player: aiColor,
             chessMove: decision.move,
             cardAction: decision.cardToPlay,
+            san: moveSan,
             fenAfter: engine.getFen(),
+            stateSnapshot: engine.getState(),
             combatText: `AI Bot moved ${moveDesc}`,
             timestamp: Date.now(),
           };
+          setViewIndex(null);
           setRecordedTurns((prev) => [...prev, turnRecord]);
         }
 
@@ -411,7 +511,7 @@ export function useDeckChessGame({
   // Execute standard chess move (immediate on click, no confirmation prompt)
   const makeMove = useCallback(
     (from: string, to: string, promotion?: string) => {
-      if (gameState.isGameOver || isAiThinking) return false;
+      if (gameState.isGameOver || isAiThinking || isViewingHistory) return false;
 
       const currentTurn = engineRef.current.getTurn();
       if ((mode === 'ai' || mode === 'multiplayer') && currentTurn !== playerColor) return false;
@@ -452,11 +552,14 @@ export function useDeckChessGame({
         player: currentTurn,
         chessMove: { from, to, promotion: actualPromotion },
         cardAction: lastCardActionRef.current || undefined,
+        san: moveSan,
         fenAfter: engineRef.current.getFen(),
+        stateSnapshot: engineRef.current.getState(),
         combatText: `${currentTurn === 'w' ? 'White' : 'Black'} moved ${moveSan}`,
         timestamp: Date.now(),
       };
       lastCardActionRef.current = null;
+      setViewIndex(null);
       setRecordedTurns((prev) => [...prev, turnRecord]);
 
       cancelPendingCardMove();
@@ -482,6 +585,7 @@ export function useDeckChessGame({
     [
       gameState.isGameOver,
       isAiThinking,
+      isViewingHistory,
       mode,
       playerColor,
       addLog,
@@ -495,7 +599,7 @@ export function useDeckChessGame({
   // Confirm pending card move (executed when Big Green Check ✓ is clicked)
   const confirmPendingCardMove = useCallback(() => {
     if (!pendingCardMove) return false;
-    if (gameState.isGameOver || isAiThinking) return false;
+    if (gameState.isGameOver || isAiThinking || isViewingHistory) return false;
     const currentTurn = engineRef.current.getTurn();
     if ((mode === 'ai' || mode === 'multiplayer') && currentTurn !== playerColor) return false;
 
@@ -528,7 +632,15 @@ export function useDeckChessGame({
       }
     }
 
-    const cardName = move.metadata?.cardName || move.cardId;
+    const cardDef = getCardById(move.cardId);
+    const cardTag = getCardTag(move.cardId);
+    const cardName = move.metadata?.cardName || cardDef?.name || move.cardId;
+    const san = formatEmpoweredMoveSan(
+      cardDef?.anchor || 'p',
+      move.from,
+      move.to,
+      isCapture
+    );
     addLog(
       `${currentTurn === 'w' ? 'White' : 'Black'} played [${cardName}] ➔ ${move.to}`,
       'card',
@@ -545,11 +657,16 @@ export function useDeckChessGame({
         targetSquare: move.to,
         extraSquare: move.extraSquare,
       },
+      cardCode: cardTag?.code,
+      cardPieceType: cardTag?.pieceType,
+      san,
       fenAfter: engineRef.current.getFen(),
+      stateSnapshot: engineRef.current.getState(),
       combatText: `${currentTurn === 'w' ? 'White' : 'Black'} played [${cardName}] ➔ ${move.to}`,
       timestamp: Date.now(),
     };
     lastCardActionRef.current = null;
+    setViewIndex(null);
     setRecordedTurns((prev) => [...prev, turnRecord]);
 
     cancelPendingCardMove();
@@ -581,6 +698,7 @@ export function useDeckChessGame({
     pendingCardMove,
     gameState.isGameOver,
     isAiThinking,
+    isViewingHistory,
     mode,
     playerColor,
     addLog,
@@ -593,7 +711,7 @@ export function useDeckChessGame({
   // Square click coordinator (Decoupled Standard Moves & Card-Armed State Machine)
   const handleSquareClick = useCallback(
     (square: string) => {
-      if (gameState.isGameOver || isAiThinking) return;
+      if (gameState.isGameOver || isAiThinking || isViewingHistory) return;
       const activeTurn = engineRef.current.getTurn();
       if ((mode === 'ai' || mode === 'multiplayer') && activeTurn !== playerColor) return;
 
@@ -776,6 +894,7 @@ export function useDeckChessGame({
       makeMove,
       clearPieceSelection,
       cancelPendingCardMove,
+      isViewingHistory,
     ]
   );
 
@@ -818,15 +937,21 @@ export function useDeckChessGame({
         setTimeout(playCheckSound, 120);
       }
 
+      const cardTag = payload.cardAction?.cardId ? getCardTag(payload.cardAction.cardId) : undefined;
       const turnRecord: RecordedTurn = {
         turnNumber: payload.turnNumber,
         player: payload.playerColor,
         chessMove: payload.chessMove,
         cardAction: payload.cardAction,
+        cardCode: cardTag?.code,
+        cardPieceType: cardTag?.pieceType,
+        san: moveSan,
         fenAfter: payload.resultingFen || engine.getFen(),
+        stateSnapshot: engine.getState(),
         combatText: `${payload.playerColor === 'w' ? 'White' : 'Black'} moved ${moveSan}`,
         timestamp: Date.now(),
       };
+      setViewIndex(null);
       setRecordedTurns((prev) => [...prev, turnRecord]);
 
       cancelPendingCardMove();
@@ -839,6 +964,8 @@ export function useDeckChessGame({
   const resetGame = useCallback(
     (newWhiteDeck?: string[], newBlackDeck?: string[], initialFen?: string) => {
       engineRef.current = new DeckChessEngine(initialFen, newWhiteDeck, newBlackDeck);
+      initialStateSnapshotRef.current = engineRef.current.getState();
+      setViewIndex(null);
       cancelPendingCardMove();
       setIsAiThinking(false);
       gameStartedAtRef.current = Date.now();
@@ -865,12 +992,35 @@ export function useDeckChessGame({
         resetGame,
         syncState,
         selectCard: selectCardFromHand,
+        selectCardFromHand,
         cancelPendingCardMove,
         confirmPendingCardMove,
         handleSquareClick,
+        makeMove,
+        stepBackward,
+        stepForward,
+        stepToMove,
+        jumpToLive,
+        getActiveMoveIndex: () => (viewIndex !== null ? viewIndex : recordedTurns.length - 1),
+        isViewingHistory: () => (viewIndex !== null && viewIndex < recordedTurns.length - 1),
+        getRecordedTurns: () => recordedTurns,
       };
     }
-  }, [resetGame, syncState, selectCardFromHand, cancelPendingCardMove, confirmPendingCardMove, handleSquareClick]);
+  }, [
+    resetGame,
+    syncState,
+    selectCardFromHand,
+    cancelPendingCardMove,
+    confirmPendingCardMove,
+    handleSquareClick,
+    makeMove,
+    stepBackward,
+    stepForward,
+    stepToMove,
+    jumpToLive,
+    viewIndex,
+    recordedTurns,
+  ]);
 
   // Resign match
   const resign = useCallback(
@@ -1009,19 +1159,38 @@ export function useDeckChessGame({
   return {
     // Engine State
     gameState,
-    fen: gameState.fen,
-    turn: gameState.turn,
-    turnNumber: gameState.turnNumber,
-    hasPlayedCardThisTurn: gameState.cardPlayedThisTurn,
-    whiteHand: gameState.whiteHand,
-    blackHand: gameState.blackHand,
-    graveyard: gameState.graveyard,
-    activeModifiers: gameState.activeModifiers,
-    isGameOver: gameState.isGameOver,
-    winner: gameState.winner,
-    finishReason: gameState.finishReason,
-    inCheck: gameState.inCheck,
+    displayedState,
+    fen: displayedState.fen,
+    turn: displayedState.turn,
+    turnNumber: displayedState.turnNumber,
+    hasPlayedCardThisTurn: displayedState.cardPlayedThisTurn,
+    whiteHand: displayedState.whiteHand,
+    blackHand: displayedState.blackHand,
+    graveyard: displayedState.graveyard,
+    activeModifiers: displayedState.activeModifiers,
+    isGameOver: displayedState.isGameOver,
+    winner: displayedState.winner,
+    finishReason: displayedState.finishReason,
+    inCheck: displayedState.inCheck,
     isAiThinking,
+
+    // Timeline Scrubber & Inspection
+    viewIndex,
+    activeMoveIndex,
+    isViewingHistory,
+    stepBackward,
+    stepForward,
+    stepToMove,
+    jumpToLive,
+    lastMoveHighlight:
+      activeMoveIndex >= 0 && recordedTurns[activeMoveIndex]
+        ? {
+            from: recordedTurns[activeMoveIndex].chessMove.from,
+            to: recordedTurns[activeMoveIndex].chessMove.to,
+          }
+        : gameState.lastMove
+        ? { from: gameState.lastMove.from, to: gameState.lastMove.to }
+        : null,
 
     // Selection & Targeting State
     selectedCard,
