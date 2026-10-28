@@ -94,9 +94,10 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 ---
 
 ### Phase 9: In-Game Read-Only Rewind Scrubber & Interactive Move Log
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 **Objective:** Implement read-only timeline scrubbing (`|◀`, `◀`, `▶`, `▶|` + arrow keys) and full per-ply state snapshots (`fen`, `whiteHand`, `blackHand`, `graveyard`, `activeModifiers`, `inCheck`, `lastMove`, `cardAction`, and live `EvalBar` evaluation) in `useDeckChessGame.ts`; make all move/card rows in the scrolling Move Log clickable with active-ply gold highlighting and internal auto-scroll; position the Rewind Control Bar **above the Move Log on mobile** (directly below the Tactical Hand) and **below the Move Log on desktop** (above the Action Footer) in `DeckBuilderPage.tsx` (and `PlayRoomPage.tsx`); and enforce a read-only viewing guard with a 1-click `"Return to Live"` indicator that works both during active matches and in post-game `"Review Board"` mode.
 **Dependencies:** Phase 8 (Complete)
+**Verification:** Complete (63/63 contract assertions, Playwright mobile/desktop E2E, 43/43 unit tests, VERIFICATION.md)
 
 ---
 
