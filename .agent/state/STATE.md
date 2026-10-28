@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-28T10:13:00-05:00
+updated: 2026-10-28T10:21:20-05:00
 ---
 
 # Project State
@@ -8,34 +8,27 @@ updated: 2026-10-28T10:13:00-05:00
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 - **Phase**: Phase 8 — *Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness*
-- **Task**: Phase 8 Planning Complete (`8.1-PLAN.md` – `8.3-PLAN.md` across 3 waves + `RESEARCH.md`) — Ready for Execution (`@[.agent/workflows/execute.md] 8`)
-- **Status**: Ready for execution
+- **Task**: Phase 8 Inserted & Planned (`8.1-PLAN.md` – `8.3-PLAN.md` across 3 waves + `RESEARCH.md`) — Ready for Execution (`@[.agent/workflows/execute.md] 8`)
+- **Status**: Paused at 2026-10-28 10:21
 - **Roadmap Status**: Phases 1–7 Complete & Verified; Phase 8 Planned & Ready (`8.1`–`8.3`); Phases 9–11 Next (Campaign, Jester Shop & World Keys)
 
 ## Last Session Summary
-1. **Phase 7 Plan 7.1 (Wave 1) — Roster Definition & Pawns/Bishops Overhaul (`4cdbe36`, `4fb2049`, `30993b4`)**:
-   - Extended `EmpoweredMove` with `BoardPreviewArrow` type and updated all 27 overhauled card names, condition text, effect text, and descriptions in `src/engine/cards/releaseRoster36.ts`.
-   - Created comprehensive overhaul contract verification suite `scripts/verify-phase7-overhaul.ts` (144 assertions).
-   - Overhauled Pawn handlers (`P1, P3, P4, P5, P6, P7, P8`) and Bishop handlers (`B1, B2, B4, B5, B6, B7`) in `src/engine/cards/playbook36Handlers.ts`.
-2. **Phase 7 Plan 7.2 (Wave 2) — Knights, Rooks, Queens, Kings & AI Evaluation (`4751cca`, `37bfb92`, `89d209c`)**:
-   - Overhauled Knight handlers (`N2, N3, N4, N5, N6, N7`) and Rook handlers (`R2, R4, R5, R6`).
-   - Overhauled Queen handlers (`Q1, Q3, Q4`) and King handlers (`K1, K3, K4`). Added dual preview arrows for `Q2 (The Queen's Gambit)` (`[Queen, ally]` in gold, `[ally, enemy]` in red).
-   - Aligned modular handler AI setup heuristics and verified all 144 contract assertions in `verify-phase7-overhaul.ts` pass (100%).
-3. **Phase 7 Plan 7.3 (Wave 2) — Multi-Step Staging & Board Preview Arrows (`8e54bdd`, `c612474`)**:
-   - Refined `src/hooks/useDeckChessGame.ts` to cleanly separate `stageExtraSquareFirst` cards (`N5: Get to the King`, `R1: Make Way`) from `to`-first cards (`N3`, `P4`, `Q2`, `K3`, `B6`, `B7`).
-   - Implemented `<svg data-testid="board-preview-arrows">` at `z-[6]` inside `DeckChessBoard.tsx`, strictly beneath `z-10` pieces, rendering polyline arrows for `N3`, `N5`, and `Q2` with dynamic contextual badges (`FORK`, `PATH`, `LAUNCH`, `BLESS`, `BOUNCE`, `SHIELD`, `CONVERT`).
-4. **Phase 7 Plan 7.4 (Wave 3) — Regression Alignment, Playwright E2E & Tournament Re-Simulation (`6cc75f7`, `f54d17d`, `a7c312d`)**:
-   - Aligned existing regression suites (`verify-36-playbook.ts`, `verify-36-mechanics-edge-cases.ts`, `verify-phase6-ai-engine.ts`) with Phase 7 abilities (382 total engine/AI assertions passing 100%).
-   - Authored and verified Playwright headless Chromium E2E suite (`scripts/verify-phase7-e2e.mjs`) validating library overhauls, `z-[6]` arrow layering, N3 execution, N5 2-click staging, and Q2 dual arrows with 0 console errors (4 screenshots captured).
-   - Executed multi-worker Monte Carlo tournament simulation (36 matches across 8 cores) generating `.agent/state/phases/7/BALANCE_REPORT.md` and `balance-metrics.json`, demonstrating a +340% increase in cards played per match (1.0 -> 4.4 cards/match) and expanding tactical playmakers from 7 to 20 cards.
-5. **Phase 7 Balance Diagnostics & Outlier Analysis**:
-   - Identified Top 10 Overpowered cards (`B1, R3, K1, P7, B7, P8, B6, R5, B3, K3`) and Top 10 Underpowered cards (`Q4, P3, Q2, N6, B4, N7, B5, B2, N5, P1`) with supporting telemetry.
-   - Confirmed all simulation scripts and metadata are fully synchronized with Phase 7 mechanics.
+1. **Diagnosed Phase 7 Simulation & Engine Determinism**:
+   - Audited the Top 10 Strongest and Bottom 10 Weakest cards from `.agent/state/phases/7/BALANCE_REPORT.md` and traced why the AI always played `1. c4 Nc6` (`computeBestTurn` used strict `score > bestScore` tie-breaking with tight root alpha pruning; `Nc6` and `Nf6` tied at `+10cp` at depth 2 and `+60cp` at depth 3, while `e5` was at `-10cp`).
+   - Uncovered the **"Double-Tax" Card Hoarding Bug** explaining why `P3 (March Together)` had a `90.4%` trigger rate and `0.0%` play rate: holding a card granted both `retentionByClass` (`55cp–100cp`) in `evaluateCardScarcityAndHand` AND `+15cp–35cp` in `evaluateHandSynergy`, and playing the card immediately removed *both* bonuses (`-73cp` to `-135cp` penalty).
+   - Identified 4 zero-loss search bottlenecks in `DeckChessEngine.ts` and `DeckChessAI.ts` (redundant `getLegalMoves` + triple `isCheckmate`/`isStalemate`/`isDraw` move-gen inside every `makeMove` and `makeEmpoweredMove` call in the search tree, double 64-square loop in `evaluateBoard`, 64-square string loops for King safety, and discarded Transposition Table move ordering).
+   - Identified 4 statistical flaws in the Phase 6/7 tournament harness (42-ply premature cutoff adjudicating >95% of games by static eval including unspent hand retention, 8-card teammate confounding, un-paired color assignment, and one-ply naive swing).
+2. **Inserted Phase 8 (`ed1acde`) & Authored Phase 8 Plans (`5f67005`)**:
+   - Inserted **Phase 8: Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness** into `ROADMAP.md` (renumbering Campaign Phases 8–10 to Phases 9–11).
+   - Authored `.agent/state/phases/8/RESEARCH.md` and 3 execution plans across 3 waves:
+     - `8.1-PLAN.md` (Wave 1): Zero-Loss Search Speedup (`fastSearch` execution path, single-pass `evaluateBoard`, Iterative Deepening + TT move ordering), Low-Determinism Clipped Softmax AI (`mulberry32` seeded PRNG over `bestScore - marginCp` exact-window contenders with tactical lock guardrails), and Game-Phase Decaying Card Retention fixing the `evaluateHandSynergy` double-tax.
+     - `8.2-PLAN.md` (Wave 2): Atomic Single-Match Runner (`scripts/sim-single-match.ts` with `maxPlies=100`, quiescence mercy adjudication, and Search-Backed Card Lift `cardLiftCp`), 18-match Color-Swapped Stratified Blocks with stoppable/resumable per-worker JSONL persistence, and De-Confounded Ridge Regression Aggregator (`scripts/aggregate-deck-balance.ts`).
+     - `8.3-PLAN.md` (Wave 3): Head-to-Head Engine Benchmark, High-Sample Color-Swapped Tournament Simulation, and Outlier Card Calibration.
 
 ## In-Progress Work
 
 - Files modified: None (working tree 100% clean and committed to git).
-- Tests status: Passing 100% green across all unit, AI, E2E, and tournament simulation suites.
+- Tests status: Passing 100% green; Phase 8 TDD contract suite (`scripts/verify-phase8-engine-and-harness.ts`) ready to be authored in Plan 8.1 Task 1.
 
 ## Blockers
 
@@ -44,24 +37,22 @@ None.
 ## Context Dump
 
 ### Decisions Made
-- `[DECISION-036]`: Phase 7 36-Card Ability Overhaul Around Natural Piece Strengths/Weaknesses & Board Preview Arrows (`N3`, `N5`, `Q2`).
-- `[DECISION-035]`: Unified Card-Aware AI with Pre-Condition Shaping, Direct Best-Move Hint & Live Side Eval Bar, and Simulation-First Card Tuning.
-- `[DECISION-034]`: Complete Engine/UI Energy Purge, Medieval Village Palette, Live Landing Card Showcase, and Batched Copywriting Review.
+- **Hybrid Low-Determinism AI**: Combine Iterative Deepening ($1 \to D$) + Exact-Window Contender Evaluation (`bestScore - marginCp`) + Seeded Clipped Softmax (`mulberry32`) with tactical lock guardrails (keeping UI `Hint` and `<EvalBar />` 100% deterministic).
+- **Decaying Card Retention & Double-Tax Fix**: Decay card retention smoothly with `turnNumber` and prevent `evaluateHandSynergy` from penalizing card execution.
+- **Atomic Resumable JSONL Simulation Harness**: Separate single-game execution (`playSingleMatch(spec) -> MatchRecord`) from multi-worker orchestration (`worker_*.jsonl` append-per-game) and statistical aggregation (`aggregate-deck-balance.ts` with Ridge-Regularized Marginal Win Credit and Search-Backed Card Lift).
 
 ### Approaches Tried
-- Used empirical `Trigger Rate` and `Play Rate` telemetry from `.agent/state/phases/6/BALANCE_REPORT.md` to overhaul dead cards before building the Campaign puzzle engine.
-- Implemented under-piece SVG preview arrows at `z-[6]` beneath `z-10` pieces, eliminating piece visual occlusion while providing instant visual clarity on multi-hop jumps and sacrificial lines.
+- Verified exact root scores for all 20 Black replies to `1. c4` at Depth 2 and Depth 3, confirming `Nc6` and `Nf6` were tied and `e5`/`d5` were within `10cp`.
 
 ### Files of Interest
-- `.agent/state/phases/7/BALANCE_REPORT.md`: Updated Phase 7 tournament balance report with before/after comparison table.
-- `.agent/state/phases/7/balance-metrics.json`: Empirical JSON telemetry for all 36 cards across 36 matches.
-- `scripts/verify-phase7-overhaul.ts`: 144-assertion contract suite for all 30 overhauled card behaviors.
-- `scripts/verify-phase7-e2e.mjs`: Playwright E2E browser suite for library cards, arrows, and multi-step staging.
-- `src/components/DeckChessBoard.tsx`: Embeds under-piece SVG arrow overlay at `z-[6]`.
-- `src/hooks/useDeckChessGame.ts`: Multi-step card staging and selection engine.
+- `.agent/state/phases/8/RESEARCH.md`: Complete algorithmic and statistical specification for Phase 8.
+- `.agent/state/phases/8/8.1-PLAN.md`: Wave 1 plan (Search speedup, Low-Determinism Softmax AI, Decaying Card Retention).
+- `.agent/state/phases/8/8.2-PLAN.md`: Wave 2 plan (Atomic `sim-single-match.ts`, resumable JSONL workers, `aggregate-deck-balance.ts`).
+- `.agent/state/phases/8/8.3-PLAN.md`: Wave 3 plan (High-sample tournament, head-to-head benchmark, outlier calibration).
+- `src/engine/DeckChessEngine.ts` & `src/engine/DeckChessAI.ts`: Target engine files for Wave 1 optimization.
 
 ## Next Steps
 
-1. Run `@[.agent/workflows/execute.md] 8` to execute Phase 8 (*Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness*).
-2. Review the new de-confounded Top 10 Strongest / Weakest card rankings from `.agent/state/phases/8/BALANCE_REPORT.md`.
-3. Proceed to Phase 9 (*Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)*).
+1. Resume session (`@[.agent/workflows/resume.md]`).
+2. Run `@[.agent/workflows/execute.md] 8` to execute Plans `8.1`, `8.2`, and `8.3`.
+3. Inspect the new de-confounded Top 10 Strongest / Weakest card rankings in `.agent/state/phases/8/BALANCE_REPORT.md`, then proceed to Phase 9 (`@[.agent/workflows/plan.md] 9`).

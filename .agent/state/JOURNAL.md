@@ -4,6 +4,34 @@
 
 ---
 
+### Session: 2026-10-28 10:21
+
+#### Objective
+Resume session context (`@[.agent/workflows/resume.md]`), analyze the Phase 7 Top 10 Strongest and Bottom 10 Weakest card telemetry, diagnose engine determinism (`1. c4 Nc6`) and simulation metric validity, insert Phase 8 (`@[.agent/workflows/insert-phase.md]`), and create execution plans for Phase 8 (`@[.agent/workflows/plan.md] 8`).
+
+#### Accomplished
+- ✅ **Engine Determinism & Card-Hoarding Root-Cause Analysis**:
+  - Verified exact root minimax scores on `1. c4` at Depth 2 and Depth 3, confirming `Nc6` and `Nf6` tie at `+10cp` / `+60cp` and `e5` trails by just `10cp`, with `Nc6` winning every time solely due to `chess.js` move generation order and tight root alpha pruning.
+  - Discovered the **`evaluateHandSynergy` + `evaluateCardScarcityAndHand` Double-Tax Bug**: playing a card removes it from `hand`, immediately costing both its class retention value (`55–100cp`) and its pre-condition setup bonus (`15–35cp`), which explained why `P3 (March Together)` had a `90.4%` trigger rate and `0.0%` play rate.
+  - Identified 4 zero-loss search bottlenecks in `DeckChessEngine.ts` and `DeckChessAI.ts` (redundant `getLegalMoves` + triple `isCheckmate`/`isStalemate`/`isDraw` move-gen inside every `makeMove` and `makeEmpoweredMove` call in the search tree, double 64-square loop in `evaluateBoard`, 64-square string loops for King safety, and discarded Transposition Table move ordering).
+- ✅ **Phase 8 Insertion (`ed1acde`) & Planning (`5f67005`)**:
+  - Inserted **Phase 8: Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness** into `ROADMAP.md` (renumbering Campaign Phases 8–10 to Phases 9–11).
+  - Authored `.agent/state/phases/8/RESEARCH.md` and 3 atomic plans across 3 waves (`8.1-PLAN.md`, `8.2-PLAN.md`, `8.3-PLAN.md`), passing all 6 Plan-Checker dimensions with zero blockers.
+
+#### Verification
+- [x] `ROADMAP.md` updated with Phase 8 inserted and Phases 9–11 renumbered (`ed1acde`)
+- [x] `.agent/state/phases/8/RESEARCH.md` and `8.1-PLAN.md` – `8.3-PLAN.md` verified and committed (`5f67005`)
+- [ ] Phase 8 execution pending (`@[.agent/workflows/execute.md] 8`)
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) after completing Phase 8 insertion and planning.
+
+#### Handoff Notes
+- Working tree is 100% clean.
+- Next session can immediately run `@[.agent/workflows/execute.md] 8` to implement the 5x–10x search speedup, Low-Determinism Clipped Softmax AI, decaying card retention, and atomic resumable JSONL balance harness.
+
+---
+
 ### Session: 2026-10-28 09:48
 
 #### Objective
