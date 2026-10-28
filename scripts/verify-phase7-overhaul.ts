@@ -302,17 +302,17 @@ if (!suiteArg || suiteArg === 'knights-rooks' || suiteArg === 'knights') {
   // N5: Get to the King
   {
     // Knight jumps to safe forking square S1 (attacks King + another piece, not attacked itself), then makes second jump to S2
-    // Black King at e8, Black Queen at c7.
-    // Square d6 attacks both e8 (King) and c7 (Queen)! A royal fork!
+    // Black King at e8, Black Queen at c8.
+    // Square d6 attacks both e8 (King) and c8 (Queen)! A royal fork!
     // If d6 is unthreatened, Knight at b5 can jump b5 -> d6 (S1) -> S2.
-    const engine = new DeckChessEngine('4k3/2q5/8/1N6/8/8/8/4K3 w - - 0 1', ['n5_get_to_the_king']);
+    const engine = new DeckChessEngine('2q1k3/8/8/1N6/8/8/8/7K w - - 0 1', ['n5_get_to_the_king']);
     const moves = engine.getEmpoweredMoves('b5');
     assert(moves.length > 0, 'N5: Generates moves through safe royal fork square d6');
     assert(moves.every(m => m.extraSquare === 'd6'), 'N5: All moves have extraSquare = d6 (the fork square)');
     assert(moves[0].stageExtraSquareFirst === true, 'N5: stageExtraSquareFirst is true');
 
     // Test when S1 is threatened by an enemy piece: e.g. Black bishop at g3 covers d6. Should be REJECTED!
-    const engineThreatened = new DeckChessEngine('4k3/2q5/8/1N6/8/6b1/8/4K3 w - - 0 1', ['n5_get_to_the_king']);
+    const engineThreatened = new DeckChessEngine('2q1k3/8/8/1N6/8/6b1/8/7K w - - 0 1', ['n5_get_to_the_king']);
     const movesThreatened = engineThreatened.getEmpoweredMoves('b5');
     assert(!movesThreatened.some(m => m.extraSquare === 'd6'), 'N5: Rejects fork square d6 when threatened by enemy piece');
   }

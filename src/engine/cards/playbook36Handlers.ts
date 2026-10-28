@@ -37,6 +37,63 @@ function isPinnedToKing(engine: DeckChessEngine, square: string): boolean {
   return CardUtils.getPinRay(engine, square) !== null;
 }
 
+function isSquareDefendedByFriendly(engine: DeckChessEngine, square: string, turn: PieceColor): boolean {
+  const coords = CardUtils.getCoords(square);
+  const dir = turn === 'w' ? 1 : -1;
+  // 1. Friendly Pawns: from (file ± 1, rank - dir)
+  for (const df of [-1, 1]) {
+    const pSq = CardUtils.getSquare(coords.file + df, coords.rank - dir);
+    if (pSq) {
+      const p = engine.getPiece(pSq);
+      if (p && p.color === turn && p.type === 'p') return true;
+    }
+  }
+  // 2. Friendly Knights
+  const knightJumps = [
+    [1, 2], [1, -2], [-1, 2], [-1, -2],
+    [2, 1], [2, -1], [-2, 1], [-2, -1],
+  ];
+  for (const [df, dr] of knightJumps) {
+    const nSq = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+    if (nSq) {
+      const p = engine.getPiece(nSq);
+      if (p && p.color === turn && p.type === 'n') return true;
+    }
+  }
+  // 3. Friendly Kings (8 surrounding squares)
+  for (let df = -1; df <= 1; df++) {
+    for (let dr = -1; dr <= 1; dr++) {
+      if (df === 0 && dr === 0) continue;
+      const kSq = CardUtils.getSquare(coords.file + df, coords.rank + dr);
+      if (kSq) {
+        const p = engine.getPiece(kSq);
+        if (p && p.color === turn && p.type === 'k') return true;
+      }
+    }
+  }
+  // 4. Friendly sliding pieces (B/Q diagonal, R/Q orthogonal)
+  const rays = [
+    { dirs: [[1, 1], [1, -1], [-1, 1], [-1, -1]], types: ['b', 'q'] },
+    { dirs: [[1, 0], [-1, 0], [0, 1], [0, -1]], types: ['r', 'q'] },
+  ];
+  for (const rayGroup of rays) {
+    for (const [df, dr] of rayGroup.dirs) {
+      let step = 1;
+      while (true) {
+        const rSq = CardUtils.getSquare(coords.file + df * step, coords.rank + dr * step);
+        if (!rSq || engine.isSquareBlockedByBarrier(rSq)) break;
+        const p = engine.getPiece(rSq);
+        if (p) {
+          if (p.color === turn && rayGroup.types.includes(p.type)) return true;
+          break;
+        }
+        step++;
+      }
+    }
+  }
+  return false;
+}
+
 function getRelativeRank(rank: number, color: PieceColor): number {
   return color === 'w' ? rank : 7 - rank;
 }
@@ -557,11 +614,15 @@ export function registerPlaybook36Handlers(): void {
   });
 
   // ==========================================
-  // N2: Swap With Me (n2_swap_with_me)
+  // N2: Swap With Me / Springboard (n2_swap_with_me)
   // ==========================================
-  registerCardHandler({
+  registerCardHandler<TargetOption>({
     cardId: 'n2_swap_with_me',
-    getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    evaluateSetup(friendlyPieces) {
+      const knights = friendlyPieces.filter((p) => p.type === 'n');
+      return knights.length > 0 && friendlyPieces.length >= 3 ? 16 : 0;
+    },
+    getTargets(engine: DeckChessEngine, anchorSquare: string): TargetOption[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
 
@@ -569,32 +630,58 @@ export function registerPlaybook36Handlers(): void {
         [1, 2], [1, -2], [-1, 2], [-1, -2],
         [2, 1], [2, -1], [-2, 1], [-2, -1],
       ];
-      const targets: string[] = [];
+
+      // Find all L-jump squares S1 occupied by a friendly piece
+      const springboards: string[] = [];
       for (const [df, dr] of jumps) {
         const sq = CardUtils.getSquare(file + df, rank + dr);
         if (sq) {
           const p = engine.getPiece(sq);
           if (p && p.color === turn) {
-            targets.push(sq);
+            springboards.push(sq);
+          }
+        }
+      }
+
+      const targets: TargetOption[] = [];
+      for (const s1 of springboards) {
+        const { file: f1, rank: r1 } = CardUtils.getCoords(s1);
+        for (const [df2, dr2] of jumps) {
+          const s2 = CardUtils.getSquare(f1 + df2, r1 + dr2);
+          if (!s2 || s2 === anchorSquare || engine.isSquareBlockedByBarrier(s2)) continue;
+          const p2 = engine.getPiece(s2);
+          if (!p2 || (p2.color !== turn && p2.type !== 'k')) {
+            targets.push({
+              to: s2,
+              extraSquare: s1,
+              disambiguationPrompt: 'Choose springboard ally',
+              arrows: [{ points: [anchorSquare, s1, s2], color: 'green' }],
+            });
           }
         }
       }
       return targets;
     },
-    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string) {
-      const valid = this.getTargets(engine, anchorSquare);
-      const dest = targetSquare || valid[0];
-      if (!dest || !valid.includes(dest)) return { success: false, error: 'Invalid Swap With Me target' };
+    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string, extraSquare?: string) {
+      if (!targetSquare) return { success: false, error: 'Missing Springboard target' };
+      const rawTargets = this.getTargets(engine, anchorSquare);
+      const match = rawTargets.find((t) => {
+        if (typeof t === 'string') return t === targetSquare;
+        return t.to === targetSquare && (!extraSquare || t.extraSquare === extraSquare);
+      });
+      if (!match) return { success: false, error: 'Invalid Springboard target' };
 
       const knight = engine.getPiece(anchorSquare);
-      const ally = engine.getPiece(dest);
-      if (!knight || !ally) return { success: false, error: 'Missing pieces for swap' };
+      if (!knight) return { success: false, error: 'No knight at anchor' };
 
+      const enemy = engine.getPiece(targetSquare);
       const chess = engine.getInternalChess();
+      if (enemy) {
+        chess.remove(targetSquare as Square);
+        engine.addToPlayerGraveyard(enemy.color, enemy.type);
+      }
       chess.remove(anchorSquare as Square);
-      chess.remove(dest as Square);
-      chess.put(knight, dest as Square);
-      chess.put(ally, anchorSquare as Square);
+      chess.put(knight, targetSquare as Square);
       return { success: true };
     },
   });
@@ -602,9 +689,9 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   // N3: Trample (n3_trample)
   // ==========================================
-  registerCardHandler({
+  registerCardHandler<TargetOption>({
     cardId: 'n3_trample',
-    getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    getTargets(engine: DeckChessEngine, anchorSquare: string): TargetOption[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
 
@@ -612,65 +699,112 @@ export function registerPlaybook36Handlers(): void {
         [1, 2], [1, -2], [-1, 2], [-1, -2],
         [2, 1], [2, -1], [-2, 1], [-2, -1],
       ];
-      const targets: string[] = [];
+      const targets: TargetOption[] = [];
+
       for (const [df, dr] of jumps) {
         const destSq = CardUtils.getSquare(file + df, rank + dr);
-        if (!destSq || engine.getPiece(destSq) || engine.isSquareBlockedByBarrier(destSq)) continue;
+        if (!destSq || engine.isSquareBlockedByBarrier(destSq)) continue;
+        const destPiece = engine.getPiece(destSq);
+        if (destPiece && (destPiece.color === turn || destPiece.type === 'k')) continue;
 
-        // Check straight leg for enemy pawns
-        let hasEnemyPawn = false;
-        if (Math.abs(df) === 2) {
-          const step1 = CardUtils.getSquare(file + Math.sign(df) * 1, rank);
-          const step2 = CardUtils.getSquare(file + Math.sign(df) * 2, rank);
-          for (const s of [step1, step2]) {
-            if (s) {
-              const p = engine.getPiece(s);
-              if (p && p.color !== turn && p.type === 'p') hasEnemyPawn = true;
-            }
-          }
-        } else {
-          const step1 = CardUtils.getSquare(file, rank + Math.sign(dr) * 1);
-          const step2 = CardUtils.getSquare(file, rank + Math.sign(dr) * 2);
-          for (const s of [step1, step2]) {
-            if (s) {
-              const p = engine.getPiece(s);
-              if (p && p.color !== turn && p.type === 'p') hasEnemyPawn = true;
-            }
+        // Path A: 2-square straight leg first, then 1-square turn
+        const isFileStraight = Math.abs(df) === 2;
+        const sfA = isFileStraight ? Math.sign(df) : 0;
+        const srA = isFileStraight ? 0 : Math.sign(dr);
+
+        const sqA1 = CardUtils.getSquare(file + sfA, rank + srA);
+        const sqA2 = CardUtils.getSquare(file + 2 * sfA, rank + 2 * srA); // elbow corner
+        if (sqA1 && sqA2 && !engine.isSquareBlockedByBarrier(sqA1) && !engine.isSquareBlockedByBarrier(sqA2)) {
+          const pA1 = engine.getPiece(sqA1);
+          const pA2 = engine.getPiece(sqA2);
+          const hasEnemyPawnA =
+            (pA1 && pA1.color !== turn && pA1.type === 'p') ||
+            (pA2 && pA2.color !== turn && pA2.type === 'p');
+
+          if (hasEnemyPawnA) {
+            targets.push({
+              to: destSq,
+              extraSquare: sqA2,
+              disambiguationPrompt: 'Choose L-path to trample',
+              arrows: [{ points: [anchorSquare, sqA2, destSq], color: 'green' }],
+            });
           }
         }
 
-        if (hasEnemyPawn) {
-          targets.push(destSq);
+        // Path B: 1-square turn first, then 2-square straight leg
+        const tfB = isFileStraight ? 0 : Math.sign(df);
+        const trB = isFileStraight ? Math.sign(dr) : 0;
+        const sfB = isFileStraight ? Math.sign(df) : 0;
+        const srB = isFileStraight ? 0 : Math.sign(dr);
+
+        const cornerB = CardUtils.getSquare(file + tfB, rank + trB); // corner
+        const sqB1 = CardUtils.getSquare(file + tfB + sfB, rank + trB + srB);
+        if (cornerB && sqB1 && !engine.isSquareBlockedByBarrier(cornerB) && !engine.isSquareBlockedByBarrier(sqB1)) {
+          const pB1 = engine.getPiece(cornerB);
+          const pB2 = engine.getPiece(sqB1);
+          const hasEnemyPawnB =
+            (pB1 && pB1.color !== turn && pB1.type === 'p') ||
+            (pB2 && pB2.color !== turn && pB2.type === 'p');
+
+          if (hasEnemyPawnB) {
+            targets.push({
+              to: destSq,
+              extraSquare: cornerB,
+              disambiguationPrompt: 'Choose L-path to trample',
+              arrows: [{ points: [anchorSquare, cornerB, destSq], color: 'gold' }],
+            });
+          }
         }
       }
       return targets;
     },
-    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string) {
-      const valid = this.getTargets(engine, anchorSquare);
-      const dest = targetSquare || valid[0];
-      if (!dest || !valid.includes(dest)) return { success: false, error: 'Invalid Trample target' };
+    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string, extraSquare?: string) {
+      if (!targetSquare) return { success: false, error: 'Missing Trample target' };
+      const rawTargets = this.getTargets(engine, anchorSquare);
+      const match = rawTargets.find((t) => {
+        if (typeof t === 'string') return t === targetSquare;
+        return t.to === targetSquare && (!extraSquare || t.extraSquare === extraSquare);
+      });
+      if (!match) return { success: false, error: 'Invalid Trample target' };
 
       const knight = engine.getPiece(anchorSquare);
       if (!knight) return { success: false, error: 'No knight at anchor' };
 
       const cFrom = CardUtils.getCoords(anchorSquare);
-      const cTo = CardUtils.getCoords(dest);
+      const cTo = CardUtils.getCoords(targetSquare);
       const df = cTo.file - cFrom.file;
       const dr = cTo.rank - cFrom.rank;
       const turn = engine.getTurn();
       const chess = engine.getInternalChess();
 
-      // Destroy enemy pawns on straight leg
-      const legSquares =
-        Math.abs(df) === 2
-          ? [
-              CardUtils.getSquare(cFrom.file + Math.sign(df) * 1, cFrom.rank),
-              CardUtils.getSquare(cFrom.file + Math.sign(df) * 2, cFrom.rank),
-            ]
-          : [
-              CardUtils.getSquare(cFrom.file, cFrom.rank + Math.sign(dr) * 1),
-              CardUtils.getSquare(cFrom.file, cFrom.rank + Math.sign(dr) * 2),
-            ];
+      const chosenExtra = typeof match === 'string' ? extraSquare : (match.extraSquare || extraSquare);
+      const isFileStraight = Math.abs(df) === 2;
+      const elbowA = CardUtils.getSquare(
+        cFrom.file + (isFileStraight ? 2 * Math.sign(df) : 0),
+        cFrom.rank + (isFileStraight ? 0 : 2 * Math.sign(dr))
+      );
+
+      // Determine intermediate leg squares
+      let legSquares: (string | null)[] = [];
+      if (chosenExtra === elbowA) {
+        // Path A
+        const sfA = isFileStraight ? Math.sign(df) : 0;
+        const srA = isFileStraight ? 0 : Math.sign(dr);
+        legSquares = [
+          CardUtils.getSquare(cFrom.file + sfA, cFrom.rank + srA),
+          CardUtils.getSquare(cFrom.file + 2 * sfA, cFrom.rank + 2 * srA),
+        ];
+      } else {
+        // Path B
+        const tfB = isFileStraight ? 0 : Math.sign(df);
+        const trB = isFileStraight ? Math.sign(dr) : 0;
+        const sfB = isFileStraight ? Math.sign(df) : 0;
+        const srB = isFileStraight ? 0 : Math.sign(dr);
+        legSquares = [
+          CardUtils.getSquare(cFrom.file + tfB, cFrom.rank + trB),
+          CardUtils.getSquare(cFrom.file + tfB + sfB, cFrom.rank + trB + srB),
+        ];
+      }
 
       for (const sq of legSquares) {
         if (sq) {
@@ -682,29 +816,42 @@ export function registerPlaybook36Handlers(): void {
         }
       }
 
+      const enemyAtDest = engine.getPiece(targetSquare);
+      if (enemyAtDest) {
+        chess.remove(targetSquare as Square);
+        engine.addToPlayerGraveyard(enemyAtDest.color, enemyAtDest.type);
+      }
+
       chess.remove(anchorSquare as Square);
-      chess.put(knight, dest as Square);
+      chess.put(knight, targetSquare as Square);
       return { success: true };
     },
   });
 
   // ==========================================
-  // N4: Pin Swap (n4_pin_swap)
+  // N4: Pin Swap / Square Jump (n4_pin_swap)
   // ==========================================
   registerCardHandler({
     cardId: 'n4_pin_swap',
     evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
-      return isPinnedToKing(engine, anchorSquare);
+      return isSquareDefendedByFriendly(engine, anchorSquare, engine.getTurn());
     },
     getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
-      if (!isPinnedToKing(engine, anchorSquare)) return [];
+      if (!this.evaluateConditions?.(engine, anchorSquare)) return [];
+      const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
-      const adjacent = CardUtils.getAdjacentSquares(anchorSquare, true);
+
+      const jumps = [
+        [2, 2], [2, -2], [-2, 2], [-2, -2],
+      ];
       const targets: string[] = [];
-      for (const sq of adjacent) {
-        const p = engine.getPiece(sq);
-        if (p && p.color === turn && p.type !== 'k') {
-          targets.push(sq);
+      for (const [df, dr] of jumps) {
+        const sq = CardUtils.getSquare(file + df, rank + dr);
+        if (sq && !engine.isSquareBlockedByBarrier(sq)) {
+          const p = engine.getPiece(sq);
+          if (!p || (p.color !== turn && p.type !== 'k')) {
+            targets.push(sq);
+          }
         }
       }
       return targets;
@@ -712,17 +859,19 @@ export function registerPlaybook36Handlers(): void {
     execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string) {
       const valid = this.getTargets(engine, anchorSquare);
       const dest = targetSquare || valid[0];
-      if (!dest || !valid.includes(dest)) return { success: false, error: 'Invalid Pin Swap target' };
+      if (!dest || !valid.includes(dest)) return { success: false, error: 'Invalid Square Jump target' };
 
       const knight = engine.getPiece(anchorSquare);
-      const ally = engine.getPiece(dest);
-      if (!knight || !ally || ally.type === 'k') return { success: false, error: 'Missing or invalid pieces for Pin Swap' };
+      if (!knight) return { success: false, error: 'No knight at anchor' };
 
+      const enemy = engine.getPiece(dest);
       const chess = engine.getInternalChess();
+      if (enemy) {
+        chess.remove(dest as Square);
+        engine.addToPlayerGraveyard(enemy.color, enemy.type);
+      }
       chess.remove(anchorSquare as Square);
-      chess.remove(dest as Square);
       chess.put(knight, dest as Square);
-      chess.put(ally, anchorSquare as Square);
       return { success: true };
     },
   });
@@ -730,46 +879,137 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   // N5: Get to the King (n5_get_to_the_king)
   // ==========================================
-  registerCardHandler({
+  registerCardHandler<TargetOption>({
     cardId: 'n5_get_to_the_king',
-    evaluateConditions(engine: DeckChessEngine): boolean {
-      return engine.inCheck();
+    evaluateSetup(friendlyPieces) {
+      const knights = friendlyPieces.filter((p) => p.type === 'n');
+      return knights.length > 0 ? 15 : 0;
     },
-    getTargets(engine: DeckChessEngine): string[] {
-      if (!engine.inCheck()) return [];
+    getTargets(engine: DeckChessEngine, anchorSquare: string): TargetOption[] {
       const turn = engine.getTurn();
+      const oppColor = (turn === 'w' ? 'b' : 'w') as PieceColor;
+      const { file, rank } = CardUtils.getCoords(anchorSquare);
 
-      // Locate friendly king
-      let kingSq: string | null = null;
+      // Find enemy King
+      let enemyKingSq: string | null = null;
       for (let r = 0; r < 8; r++) {
         for (let f = 0; f < 8; f++) {
           const s = CardUtils.getSquare(f, r);
           if (s) {
             const p = engine.getPiece(s);
-            if (p && p.color === turn && p.type === 'k') {
-              kingSq = s;
+            if (p && p.color === oppColor && p.type === 'k') {
+              enemyKingSq = s;
               break;
             }
           }
         }
-        if (kingSq) break;
+        if (enemyKingSq) break;
       }
-      if (!kingSq) return [];
+      if (!enemyKingSq) return [];
 
-      const adjacent = CardUtils.getAdjacentSquares(kingSq, true);
-      return adjacent.filter((sq) => !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq));
+      const jumps = [
+        [1, 2], [1, -2], [-1, 2], [-1, -2],
+        [2, 1], [2, -1], [-2, 1], [-2, -1],
+      ];
+
+      const targets: TargetOption[] = [];
+      const cK = CardUtils.getCoords(enemyKingSq);
+
+      for (const [df1, dr1] of jumps) {
+        const s1 = CardUtils.getSquare(file + df1, rank + dr1);
+        if (!s1 || engine.isSquareBlockedByBarrier(s1)) continue;
+        const p1 = engine.getPiece(s1);
+        if (p1 && (p1.color === turn || p1.type === 'k')) continue;
+
+        // Condition 1: Check if S1 delivers check to enemy King
+        const c1 = CardUtils.getCoords(s1);
+        const kDf = Math.abs(c1.file - cK.file);
+        const kDr = Math.abs(c1.rank - cK.rank);
+        const attacksKing = (kDf === 1 && kDr === 2) || (kDf === 2 && kDr === 1);
+        if (!attacksKing) continue;
+
+        // Condition 2: Check if S1 attacks at least 1 other enemy non-King piece
+        let hasOtherTarget = false;
+        for (const [dfT, drT] of jumps) {
+          const sqT = CardUtils.getSquare(c1.file + dfT, c1.rank + drT);
+          if (sqT && sqT !== enemyKingSq && sqT !== anchorSquare) {
+            const pt = engine.getPiece(sqT);
+            if (pt && pt.color === oppColor && pt.type !== 'k') {
+              hasOtherTarget = true;
+              break;
+            }
+          }
+        }
+        if (!hasOtherTarget) continue;
+
+        // Condition 3: Verify S1 is NOT threatened by any enemy piece after moving Knight to S1
+        const sim = engine.clone();
+        const simChess = sim.getInternalChess();
+        const knightPiece = sim.getPiece(anchorSquare);
+        if (!knightPiece) continue;
+        if (p1) {
+          simChess.remove(s1 as Square);
+        }
+        simChess.remove(anchorSquare as Square);
+        simChess.put(knightPiece, s1 as Square);
+
+        // Check if any standard enemy move attacks S1
+        if (simChess.isAttacked(s1 as Square, oppColor)) {
+          continue; // Threatened! Rejects S1.
+        }
+
+        // Fork square S1 is valid and safe! Generate second jumps S2
+        for (const [df2, dr2] of jumps) {
+          const s2 = CardUtils.getSquare(c1.file + df2, c1.rank + dr2);
+          if (!s2 || s2 === anchorSquare || engine.isSquareBlockedByBarrier(s2)) continue;
+          const p2 = engine.getPiece(s2);
+          if (!p2 || (p2.color !== turn && p2.type !== 'k')) {
+            targets.push({
+              to: s2,
+              extraSquare: s1,
+              stageExtraSquareFirst: true,
+              disambiguationPrompt: 'Click safe forking square first',
+              arrows: [{ points: [anchorSquare, s1, s2], color: 'gold' }],
+            });
+          }
+        }
+      }
+
+      return targets;
     },
-    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string) {
-      const valid = this.getTargets(engine, anchorSquare);
-      const dest = targetSquare || valid[0];
-      if (!dest || !valid.includes(dest)) return { success: false, error: 'Invalid Get to the King target' };
+    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string, extraSquare?: string) {
+      if (!targetSquare) return { success: false, error: 'Missing Get to the King target' };
+      const rawTargets = this.getTargets(engine, anchorSquare);
+      const match = rawTargets.find((t) => {
+        if (typeof t === 'string') return t === targetSquare;
+        return t.to === targetSquare && (!extraSquare || t.extraSquare === extraSquare);
+      });
+      if (!match) return { success: false, error: 'Invalid Get to the King target' };
+
+      const chosenS1 = typeof match === 'string' ? extraSquare : (match.extraSquare || extraSquare);
+      if (!chosenS1) return { success: false, error: 'Missing safe fork square S1' };
 
       const knight = engine.getPiece(anchorSquare);
       if (!knight) return { success: false, error: 'No knight at anchor' };
 
       const chess = engine.getInternalChess();
+
+      // If an enemy piece was on S1, capture it
+      const enemyS1 = engine.getPiece(chosenS1);
+      if (enemyS1) {
+        chess.remove(chosenS1 as Square);
+        engine.addToPlayerGraveyard(enemyS1.color, enemyS1.type);
+      }
+
+      // If an enemy piece was on targetSquare (S2), capture it
+      const enemyS2 = engine.getPiece(targetSquare);
+      if (enemyS2) {
+        chess.remove(targetSquare as Square);
+        engine.addToPlayerGraveyard(enemyS2.color, enemyS2.type);
+      }
+
       chess.remove(anchorSquare as Square);
-      chess.put(knight, dest as Square);
+      chess.put(knight, targetSquare as Square);
       return { success: true };
     },
   });
@@ -782,11 +1022,12 @@ export function registerPlaybook36Handlers(): void {
     minAnchorsRequired: 2,
     evaluateSetup(friendlyPieces) {
       const knights = friendlyPieces.filter((p) => p.type === 'n');
-      return knights.length >= 2 && knights.some((k) => k.file === 0 || k.file === 7) ? 18 : 0;
+      return knights.length >= 2 && knights.some((k) => k.file <= 1 || k.file >= 6) ? 18 : 0;
     },
     evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
       const { file } = CardUtils.getCoords(anchorSquare);
-      if (file !== 0 && file !== 7) return false;
+      // a, b, g, or h files (0, 1, 6, 7)
+      if (file > 1 && file < 6) return false;
       const turn = engine.getTurn();
 
       // Verify second friendly knight exists
@@ -889,19 +1130,16 @@ export function registerPlaybook36Handlers(): void {
       const relRank = getRelativeRank(rank, turn);
       // Ranks 5-8 relative (4..7)
       if (relRank < 4) return false;
+      if (!engine.canSpawnPawn(turn)) return false;
 
       const dir = turn === 'w' ? 1 : -1;
-      let defendedCount = 0;
-      let emptyCount = 0;
       for (const df of [-1, 1]) {
         const sq = CardUtils.getSquare(file + df, rank - dir);
-        if (sq) {
-          const p = engine.getPiece(sq);
-          if (p && p.color === turn && p.type === 'p') defendedCount++;
-          if (!p && !engine.isSquareBlockedByBarrier(sq)) emptyCount++;
+        if (sq && !engine.getPiece(sq) && !engine.isSquareBlockedByBarrier(sq)) {
+          return true;
         }
       }
-      return defendedCount >= 1 && emptyCount >= 1 && engine.canSpawnPawn(turn);
+      return false;
     },
     getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
       if (!this.evaluateConditions?.(engine, anchorSquare)) return [];
@@ -1540,17 +1778,17 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   // R2: I've Got Your Back (r2_ive_got_your_back)
   // ==========================================
-  registerCardHandler({
+  registerCardHandler<TargetOption>({
     cardId: 'r2_ive_got_your_back',
     evaluateSetup(friendlyPieces) {
       return hasRookAllyAlignment(friendlyPieces) ? 15 : 0;
     },
-    getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    getTargets(engine: DeckChessEngine, anchorSquare: string): TargetOption[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
       const dir = turn === 'w' ? 1 : -1;
 
-      const targets: string[] = [];
+      const targets: TargetOption[] = [];
       for (const df of [-1, 1]) {
         let step = 1;
         while (true) {
@@ -1558,10 +1796,13 @@ export function registerPlaybook36Handlers(): void {
           if (!sq || engine.isSquareBlockedByBarrier(sq)) break;
           const p = engine.getPiece(sq);
           if (p) {
-            if (p.color === turn) {
+            if (p.color === turn && p.type !== 'k') {
               const forwardSq = CardUtils.getSquare(file + df * step, rank + dir);
-              if (forwardSq && !engine.getPiece(forwardSq) && !engine.isSquareBlockedByBarrier(forwardSq)) {
-                targets.push(sq);
+              if (forwardSq && !engine.isSquareBlockedByBarrier(forwardSq)) {
+                const fp = engine.getPiece(forwardSq);
+                if (!fp || (fp.color !== turn && fp.type !== 'k')) {
+                  targets.push({ to: sq, extraSquare: sq });
+                }
               }
             }
             break;
@@ -1571,10 +1812,10 @@ export function registerPlaybook36Handlers(): void {
       }
       return targets;
     },
-    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string) {
-      const valid = this.getTargets(engine, anchorSquare);
-      const dest = targetSquare || valid[0];
-      if (!dest || !valid.includes(dest)) return { success: false, error: 'Invalid I\'ve Got Your Back target' };
+    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string, extraSquare?: string) {
+      const rawTargets = this.getTargets(engine, anchorSquare);
+      const dest = targetSquare || (typeof rawTargets[0] === 'string' ? rawTargets[0] : rawTargets[0]?.to);
+      if (!dest) return { success: false, error: 'Invalid I\'ve Got Your Back target' };
 
       const rook = engine.getPiece(anchorSquare);
       const ally = engine.getPiece(dest);
@@ -1586,7 +1827,13 @@ export function registerPlaybook36Handlers(): void {
       const forwardSq = CardUtils.getSquare(file, rank + dir);
       if (!forwardSq) return { success: false, error: 'Invalid forward square' };
 
+      const enemyAtFwd = engine.getPiece(forwardSq);
       const chess = engine.getInternalChess();
+      if (enemyAtFwd) {
+        chess.remove(forwardSq as Square);
+        engine.addToPlayerGraveyard(enemyAtFwd.color, enemyAtFwd.type);
+      }
+
       chess.remove(anchorSquare as Square);
       chess.remove(dest as Square);
       chess.put(ally, forwardSq as Square);
@@ -1675,21 +1922,21 @@ export function registerPlaybook36Handlers(): void {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
 
-      // Find other friendly rook on same rank or file with unobstructed line
+      // Find other friendly rook in unobstructed line of sight (same rank or file)
       let otherRookSq: string | null = null;
-      let sharedAxis: 'rank' | 'file' | null = null;
+      const orthogonals: [number, number][] = [
+        [1, 0], [-1, 0], [0, 1], [0, -1],
+      ];
 
-      // Check same file
-      for (const dr of [-1, 1]) {
+      for (const [df, dr] of orthogonals) {
         let step = 1;
         while (true) {
-          const sq = CardUtils.getSquare(file, rank + dr * step);
+          const sq = CardUtils.getSquare(file + df * step, rank + dr * step);
           if (!sq || engine.isSquareBlockedByBarrier(sq)) break;
           const p = engine.getPiece(sq);
           if (p) {
             if (p.color === turn && p.type === 'r') {
               otherRookSq = sq;
-              sharedAxis = 'file';
             }
             break;
           }
@@ -1698,56 +1945,33 @@ export function registerPlaybook36Handlers(): void {
         if (otherRookSq) break;
       }
 
-      // Check same rank
-      if (!otherRookSq) {
-        for (const df of [-1, 1]) {
-          let step = 1;
-          while (true) {
-            const sq = CardUtils.getSquare(file + df * step, rank);
-            if (!sq || engine.isSquareBlockedByBarrier(sq)) break;
-            const p = engine.getPiece(sq);
-            if (p) {
-              if (p.color === turn && p.type === 'r') {
-                otherRookSq = sq;
-                sharedAxis = 'rank';
-              }
-              break;
-            }
-            step++;
-          }
-          if (otherRookSq) break;
-        }
-      }
-
-      if (!otherRookSq || !sharedAxis) return [];
-      const cOther = CardUtils.getCoords(otherRookSq);
+      if (!otherRookSq) return [];
 
       const targets: TargetOption[] = [];
-      const perpDirs = sharedAxis === 'file' ? [[1, 0], [-1, 0]] : [[0, 1], [0, -1]];
-
-      for (const [df, dr] of perpDirs) {
-        let k = 1;
+      // This rook can slide any unobstructed distance along its rank or file
+      for (const [df, dr] of orthogonals) {
+        let step = 1;
         while (true) {
-          const sq1 = CardUtils.getSquare(file + df * k, rank + dr * k);
-          const sq2 = CardUtils.getSquare(cOther.file + df * k, cOther.rank + dr * k);
-          if (!sq1 || !sq2) break;
-          if (engine.isSquareBlockedByBarrier(sq1) || engine.isSquareBlockedByBarrier(sq2)) break;
-
-          const p1 = engine.getPiece(sq1);
-          const p2 = engine.getPiece(sq2);
-          const canLand1 = !p1 || (p1.color !== turn && p1.type !== 'k');
-          const canLand2 = !p2 || (p2.color !== turn && p2.type !== 'k');
-
-          if (canLand1 && canLand2) {
+          const sq = CardUtils.getSquare(file + df * step, rank + dr * step);
+          if (!sq || sq === otherRookSq || engine.isSquareBlockedByBarrier(sq)) break;
+          const p = engine.getPiece(sq);
+          if (!p) {
             targets.push({
-              to: sq1,
-              extraSquare: sq2,
-              disambiguationPrompt: `Move paired Rook to ${sq2}`,
+              to: sq,
+              extraSquare: otherRookSq,
+              disambiguationPrompt: 'Move paired Rook into vacated square',
             });
+          } else {
+            if (p.color !== turn && p.type !== 'k') {
+              targets.push({
+                to: sq,
+                extraSquare: otherRookSq,
+                disambiguationPrompt: 'Move paired Rook into vacated square',
+              });
+            }
+            break;
           }
-          // If either square was obstructed by any piece, cannot extend further in this direction
-          if (p1 || p2) break;
-          k++;
+          step++;
         }
       }
       return targets;
@@ -1759,40 +1983,25 @@ export function registerPlaybook36Handlers(): void {
         if (typeof t === 'string') return t === targetSquare;
         return t.to === targetSquare && (!extraSquare || t.extraSquare === extraSquare);
       });
-      if (!match) return { success: false, error: 'Invalid Move in Unison targets' };
+      if (!match) return { success: false, error: 'Invalid Move in Unison target' };
 
       const chosenExtra = typeof match === 'string' ? extraSquare : (match.extraSquare || extraSquare);
-      if (!chosenExtra) return { success: false, error: 'Missing paired rook target' };
-
-      // Find the second rook using the exact displacement vector (df, dr)
-      const turn = engine.getTurn();
-      const cAnchor = CardUtils.getCoords(anchorSquare);
-      const cTarget = CardUtils.getCoords(targetSquare);
-      const cExtra = CardUtils.getCoords(chosenExtra);
-      const df = cTarget.file - cAnchor.file;
-      const dr = cTarget.rank - cAnchor.rank;
-      const otherRookOrigin = CardUtils.getSquare(cExtra.file - df, cExtra.rank - dr);
-      if (!otherRookOrigin) return { success: false, error: 'Second rook not found' };
+      if (!chosenExtra) return { success: false, error: 'Missing paired rook square' };
 
       const r1 = engine.getPiece(anchorSquare);
-      const r2 = engine.getPiece(otherRookOrigin);
+      const r2 = engine.getPiece(chosenExtra);
       if (!r1 || !r2) return { success: false, error: 'Missing rooks' };
 
-      const e1 = engine.getPiece(targetSquare);
-      const e2 = engine.getPiece(chosenExtra);
+      const enemy = engine.getPiece(targetSquare);
       const chess = engine.getInternalChess();
-      if (e1) {
+      if (enemy) {
         chess.remove(targetSquare as Square);
-        engine.addToPlayerGraveyard(e1.color, e1.type);
-      }
-      if (e2) {
-        chess.remove(chosenExtra as Square);
-        engine.addToPlayerGraveyard(e2.color, e2.type);
+        engine.addToPlayerGraveyard(enemy.color, enemy.type);
       }
       chess.remove(anchorSquare as Square);
-      chess.remove(otherRookOrigin as Square);
+      chess.remove(chosenExtra as Square);
       chess.put(r1, targetSquare as Square);
-      chess.put(r2, chosenExtra as Square);
+      chess.put(r2, anchorSquare as Square);
       return { success: true };
     },
   });
@@ -1800,34 +2009,39 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   // R5: Catapult (r5_catapult)
   // ==========================================
-  registerCardHandler({
+  registerCardHandler<TargetOption>({
     cardId: 'r5_catapult',
     evaluateSetup(friendlyPieces) {
       return hasRookAllyAlignment(friendlyPieces) ? 15 : 0;
     },
-    getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
+    getTargets(engine: DeckChessEngine, anchorSquare: string): TargetOption[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
-      const orthogonals = [
+      const orthogonals: [number, number][] = [
         [1, 0], [-1, 0], [0, 1], [0, -1],
       ];
 
-      const targets: string[] = [];
+      const targets: TargetOption[] = [];
       for (const [df, dr] of orthogonals) {
-        const behindSq = CardUtils.getSquare(file - df, rank - dr);
-        if (!behindSq) continue;
-        const ally = engine.getPiece(behindSq);
+        // Friendly non-King piece directly adjacent along ray: (file + df, rank + dr)
+        const adjSq = CardUtils.getSquare(file + df, rank + dr);
+        if (!adjSq) continue;
+        const ally = engine.getPiece(adjSq);
         if (!ally || ally.color !== turn || ally.type === 'k') continue;
 
-        // Scan along forward ray for first piece
-        let step = 1;
+        // Scan along open ray beyond adjSq for the first piece: must be enemy non-King
+        let step = 2;
         while (true) {
           const fwdSq = CardUtils.getSquare(file + df * step, rank + dr * step);
           if (!fwdSq || engine.isSquareBlockedByBarrier(fwdSq)) break;
           const p = engine.getPiece(fwdSq);
           if (p) {
             if (p.color !== turn && p.type !== 'k') {
-              targets.push(fwdSq);
+              targets.push({
+                to: fwdSq,
+                extraSquare: adjSq,
+                disambiguationPrompt: 'Choose adjacent ally to catapult',
+              });
             }
             break;
           }
@@ -1836,28 +2050,27 @@ export function registerPlaybook36Handlers(): void {
       }
       return targets;
     },
-    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string) {
-      const valid = this.getTargets(engine, anchorSquare);
-      const dest = targetSquare || valid[0];
-      if (!dest || !valid.includes(dest)) return { success: false, error: 'Invalid Catapult target' };
+    execute(engine: DeckChessEngine, anchorSquare: string, targetSquare?: string, extraSquare?: string) {
+      if (!targetSquare) return { success: false, error: 'Missing Catapult target' };
+      const rawTargets = this.getTargets(engine, anchorSquare);
+      const match = rawTargets.find((t) => {
+        if (typeof t === 'string') return t === targetSquare;
+        return t.to === targetSquare && (!extraSquare || t.extraSquare === extraSquare);
+      });
+      if (!match) return { success: false, error: 'Invalid Catapult target' };
 
-      const cRook = CardUtils.getCoords(anchorSquare);
-      const cTarget = CardUtils.getCoords(dest);
-      const df = Math.sign(cTarget.file - cRook.file);
-      const dr = Math.sign(cTarget.rank - cRook.rank);
+      const chosenAllySq = typeof match === 'string' ? extraSquare : (match.extraSquare || extraSquare);
+      if (!chosenAllySq) return { success: false, error: 'Missing catapulted ally square' };
 
-      const behindSq = CardUtils.getSquare(cRook.file - df, cRook.rank - dr);
-      if (!behindSq) return { success: false, error: 'No behind square' };
-
-      const ally = engine.getPiece(behindSq);
-      const enemy = engine.getPiece(dest);
+      const ally = engine.getPiece(chosenAllySq);
+      const enemy = engine.getPiece(targetSquare);
       if (!ally || !enemy) return { success: false, error: 'Missing pieces for Catapult' };
 
       const chess = engine.getInternalChess();
-      chess.remove(dest as Square);
+      chess.remove(targetSquare as Square);
       engine.addToPlayerGraveyard(enemy.color, enemy.type);
-      chess.remove(behindSq as Square);
-      chess.put(ally, dest as Square);
+      chess.remove(chosenAllySq as Square);
+      chess.put(ally, targetSquare as Square);
       return { success: true };
     },
   });
@@ -1878,13 +2091,25 @@ export function registerPlaybook36Handlers(): void {
     evaluateConditions(engine: DeckChessEngine, anchorSquare: string): boolean {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
       const turn = engine.getTurn();
+
+      // King orthogonally adjacent (N/S/E/W, manhattan === 1)
+      const orthogonals: [number, number][] = [
+        [1, 0], [-1, 0], [0, 1], [0, -1],
+      ];
+      let kingAdjacent = false;
+      for (const [df, dr] of orthogonals) {
+        const adjSq = CardUtils.getSquare(file + df, rank + dr);
+        if (adjSq) {
+          const p = engine.getPiece(adjSq);
+          if (p && p.color === turn && p.type === 'k') {
+            kingAdjacent = true;
+            break;
+          }
+        }
+      }
+      if (!kingAdjacent) return false;
+
       const dir = turn === 'w' ? 1 : -1;
-
-      const behindSq = CardUtils.getSquare(file, rank - dir);
-      if (!behindSq) return false;
-      const king = engine.getPiece(behindSq);
-      if (!king || king.color !== turn || king.type !== 'k') return false;
-
       const frontSq = CardUtils.getSquare(file, rank + dir);
       if (!frontSq || engine.getPiece(frontSq) || engine.isSquareBlockedByBarrier(frontSq)) return false;
 
