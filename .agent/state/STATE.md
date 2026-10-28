@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-28T15:05:30-05:00
+updated: 2026-10-28T15:10:20-05:00
 ---
 
 # Project State
@@ -7,10 +7,10 @@ updated: 2026-10-28T15:05:30-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-- **Phase**: Phase 9 — *In-Game Read-Only Rewind Scrubber & Interactive Move Log* (Ready for Planning)
-- **Task**: Phase 9 Inserted; Ready for Phase 9 Planning (`@[.agent/workflows/plan.md] 9`)
-- **Status**: Active (resumed 2026-10-28 14:53)
-- **Roadmap Status**: Phases 1–8 Complete & Verified; Phase 9 Next (In-Game Rewind & Interactive Move Log); Phases 10–12 (Campaign Engine, Jester Shop & World Keys)
+- **Phase**: Phase 9 — *In-Game Read-Only Rewind Scrubber & Interactive Move Log* (Planned)
+- **Task**: Planning complete (`9.1-PLAN.md`, `9.2-PLAN.md`)
+- **Status**: Ready for execution (`@[.agent/workflows/execute.md] 9`)
+- **Roadmap Status**: Phases 1–8 Complete & Verified; Phase 9 Planned & Ready to Execute; Phases 10–12 Next (Campaign Engine, Jester Shop & World Keys)
 
 ## Last Session Summary
 1. **Plan 8.1 (Search Speedup, Low-Determinism AI & Retention Decay)**:
@@ -45,17 +45,18 @@ updated: 2026-10-28T15:05:30-05:00
 
 ### Decisions Made
 - `[DECISION-037]` logged in `DECISIONS.md`: Low-Determinism Clipped Softmax AI, Zero-Loss Search Acceleration, Decaying Card Retention & Atomic Resumable Balance Harness.
+- `[DECISION-038]` logged in `DECISIONS.md`: Read-Only In-Game Rewind Scrubber, Responsive Above/Below Move Log Placement & Interactive Ply Selection.
 - Full Phase 8 verification signed off in `.agent/state/phases/8/VERIFICATION.md`.
+- Phase 9 research and execution plans authored in `.agent/state/phases/9/` (`RESEARCH.md`, `9.1-PLAN.md`, `9.2-PLAN.md`).
 
 ### Files of Interest
-- `src/engine/DeckChessEngine.ts`: Core engine with `fastSearch` bypass.
-- `src/engine/DeckChessAI.ts`: AI engine with low-determinism Softmax, decaying retention, and tactical locks.
-- `src/hooks/useDeckChessGame.ts`: Live game hook integrating low-determinism bot turns and deterministic hints.
-- `.agent/state/phases/8/BALANCE_REPORT.md`: Comprehensive 180-game de-confounded tournament analysis.
-- `.agent/state/phases/8/VERIFICATION.md`: Official Phase 8 verification report.
+- `src/hooks/useDeckChessGame.ts`: Live game hook (target for per-ply state snapshots and read-only timeline scrubber).
+- `src/components/RewindBar.tsx`: Reusable transport bar (`|◀`, `◀`, Status/Live Pill, `▶`, `▶|`).
+- `src/pages/DeckBuilderPage.tsx`: Arena layout with responsive Rewind Bar placement (`order-1 lg:order-2`) and clickable Move Log.
+- `.agent/state/phases/9/RESEARCH.md`: Phase 9 data contracts, state transition matrix, and invariants.
 
 ## Next Steps
 
-1. Plan Phase 9 (`@[.agent/workflows/plan.md] 9`): In-Game Read-Only Rewind Scrubber & Interactive Move Log.
-2. Execute Phase 9 (`@[.agent/workflows/execute.md] 9`).
+1. Execute Phase 9 (`@[.agent/workflows/execute.md] 9`).
+2. Verify Phase 9 (`@[.agent/workflows/verify.md] 9`).
 3. Proceed to Phase 10: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`).

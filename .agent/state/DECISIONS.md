@@ -923,4 +923,33 @@ Analysis of Phase 6 and Phase 7 simulations revealed four architectural bottlene
 
 ---
 
+### [DECISION-038] Phase 9 Decisions: Read-Only In-Game Rewind Scrubber, Responsive Above/Below Move Log Placement & Interactive Ply Selection
+
+**Date**: 2026-10-28  
+**Status**: Accepted  
+
+#### Context
+Players need an in-game rewind / timeline inspection feature to step backward and forward through earlier moves during a match (and after Game Over in "Review Board" mode), synchronized with the scrolling Move Log and styled ergonomically for both mobile (`< lg`) and desktop (`>= lg`) viewports.
+
+#### Decision
+1. **Read-Only Replay & Per-Ply State Snapshot Architecture (`useDeckChessGame.ts`)**:
+   - Stepping backward/forward through the match timeline is **read-only** (it inspects past board states, hands, graveyards, modifiers, move/card square highlights, and live `<EvalBar />` evaluations without overwriting moves or branching the game state).
+   - Store an initial `initialStateSnapshot: DeckChessEngineState` when a match starts/resets, and attach `stateSnapshot: DeckChessEngineState` to every `RecordedTurn` (ply index `0 .. N-1`).
+   - Expose `viewPlyIndex: number | null` (`null` = live latest turn; `-1` = initial board setup before Ply 1; `0 .. recordedTurns.length - 1` = historical ply after `recordedTurns[viewPlyIndex]`), `isViewingHistory: boolean`, `stepToPly(index: number | null)`, `stepBackward()`, `stepForward()`, `jumpToStart()`, and `jumpToLive()`.
+   - While `isViewingHistory === true`, board square clicks, card arming/selection, and `Hint` execution are guarded against mutating the live engine (`isViewingHistory` read-only lock), and any newly completed move automatically resets `viewPlyIndex` to `null` (Live).
+2. **Responsive Rewind Control Bar Placement (Not Inside the Hand Panel)**:
+   - Keep the Rewind Control Bar separate from `TacticalHandBar.tsx`, co-located with the Move Log inside the Arena's Right Panel (`order-3` on mobile, right below the `order-2` Tactical Hand).
+   - **Mobile (`< lg`)**: Render the Rewind Control Bar **above the scrolling Move Log** (`order-1 lg:order-2`), so it sits immediately below the Tactical Hand for thumb reachability without scrolling past the Move Log.
+   - **Desktop (`>= lg`)**: Render the Rewind Control Bar **below the scrolling Move Log** (`order-2 lg:order-1`), anchored directly beneath the latest move at the bottom of the Move Log list and above the Action Footer (`💡 Hint`, `Resign`, `New Game`, `My Deck`).
+3. **Interactive Scrolling Move Log & Auto-Scroll Stability**:
+   - Link each move/card entry in `combatLog` to its `plyIndex: number` (and provide a clickable `"Starting Position"` / initial entry at `plyIndex: -1`).
+   - Clicking any move row in the scrolling Move Log calls `stepToPly(log.plyIndex)`, highlighting the active row in gold (`border-[#D4AF37] bg-[#D4AF37]/15`).
+   - Auto-scroll the Move Log container internally (`container.scrollTop`) to keep the active/viewed move visible without ever triggering window/viewport jumps (`window.scrollY` remains anchored at `0` on mobile).
+
+#### Consequences
+- Unifies live match timeline inspection and post-game `"Review Board"` analysis in both Offline AI and Online Multiplayer rooms (`DeckBuilderPage.tsx` and `PlayRoomPage.tsx`).
+- Preserves mobile ergonomics by placing the transport bar right below the Hand and above the Move Log on mobile, and below the Move Log on desktop.
+
+---
+
 *Last updated: 2026-10-28*
