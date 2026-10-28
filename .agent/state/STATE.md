@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-28T11:46:00-05:00
+updated: 2026-10-28T14:50:00-05:00
 ---
 
 # Project State
@@ -7,9 +7,10 @@ updated: 2026-10-28T11:46:00-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-- **Phase**: Phase 8 Complete & Verified (`VERIFICATION.md`) — Next: Phase 9 (*Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 The Causeway*)
-- **Status**: Ready for Phase 9 Planning (`@[.agent/workflows/plan.md] 9`)
-- **Roadmap Status**: Phases 1–8 Complete & Verified; Phases 9–11 Next (Campaign, Jester Shop & World Keys)
+- **Phase**: Phase 8 — *Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness* (Complete & Verified)
+- **Task**: Phase 8 Finished; Ready for Phase 9 Planning (`@[.agent/workflows/plan.md] 9`)
+- **Status**: Paused at 2026-10-28 14:50
+- **Roadmap Status**: Phases 1–8 Complete & Verified; Phases 9–11 Next (Campaign Engine, Jester Shop & World Keys)
 
 ## Last Session Summary
 1. **Plan 8.1 (Search Speedup, Low-Determinism AI & Retention Decay)**:
@@ -33,12 +34,27 @@ updated: 2026-10-28T11:46:00-05:00
 
 ## In-Progress Work
 
-- None. Phase 8 is 100% complete, verified, and committed.
+- Files modified: None (working tree 100% clean and committed to git).
+- Tests status: Passing 100% green across all test suites.
 
 ## Blockers
 
 - None.
 
+## Context Dump
+
+### Decisions Made
+- `[DECISION-037]` logged in `DECISIONS.md`: Low-Determinism Clipped Softmax AI, Zero-Loss Search Acceleration, Decaying Card Retention & Atomic Resumable Balance Harness.
+- Full Phase 8 verification signed off in `.agent/state/phases/8/VERIFICATION.md`.
+
+### Files of Interest
+- `src/engine/DeckChessEngine.ts`: Core engine with `fastSearch` bypass.
+- `src/engine/DeckChessAI.ts`: AI engine with low-determinism Softmax, decaying retention, and tactical locks.
+- `src/hooks/useDeckChessGame.ts`: Live game hook integrating low-determinism bot turns and deterministic hints.
+- `.agent/state/phases/8/BALANCE_REPORT.md`: Comprehensive 180-game de-confounded tournament analysis.
+- `.agent/state/phases/8/VERIFICATION.md`: Official Phase 8 verification report.
+
 ## Next Steps
 
-1. Run `@[.agent/workflows/plan.md] 9` to plan Phase 9 (*Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 The Causeway*).
+1. Resume session (`@[.agent/workflows/resume.md]`).
+2. Plan Phase 9 (`@[.agent/workflows/plan.md] 9`): Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`).
