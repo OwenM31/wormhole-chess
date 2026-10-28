@@ -235,6 +235,19 @@ export class DeckChessEngine {
     return this.chess.board();
   }
 
+  public findKingSquare(color: PieceColor): Square | null {
+    const board = this.chess.board();
+    for (let r = 0; r < 8; r++) {
+      for (let f = 0; f < 8; f++) {
+        const p = board[r][f];
+        if (p && p.type === 'k' && p.color === color) {
+          return p.square;
+        }
+      }
+    }
+    return null;
+  }
+
   public getState(): DeckChessEngineState {
     return {
       fen: this.getFen(),
@@ -260,7 +273,9 @@ export class DeckChessEngine {
       w: { ...this.graveyard.w },
       b: { ...this.graveyard.b },
     };
-    cloned.activeModifiers = this.activeModifiers.map((m) => ({ ...m }));
+    if (this.activeModifiers.length > 0) {
+      cloned.activeModifiers = this.activeModifiers.map((m) => ({ ...m }));
+    }
     cloned.winner = this.winner;
     cloned.finishReason = this.finishReason;
     cloned.limitPawnsTo8 = this.limitPawnsTo8;
@@ -715,32 +730,46 @@ export class DeckChessEngine {
     });
   }
 
-  public makeMove(move: DeckChessMove): { success: boolean; move?: Move; error?: string } {
-    const legalMoves = this.getLegalMoves(move.from);
-    const matchingMove = legalMoves.find((m) => {
-      if (m.to !== move.to) return false;
-      if (m.promotion) {
-        return m.promotion === (move.promotion || 'q');
-      }
-      return true;
-    });
-
-    if (!matchingMove) {
-      return { success: false, error: 'Illegal chess move' };
-    }
-
+  public makeMove(
+    move: DeckChessMove,
+    fastSearch: boolean = false
+  ): { success: boolean; move?: Move; error?: string } {
     const previousTurn = this.getTurn();
-
-    // Execute standard chess move
     let executedMove: Move;
-    try {
-      executedMove = this.chess.move({
-        from: move.from as Square,
-        to: move.to as Square,
-        promotion: matchingMove.promotion,
+
+    if (fastSearch && this.activeModifiers.length === 0) {
+      try {
+        executedMove = this.chess.move({
+          from: move.from as Square,
+          to: move.to as Square,
+          promotion: (move.promotion as PieceSymbol) || undefined,
+        });
+      } catch (e: any) {
+        return { success: false, error: e?.message || 'Move failed' };
+      }
+    } else {
+      const legalMoves = this.getLegalMoves(move.from);
+      const matchingMove = legalMoves.find((m) => {
+        if (m.to !== move.to) return false;
+        if (m.promotion) {
+          return m.promotion === (move.promotion || 'q');
+        }
+        return true;
       });
-    } catch (e: any) {
-      return { success: false, error: e?.message || 'Move failed' };
+
+      if (!matchingMove) {
+        return { success: false, error: 'Illegal chess move' };
+      }
+
+      try {
+        executedMove = this.chess.move({
+          from: move.from as Square,
+          to: move.to as Square,
+          promotion: matchingMove.promotion,
+        });
+      } catch (e: any) {
+        return { success: false, error: e?.message || 'Move failed' };
+      }
     }
 
     // Graveyard tracking on capture
@@ -749,23 +778,25 @@ export class DeckChessEngine {
       this.addToGraveyard(oppColor, executedMove.captured);
     }
 
-    // If moved piece had an active shield, move shield with the piece
-    this.activeModifiers = this.activeModifiers.map((mod) => {
-      if (mod.type === 'shield' && mod.square === move.from && mod.ownerColor === previousTurn) {
-        return { ...mod, square: move.to };
-      }
-      return mod;
-    });
-
-    // Decrement and expire active modifiers owned by previous player
-    this.activeModifiers = this.activeModifiers
-      .map((m) => {
-        if (m.ownerColor === previousTurn) {
-          return { ...m, turnsRemaining: m.turnsRemaining - 1 };
+    if (this.activeModifiers.length > 0) {
+      // If moved piece had an active shield, move shield with the piece
+      this.activeModifiers = this.activeModifiers.map((mod) => {
+        if (mod.type === 'shield' && mod.square === move.from && mod.ownerColor === previousTurn) {
+          return { ...mod, square: move.to };
         }
-        return m;
-      })
-      .filter((m) => m.turnsRemaining > 0);
+        return mod;
+      });
+
+      // Decrement and expire active modifiers owned by previous player
+      this.activeModifiers = this.activeModifiers
+        .map((m) => {
+          if (m.ownerColor === previousTurn) {
+            return { ...m, turnsRemaining: m.turnsRemaining - 1 };
+          }
+          return m;
+        })
+        .filter((m) => m.turnsRemaining > 0);
+    }
 
     // End-of-turn reset: card window reopened
     this.cardPlayedThisTurn = false;
@@ -776,16 +807,18 @@ export class DeckChessEngine {
 
     this.positionHistory.push(this.getPositionKey());
 
-    // Check game termination
-    if (this.chess.isCheckmate()) {
-      this.winner = previousTurn;
-      this.finishReason = 'checkmate';
-    } else if (this.chess.isStalemate()) {
-      this.winner = 'draw';
-      this.finishReason = 'stalemate';
-    } else if (this.isDraw()) {
-      this.winner = 'draw';
-      this.finishReason = 'draw';
+    // Check game termination (skip during fast search since minimax expands children)
+    if (!fastSearch) {
+      if (this.chess.isCheckmate()) {
+        this.winner = previousTurn;
+        this.finishReason = 'checkmate';
+      } else if (this.chess.isStalemate()) {
+        this.winner = 'draw';
+        this.finishReason = 'stalemate';
+      } else if (this.isDraw()) {
+        this.winner = 'draw';
+        this.finishReason = 'draw';
+      }
     }
 
     return { success: true, move: executedMove };
@@ -983,7 +1016,10 @@ export class DeckChessEngine {
     return moves;
   }
 
-  public makeEmpoweredMove(move: EmpoweredMove): { success: boolean; error?: string } {
+  public makeEmpoweredMove(
+    move: EmpoweredMove,
+    fastSearch: boolean = false
+  ): { success: boolean; error?: string } {
     if (this.cardPlayedThisTurn) {
       return { success: false, error: 'A card has already been played this turn' };
     }
@@ -1020,22 +1056,9 @@ export class DeckChessEngine {
 
     // King safety check: Own king cannot be in check after card move
     const oppColor = (currentTurn === 'w' ? 'b' : 'w') as Color;
-    let kingSq: string | null = null;
-    for (let r = 0; r < 8; r++) {
-      for (let f = 0; f < 8; f++) {
-        const s = DeckChessEngine.coordsToSquare(f, r);
-        if (s) {
-          const p = this.getPiece(s);
-          if (p && p.type === 'k' && p.color === currentTurn) {
-            kingSq = s;
-            break;
-          }
-        }
-      }
-      if (kingSq) break;
-    }
+    const kingSq = this.findKingSquare(currentTurn);
 
-    if (kingSq && this.chess.isAttacked(kingSq as Square, oppColor)) {
+    if (kingSq && this.chess.isAttacked(kingSq, oppColor)) {
       this.chess.load(rollbackFen, { skipValidation: true });
       this.turnNumber = rollbackTurnNumber;
       this.cardPlayedThisTurn = rollbackCardPlayed;
@@ -1085,16 +1108,18 @@ export class DeckChessEngine {
     // End-of-turn reset: card window reopened
     this.cardPlayedThisTurn = false;
 
-    // Check game termination
-    if (this.chess.isCheckmate()) {
-      this.winner = currentTurn;
-      this.finishReason = 'checkmate';
-    } else if (this.chess.isStalemate()) {
-      this.winner = 'draw';
-      this.finishReason = 'stalemate';
-    } else if (this.isDraw()) {
-      this.winner = 'draw';
-      this.finishReason = 'draw';
+    // Check game termination (skip during fast search)
+    if (!fastSearch) {
+      if (this.chess.isCheckmate()) {
+        this.winner = currentTurn;
+        this.finishReason = 'checkmate';
+      } else if (this.chess.isStalemate()) {
+        this.winner = 'draw';
+        this.finishReason = 'stalemate';
+      } else if (this.isDraw()) {
+        this.winner = 'draw';
+        this.finishReason = 'draw';
+      }
     }
 
     return { success: true };

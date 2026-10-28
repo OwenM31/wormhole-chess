@@ -406,54 +406,64 @@ export function evaluateBoard(
   let whiteBishops = 0;
   let blackBishops = 0;
 
+  let wk_r = -1;
+  let wk_f = -1;
+  let bk_r = -1;
+  let bk_f = -1;
+
+  // Single-pass over all 64 squares: accumulate pieces, non-king material + PST, and king locations
   for (let r = 0; r < 8; r++) {
     for (let f = 0; f < 8; f++) {
       const piece = board[r][f];
       if (!piece) continue;
       const rankFrom1 = 7 - r;
-      const sq = DeckChessEngine.coordsToSquare(f, rankFrom1);
+      const sq = (piece.square as Square) || DeckChessEngine.coordsToSquare(f, rankFrom1);
+      const type = piece.type;
+      const isWhite = piece.color === 'w';
+
       if (sq) {
-        if (piece.color === 'w') {
-          whitePieces.push({ sq, type: piece.type, file: f, rank: rankFrom1 });
-          if (piece.type === 'b') whiteBishops++;
+        if (isWhite) {
+          whitePieces.push({ sq, type, file: f, rank: rankFrom1 });
+          if (type === 'b') whiteBishops++;
         } else {
-          blackPieces.push({ sq, type: piece.type, file: f, rank: rankFrom1 });
-          if (piece.type === 'b') blackBishops++;
+          blackPieces.push({ sq, type, file: f, rank: rankFrom1 });
+          if (type === 'b') blackBishops++;
         }
       }
-      if (piece.type !== 'p' && piece.type !== 'k') {
-        nonPawnMaterial += MATERIAL_VALUES[piece.type] || 0;
+
+      if (type === 'k') {
+        if (isWhite) {
+          wk_r = r;
+          wk_f = f;
+        } else {
+          bk_r = r;
+          bk_f = f;
+        }
+      } else {
+        const baseVal = MATERIAL_VALUES[type] || 0;
+        if (type !== 'p') {
+          nonPawnMaterial += baseVal;
+        }
+        const pstRow = isWhite ? r : 7 - r;
+        const pstVal = PST_MAP[type]?.[pstRow]?.[f] || 0;
+        const totalPieceVal = baseVal + pstVal;
+        if (isWhite) {
+          whiteScore += totalPieceVal;
+        } else {
+          whiteScore -= totalPieceVal;
+        }
       }
     }
   }
 
+  // King PST evaluation based on endgame detection
   const isEndgame = nonPawnMaterial <= 2600;
-
-  // 1. Material & Correctly Oriented Piece-Square Tables
-  // Note: PST arrays have Row 0 = Rank 8 and Row 7 = Rank 1.
-  // In chess.js board[r][f], r = 0 is Rank 8 and r = 7 is Rank 1.
-  // Therefore, for White, pstRow is `r`; for Black (mirrored), pstRow is `7 - r`!
-  for (let r = 0; r < 8; r++) {
-    for (let f = 0; f < 8; f++) {
-      const piece = board[r][f];
-      if (!piece) continue;
-
-      const type = piece.type;
-      const color = piece.color as PieceColor;
-      const baseVal = MATERIAL_VALUES[type] || 0;
-
-      const pstRow = color === 'w' ? r : 7 - r;
-      const pstTable =
-        type === 'k' ? (isEndgame ? KING_ENDGAME_PST : KING_MIDGAME_PST) : PST_MAP[type];
-      const pstVal = pstTable?.[pstRow]?.[f] || 0;
-      const totalPieceVal = baseVal + pstVal;
-
-      if (color === 'w') {
-        whiteScore += totalPieceVal;
-      } else {
-        whiteScore -= totalPieceVal;
-      }
-    }
+  const kingPst = isEndgame ? KING_ENDGAME_PST : KING_MIDGAME_PST;
+  if (wk_r !== -1) {
+    whiteScore += 20000 + (kingPst[wk_r]?.[wk_f] || 0);
+  }
+  if (bk_r !== -1) {
+    whiteScore -= (20000 + (kingPst[7 - bk_r]?.[bk_f] || 0));
   }
 
   // Bishop pair bonus
@@ -544,6 +554,17 @@ interface CandidateAction {
   move?: Move;
   empoweredMove?: EmpoweredMove;
   orderScore: number;
+}
+
+function candidateKey(c: CandidateAction): string {
+  if (c.type === 'empowered' && c.empoweredMove) {
+    const em = c.empoweredMove;
+    return `e:${em.cardId}:${em.from}-${em.to}:${em.extraSquare || ''}:${em.promotion || ''}`;
+  }
+  if (c.move) {
+    return `s:${c.move.from}-${c.move.to}:${c.move.promotion || ''}`;
+  }
+  return '';
 }
 
 function getStandardCandidates(engine: DeckChessEngine): CandidateAction[] {
@@ -666,7 +687,7 @@ function quiescence(
       if (standPat + gain < alpha) continue;
 
       const clone = engine.clone();
-      const res = clone.makeMove({ from: m.from, to: m.to, promotion: m.promotion });
+      const res = clone.makeMove({ from: m.from, to: m.to, promotion: m.promotion }, true);
       if (!res.success) continue;
 
       const score = quiescence(clone, alpha, beta, false, povColor, qDepth - 1, params);
@@ -696,7 +717,7 @@ function quiescence(
       if (standPat - gain > beta) continue;
 
       const clone = engine.clone();
-      const res = clone.makeMove({ from: m.from, to: m.to, promotion: m.promotion });
+      const res = clone.makeMove({ from: m.from, to: m.to, promotion: m.promotion }, true);
       if (!res.success) continue;
 
       const score = quiescence(clone, alpha, beta, true, povColor, qDepth - 1, params);
@@ -711,6 +732,7 @@ interface TTEntry {
   depth: number;
   score: number;
   flag: 'EXACT' | 'LOWERBOUND' | 'UPPERBOUND';
+  bestMoveKey?: string;
 }
 
 /**
@@ -747,15 +769,19 @@ export function minimax(
   }
 
   const ttKey = tt
-    ? `${engine.getPositionKey()}|${engine.getWhiteHand().join(',')}|${engine.getBlackHand().join(',')}|${depth}|${isMaximizing ? 1 : 0}`
+    ? `${engine.getPositionKey()}|${engine.getWhiteHand().join(',')}|${engine.getBlackHand().join(',')}|${isMaximizing ? 1 : 0}`
     : '';
+  let ttCachedBestMoveKey: string | undefined;
   if (tt && ttKey) {
     const cached = tt.get(ttKey);
-    if (cached && cached.depth >= depth) {
-      if (cached.flag === 'EXACT') return { score: cached.score };
-      if (cached.flag === 'LOWERBOUND') alpha = Math.max(alpha, cached.score);
-      else if (cached.flag === 'UPPERBOUND') beta = Math.min(beta, cached.score);
-      if (alpha >= beta) return { score: cached.score };
+    if (cached) {
+      ttCachedBestMoveKey = cached.bestMoveKey;
+      if (cached.depth >= depth) {
+        if (cached.flag === 'EXACT') return { score: cached.score };
+        if (cached.flag === 'LOWERBOUND') alpha = Math.max(alpha, cached.score);
+        else if (cached.flag === 'UPPERBOUND') beta = Math.min(beta, cached.score);
+        if (alpha >= beta) return { score: cached.score };
+      }
     }
   }
 
@@ -763,6 +789,17 @@ export function minimax(
   const origBeta = beta;
   const currentTurn = engine.getTurn();
   const stdCandidates = getStandardCandidates(engine);
+
+  // TT Move Ordering: Prioritize the previously best candidate to accelerate alpha-beta cutoffs
+  if (ttCachedBestMoveKey) {
+    for (const c of stdCandidates) {
+      if (candidateKey(c) === ttCachedBestMoveKey) {
+        c.orderScore += 10000;
+        break;
+      }
+    }
+    stdCandidates.sort((a, b) => b.orderScore - a.orderScore);
+  }
 
   if (stdCandidates.length === 0) {
     const empCheckSaves = includeCards ? getEmpoweredCandidates(engine, currentTurn, false) : [];
@@ -790,10 +827,10 @@ export function minimax(
           from: cand.move.from,
           to: cand.move.to,
           promotion: cand.move.promotion,
-        });
+        }, true);
         success = res.success;
       } else if (cand.type === 'empowered' && cand.empoweredMove) {
-        const res = clone.makeEmpoweredMove(cand.empoweredMove);
+        const res = clone.makeEmpoweredMove(cand.empoweredMove, true);
         success = res.success;
       }
 
@@ -843,6 +880,15 @@ export function minimax(
 
     if (!cutOff && includeCards) {
       const empCandidates = getEmpoweredCandidates(engine, currentTurn, false);
+      if (ttCachedBestMoveKey) {
+        for (const c of empCandidates) {
+          if (candidateKey(c) === ttCachedBestMoveKey) {
+            c.orderScore += 10000;
+            break;
+          }
+        }
+        empCandidates.sort((a, b) => b.orderScore - a.orderScore);
+      }
       for (const cand of empCandidates) {
         if (evalCand(cand)) {
           break;
@@ -853,7 +899,12 @@ export function minimax(
     if (tt && ttKey) {
       const flag =
         maxScore <= origAlpha ? 'UPPERBOUND' : maxScore >= origBeta ? 'LOWERBOUND' : 'EXACT';
-      tt.set(ttKey, { depth, score: maxScore, flag });
+      tt.set(ttKey, {
+        depth,
+        score: maxScore,
+        flag,
+        bestMoveKey: bestCand ? candidateKey(bestCand) : undefined,
+      });
     }
 
     return { score: maxScore, move: bestCand.move, empoweredMove: bestCand.empoweredMove };
@@ -871,10 +922,10 @@ export function minimax(
           from: cand.move.from,
           to: cand.move.to,
           promotion: cand.move.promotion,
-        });
+        }, true);
         success = res.success;
       } else if (cand.type === 'empowered' && cand.empoweredMove) {
-        const res = clone.makeEmpoweredMove(cand.empoweredMove);
+        const res = clone.makeEmpoweredMove(cand.empoweredMove, true);
         success = res.success;
       }
 
@@ -926,6 +977,15 @@ export function minimax(
 
     if (!cutOff && includeCards) {
       const empCandidates = getEmpoweredCandidates(engine, currentTurn, false);
+      if (ttCachedBestMoveKey) {
+        for (const c of empCandidates) {
+          if (candidateKey(c) === ttCachedBestMoveKey) {
+            c.orderScore += 10000;
+            break;
+          }
+        }
+        empCandidates.sort((a, b) => b.orderScore - a.orderScore);
+      }
       for (const cand of empCandidates) {
         if (evalCand(cand)) {
           break;
@@ -935,8 +995,13 @@ export function minimax(
 
     if (tt && ttKey) {
       const flag =
-        minScore <= origAlpha ? 'UPPERBOUND' : minScore >= origBeta ? 'LOWERBOUND' : 'EXACT';
-      tt.set(ttKey, { depth, score: minScore, flag });
+        minScore >= origBeta ? 'LOWERBOUND' : minScore <= origAlpha ? 'UPPERBOUND' : 'EXACT';
+      tt.set(ttKey, {
+        depth,
+        score: minScore,
+        flag,
+        bestMoveKey: bestCand ? candidateKey(bestCand) : undefined,
+      });
     }
 
     return { score: minScore, move: bestCand.move, empoweredMove: bestCand.empoweredMove };
@@ -985,10 +1050,10 @@ export function computeBestTurn(
         from: candidate.move.from,
         to: candidate.move.to,
         promotion: candidate.move.promotion,
-      });
+      }, true);
       success = res.success;
     } else if (candidate.type === 'empowered' && candidate.empoweredMove) {
-      const res = clone.makeEmpoweredMove(candidate.empoweredMove);
+      const res = clone.makeEmpoweredMove(candidate.empoweredMove, true);
       success = res.success;
     }
 

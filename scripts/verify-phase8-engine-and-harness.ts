@@ -208,16 +208,16 @@ async function runEngineSuite() {
     const pieces35 = getPiecesForColor(engineTurn35, 'w');
 
     const scarcityTurn1 = evaluateCardScarcityAndHand(
-      engineTurn1,
-      'w',
       pieces1,
+      engineTurn1.getWhiteHand(),
+      'w',
       DEFAULT_EVAL_PARAMS,
       1
     );
     const scarcityTurn35 = evaluateCardScarcityAndHand(
-      engineTurn35,
-      'w',
       pieces35,
+      engineTurn35.getWhiteHand(),
+      'w',
       DEFAULT_EVAL_PARAMS,
       35
     );
