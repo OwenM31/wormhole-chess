@@ -223,9 +223,11 @@ export function evaluateCardScarcityAndHand(
   friendlyPieces: FriendlyPieceSummary[],
   hand: string[],
   color: PieceColor,
-  params: EvalParams = DEFAULT_EVAL_PARAMS
+  params: EvalParams = DEFAULT_EVAL_PARAMS,
+  turnNumber: number = 1
 ): number {
   if (hand.length === 0) return 0;
+  const decay = Math.max(0.25, 1 - (turnNumber - 1) / 42);
 
   const counts: Record<PieceSymbol, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
   let hasRank7Pawn = false;
@@ -262,11 +264,26 @@ export function evaluateCardScarcityAndHand(
     const card = getCardById(cardId);
     if (!card) continue;
     const handler = getCardHandler(cardId);
-    const baseVal = getCardRetentionValue(cardId, params);
+    let baseVal = getCardRetentionValue(cardId, params);
+
+    // Per-card retention tuning: tempo & setup cards should not be hoarded
+    if (cardId === 'p3_follow_me') {
+      baseVal = Math.round(baseVal * 0.20);
+    } else if (
+      cardId === 'p1_sidestep' ||
+      cardId === 'p6_tag_out' ||
+      cardId === 'n6_flanking_knight' ||
+      cardId === 'b4_change_color' ||
+      cardId === 'r2_ive_got_your_back'
+    ) {
+      baseVal = Math.round(baseVal * 0.35);
+    }
+
     const anchorType = anchorToPieceSymbol(card.anchor);
     const minReq = handler?.minAnchorsRequired ?? 1;
     const alive = counts[anchorType];
 
+    let cardScore = 0;
     if (alive < minReq) {
       // Card is currently ORPHANED (missing required anchor piece(s))
       const deficit = minReq - alive;
@@ -285,34 +302,32 @@ export function evaluateCardScarcityAndHand(
         }
       }
 
-      totalHandValue += Math.round(baseVal * revivalFactor);
-      continue;
-    }
-
-    // Card has its required anchor pieces alive on the board
-    if (anchorType === 'p') {
+      cardScore = Math.round(baseVal * revivalFactor);
+    } else if (anchorType === 'p') {
       // Non-linear hyperbolic scarcity curve for Pawns (normalized so n = 8 - minReq + 1 is 1.0)
       const surplus = alive - minReq + 1; // 1..8
       const maxSurplus = 8 - minReq + 1;
       const rawUtility = 1 - params.pawnScarcityAlpha / Math.pow(surplus + 0.65, 1.8);
       const normUtility = 1 - params.pawnScarcityAlpha / Math.pow(maxSurplus + 0.65, 1.8);
       const ratio = Math.min(1, Math.max(0.25, rawUtility / normUtility));
-      totalHandValue += Math.round(baseVal * ratio);
+      cardScore = Math.round(baseVal * ratio);
     } else if (anchorType === 'n' || anchorType === 'b' || anchorType === 'r') {
       if (minReq >= 2) {
         // Pair-dependent card (R4, N6) with 2+ pieces alive
-        totalHandValue += Math.round(baseVal * (1 + params.spareAnchorBonusPct));
+        cardScore = Math.round(baseVal * (1 + params.spareAnchorBonusPct));
       } else if (alive >= 2) {
         // Single-anchor card with 2 pieces alive (spare anchor flexibility bonus)
-        totalHandValue += Math.round(baseVal * (1 + params.spareAnchorBonusPct));
+        cardScore = Math.round(baseVal * (1 + params.spareAnchorBonusPct));
       } else {
         // Down to last surviving Knight/Bishop/Rook (1 -> 0 brink)
-        totalHandValue += baseVal;
+        cardScore = baseVal;
       }
     } else {
       // Queen or King (1-of-1 piece)
-      totalHandValue += baseVal;
+      cardScore = baseVal;
     }
+
+    totalHandValue += Math.round(cardScore * decay);
   }
 
   return totalHandValue;
@@ -353,7 +368,9 @@ export function evaluateHandSynergy(
   for (const cardId of uniqueCards) {
     const handler = getCardHandler(cardId);
     if (handler?.evaluateSetup) {
-      synergy += Math.round(handler.evaluateSetup(friendlyPieces, color) * params.setupWeight);
+      // Scale setup synergy to prevent double-tax when cards are played
+      const rawBonus = handler.evaluateSetup(friendlyPieces, color);
+      synergy += Math.round(rawBonus * params.setupWeight * 0.35);
     }
   }
 
@@ -470,6 +487,15 @@ export function evaluateBoard(
   if (whiteBishops >= 2) whiteScore += params.bishopPairBonus;
   if (blackBishops >= 2) whiteScore -= params.bishopPairBonus;
 
+  // Center pawn duo bonus (d4+e4 for White, d5+e5 for Black)
+  const whiteHasD4 = board[4][3]?.type === 'p' && board[4][3]?.color === 'w';
+  const whiteHasE4 = board[4][4]?.type === 'p' && board[4][4]?.color === 'w';
+  if (whiteHasD4 && whiteHasE4) whiteScore += 28;
+
+  const blackHasD5 = board[3][3]?.type === 'p' && board[3][3]?.color === 'b';
+  const blackHasE5 = board[3][4]?.type === 'p' && board[3][4]?.color === 'b';
+  if (blackHasD5 && blackHasE5) whiteScore -= 28;
+
   // 2. Active Shields
   for (const mod of engine.getActiveModifiers()) {
     if (mod.type === 'shield') {
@@ -479,17 +505,20 @@ export function evaluateBoard(
   }
 
   // 3. Non-Linear Card Scarcity, Orphaning & Revival Valuation
+  const turnNumber = engine.getTurnNumber();
   const whiteScarcityVal = evaluateCardScarcityAndHand(
     whitePieces,
     engine.getWhiteHand(),
     'w',
-    params
+    params,
+    turnNumber
   );
   const blackScarcityVal = evaluateCardScarcityAndHand(
     blackPieces,
     engine.getBlackHand(),
     'b',
-    params
+    params,
+    turnNumber
   );
   whiteScore += whiteScarcityVal - blackScarcityVal;
 
@@ -1011,6 +1040,7 @@ export function minimax(
 /**
  * Top-level tactical AI turn decision.
  * Supports 'easy', 'medium', 'tactical', and 'grandmaster' difficulties.
+ * Implements Iterative Deepening + Top-K Windowed Verification + Seeded Clipped Softmax.
  */
 export function computeBestTurn(
   engine: DeckChessEngine,
@@ -1028,16 +1058,79 @@ export function computeBestTurn(
   const maxDepth = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3;
   const includeCards = difficulty !== 'easy';
 
+  const defaultMargins: Record<AiDifficulty, number> = {
+    grandmaster: 15,
+    tactical: 22,
+    medium: 32,
+    easy: 60,
+  };
+  const defaultTemps: Record<AiDifficulty, number> = {
+    grandmaster: 10,
+    tactical: 14,
+    medium: 20,
+    easy: 35,
+  };
+
+  const marginCp = options?.contenderMarginCp ?? defaultMargins[difficulty];
+  const temperature = options?.temperature ?? defaultTemps[difficulty];
+  const isDeterministic = options?.deterministic ?? (options?.seed === undefined);
+
   const candidates = getCandidateActions(engine, includeCards, aiColor, true);
   if (candidates.length === 0) {
     throw new Error('No legal moves available for AI');
   }
 
   const tt = new Map<string, TTEntry>();
+
+  // Iterative Deepening: Run shallow passes d = 1..maxDepth-1 to populate TT & order root moves
+  if (maxDepth > 1) {
+    for (let d = 1; d < maxDepth; d++) {
+      for (const candidate of candidates) {
+        const clone = engine.clone();
+        let success = false;
+        if (candidate.type === 'standard' && candidate.move) {
+          const res = clone.makeMove({
+            from: candidate.move.from,
+            to: candidate.move.to,
+            promotion: candidate.move.promotion,
+          }, true);
+          success = res.success;
+        } else if (candidate.type === 'empowered' && candidate.empoweredMove) {
+          const res = clone.makeEmpoweredMove(candidate.empoweredMove, true);
+          success = res.success;
+        }
+        if (!success) continue;
+
+        if (clone.inCheck() && clone.isCheckmate()) {
+          candidate.orderScore = 100000;
+        } else {
+          const next = minimax(
+            clone,
+            d - 1,
+            -Infinity,
+            Infinity,
+            false,
+            aiColor,
+            includeCards,
+            params,
+            tt
+          );
+          candidate.orderScore = next.score;
+        }
+      }
+      candidates.sort((a, b) => b.orderScore - a.orderScore);
+    }
+  }
+
   let bestScore = -Infinity;
   let bestCandidate = candidates[0];
   let alpha = -Infinity;
   const beta = Infinity;
+
+  let bestStandardScore: number | undefined;
+  let bestEmpoweredScore: number | undefined;
+
+  const candidateScores: { candidate: CandidateAction; score: number; failedLow: boolean }[] = [];
 
   let rootIdx = 0;
   for (const candidate of candidates) {
@@ -1060,25 +1153,31 @@ export function computeBestTurn(
     if (!success) continue;
 
     let score: number;
+    let failedLow = false;
     if (clone.inCheck() && clone.isCheckmate()) {
       score = 100000 + maxDepth * 100;
     } else {
       const destSq = (candidate.move?.to || candidate.empoweredMove?.to) as Square | undefined;
       const isTact = Boolean(candidate.move?.captured || candidate.move?.promotion);
-      // Late Move Reduction (LMR) at Root for depth >= 3:
-      // Search top 10 moves + all tactical moves at full depth; reduce quiet late moves to depth 1 first
+
+      // When low-determinism is enabled, keep alpha relaxed to bestScore - marginCp
+      // so all moves in the contender window receive exact minimax scores.
+      const searchAlpha = isDeterministic
+        ? alpha
+        : Math.max(-Infinity, bestScore - marginCp);
+
       const canReduce =
         maxDepth >= 3 &&
         rootIdx > 10 &&
         !isTact &&
         candidate.orderScore < 350 &&
-        alpha > -50000;
+        searchAlpha > -50000;
 
       if (canReduce) {
         const reduced = minimax(
           clone,
           1,
-          alpha,
+          searchAlpha,
           beta,
           false,
           aiColor,
@@ -1089,11 +1188,11 @@ export function computeBestTurn(
           isTact
         );
         score = reduced.score;
-        if (score > alpha) {
+        if (score > searchAlpha) {
           const full = minimax(
             clone,
             maxDepth - 1,
-            alpha,
+            searchAlpha,
             beta,
             false,
             aiColor,
@@ -1104,12 +1203,14 @@ export function computeBestTurn(
             isTact
           );
           score = full.score;
+        } else {
+          failedLow = !isDeterministic && bestScore > -50000;
         }
       } else {
         const next = minimax(
           clone,
           maxDepth - 1,
-          alpha,
+          searchAlpha,
           beta,
           false,
           aiColor,
@@ -1120,10 +1221,25 @@ export function computeBestTurn(
           isTact
         );
         score = next.score;
+        if (score <= searchAlpha && !isDeterministic && bestScore > -50000) {
+          failedLow = true;
+        }
       }
       // Repetition contempt at Root: never shuffle Ra8-b8-a8-b8 when not losing
       if (clone.getPositionRepeatCount() >= 2 && score > -150) {
         score -= params.repetitionContempt;
+      }
+    }
+
+    candidateScores.push({ candidate, score, failedLow });
+
+    if (candidate.type === 'standard') {
+      if (bestStandardScore === undefined || score > bestStandardScore) {
+        bestStandardScore = score;
+      }
+    } else if (candidate.type === 'empowered') {
+      if (bestEmpoweredScore === undefined || score > bestEmpoweredScore) {
+        bestEmpoweredScore = score;
       }
     }
 
@@ -1132,20 +1248,67 @@ export function computeBestTurn(
       bestCandidate = candidate;
     }
 
-    alpha = Math.max(alpha, bestScore);
+    if (isDeterministic) {
+      alpha = Math.max(alpha, bestScore);
+    }
   }
 
-  const whiteEvalCp = aiColor === 'w' ? bestScore : -bestScore;
+  // Calculate Search-Backed Card Lift
+  const cardLiftCp =
+    bestEmpoweredScore !== undefined && bestStandardScore !== undefined
+      ? bestEmpoweredScore - bestStandardScore
+      : undefined;
+
+  // Filter root contenders within marginCp of bestScore (excluding moves that failed low)
+  const threshold = bestScore - marginCp;
+  let contenders = candidateScores
+    .filter((cs) => !cs.failedLow && cs.score >= threshold)
+    .sort((a, b) => b.score - a.score);
+
+  // Tactical Lock: forced checkmate locks contenders to top-1 mate move
+  if (bestScore >= 80000 || contenders.length === 0) {
+    contenders = [{ candidate: bestCandidate, score: bestScore, failedLow: false }];
+  }
+  const contenderCount = contenders.length;
+
+  // Tactical Lock Guardrails:
+  // 1. Forced deterministic mode (e.g. player Hint, EvalBar, Replay)
+  // 2. Clear forced checkmate found (bestScore >= 80000)
+  // 3. Only 1 legal contender in the window
+  let chosenCandidate = bestCandidate;
+  let chosenScore = bestScore;
+
+  if (isDeterministic || bestScore >= 80000 || contenders.length <= 1) {
+    chosenCandidate = contenders[0]?.candidate || bestCandidate;
+    chosenScore = contenders[0]?.score ?? bestScore;
+  } else {
+    // Seeded Clipped Softmax (Boltzmann Sampling) over Contenders
+    const rng = options?.seed !== undefined ? mulberry32(options.seed) : Math.random;
+    const weights = contenders.map((c) => Math.exp((c.score - bestScore) / temperature));
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+
+    let pick = rng() * totalWeight;
+    for (let i = 0; i < contenders.length; i++) {
+      pick -= weights[i];
+      if (pick <= 0 || i === contenders.length - 1) {
+        chosenCandidate = contenders[i].candidate;
+        chosenScore = contenders[i].score;
+        break;
+      }
+    }
+  }
+
+  const whiteEvalCp = aiColor === 'w' ? chosenScore : -chosenScore;
   const scoreFormatted = (whiteEvalCp / 100).toFixed(1);
   const prefix = whiteEvalCp > 0 ? '+' : '';
 
-  if (bestCandidate.type === 'empowered' && bestCandidate.empoweredMove) {
-    const emp = bestCandidate.empoweredMove;
+  if (chosenCandidate.type === 'empowered' && chosenCandidate.empoweredMove) {
+    const emp = chosenCandidate.empoweredMove;
     const cardDef = getCardById(emp.cardId);
     const cardName = emp.metadata?.cardName || cardDef?.name || emp.cardId;
     const promoSuffix = emp.promotion ? `=${emp.promotion.toUpperCase()}` : '';
     const explanation =
-      bestScore >= 90000
+      chosenScore >= 90000
         ? `💡 Best Move: [${cardName}] ${emp.from} ➔ ${emp.to}${promoSuffix} (Checkmate)`
         : `💡 Best Move: [${cardName}] ${emp.from} ➔ ${emp.to}${promoSuffix} (${prefix}${scoreFormatted})`;
 
@@ -1163,22 +1326,26 @@ export function computeBestTurn(
         targetSquare: emp.to,
         extraSquare: emp.extraSquare,
       },
-      evalScore: bestScore,
+      evalScore: chosenScore,
       whiteEvalCp,
-      mateIn: bestScore >= 90000 ? 1 : undefined,
+      mateIn: chosenScore >= 90000 ? 1 : undefined,
       explanation,
+      bestStandardScore,
+      bestEmpoweredScore,
+      cardLiftCp,
+      contenderCount,
     };
   }
 
   // Standard Move chosen
-  const sm = bestCandidate.move || engine.getLegalMoves()[0];
+  const sm = chosenCandidate.move || engine.getLegalMoves()[0];
   if (!sm) {
     throw new Error('No legal move available');
   }
 
   const promoSuffix = sm.promotion ? `=${sm.promotion.toUpperCase()}` : '';
   const explanation =
-    bestScore >= 90000
+    chosenScore >= 90000
       ? `💡 Best Move: ${sm.from} ➔ ${sm.to}${promoSuffix} (Checkmate)`
       : `💡 Best Move: ${sm.from} ➔ ${sm.to}${promoSuffix} (${prefix}${scoreFormatted})`;
 
@@ -1189,9 +1356,13 @@ export function computeBestTurn(
       to: sm.to,
       promotion: sm.promotion,
     },
-    evalScore: bestScore,
+    evalScore: chosenScore,
     whiteEvalCp,
-    mateIn: bestScore >= 90000 ? 1 : undefined,
+    mateIn: chosenScore >= 90000 ? 1 : undefined,
     explanation,
+    bestStandardScore,
+    bestEmpoweredScore,
+    cardLiftCp,
+    contenderCount,
   };
 }

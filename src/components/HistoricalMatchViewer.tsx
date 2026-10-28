@@ -70,7 +70,7 @@ export const HistoricalMatchViewer: React.FC<HistoricalMatchViewerProps> = ({
   const replayHint = useMemo(() => {
     if (!showReplayBestMove) return null;
     if (replayEngine.isGameOver()) return null;
-    return computeBestTurn(replayEngine, replayEngine.getTurn(), 'tactical');
+    return computeBestTurn(replayEngine, replayEngine.getTurn(), 'tactical', undefined, { deterministic: true });
   }, [showReplayBestMove, replayEngine]);
 
   const handleStep = (targetIndex: number) => {

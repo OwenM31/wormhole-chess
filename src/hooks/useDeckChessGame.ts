@@ -312,7 +312,7 @@ export function useDeckChessGame({
         }
 
         // Unified Card-Aware Alpha-Beta Decision
-        const decision = computeBestTurn(engine, aiColor, aiDifficulty);
+        const decision = computeBestTurn(engine, aiColor, aiDifficulty, undefined, { deterministic: false });
 
         if (decision.type === 'empowered' && decision.empoweredMove) {
           const emp = decision.empoweredMove;
@@ -912,7 +912,7 @@ export function useDeckChessGame({
     }
     const engine = engineRef.current;
     if (engine.isGameOver()) return;
-    const best = computeBestTurn(engine, engine.getTurn(), 'tactical');
+    const best = computeBestTurn(engine, engine.getTurn(), 'tactical', undefined, { deterministic: true });
     setHintMove(best);
   }, [hintMove]);
 
