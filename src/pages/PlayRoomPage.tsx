@@ -8,6 +8,7 @@ import { WormholeLogo } from '../components/WormholeLogo';
 import { DeckChessBoard } from '../components/DeckChessBoard';
 import { TabletopArena } from '../components/TabletopArena';
 import { TacticalHandBar } from '../components/TacticalHandBar';
+import { MoveStreamMobile } from '../components/MoveStreamMobile';
 import { useDeckChessGame } from '../hooks/useDeckChessGame';
 import { usePlayerProfiles } from '../hooks/usePlayerProfiles';
 
@@ -250,6 +251,10 @@ export const PlayRoomPage: React.FC = () => {
                             onChangeCardPromotion={deckGame.changeCardPromotion}
                             inCheck={deckGame.inCheck}
                             activeModifiers={deckGame.activeModifiers}
+                            lastMoveFrom={deckGame.lastMoveHighlight?.from}
+                            lastMoveTo={deckGame.lastMoveHighlight?.to}
+                            isViewingHistory={deckGame.isViewingHistory}
+                            onReturnToLive={deckGame.jumpToLive}
                           />
                         </TabletopArena>
                       </div>
@@ -266,6 +271,16 @@ export const PlayRoomPage: React.FC = () => {
                           onCancelTargeting={deckGame.cancelPendingCardMove}
                           pendingCardMove={deckGame.pendingCardMove}
                           selectedSquare={deckGame.selectedSquare}
+                        />
+                      </div>
+                      <div style={{ width: '100%', maxWidth: '820px' }}>
+                        <MoveStreamMobile
+                          recordedTurns={deckGame.recordedTurns}
+                          activeMoveIndex={deckGame.activeMoveIndex}
+                          isViewingHistory={deckGame.isViewingHistory}
+                          onSelectMove={deckGame.stepToMove}
+                          onStepBackward={deckGame.stepBackward}
+                          onStepForward={deckGame.stepForward}
                         />
                       </div>
                     </div>

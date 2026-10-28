@@ -34,6 +34,10 @@ export interface DeckChessBoardProps {
   activeModifiers?: BoardModifier[];
   inCheck?: boolean;
   embedded?: boolean;
+  lastMoveFrom?: string | null;
+  lastMoveTo?: string | null;
+  isViewingHistory?: boolean;
+  onReturnToLive?: () => void;
 }
 
 const CARD_MAP = new Map(CANONICAL_36_CARDS.map((c) => [c.id, c]));
@@ -186,6 +190,10 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
   activeModifiers = [],
   inCheck = false,
   embedded = false,
+  lastMoveFrom,
+  lastMoveTo,
+  isViewingHistory = false,
+  onReturnToLive,
 }) => {
   // If pendingCardMove exists, render the resulting board state (previewFen)!
   const effectiveFen = pendingCardMove?.previewFen || fen;
@@ -390,6 +398,28 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
         </div>
       )}
 
+      {/* Historical Move Inspection Banner */}
+      {isViewingHistory && (
+        <div
+          data-testid="viewing-history-banner"
+          onClick={onReturnToLive}
+          className="mb-2 px-3 py-1.5 bg-[#3FB950]/15 border border-[#3FB950]/40 rounded-lg flex items-center justify-between text-xs cursor-pointer hover:bg-[#3FB950]/25 transition-colors group shadow-sm"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-[#3FB950] font-bold">⏪</span>
+            <span className="text-[#FAF9F6] font-medium">Viewing Past Move</span>
+            <span className="text-[#8A9199] hidden sm:inline">(Board is read-only)</span>
+          </div>
+          <button
+            type="button"
+            className="text-[11px] font-semibold text-[#3FB950] group-hover:underline flex items-center gap-1 cursor-pointer"
+          >
+            <span>Return to Live</span>
+            <span>›</span>
+          </button>
+        </div>
+      )}
+
       {/* 8x8 Chess Grid */}
       <div
         data-testid="chessboard-grid"
@@ -514,6 +544,10 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
             const isPreviewTo = pendingCardMove && pendingCardMove.to === squareName;
             const isPreviewExtra = pendingCardMove && pendingCardMove.extraSquare === squareName;
 
+            // Historical or Latest Move Highlights
+            const isLastMoveFrom = Boolean(lastMoveFrom && lastMoveFrom === squareName);
+            const isLastMoveTo = Boolean(lastMoveTo && lastMoveTo === squareName);
+
             // Engine Hint Highlights
             const isHintFrom = Boolean(
               hintMove &&
@@ -566,6 +600,14 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                 {/* Selected Piece Highlight */}
                 {isSelected && (
                   <div className="absolute inset-0 bg-[#D4AF37]/30 border-2 border-[#D4AF37] rounded-sm pointer-events-none z-10" />
+                )}
+
+                {/* Last / Historical Move Highlight */}
+                {(isLastMoveFrom || isLastMoveTo) && !isSelected && !isPreviewFrom && !isPreviewTo && (
+                  <div
+                    data-testid={`last-move-${squareName}`}
+                    className="absolute inset-0 bg-[#3FB950]/20 border border-[#3FB950]/40 rounded-sm pointer-events-none z-0"
+                  />
                 )}
 
                 {/* King Check Glow */}

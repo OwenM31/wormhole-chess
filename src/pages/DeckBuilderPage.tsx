@@ -4,6 +4,8 @@ import { DeckChessBoard } from '../components/DeckChessBoard';
 import { TabletopArena } from '../components/TabletopArena';
 import { EvalBar } from '../components/EvalBar';
 import { TacticalHandBar } from '../components/TacticalHandBar';
+import { MoveStreamMobile } from '../components/MoveStreamMobile';
+import { MoveTableDesktop } from '../components/MoveTableDesktop';
 import { DeckBuilderView } from '../components/DeckBuilderView';
 import { DeckBuilderMainMenu } from '../components/DeckBuilderMainMenu';
 import { MultiplayerCharacterStage, OfflineMatchConfig } from '../components/MultiplayerCharacterStage';
@@ -200,8 +202,8 @@ export const DeckBuilderPage: React.FC = () => {
           </div>
 
           <div className="w-full max-w-[1240px] flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-5">
-            {/* 1. LEFT COLUMN (356px): TCG Ruffle Hand Stage */}
-            <div className="w-full max-w-[512px] lg:w-[356px] lg:h-[596px] order-2 lg:order-1 flex flex-col">
+            {/* 1. LEFT COLUMN (356px): TCG Ruffle Hand Stage & Mobile Move Stream */}
+            <div className="w-full max-w-[512px] lg:w-[356px] lg:h-[596px] order-2 lg:order-1 flex flex-col gap-2">
               <TacticalHandBar
                 hand={myHand}
                 initialDeck={activeProfile.equippedHand}
@@ -218,6 +220,18 @@ export const DeckBuilderPage: React.FC = () => {
                 pendingCardMove={game.pendingCardMove}
                 selectedSquare={game.selectedSquare}
               />
+
+              {/* Mobile Move Stream (< lg): Positioned directly below Tactical Hand */}
+              <div className="block lg:hidden w-full">
+                <MoveStreamMobile
+                  recordedTurns={game.recordedTurns}
+                  activeMoveIndex={game.activeMoveIndex}
+                  isViewingHistory={game.isViewingHistory}
+                  onSelectMove={game.stepToMove}
+                  onStepBackward={game.stepBackward}
+                  onStepForward={game.stepForward}
+                />
+              </div>
             </div>
 
             {/* 2. CENTER COLUMN (512px): Full 512x512 Chessboard */}
@@ -288,6 +302,10 @@ export const DeckBuilderPage: React.FC = () => {
                     validTargetSquares={game.validTargetSquares}
                     activeModifiers={game.activeModifiers}
                     inCheck={game.inCheck}
+                    lastMoveFrom={game.lastMoveHighlight?.from}
+                    lastMoveTo={game.lastMoveHighlight?.to}
+                    isViewingHistory={game.isViewingHistory}
+                    onReturnToLive={game.jumpToLive}
                   />
                 </TabletopArena>
               </div>
@@ -361,27 +379,16 @@ export const DeckBuilderPage: React.FC = () => {
               {/* Tab Body: Moves List vs Live Chat */}
               <div className="flex-1 my-2 overflow-hidden flex flex-col">
                 {rightTab === 'moves' ? (
-                  <div ref={moveLogContainerRef} className="flex-1 overflow-y-auto pr-1 space-y-1 font-mono text-xs">
-                    {game.combatLog.length === 0 ? (
-                      <div className="text-center text-[#8B7E74] text-xs py-8">
-                        No moves recorded yet
-                      </div>
-                    ) : (
-                      game.combatLog.map((log) => (
-                        <div
-                          key={log.id}
-                          className={`p-1.5 rounded text-[11px] leading-tight ${
-                            log.type === 'system'
-                              ? 'bg-[#191B1D] text-[#8B7E74] italic border border-[rgba(139,126,116,0.1)]'
-                              : log.type === 'card'
-                              ? 'bg-[#24272A] border-l-2 border-[#D4AF37] text-[#FAF9F6]'
-                              : 'bg-[#191B1D] text-[#FAF9F6] border border-[rgba(139,126,116,0.15)]'
-                          }`}
-                        >
-                          {log.text}
-                        </div>
-                      ))
-                    )}
+                  <div className="flex-1 overflow-hidden h-full flex flex-col">
+                    <MoveTableDesktop
+                      recordedTurns={game.recordedTurns}
+                      activeMoveIndex={game.activeMoveIndex}
+                      isViewingHistory={game.isViewingHistory}
+                      onSelectMove={game.stepToMove}
+                      onStepBackward={game.stepBackward}
+                      onStepForward={game.stepForward}
+                      onJumpToLive={game.jumpToLive}
+                    />
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col justify-between overflow-hidden">
