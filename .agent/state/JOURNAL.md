@@ -4,6 +4,46 @@
 
 ---
 
+### Session: 2026-10-28 15:31
+
+#### Objective
+Resume session context (`@[.agent/workflows/resume.md]`), scope the in-game rewind feature, insert Phase 9 into the roadmap (`@[.agent/workflows/insert-phase.md] 9`), design the rewind controls via `/create-asset`, align UX with Chess.com conventions (horizontal move tape on mobile, 2-column table on desktop, green highlights, piece-colored card tags), author Phase 9 research and execution plans (`@[.agent/workflows/plan.md] 9`), and cleanly pause the session (`@[.agent/workflows/pause.md]`).
+
+#### Accomplished
+- ✅ **Phase 9 Insertion (`8f13066`)**:
+  - Inserted **Phase 9: In-Game Read-Only Rewind Scrubber & Interactive Move Log** into `ROADMAP.md` and renumbered subsequent Campaign phases to Phases 10–12.
+- ✅ **Asset Exploration & UX Sharpening (`/create-asset`)**:
+  - Designed 5 stylistic variants for rewind transport controls in `scratch/assets/` and rendered a 5-up contact sheet (`.agent/state/artifacts/assets/contact_sheet.png`) using Playwright headless Chromium.
+  - Selected Variant 1 (Minimalist Line) and refined the UX based on user direction:
+    - Replaced yellow/gold with tactical green (`#3FB950`).
+    - Replaced redundant jump buttons with clean single-step `‹` and `›` controls.
+    - Dropped the term "ply" in favor of standard chess numbering (`1. e4 e5`).
+    - **Mobile (< lg)**: Designed `<MoveStreamMobile />` horizontal move stream directly below the Hand with left/right fade gradients.
+    - **Desktop (>= lg)**: Designed `<MoveTableDesktop />` 2-column table with cell-by-cell moving green highlight box matching the board state.
+    - **Piece-Colored Card Tags**: Added card tags (e.g. `[N1]`) matching each piece's card border color (Pawn `#8A9199`, Knight `#3FB950`, Bishop `#3B82F6`, Rook `#A855F7`, Queen `#EF4444`, King `#D4AF37`).
+- ✅ **Phase 9 Decisions & Planning (`d7fb4a8`)**:
+  - Recorded `[DECISION-038]` in `DECISIONS.md`.
+  - Authored `.agent/state/phases/9/RESEARCH.md` detailing the 5-layer contracts and invariants.
+  - Authored atomic execution plans `9.1-PLAN.md` (Wave 1: Hook state machine, `MoveStreamMobile.tsx`, `MoveTableDesktop.tsx`, contract tests) and `9.2-PLAN.md` (Wave 2: Page wiring, board highlights, Playwright E2E verification).
+  - Purged scratch files cleanly.
+
+#### Verification
+- [x] Phase 9 inserted in `ROADMAP.md` and `STATE.md` (`8f13066`)
+- [x] 5-variant contact sheet generated and reviewed (`contact_sheet.png`)
+- [x] `[DECISION-038]` documented in `DECISIONS.md` (`d7fb4a8`)
+- [x] `.agent/state/phases/9/RESEARCH.md`, `9.1-PLAN.md`, and `9.2-PLAN.md` validated against Plan Checker (0 blockers, 0 warnings) (`d7fb4a8`)
+- [ ] Phase 9 execution pending (`@[.agent/workflows/execute.md] 9`)
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) after completing Phase 9 design and planning.
+
+#### Handoff Notes
+- Working tree is 100% clean and committed to git on `master`.
+- Roadmap position is at **Phase 9: In-Game Read-Only Rewind Scrubber & Interactive Move Log**.
+- Upon resuming (`/resume`), immediately execute Phase 9 via `@[.agent/workflows/execute.md] 9`.
+
+---
+
 ### Session: 2026-10-28 14:50
 
 #### Objective
