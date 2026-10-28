@@ -4,6 +4,50 @@
 
 ---
 
+### Session: 2026-10-28 09:48
+
+#### Objective
+Resume session context (`@[.agent/workflows/resume.md]`) and execute Phase 7: *36-Card Ability Overhaul, Board Preview Arrows & Tournament Re-Simulation* (`@[.agent/workflows/execute.md] 7`) across all 4 execution plans in 3 waves (`7.1-PLAN.md` through `7.4-PLAN.md`); verify under-piece SVG arrow overlay, multi-step staging, Playwright headless Chromium E2E, and multi-worker Monte Carlo tournament simulation; analyze outlier telemetry; and pause cleanly (`@[.agent/workflows/pause.md]`).
+
+#### Accomplished
+- ✅ **Phase 7 Plan 7.1 (Wave 1) — Roster Definition & Pawns/Bishops Overhaul (`4cdbe36`, `4fb2049`, `30993b4`)**:
+  - Added `BoardPreviewArrow` type and extended `EmpoweredMove` in `src/types/deckChess.ts`.
+  - Overhauled 27 card names, condition texts, effect texts, and descriptions in `src/engine/cards/releaseRoster36.ts` adhering strictly to zero-ellipsis and immutable `id`/`artId` constraints.
+  - Authored contract test suite `scripts/verify-phase7-overhaul.ts` (144 assertions).
+  - Overhauled Pawn handlers (`P1–P8`) and Bishop handlers (`B1–B7`) in `src/engine/cards/playbook36Handlers.ts`. Authored `7.1-SUMMARY.md`.
+- ✅ **Phase 7 Plan 7.2 (Wave 2) — Knights, Rooks, Queens, Kings & AI Evaluation (`4751cca`, `37bfb92`, `89d209c`, `b8f31d7`)**:
+  - Overhauled Knight handlers (`N2–N7`) and Rook handlers (`R2, R4, R5, R6`).
+  - Overhauled Queen handlers (`Q1, Q3, Q4`) and King handlers (`K1, K3, K4`). Added dual preview arrows for `Q2 (The Queen's Gambit)` (`[Queen, ally]` in gold, `[ally, enemy]` in red).
+  - Aligned modular handler AI setup heuristics and verified all 144 contract assertions in `verify-phase7-overhaul.ts` pass (100%). Authored `7.2-SUMMARY.md`.
+- ✅ **Phase 7 Plan 7.3 (Wave 2) — Multi-Step Staging & Board Preview Arrows (`8e54bdd`, `c612474`, `ae1c7f0`)**:
+  - Refined `src/hooks/useDeckChessGame.ts` separating `stageExtraSquareFirst` cards (`N5`, `R1`) from `to`-first cards (`N3`, `P4`, `Q2`, `K3`, `B6`, `B7`).
+  - Implemented `<svg data-testid="board-preview-arrows">` at `z-[6]` inside `DeckChessBoard.tsx`, strictly beneath `z-10` pieces, rendering polyline arrows for `N3`, `N5`, and `Q2` with dynamic contextual badges (`FORK`, `PATH`, `LAUNCH`, `BLESS`, `BOUNCE`, `SHIELD`, `CONVERT`). Authored `7.3-SUMMARY.md`.
+- ✅ **Phase 7 Plan 7.4 (Wave 3) — Regression Alignment, Playwright E2E & Tournament Re-Simulation (`6cc75f7`, `f54d17d`, `a7c312d`, `44852ab`)**:
+  - Aligned existing regression suites (`verify-36-playbook.ts` 162/162, `verify-36-mechanics-edge-cases.ts` 43/43, `verify-phase6-ai-engine.ts` 33/33).
+  - Created and executed Playwright headless Chromium E2E suite `scripts/verify-phase7-e2e.mjs` verifying library overhauls, `z-[6]` arrow layering, N3 execution, N5 2-click staging, and Q2 dual arrows with 0 console errors (4 screenshots captured).
+  - Executed multi-worker Monte Carlo tournament simulation (36 matches across 8 cores in 407s), generating `.agent/state/phases/7/BALANCE_REPORT.md` and `balance-metrics.json` (+340% increase in cards played/match). Authored `7.4-SUMMARY.md` and marked Phase 7 Complete in `ROADMAP.md` and `STATE.md`.
+- ✅ **Phase 7 Outlier Telemetry Analysis**:
+  - Identified Top 10 Overpowered cards (`B1, R3, K1, P7, B7, P8, B6, R5, B3, K3`) and Top 10 Underpowered cards (`Q4, P3, Q2, N6, B4, N7, B5, B2, N5, P1`) with supporting metrics.
+
+#### Verification
+- [x] Contract Suite: 144/144 passing (`scripts/verify-phase7-overhaul.ts`)
+- [x] Playbook Suite: 162/162 passing (`scripts/verify-36-playbook.ts`)
+- [x] Mechanics Edge Cases: 43/43 passing (`scripts/verify-36-mechanics-edge-cases.ts`)
+- [x] Grandmaster AI Suite: 33/33 passing (`scripts/verify-phase6-ai-engine.ts`)
+- [x] Playwright Browser E2E: 5/5 passing, 0 console errors (`scripts/verify-phase7-e2e.mjs`)
+- [x] Balance Tournament: 36 matches on 8 cores, 4.4 cards/match (+340%) (`.agent/state/phases/7/BALANCE_REPORT.md`)
+- [x] Production Build: Clean build in 6.60s (`npm run build`)
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) following complete execution and verification of Phase 7.
+
+#### Handoff Notes
+- Working tree is clean and all 4 execution plans are verified and committed to git.
+- Roadmap position is at **Phase 8: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)**.
+- Upon resuming (`/resume`), proceed directly to `@[.agent/workflows/plan.md] 8` (or optionally perform balance fine-tuning on identified outlier cards).
+
+---
+
 ### Session: 2026-10-27 14:28
 
 #### Objective
