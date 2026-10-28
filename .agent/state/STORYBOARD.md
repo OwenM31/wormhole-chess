@@ -140,13 +140,13 @@ Between matches, players can spend **Gold Coins** at the Jester's Coat on **4 st
 
 | Order | Code | Card Name | Piece | Condition | Effect | Cycle Notes |
 | :---: | :---: | :--- | :---: | :--- | :--- | :--- |
-| **1** | `P1` | **Sidestep** | ♟ Pawn | Enemy piece is directly in front of this Pawn. | Step 1 square horizontally (left or right) onto an empty square. | Guided Tavern + Bridge intro (1 Slot). |
-| **2** | `P2` | **Head On** | ♟ Pawn | Enemy Pawn is directly in front of this Pawn. | Capture that enemy Pawn straight ahead. | Puzzle 1 auto-slots `P1`. |
-| **3** | `P3` | **Follow Me** | ♟ Pawn | Friendly piece is directly behind this Pawn and the square in front is empty. | Move both this Pawn and the friendly piece behind it 1 square straight forward. | Puzzle 1 auto-slots `P2`. Unlocking `P3` awards **Slot #2**. |
+| **1** | `P1` | **Sidestep** | ♟ Pawn | Pawn has any piece directly in front. | Step 1 square diagonally forward onto an empty square. | Guided Tavern + Bridge intro (1 Slot). |
+| **2** | `P2` | **Attack Head On** | ♟ Pawn | Enemy Pawn is directly in front of this Pawn. | Capture that enemy Pawn straight ahead. | Puzzle 1 auto-slots `P1`. |
+| **3** | `P3` | **March Together** | ♟ Pawn | Two friendly Pawns are horizontally adjacent with empty squares directly in front. | Advance both friendly Pawns 1 square straight forward together. | Puzzle 1 auto-slots `P2`. Unlocking `P3` awards **Slot #2**. |
 | **4** | `N1` | **Adrenaline Jump** | ♞ Knight | This Knight is currently under attack by an enemy piece. | Jump 3 squares in one orthogonal direction and 1 square perpendicular (`3×1` Camel-like jump, move or capture). | Puzzle 1 auto-slots `P3`. |
-| **5** | `B1` | **Let Me Through** | ♝ Bishop | Friendly Pawn is 1 square diagonally in front of this Bishop. | Swap places with that friendly Pawn. | Puzzle 1 auto-slots `N1`. |
-| **6** | `N2` | **Swap With Me** | ♞ Knight | Friendly piece sits on one of this Knight's normal `(2,1)` L-jump squares. | Swap places with that friendly piece. | Puzzle 1 auto-slots `B1`. |
-| **7 (Boss)** | `R1` | **Make Way** | ♜ Rook | Friendly Pawn is orthogonally adjacent to this Rook and the square directly beyond that Pawn along the same line is empty. | Push that Pawn 1 square away along that line and move this Rook into the square the Pawn vacated. | Puzzle 1 auto-slots `N2`. **Gatehouse Boss**: Awards `R1`, **Slot #3**, and opens World 2 (*no forced slot after Boss*). |
+| **5** | `B1` | **Let Me Through** | ♝ Bishop | Friendly Pawn sits on this Bishop's unobstructed forward diagonal. | Slide cleanly through that friendly Pawn to any unobstructed square beyond. | Puzzle 1 auto-slots `N1`. |
+| **6** | `N2` | **Springboard** | ♞ Knight | Friendly piece occupies one of this Knight's L-jump squares. | Bounce off friendly piece to make a second full L-jump (move or capture). | Puzzle 1 auto-slots `B1`. |
+| **7 (Boss)** | `R1` | **Make Way** | ♜ Rook | Friendly Pawn is orthogonally adjacent and has an empty square perpendicular to your line. | Pawn steps aside perpendicular to an empty square, and Rook slides to any open square along the opened line. | Puzzle 1 auto-slots `N2`. **Gatehouse Boss**: Awards `R1`, **Slot #3**, and opens World 2 (*no forced slot after Boss*). |
 
 ---
 
@@ -155,9 +155,9 @@ Between matches, players can spend **Gold Coins** at the Jester's Coat on **4 st
 
 | Order | Code | Card Name | Piece | Condition | Effect | Cycle Notes |
 | :---: | :---: | :--- | :---: | :--- | :--- | :--- |
-| **8** | `N3` | **Trample** | ♞ Knight | At least 1 enemy Pawn lies on the 2-square straight leg of this Knight's normal `(2,1)` L-jump. | Jump onto an empty landing square and destroy any enemy Pawns on that 2-square straight leg. | All 3 slots free choice on entry. |
-| **9** | `R2` | **I've Got Your Back** | ♜ Rook | Friendly unit sits on the same rank as this Rook (unobstructed) and the square 1 rank directly in front of that unit is empty. | Push that friendly unit 1 square straight forward and slide this Rook horizontally into the square it vacated. | Puzzle 1 auto-slots `N3`. |
-| **10** | `B2` | **Pierce** | ♝ Bishop | Exactly 1 enemy Pawn sits on an unobstructed diagonal of this Bishop with at least 1 empty square beyond it. | Slide through that enemy Pawn, destroying it and landing on any unobstructed empty square beyond it. | Puzzle 1 auto-slots `R2`. |
+| **8** | `N3` | **Trample** | ♞ Knight | Enemy Pawn lies on the 2-square straight leg of either L-jump path. | Jump to landing square (move or capture) and destroy enemy Pawns on that leg. | All 3 slots free choice on entry. |
+| **9** | `R2` | **I've Got Your Back** | ♜ Rook | Friendly non-King piece sits on same rank with square in front open or enemy. | Push friendly piece 1 square forward (move or capture) and slide Rook into vacated tile. | Puzzle 1 auto-slots `N3`. |
+| **10** | `B2` | **Pierce** | ♝ Bishop | Exactly 1 enemy Pawn sits on unobstructed diagonal with squares beyond. | Destroy enemy Pawn, landing on empty square or capturing enemy beyond. | Puzzle 1 auto-slots `R2`. |
 | **11 (Boss)** | `R3` | **Cut Across** | ♜ Rook | This Rook sits on one of the two 8-square main diagonals (`a1–h8` or `a8–h1`). | Step 1 square diagonally along that main diagonal (onto an empty square or to capture). | Puzzle 1 auto-slots `B2`. **Courtyard Boss**: Awards `R3` + **2 Wing Keys** to the **Central Rotunda** (*no forced slot after Boss*). |
 
 ---
@@ -167,10 +167,10 @@ Between matches, players can spend **Gold Coins** at the Jester's Coat on **4 st
 
 | Order | Code | Card Name | Piece | Condition | Effect | Cycle Notes |
 | :---: | :---: | :--- | :---: | :--- | :--- | :--- |
-| **12** | `P4` | **Attack Together** | ♟ Pawn | This Pawn is defended by a friendly Pawn on a rear-diagonal square. | Capture an enemy piece diagonally with this Pawn, and move that defending friendly Pawn into the square this Pawn vacated. | Free choice slots on Wing entry. |
-| **13** | `N4` | **Pin Swap** | ♞ Knight | This Knight is pinned to your King. | Swap places with any friendly piece in the 8 surrounding squares (if resulting board leaves your King safe). | Puzzle 1 auto-slots `P4`. |
+| **12** | `P4` | **Attack Together** | ♟ Pawn | Pawn can capture an enemy piece diagonally ahead and has an adjacent friendly Pawn. | Capture the enemy piece and move that adjacent friendly Pawn into vacated origin square. | Free choice slots on Wing entry. |
+| **13** | `N4` | **Square Jump** | ♞ Knight | Knight is defended by any friendly piece. | Jump 2 squares diagonally in any direction to move or capture. | Puzzle 1 auto-slots `P4`. |
 | **14** | `B3` | **Ricochet** *(Swapped Bishop)* | ♝ Bishop | An empty square on the `a`-file or `h`-file lies along this Bishop's unobstructed diagonal. | Slide diagonally to that edge square and bounce 90° inward along the reflected diagonal any number of unobstructed squares (move or capture). | Puzzle 1 auto-slots `N4`. Unlocking `B3` awards **+1 Wing Key**. |
-| **15** | `N6` | **Flanking Support** | ♞ Knight | This Knight is on an outer file (`a`-file or `h`-file) and you have another friendly Knight on the board. | Make a normal Knight jump (move or capture) with this outer-file Knight, and move your other friendly Knight into the square it vacated. | Puzzle 1 auto-slots `B3`. |
+| **15** | `N6` | **Flanking Support** | ♞ Knight | Knight is on file a, b, g, or h and you have another friendly Knight. | Make normal Knight jump, and move other friendly Knight into vacated square. | Puzzle 1 auto-slots `B3`. |
 | **16 (Boss)** | `K2` | **Royal Knighting** | ♚ King | A friendly Pawn is horizontally adjacent (1 square left or right on the same rank) to your King. | Remove that friendly Pawn to your graveyard and spawn a friendly Knight onto that exact square. | Puzzle 1 auto-slots `N6`. **Barracks Boss**: Awards `K2` + **Throne Seal #1** (*no forced slot after Boss*). |
 
 ---
@@ -180,11 +180,11 @@ Between matches, players can spend **Gold Coins** at the Jester's Coat on **4 st
 
 | Order | Code | Card Name | Piece | Condition | Effect | Cycle Notes |
 | :---: | :---: | :--- | :---: | :--- | :--- | :--- |
-| **17** | `P5` | **Get Behind Me** | ♟ Pawn | A friendly piece sits on a rear-diagonal square behind this Pawn, and the square directly behind this Pawn is empty. | Move that friendly piece 1 square horizontally into the empty square directly behind this Pawn. | Free choice slots on Wing entry. |
-| **18** | `B4` | **Change Color** | ♝ Bishop | This Bishop is on one of your two home corner squares (`a1` or `h1` relative to owner). | Step 1 square orthogonally onto an empty adjacent square, permanently switching square color. | Puzzle 1 auto-slots `P5`. |
-| **19** | `N5` | **Get to the King** *(Swapped Knight)* | ♞ Knight | Your King is currently in check. | Jump this Knight from anywhere on the board to an empty square adjacent to your King that blocks/resolves the check. | Puzzle 1 auto-slots `B4`. Unlocking `N5` awards **+1 Wing Key**. |
-| **20** | `B5` | **Take My Place** | ♝ Bishop | This Bishop is pinned to your King. | Swap places with a friendly piece along any of this Bishop's unobstructed diagonals. | Puzzle 1 auto-slots `N5`. |
-| **21 (Boss)** | `B6` | **Come This Way** | ♝ Bishop | This Bishop is on one of the 4 center squares (`d4, d5, e4, e5`) and a friendly Pawn lies along an unobstructed diagonal. | Pull that friendly Pawn along the diagonal to the square 1 tile diagonally adjacent to this Bishop. | Puzzle 1 auto-slots `B5`. **Chapel Boss**: Awards `B6` + **Throne Seal #2** (*no forced slot after Boss*). |
+| **17** | `P5` | **Get Behind Me** | ♟ Pawn | Friendly non-Pawn, non-King piece in the 3 forward squares is under attack. | Swap places with that attacked friendly piece. | Free choice slots on Wing entry. |
+| **18** | `B4` | **Change Color** | ♝ Bishop | At least 1 enemy piece is orthogonally adjacent to this Bishop. | Step 1 square orthogonally onto empty square or capture adjacent enemy. | Puzzle 1 auto-slots `P5`. |
+| **19** | `N5` | **Get to the King** *(Swapped Knight)* | ♞ Knight | Knight can jump to an unthreatened square that forks enemy King and another enemy piece. | Jump to safe forking square, then make an immediate second L-jump. | Puzzle 1 auto-slots `B4`. Unlocking `N5` awards **+1 Wing Key**. |
+| **20** | `B5` | **Take My Place** | ♝ Bishop | This Bishop is under attack by any enemy piece. | Swap places with friendly non-King piece along unobstructed diagonal. | Puzzle 1 auto-slots `N5`. |
+| **21 (Boss)** | `B6` | **Diagonal Launch** | ♝ Bishop | Friendly Pawn sits in the rank directly ahead of this Bishop. | Launch friendly Pawn along its forward diagonals to move or capture. | Puzzle 1 auto-slots `B5`. **Chapel Boss**: Awards `B6` + **Throne Seal #2** (*no forced slot after Boss*). |
 
 ---
 
@@ -193,11 +193,11 @@ Between matches, players can spend **Gold Coins** at the Jester's Coat on **4 st
 
 | Order | Code | Card Name | Piece | Condition | Effect | Cycle Notes |
 | :---: | :---: | :--- | :---: | :--- | :--- | :--- |
-| **22** | `P6` | **Tag Out** | ♟ Pawn | A friendly piece is directly in front of this Pawn. | Swap places with that friendly piece. | Free choice slots on Wing entry. |
-| **23** | `R4` | **Move in Unison** | ♜ Rook | Your two Rooks share the same rank or file with no pieces between them. | Slide both Rooks the exact same number of unobstructed squares in the same perpendicular direction (each landing on an empty square or capturing). | Puzzle 1 auto-slots `P6`. |
-| **24** | `Q1` | **Royal Summons** *(Swapped Queen)* | ♛ Queen | A friendly Pawn lies on this Queen's unobstructed rank or file at distance $\ge 2$. | Move that friendly Pawn along the rank or file onto the empty square orthogonally adjacent to this Queen. | Puzzle 1 auto-slots `R4`. Unlocking `Q1` awards **+1 Wing Key**. |
-| **25** | `R5` | **Catapult** | ♜ Rook | A friendly non-King piece is directly behind/orthogonally adjacent to this Rook, and an enemy non-King unit lies along that unobstructed orthogonal ray in front. | Launch that friendly piece over this Rook to land on and capture that enemy unit (this Rook stays in place). | Puzzle 1 auto-slots `Q1`. |
-| **26 (Boss)** | `K1` | **Conscription** | ♚ King | Your King is on one of your two home corner squares (`a1` or `h1` relative to owner) with at least 1 empty orthogonally adjacent square. | Spawn a friendly Pawn onto each empty orthogonally adjacent square (`a2/b1` or `h2/g1`, up to 2 Pawns; Rank 1 Pawn steps 1 square to Rank 2). | Puzzle 1 auto-slots `R5`. **Armory Boss**: Awards `K1` + **Throne Seal #3** (*no forced slot after Boss*). |
+| **22** | `P6` | **Double Time** | ♟ Pawn | Pawn is on Ranks 3, 4, or 5 with 2 empty squares directly in front. | Advance this Pawn 2 squares straight forward. | Free choice slots on Wing entry. |
+| **23** | `R4` | **Move in Unison** | ♜ Rook | Two friendly Rooks share unobstructed rank or file. | Move this Rook along line, and move second Rook into square this Rook vacated. | Puzzle 1 auto-slots `P6`. |
+| **24** | `Q1` | **Royal Summons** *(Swapped Queen)* | ♛ Queen | Friendly non-King piece lies in Queen line of sight at distance >= 2. | Pull friendly piece along ray onto empty square adjacent to Queen. | Puzzle 1 auto-slots `R4`. Unlocking `Q1` awards **+1 Wing Key**. |
+| **25** | `R5` | **Catapult** | ♜ Rook | Friendly piece is directly in front of Rook and enemy lies along ray beyond. | Launch front ally over open ray to capture enemy ahead (Rook stays in place). | Puzzle 1 auto-slots `Q1`. |
+| **26 (Boss)** | `K1` | **Conscription** | ♚ King | King is on home back rank (Rank 1/8) with empty adjacent orthogonal square. | Spawn friendly Pawn onto each empty adjacent orthogonal square (up to 3 Pawns). | Puzzle 1 auto-slots `R5`. **Armory Boss**: Awards `K1` + **Throne Seal #3** (*no forced slot after Boss*). |
 
 ---
 
@@ -206,11 +206,11 @@ Between matches, players can spend **Gold Coins** at the Jester's Coat on **4 st
 
 | Order | Code | Card Name | Piece | Condition | Effect | Cycle Notes |
 | :---: | :---: | :--- | :---: | :--- | :--- | :--- |
-| **27** | `P7` | **Protect the King** | ♟ Pawn | This Pawn is pinned to your King. | Destroy an enemy non-King piece on one of this Pawn's forward-diagonal capture squares without moving this Pawn. | Free choice slots on Wing entry. |
-| **28** | `Q2` | **The Queen's Gambit** | ♛ Queen | A friendly non-King unit in this Queen's unobstructed line of sight is under pseudo-legal attack by at least one enemy non-King unit. | Sacrifice (remove) that friendly unit to your graveyard and move this Queen directly onto the attacking enemy unit's square, capturing it. | Puzzle 1 auto-slots `P7`. |
-| **29** | `R6` | **Garrison** *(Swapped Rook)* | ♜ Rook | Your King is directly behind this Rook and the square directly in front of this Rook is empty. | Spawn 1 friendly Pawn onto the empty square directly in front of this Rook. | Puzzle 1 auto-slots `Q2`. Unlocking `R6` awards **+1 Wing Key**. |
-| **30** | `Q3` | **All Rise** | ♛ Queen | This Queen is on Ranks 2–8 and at least one friendly Pawn on a strictly lower rank (`Pawn.rank < Queen.rank`) has an empty square in front. | Evaluating from highest rank down, advance every friendly Pawn on a strictly lower rank 1 square straight forward if unobstructed. | Puzzle 1 auto-slots `R6`. |
-| **31 (Boss)** | `K3` | **Royal Execution** | ♚ King | A friendly unit is orthogonally adjacent to your King, and an enemy non-King unit occupies a square that ally could legally capture if standing on your King's square (ignoring King and ally's current square for line-of-sight). | Move that friendly unit directly onto that enemy unit's square, capturing it. | Puzzle 1 auto-slots `Q3`. **Royal Court Boss**: Awards `K3` + **Throne Seal #4** (*no forced slot after Boss*). |
+| **27** | `P7` | **Protect the King** | ♟ Pawn | Friendly King is in this Pawn's 8 surrounding squares. | Slide this Pawn diagonally any unobstructed distance to move or capture. | Free choice slots on Wing entry. |
+| **28** | `Q2` | **The Queen's Gambit** | ♛ Queen | Friendly non-King unit in Queen line of sight is under attack by enemy non-King unit. | Sacrifice friendly unit to graveyard and move Queen onto attacking enemy unit square. | Puzzle 1 auto-slots `P7`. |
+| **29** | `R6` | **Garrison** *(Swapped Rook)* | ♜ Rook | Rook is orthogonally adjacent to friendly King with square in front empty. | Spawn 1 friendly Pawn onto empty square 1 rank in front of Rook. | Puzzle 1 auto-slots `Q2`. Unlocking `R6` awards **+1 Wing Key**. |
+| **30** | `Q3` | **Royal Shield** | ♛ Queen | Friendly Pawn is 1 square away along ray with squares beyond. | Push Pawn along ray to target square and slide Queen 1 square behind it. | Puzzle 1 auto-slots `R6`. |
+| **31 (Boss)** | `K3` | **Royal Execution** | ♚ King | Enemy in King line of sight and friendly non-King piece is adjacent to King. | Launch adjacent friendly piece directly onto enemy piece to capture it. | Puzzle 1 auto-slots `Q3`. **Royal Court Boss**: Awards `K3` + **Throne Seal #4** (*no forced slot after Boss*). |
 
 ---
 
@@ -219,11 +219,11 @@ Between matches, players can spend **Gold Coins** at the Jester's Coat on **4 st
 
 | Order | Code | Card Name | Piece | Condition | Effect | Cycle Notes |
 | :---: | :---: | :--- | :---: | :--- | :--- | :--- |
-| **32** | `N7` | **Outpost Support** | ♞ Knight | This Knight is in enemy territory (Ranks 5–8), is defended by a friendly Pawn on one rear-diagonal square, and the other rear-diagonal square is empty. | Spawn a friendly Pawn onto that empty rear-diagonal square behind this Knight. | All 5 slots free choice on Throne Room entry. |
-| **33** | `P8` | **Call Reserves** | ♟ Pawn | This Pawn is in enemy territory (Ranks 5–7), has a friendly piece horizontally adjacent, and the square directly behind this Pawn is empty. | Spawn a friendly Pawn onto the empty square directly behind this Pawn. | Puzzle 1 auto-slots `N7`. |
-| **34** | `B7` | **Bishop's Blessing** | ♝ Bishop | A friendly piece (including your King) is directly behind this Bishop. | Move that friendly piece any number of unobstructed squares along the diagonals of its current square color (move or capture), while this Bishop stays in place. | Puzzle 1 auto-slots `P8`. |
-| **35** | `Q4` | **One Fell Swoop** | ♛ Queen | Supported from behind by a directly adjacent friendly Rook, Bishop, or second Queen along a shared attack ray where the forward ray has $\ge 1$ enemy unit, $0$ friendly units, and ends at the board edge or immediately before the enemy King. | Move this Queen all the way to the end of that ray, capturing every enemy unit along the path in a single sweep. | Puzzle 1 auto-slots `B7`. |
-| **36 (King Boss)** | `K4` | **Banish** | ♚ King | Along the same file in front of your King, the first unit encountered is an enemy non-King unit on Ranks 1–4, all units in the contiguous vertical stack $S$ of enemy non-King units behind it are on Ranks 1–4, and the square behind $S$ is empty. | Push the entire contiguous enemy stack $S$ backward along the file toward Rank 8 as a rigid block until the topmost unit reaches Rank 8 or stops immediately before another piece (at Rank $\ge 5$). | Puzzle 1 auto-slots `Q4`. **Iron King Duel**: Awards `K4` (completing all 36 cards). *No forced slot after King.* |
+| **32** | `N7` | **Outpost Support** | ♞ Knight | Knight is on Ranks 5-8 with an empty rear-diagonal square. | Spawn a friendly Pawn onto an empty rear-diagonal square behind this Knight. | All 5 slots free choice on Throne Room entry. |
+| **33** | `P8` | **Call Reserves** | ♟ Pawn | Pawn is on Ranks 5-7 with an empty rear-diagonal square. | Spawn a friendly Pawn onto an empty rear-diagonal square behind this Pawn. | Puzzle 1 auto-slots `N7`. |
+| **34** | `B7` | **Bishop's Blessing** | ♝ Bishop | Friendly non-Bishop piece is in this Bishop's 8 surrounding squares. | Move adjacent ally along diagonals of its current square to move or capture. | Puzzle 1 auto-slots `P8`. |
+| **35** | `Q4` | **One Fell Swoop** | ♛ Queen | Queen supported from behind by R/B/Q along shared ray with enemy units ahead. | Move Queen to end of ray, capturing every enemy unit along path in a single sweep. | Puzzle 1 auto-slots `B7`. |
+| **36 (King Boss)** | `K4` | **Turncoat** | ♚ King | Enemy Pawn is in King's 8 surrounding squares. | Convert enemy Pawn in-place into friendly Pawn under your control. | Puzzle 1 auto-slots `Q4`. **Iron King Duel**: Awards `K4` (completing all 36 cards). *No forced slot after King.* |
 | **FINAL** | — | **True Final Boss: The Scheming Jester** | 🃏 All | The Jester steals your completed 36-Card Playbook and challenges you on an 8×8 board with his Master Deck. | Full 8×8 Grandmaster Duel against the Card-Aware Minimax AI. | Full free-choice hand from all **36 Cards**. Victory unlocks the **World 8+ Atlas Frontier**. |
 
 ---

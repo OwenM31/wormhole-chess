@@ -127,6 +127,13 @@ export interface CardDefinition {
   visualTheme: CardVisualTheme;
 }
 
+export interface BoardPreviewArrow {
+  points: string[];
+  color?: 'gold' | 'green' | 'red' | 'cyan';
+  dashed?: boolean;
+  label?: string;
+}
+
 /**
  * Unified Action Model ("The Card IS the Move"):
  * An EmpoweredMove represents an atomic chess move augmented by a card.
@@ -141,6 +148,8 @@ export interface EmpoweredMove {
   extraSquare?: string;
   previewFen?: string;
   disambiguationPrompt?: string;
+  arrows?: BoardPreviewArrow[];
+  stageExtraSquareFirst?: boolean;
 }
 
 export interface ProfileGear {
