@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-28T09:48:33-05:00
+updated: 2026-10-28T10:13:00-05:00
 ---
 
 # Project State
@@ -7,10 +7,10 @@ updated: 2026-10-28T09:48:33-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-- **Phase**: Phase 7 — *36-Card Ability Overhaul, Board Preview Arrows & Tournament Re-Simulation*
-- **Task**: Phase 7 Execution & Verification Complete (`7.1-PLAN.md` – `7.4-PLAN.md` 100% green across all 3 waves); Outlier Analysis Documented — Ready for Phase 8 Planning (`@[.agent/workflows/plan.md] 8`)
-- **Status**: Paused at 2026-10-28 09:48
-- **Roadmap Status**: Phases 1–7 Complete & Verified; Phases 8–10 Next (Campaign, Jester Shop & World Keys)
+- **Phase**: Phase 8 — *Search Performance Optimization, Low-Determinism AI & Atomic Balance Harness*
+- **Task**: Phase 8 Inserted (Phases 8–10 renumbered to 9–11) — Ready for Phase 8 Planning (`@[.agent/workflows/plan.md] 8`)
+- **Status**: Active (resumed 2026-10-28 09:50)
+- **Roadmap Status**: Phases 1–7 Complete & Verified; Phase 8 Next (Search Speedup, Low-Determinism AI & Atomic Balance Harness); Phases 9–11 Campaign & World Keys
 
 ## Last Session Summary
 1. **Phase 7 Plan 7.1 (Wave 1) — Roster Definition & Pawns/Bishops Overhaul (`4cdbe36`, `4fb2049`, `30993b4`)**:
