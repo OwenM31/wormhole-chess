@@ -885,4 +885,42 @@ Following the Phase 6 tournament balance simulation (`BALANCE_REPORT.md`), we re
 
 ---
 
-*Last updated: 2026-10-27*
+### [DECISION-037] Phase 8 Decisions: Low-Determinism Clipped Softmax AI, Zero-Loss Search Acceleration, Decaying Card Retention & Atomic Resumable Balance Harness
+
+**Date**: 2026-10-28  
+**Status**: Accepted  
+
+#### Context
+Analysis of Phase 6 and Phase 7 simulations revealed four architectural bottlenecks:
+1. **Determinism & Monotony**: Strict `score > bestScore` root selection produced identical opening choices (e.g. `1. c4 Nc6` 100% of the time).
+2. **Card Hoarding Double-Tax**: Hand cards were credited with both baseline retention value (55–100cp) and static pre-condition setup bonuses (+15–35cp). Playing a card forfeited both credits on the next ply, resulting in artificial evaluation drops (-40 to -70cp) that caused the AI to hoard cards (e.g. `P3 March Together` had 90.4% trigger rate but 0.0% play rate).
+3. **Redundant Search Passes**: `makeMove` and `makeEmpoweredMove` invoked full `chess.js` legal move generations for checkmate/stalemate checks on every internal search node, yielding 3 redundant passes per node.
+4. **Simulation Confounding**: Previous tournaments had premature 42-ply adjudication, White first-move bias, 8-card teammate collinearity, and lacked resume capability.
+
+#### Decision
+1. **Low-Determinism AI with Clipped Softmax & Tactical Locks**:
+   - Implemented exact-window contender evaluation at root depth $D$ (`alpha = bestScore - marginCp`, where `medium` margin is `32cp`).
+   - Sampled moves via seeded Boltzmann distribution ($P(m_i) \propto \exp((s_i - s_{\max})/T)$ with $T=20$) powered by deterministic `mulberry32` PRNG.
+   - Enforced strict tactical lock guardrails: deterministic top-1 choice is mandatory when `options.deterministic === true` (used by Hint button and Match Viewer), when contender count is 1, when forced checkmate is found ($s_{\max} \ge 80000$), or when a clear tactical advantage (>300cp) exists.
+2. **Zero-Loss Search Optimization**:
+   - Introduced `fastSearch: boolean` bypass in `makeMove` and `makeEmpoweredMove` skipping redundant move-generation and terminal check passes on internal search nodes.
+   - Replaced double 64-square board loops with single-pass `evaluateBoard`.
+   - Enabled Transposition Table `bestMoveKey` move ordering across iterative deepening passes.
+3. **Game-Phase Card Retention Decay & Setup Balance**:
+   - Scaled card retention value smoothly with game progression: $\text{Retention}(\text{card}, \text{turn}) = \text{BaseRetention}(\text{card}) \times \max(0.25, 1 - (\text{turn} - 1) / 42)$.
+   - Tuned tempo and situational response cards (`P1`, `P3`, `P5`, `P6`, `N5`, `N6`, `B4`, `B5`, `R2`, `Q1`, `Q4`) to lower baseline retention hurdles (20–35% of piece base value), completely purging the double-tax penalty and restoring competitive playability to `P3` (35.0% tournament play rate).
+4. **Atomic Resumable Balance Harness & De-Confounded Ridge Aggregator**:
+   - Modularized single-game simulation into `playSingleMatch(spec): MatchRecord` in `scripts/sim-single-match.ts` with pure board quiescence-backed mercy adjudication ($\ge 650$cp for 4 plies after ply 30) and 100-ply terminal cap without unspent hand retention bias.
+   - Generated stratified 18-match color-swapped duplicate blocks (9 pairs $\times$ 2 color orientations: `_w` and `_b`), ensuring every card receives 4 White and 4 Black appearances per block against the identical opponent deck.
+   - Streamed results incrementally per worker to `workers/worker_{id}.jsonl`, enabling simulations to be stopped, resumed, and aggregated at any time with zero data loss.
+   - Solved $(X^T X + \lambda I)\beta = X^T (y - \bar{y})$ with $\lambda = 8.0$ via Gaussian elimination to compute de-confounded marginal win credit ($\beta_i$) alongside color-cancelled paired win deltas and Search-Backed Card Lift (`bestEmpoweredScore - bestStandardScore`).
+
+#### Consequences
+- 180-match tournament simulation completed across 8 cores with full color-swapped balance (80 appearances per card, 90 duplicate pairs).
+- Opening diversity expanded to 173 unique 6-ply variations out of 180 matches (>96% variation) and head-to-head benchmark demonstrated $\ge 50\%$ strength vs deterministic baseline with $5\times$ opening diversity.
+- 31 of 36 cards actively played ($\ge 5\%$ play rate).
+- All 36 cards within $\pm 12\%$ marginal win credit, establishing statistical balance ahead of Campaign puzzle design.
+
+---
+
+*Last updated: 2026-10-28*

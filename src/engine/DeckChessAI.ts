@@ -266,15 +266,20 @@ export function evaluateCardScarcityAndHand(
     const handler = getCardHandler(cardId);
     let baseVal = getCardRetentionValue(cardId, params);
 
-    // Per-card retention tuning: tempo & setup cards should not be hoarded
+    // Per-card retention tuning: tempo, setup & situational response cards should not be hoarded
     if (cardId === 'p3_follow_me') {
       baseVal = Math.round(baseVal * 0.20);
     } else if (
       cardId === 'p1_sidestep' ||
+      cardId === 'p5_get_behind_me' ||
       cardId === 'p6_tag_out' ||
-      cardId === 'n6_flanking_knight' ||
+      cardId === 'n5_get_to_the_king' ||
+      cardId === 'n6_flanking_support' ||
       cardId === 'b4_change_color' ||
-      cardId === 'r2_ive_got_your_back'
+      cardId === 'b5_take_my_place' ||
+      cardId === 'r2_ive_got_your_back' ||
+      cardId === 'q1_royal_summons' ||
+      cardId === 'q4_one_fell_swoop'
     ) {
       baseVal = Math.round(baseVal * 0.35);
     }

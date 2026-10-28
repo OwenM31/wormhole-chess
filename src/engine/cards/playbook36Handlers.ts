@@ -346,7 +346,7 @@ export function registerPlaybook36Handlers(): void {
   registerCardHandler({
     cardId: 'p5_get_behind_me',
     evaluateSetup(friendlyPieces) {
-      return hasPiecePawnAdjacency(friendlyPieces) ? 14 : 0;
+      return hasPiecePawnAdjacency(friendlyPieces) ? 5 : 0;
     },
     getTargets(engine: DeckChessEngine, anchorSquare: string): string[] {
       const { file, rank } = CardUtils.getCoords(anchorSquare);
