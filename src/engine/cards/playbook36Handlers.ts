@@ -1602,13 +1602,6 @@ export function registerPlaybook36Handlers(): void {
                       disambiguationPrompt: 'Choose blessed ally',
                     });
                   } else {
-                    if (p.color !== turn && p.type !== 'k') {
-                      targets.push({
-                        to: sq,
-                        extraSquare: allySq,
-                        disambiguationPrompt: 'Choose blessed ally',
-                      });
-                    }
                     break;
                   }
                   step++;
@@ -1634,13 +1627,9 @@ export function registerPlaybook36Handlers(): void {
 
       const ally = engine.getPiece(chosenAllySq);
       if (!ally) return { success: false, error: 'No ally at selected square' };
+      if (engine.getPiece(targetSquare)) return { success: false, error: 'Bishop\'s Blessing cannot capture' };
 
-      const enemy = engine.getPiece(targetSquare);
       const chess = engine.getInternalChess();
-      if (enemy) {
-        chess.remove(targetSquare as Square);
-        engine.addToPlayerGraveyard(enemy.color, enemy.type);
-      }
       chess.remove(chosenAllySq as Square);
       chess.put(ally, targetSquare as Square);
       return { success: true };

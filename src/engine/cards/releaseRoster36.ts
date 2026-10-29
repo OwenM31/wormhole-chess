@@ -485,8 +485,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     energyCost: 0,
     artId: 'b7_bishops_blessing',
     conditionText: 'Friendly non-Bishop piece is in this Bishop\'s 8 surrounding squares.',
-    effectText: 'Move adjacent ally along diagonals of its current square to move or capture.',
-    description: 'Adjacent friendly piece: Bless ally to slide diagonally as a Bishop to move or capture.',
+    effectText: 'Move adjacent ally along diagonals of its current square onto an empty square.',
+    description: 'Adjacent friendly piece: Bless ally to slide diagonally onto an empty square.',
     visualTheme: PIECE_COLOR_THEMES.bishop
   },
   {

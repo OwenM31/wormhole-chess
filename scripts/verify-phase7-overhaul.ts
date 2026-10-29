@@ -231,12 +231,14 @@ if (!suiteArg || suiteArg === 'pawns-bishops' || suiteArg === 'bishops') {
 
   // B7: Bishop's Blessing
   {
-    // Friendly piece in 8 surrounding squares slides diagonally like a Bishop
-    // White Bishop at d4, friendly knight at d5.
-    const engine = new DeckChessEngine('4k3/8/8/3N4/3B4/8/8/4K3 w - - 0 1', ['b7_bishops_blessing']);
+    // Friendly piece in 8 surrounding squares slides diagonally onto an empty square (cannot capture)
+    // White Bishop at d4, friendly knight at d5, enemy pawn on f7.
+    const engine = new DeckChessEngine('4k3/5p2/8/3N4/3B4/8/8/4K3 w - - 0 1', ['b7_bishops_blessing']);
     const moves = engine.getEmpoweredMoves('d4');
-    assert(moves.some(m => m.to === 'c6' && m.extraSquare === 'd5'), 'B7: Blesses knight to slide to c6');
-    assert(moves.some(m => m.to === 'b7' && m.extraSquare === 'd5'), 'B7: Blesses knight to slide to b7');
+    assert(moves.some(m => m.to === 'c6' && m.extraSquare === 'd5'), 'B7: Blesses knight to slide to empty c6');
+    assert(moves.some(m => m.to === 'b7' && m.extraSquare === 'd5'), 'B7: Blesses knight to slide to empty b7');
+    assert(moves.some(m => m.to === 'e6' && m.extraSquare === 'd5'), 'B7: Blesses knight to slide to empty e6');
+    assert(!moves.some(m => m.to === 'f7'), 'B7: Cannot capture enemy piece on f7 (empty square only)');
 
     const res = engine.makeEmpoweredMove(moves.find(m => m.to === 'c6')!);
     assert(res.success === true, 'B7: execution succeeds');

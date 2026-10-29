@@ -264,9 +264,10 @@ console.log('\nSuite 4: Bespoke Bishops Suite (B1–B7)');
   assert(b6Engine.getPiece('d3')?.type === 'b', 'Bishop stays at d3');
 
   // B7: Bishop's Blessing
-  const b7Engine = new DeckChessEngine('4k3/8/8/3N4/3B4/8/8/4K3 w - - 0 1', ['b7_bishops_blessing']);
+  const b7Engine = new DeckChessEngine('4k3/5p2/8/3N4/3B4/8/8/4K3 w - - 0 1', ['b7_bishops_blessing']);
   const b7Moves = b7Engine.getEmpoweredMoves('d4');
-  assert(b7Moves.some(m => m.to === 'c6' && m.extraSquare === 'd5'), 'B7 Bishop\'s Blessing blesses knight to slide to c6');
+  assert(b7Moves.some(m => m.to === 'c6' && m.extraSquare === 'd5'), 'B7 Bishop\'s Blessing blesses knight to slide to empty c6');
+  assert(!b7Moves.some(m => m.to === 'f7'), 'B7 Bishop\'s Blessing rejects capturing enemy on f7');
   const b7Res = b7Engine.makeEmpoweredMove(b7Moves.find(m => m.to === 'c6')!);
   assert(b7Res.success === true, 'B7 Bishop\'s Blessing executed');
   assert(b7Engine.getPiece('c6')?.type === 'n', 'Blessed knight moved to c6');

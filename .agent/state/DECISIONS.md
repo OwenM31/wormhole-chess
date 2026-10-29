@@ -860,7 +860,7 @@ Following the Phase 6 tournament balance simulation (`BALANCE_REPORT.md`), we re
    - **`B4: Change Color`**: Condition: Enemy piece is orthogonally adjacent (`N/S/E/W`) to this Bishop. Effect: Step 1 square orthogonally to an empty square or capture that enemy, permanently switching square color.
    - **`B5: Take My Place`**: Condition: This Bishop is under attack. Effect: Swap places with any friendly non-King piece along this Bishop's unobstructed diagonals.
    - **`B6: Diagonal Launch`** *(Replaces `Come This Way`)*: Condition: Friendly Pawn sits on any of the 3 squares in the rank directly ahead of this Bishop (`front-left`, `front-center`, `front-right`). Effect: Launch that Pawn any number of unobstructed squares along the Pawn's forward diagonals (move or capture).
-   - **`B7: Bishop's Blessing`**: Condition: Friendly non-Bishop piece is in this Bishop's 8 surrounding squares. Effect: Move that friendly piece unobstructed along the diagonals of its current square (move or capture).
+   - **`B7: Bishop's Blessing`**: Condition: Friendly non-Bishop piece is in this Bishop's 8 surrounding squares. Effect: Move that friendly piece unobstructed along the diagonals of its current square onto an empty square (cannot capture).
 4. **Rooks (`R1–R6`)**:
    - **`R1: Make Way`** *(Unchanged)*.
    - **`R2: I've Got Your Back`**: Condition: Friendly unit on same rank unobstructed. Effect: Push friendly unit 1 square forward (to an empty square or enemy capture) and slide Rook into the square it vacated.
