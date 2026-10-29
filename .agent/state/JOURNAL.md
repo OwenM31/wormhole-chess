@@ -4,6 +4,41 @@
 
 ---
 
+### Session: 2026-10-29 10:00
+
+#### Objective
+Execute Phase 10 (`@[.agent/workflows/execute.md] 10`): Gameplay Ergonomics, Card Tag Previews, R1 Ray Distance & Move Animation Engine, and verify all plans.
+
+#### Accomplished
+- ✅ **Plan 10.1 (Wave 1) — R1 Ray Distance & Deselection Blank Slate (`d5c568c`, `7acab13`, `e407de3`)**:
+  - Implemented outward orthogonal ray scanning in `playbook36Handlers.ts` for `R1: Make Way`.
+  - Added clean slate deselect in `useDeckChessGame.ts` clearing piece selection when card is toggled off.
+  - Verified with 33/33 passing assertions in `scripts/verify-phase10-mechanics.ts`.
+- ✅ **Plan 10.2 (Wave 1) — Card Tag Hover Tooltips & Tap Popovers (`075de18`, `a386b23`, `bfda70c`)**:
+  - Created `<CardTagBadge />` with portal rendering and event isolation (`e.stopPropagation()`).
+  - Integrated into `<MoveStreamMobile />` and `<MoveTableDesktop />`.
+  - Verified with Playwright E2E browser suite and proof screenshots.
+- ✅ **Plan 10.3 (Wave 2) — Piece Move Sliding & Theatrical Card Manifestation FX (`7716917`, `d7bbc6a`)**:
+  - Implemented FLIP CSS sliding animation (180ms cubic-bezier) bypassed during history scrubbing.
+  - Built theatrical card manifestation banner and 6 generalized SVG animation archetypes (`charge`, `leap`, `teleport`, `beam`, `displace`, `shockwave`).
+  - Verified with 20/20 passing assertions in `scripts/verify-phase10-animations.ts`.
+- ✅ **Phase 10 Verification (`9783d09`)**:
+  - Completed verification sign-off in `.agent/state/phases/10/VERIFICATION.md`.
+  - Advanced milestone state to Phase 11.
+
+#### Verification
+- [x] R1 Ray & Deselection: 33/33 PASS (`scripts/verify-phase10-mechanics.ts`)
+- [x] Board Moves & Animation FX: 20/20 PASS (`scripts/verify-phase10-animations.ts`)
+- [x] Card Tag E2E: 100% PASS (`scripts/verify-phase10-card-tag-e2e.mjs`)
+- [x] Full Playbook & Mechanics Regression: 163/163 + 146/146 + 43/43 PASS
+- [x] Production Build: Clean bundle in 1.73s (`npm run build`)
+
+#### Handoff Notes
+- Working tree clean on `master`.
+- Ready for Phase 11: *Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)*.
+
+---
+
 ### Session: 2026-10-29 09:48
 
 #### Objective
