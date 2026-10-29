@@ -121,9 +121,9 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     world: 1,
     energyCost: 0,
     artId: 'r1_make_way',
-    conditionText: 'Friendly Pawn is orthogonally adjacent and has an empty square perpendicular to your line.',
-    effectText: 'Pawn steps aside perpendicular to an empty square, and Rook slides to any open square along the opened line.',
-    description: 'Adjacent ally Pawn steps aside to empty square, clearing file for Rook to charge.',
+    conditionText: "First piece in Rook's orthogonal line of sight is an allied Pawn with an open square perpendicular to your line.",
+    effectText: 'Pawn steps aside perpendicular to an open square, clearing the line for Rook to charge through to any open square along the path (or capture an enemy beyond).',
+    description: 'Allied Pawn in line of sight steps aside, clearing the line for Rook to charge through.',
     visualTheme: PIECE_COLOR_THEMES.rook
   },
 
@@ -516,3 +516,5 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     visualTheme: PIECE_COLOR_THEMES.king
   }
 ];
+
+export const RELEASE_ROSTER_36 = CANONICAL_36_CARDS;

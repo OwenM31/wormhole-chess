@@ -1639,7 +1639,7 @@ export function registerPlaybook36Handlers(): void {
   // ==========================================
   // R1: Make Way (r1_make_way)
   // ==========================================
-  registerCardHandler({
+  registerCardHandler<TargetOption>({
     cardId: 'r1_make_way',
     evaluateSetup(friendlyPieces) {
       return hasRookAllyAlignment(friendlyPieces) ? 15 : 0;
@@ -1653,10 +1653,28 @@ export function registerPlaybook36Handlers(): void {
 
       const targets: TargetOption[] = [];
       for (const [df, dr] of orthogonals) {
-        const pawnSq = CardUtils.getSquare(file + df, rank + dr);
-        if (!pawnSq) continue;
-        const p = engine.getPiece(pawnSq);
-        if (!p || p.color !== turn || p.type !== 'p') continue;
+        let pawnSq: string | null = null;
+        let pawnStep = 0;
+        let step = 1;
+
+        // Scan outward along the ray
+        while (true) {
+          const currSq = CardUtils.getSquare(file + df * step, rank + dr * step);
+          if (!currSq || engine.isSquareBlockedByBarrier(currSq)) break;
+
+          const p = engine.getPiece(currSq);
+          if (p) {
+            // First piece encountered in line of sight must be a friendly Pawn
+            if (p.color === turn && p.type === 'p') {
+              pawnSq = currSq;
+              pawnStep = step;
+            }
+            break;
+          }
+          step++;
+        }
+
+        if (!pawnSq || pawnStep === 0) continue;
 
         const pawnCoords = CardUtils.getCoords(pawnSq);
         const perpendiculars: [number, number][] = [
@@ -1675,26 +1693,34 @@ export function registerPlaybook36Handlers(): void {
         if (validPawnDests.length === 0) continue;
 
         const rookDestinations: string[] = [];
-        let step = 1;
-        while (true) {
-          const rookDest = CardUtils.getSquare(file + df * step, rank + dr * step);
-          if (!rookDest) break;
-          if (engine.isSquareBlockedByBarrier(rookDest)) break;
 
-          if (rookDest === pawnSq) {
-            rookDestinations.push(rookDest);
-          } else {
-            const destPiece = engine.getPiece(rookDest);
-            if (destPiece) {
-              if (destPiece.color !== turn && destPiece.type !== 'k') {
-                rookDestinations.push(rookDest);
-              }
-              break;
-            } else {
-              rookDestinations.push(rookDest);
-            }
+        // 1. Intermediate open squares along the ray prior to the pawn (step = 1 .. pawnStep - 1)
+        for (let s = 1; s < pawnStep; s++) {
+          const intermediateSq = CardUtils.getSquare(file + df * s, rank + dr * s);
+          if (intermediateSq) {
+            rookDestinations.push(intermediateSq);
           }
-          step++;
+        }
+
+        // 2. The vacated square of the pawn
+        rookDestinations.push(pawnSq);
+
+        // 3. Squares beyond the pawn (step = pawnStep + 1 ..)
+        let sAfter = pawnStep + 1;
+        while (true) {
+          const beyondSq = CardUtils.getSquare(file + df * sAfter, rank + dr * sAfter);
+          if (!beyondSq || engine.isSquareBlockedByBarrier(beyondSq)) break;
+
+          const destPiece = engine.getPiece(beyondSq);
+          if (destPiece) {
+            if (destPiece.color !== turn && destPiece.type !== 'k') {
+              rookDestinations.push(beyondSq);
+            }
+            break;
+          } else {
+            rookDestinations.push(beyondSq);
+          }
+          sAfter++;
         }
 
         for (const rookDest of rookDestinations) {
@@ -1734,12 +1760,25 @@ export function registerPlaybook36Handlers(): void {
         return { success: false, error: 'Target square must be along an orthogonal line from Rook' };
       }
 
-      const pawnSq = CardUtils.getSquare(cRook.file + df, cRook.rank + dr);
-      if (!pawnSq) return { success: false, error: 'Invalid pawn square' };
-      const pawn = engine.getPiece(pawnSq);
-      if (!pawn || pawn.color !== engine.getTurn() || pawn.type !== 'p') {
-        return { success: false, error: 'Missing friendly pawn adjacent to Rook along movement line' };
+      // Scan along the orthogonal line to find the friendly pawn
+      let pawnSq: string | null = null;
+      let s = 1;
+      while (true) {
+        const sq = CardUtils.getSquare(cRook.file + df * s, cRook.rank + dr * s);
+        if (!sq || engine.isSquareBlockedByBarrier(sq)) break;
+        const p = engine.getPiece(sq);
+        if (p) {
+          if (p.color === engine.getTurn() && p.type === 'p') {
+            pawnSq = sq;
+          }
+          break;
+        }
+        s++;
       }
+
+      if (!pawnSq) return { success: false, error: 'Missing friendly pawn in line of sight along movement line' };
+      const pawn = engine.getPiece(pawnSq);
+      if (!pawn) return { success: false, error: 'Invalid pawn piece' };
 
       const chess = engine.getInternalChess();
 

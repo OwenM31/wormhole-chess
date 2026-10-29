@@ -302,17 +302,14 @@ export function useDeckChessGame({
       if (gameState.isGameOver || isAiThinking || isViewingHistory) return;
       if (mode === 'ai' && gameState.turn !== playerColor) return;
 
-      // Card Arm / Disarm Toggle: Tapping the currently armed card disarms it and reverts to standard moves
+      // Card Arm / Disarm Toggle: Tapping the currently armed card disarms it and provides a clean slate
       if (selectedCardId === cardId) {
         setSelectedCardId(null);
         setSelectedCard(null);
         setPendingCardMove(null);
         setDisambiguationCandidates(null);
         setEmpoweredMovesForSelected([]);
-        if (selectedSquare) {
-          const legalStandard = engineRef.current.getLegalMoves(selectedSquare).map((m) => m.to);
-          setLegalMovesForSelected(legalStandard);
-        }
+        clearPieceSelection();
         return;
       }
 

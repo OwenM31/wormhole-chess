@@ -157,13 +157,13 @@ console.log('\nSuite 4: R1 Execution & Board State Mutation');
     const rookAtA2 = engine.getPiece('a2');
     assert(rookAtA2?.type === 'r' && rookAtA2?.color === 'w', 'Rook successfully charged to a2');
 
-    // Verify original squares h2 and c2 are empty
-    assert(engine.getPiece('h2') === null, 'Original Rook square h2 is now empty');
-    assert(engine.getPiece('c2') === null, 'Original Pawn square c2 is now empty');
+    // Verify original squares h2 and c2 are empty (chess.js get returns undefined when vacant)
+    assert(!engine.getPiece('h2'), 'Original Rook square h2 is now empty');
+    assert(!engine.getPiece('c2'), 'Original Pawn square c2 is now empty');
 
     // Verify captured piece in graveyard
-    const blackGraveyard = engine.getPlayerGraveyard('b');
-    assert(blackGraveyard.includes('r'), 'Captured enemy Rook recorded in Black graveyard');
+    const blackGraveyard = engine.getGraveyard().b;
+    assert(blackGraveyard.r > 0, 'Captured enemy Rook recorded in Black graveyard');
   }
 }
 
