@@ -184,12 +184,20 @@ export const CardTagBadge: React.FC<CardTagBadgeProps> = ({
 
   return (
     <>
-      <button
-        ref={badgeRef as any}
-        type="button"
+      <span
+        ref={badgeRef}
+        role="button"
+        tabIndex={0}
         data-testid={`card-tag-badge-${cardCode}`}
         title={title || (card ? `${card.name} (${card.code})` : cardCode)}
         onClick={handleTogglePopover}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.stopPropagation();
+            e.preventDefault();
+            handleTogglePopover(e as any);
+          }
+        }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onFocus={handleMouseEnter}
@@ -198,7 +206,7 @@ export const CardTagBadge: React.FC<CardTagBadgeProps> = ({
         className={`inline-flex items-center text-[10px] font-mono font-semibold tracking-tight cursor-pointer hover:underline focus:outline-none transition-transform hover:scale-105 ${className}`}
       >
         [{cardCode}]
-      </button>
+      </span>
 
       {/* Desktop Hover Tooltip (rendered in portal, pointer-events-none) */}
       {portalTarget &&

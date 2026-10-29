@@ -5,6 +5,7 @@ import {
   PIECE_CARD_COLORS,
   groupTurnsIntoRows,
 } from '../utils/moveNotation';
+import { CardTagBadge } from './CardTagBadge';
 
 export interface MoveTableDesktopProps {
   recordedTurns: RecordedTurn[];
@@ -141,12 +142,7 @@ export const MoveTableDesktop: React.FC<MoveTableDesktopProps> = ({
                           `${row.white.chessMove.from}-${row.white.chessMove.to}`}
                       </span>
                       {row.white.cardCode && (
-                        <span
-                          style={{ color: whiteColor }}
-                          className="text-[10px] font-mono font-semibold tracking-tight ml-1"
-                        >
-                          [{row.white.cardCode}]
-                        </span>
+                        <CardTagBadge cardCode={row.white.cardCode} className="ml-1" />
                       )}
                     </button>
                   ) : (
@@ -178,12 +174,7 @@ export const MoveTableDesktop: React.FC<MoveTableDesktopProps> = ({
                           `${row.black.chessMove.from}-${row.black.chessMove.to}`}
                       </span>
                       {row.black.cardCode && (
-                        <span
-                          style={{ color: blackColor }}
-                          className="text-[10px] font-mono font-semibold tracking-tight ml-1"
-                        >
-                          [{row.black.cardCode}]
-                        </span>
+                        <CardTagBadge cardCode={row.black.cardCode} className="ml-1" />
                       )}
                     </button>
                   ) : (

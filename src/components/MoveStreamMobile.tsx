@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { RecordedTurn, PIECE_CARD_COLORS } from '../utils/moveNotation';
+import { CardTagBadge } from './CardTagBadge';
 
 export interface MoveStreamMobileProps {
   recordedTurns: RecordedTurn[];
@@ -104,12 +105,7 @@ export const MoveStreamMobile: React.FC<MoveStreamMobileProps> = ({
                 {turn.san || `${turn.chessMove.from}-${turn.chessMove.to}`}
               </span>
               {turn.cardCode && (
-                <span
-                  style={{ color: cardColor }}
-                  className="text-[10px] font-mono font-semibold tracking-tighter"
-                >
-                  [{turn.cardCode}]
-                </span>
+                <CardTagBadge cardCode={turn.cardCode} className="ml-0.5" />
               )}
             </button>
           );
