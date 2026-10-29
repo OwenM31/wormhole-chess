@@ -4,6 +4,34 @@
 
 ---
 
+### Session: 2026-10-29 09:17
+
+#### Objective
+Resume session context (`@[.agent/workflows/resume.md]`), investigate and resolve the mechanical overlap between `B6: Diagonal Launch` (`b6_come_this_way`) and `B7: Bishop's Blessing` (`b7_bishops_blessing`), verify all card contract and playbook test suites, and cleanly pause the session (`@[.agent/workflows/pause.md]`).
+
+#### Accomplished
+- ✅ **B7 (`Bishop's Blessing`) vs B6 (`Diagonal Launch`) Differentiation (`c522554`)**:
+  - Audited `B6` and `B7` in `src/engine/cards/releaseRoster36.ts` and `src/engine/cards/playbook36Handlers.ts`, confirming that `B7` was previously a strict mathematical superset of `B6`.
+  - Updated `B7: Bishop's Blessing` so blessed adjacent friendly pieces (`P, N, R, Q`) slide along diagonals **onto empty squares only (cannot capture)**, while `B6: Diagonal Launch` remains the offensive Pawn diagonal-capture launcher.
+  - Added non-capture and empty-square-only assertions to `scripts/verify-phase7-overhaul.ts` and `scripts/verify-36-playbook.ts`.
+  - Synced canonical documentation in `.agent/state/STORYBOARD.md` and `.agent/state/DECISIONS.md` (`[DECISION-036]`).
+
+#### Verification
+- [x] Phase 7 Overhaul Specification Suite: 146/146 passing (`scripts/verify-phase7-overhaul.ts`)
+- [x] 36-Card Playbook Suite: 170/170 passing (`scripts/verify-36-playbook.ts`)
+- [x] Mechanics Edge Cases Suite: 43/43 passing (`scripts/verify-36-mechanics-edge-cases.ts`)
+- [x] Full Unit Test Suite: Passing (`npm test`)
+
+#### Paused Because
+User requested session pause (`@[.agent/workflows/pause.md]`) after completing and verifying the `B7: Bishop's Blessing` mechanical differentiation.
+
+#### Handoff Notes
+- Working tree is 100% clean and committed on `master`.
+- Roadmap position is at **Phase 10: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`The Causeway`)**.
+- Next session can immediately resume with `/resume` and run `@[.agent/workflows/plan.md] 10` (or `@[.agent/workflows/discuss-phase.md] 10`).
+
+---
+
 ### Session: 2026-10-28 16:10
 
 #### Objective
