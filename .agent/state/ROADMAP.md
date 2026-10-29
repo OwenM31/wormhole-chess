@@ -103,9 +103,10 @@ Implement the curated **36-Card Piece-Abundance Pyramid** (`8 Pawn, 7 Knight, 7 
 ---
 
 ### Phase 10: Gameplay Ergonomics, Card Tag Previews, R1 Ray Distance & Move Animation Engine
-**Status:** ⬜ Not Started
+**Status:** ✅ Complete
 **Objective:** Upgrade `R1: Make Way` with ray-distance scanning along open orthogonal files/ranks; fix card deselection to immediately clear piece selection ("blank slate"); add desktop hover tooltips and mobile tap popovers for card tags in `<MoveTableDesktop />` and `<MoveStreamMobile />`; and build smooth chess piece sliding movement plus theatrical card manifestation with 6 generalized animation archetypes (`Charge`, `Arc Leap`, `Rift Teleport`, `Radiant Beam`, `Twin Displace`, `Shockwave Blast`).
 **Dependencies:** Phase 9 (Complete)
+**Verification:** Complete (33/33 mechanics assertions, 20/20 animation assertions, Playwright E2E tooltips/popovers, VERIFICATION.md)
 
 ---
 

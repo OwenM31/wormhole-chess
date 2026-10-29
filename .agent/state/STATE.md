@@ -1,5 +1,5 @@
 ---
-updated: 2026-10-29T09:48:15-05:00
+updated: 2026-10-29T10:20:55-05:00
 ---
 
 # Project State
@@ -7,29 +7,24 @@ updated: 2026-10-29T09:48:15-05:00
 ## Current Position
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
-- **Phase**: Phase 10 — *Gameplay Ergonomics, Card Tag Previews, R1 Ray Distance & Move Animation Engine*
-- **Task**: Phase 10 Planned (Plans 10.1, 10.2, 10.3 authored); Ready for execution (`@[.agent/workflows/execute.md] 10`)
-- **Status**: Paused at 2026-10-29 09:48
-- **Roadmap Status**: Phases 1–9 Complete & Verified; Phase 10 Ready for Execution; Phases 11–13 Next (Campaign Engine, Castle Wings & Throne Room)
+- **Phase**: Phase 10 — *Gameplay Ergonomics, Card Tag Previews, R1 Ray Distance & Move Animation Engine* (Completed & Verified)
+- **Task**: All Phase 10 plans (10.1, 10.2, 10.3) complete; Ready for Phase 11 planning (`@[.agent/workflows/plan.md] 11`)
+- **Status**: Verified ✅
+- **Roadmap Status**: Phases 1–10 Complete & Verified; Phases 11–13 Next (Campaign Engine, Castle Wings & Throne Room)
 
 ## Last Session Summary
 
-1. **Phase 10 Inserted & Planned (`62abbe6`, `35da6e0`)**:
-   - Analyzed user feedback on R1 ray scanning, card deselection blank slate, card tag tooltips/popovers, and move animation engine.
-   - Inserted new Phase 10 via `insert-phase` workflow, renumbering Campaign Engine, Castle Wings, and Throne Room to Phases 11–13.
-   - Documented architectural decisions in `[DECISION-039]`.
-   - Conducted in-depth technical research in `.agent/state/phases/10/RESEARCH.md`.
-   - Created 3 execution plans across 2 waves:
-     - `10.1-PLAN.md` (Wave 1): R1 Ray Scanning Engine & Clean Slate Deselection.
-     - `10.2-PLAN.md` (Wave 1): Card Tag Tooltips (Desktop) & Tap-Popovers (Mobile) in Move Log.
-     - `10.3-PLAN.md` (Wave 2): Board Move Animation Engine & Theatrical Card FX.
-2. **B7 (`Bishop's Blessing`) vs B6 (`Diagonal Launch`) Differentiation (`c522554`)**:
-   - Updated `B7: Bishop's Blessing` so blessed allies slide diagonally **onto an empty square only (cannot capture)**, giving `B7` a universal positional-repositioning identity while keeping `B6: Diagonal Launch` as the offensive Pawn diagonal-capture launcher.
+1. **Phase 10 Execution Complete (`d5c568c`, `7acab13`, `075de18`, `a386b23`, `7716917`)**:
+   - **Plan 10.1 (Wave 1)**: Upgraded `R1: Make Way` with orthogonal ray-distance scanning; added deselection blank slate reset; verified with 33-assertion specification test suite `scripts/verify-phase10-mechanics.ts`.
+   - **Plan 10.2 (Wave 1)**: Built `<CardTagBadge />` with portal rendering and event isolation (`e.stopPropagation()`); wired into `<MoveStreamMobile />` and `<MoveTableDesktop />`; verified with Playwright E2E browser tests and proof screenshots (`phase10_desktop_tag_tooltip.png`, `phase10_mobile_tag_popover.png`).
+   - **Plan 10.3 (Wave 2)**: Built FLIP CSS piece sliding animation (180ms cubic-bezier) bypassed during history scrubbing; built theatrical card play manifestation banner and 6 generalized SVG animation archetypes (`charge`, `leap`, `teleport`, `beam`, `displace`, `shockwave`) mapped across all 36 canonical cards; verified with 20-assertion contract test `scripts/verify-phase10-animations.ts`.
+   - **Zero Regressions**: 163/163 playbook assertions, 146/146 overhaul assertions, 43/43 mechanics edge-case assertions, and `npm test` passing 100% green; clean production build in 1.73s.
+   - **Phase 10 Sign-Off**: Documented in `.agent/state/phases/10/VERIFICATION.md` with PASS verdict.
 
 ## In-Progress Work
 
 - Files modified: None (working tree clean and committed to git).
-- Tests status: All existing regression suites passing 100% green (`verify-phase7-overhaul.ts`, `verify-36-playbook.ts`, `verify-36-mechanics-edge-cases.ts`, `npm test`).
+- Tests status: All regression and Phase 10 suites passing 100% green (`verify-phase10-mechanics.ts`, `verify-phase10-animations.ts`, `verify-phase10-card-tag-e2e.mjs`, `verify-36-playbook.ts`, `verify-phase7-overhaul.ts`, `npm test`).
 
 ## Blockers
 
@@ -38,24 +33,20 @@ updated: 2026-10-29T09:48:15-05:00
 ## Context Dump
 
 ### Decisions Made
-- `[DECISION-039]`: Inserted Phase 10 for Gameplay Ergonomics, Card Tag Previews, R1 Ray Distance & Move Animation Engine before Campaign Engine (now Phase 11).
-- `B7: Bishop's Blessing` (`b7_bishops_blessing`) is now **empty-square only (no capture)** (`[DECISION-036]` updated in `DECISIONS.md`), cleanly distinguishing it from `B6: Diagonal Launch` (`b6_come_this_way`).
-- `[DECISION-038]` in `DECISIONS.md`: Chess.com-Style Horizontal Move Stream on Mobile, 2-Column Table on Desktop & Piece-Colored Card Tags.
+- `[DECISION-039]`: Phase 10 Gameplay Ergonomics, Card Tag Previews, R1 Ray Distance & Move Animation Engine completed.
+- Card tags in move history use React portals with `fixed` viewport positioning to avoid CSS clipping by scroll containers or gradient mask images.
+- Standard moves slide smoothly via FLIP `@keyframes piece-slide` in 180ms; history scrubbing remains 0ms instantaneous.
 
 ### Files of Interest
-- `.agent/state/phases/10/RESEARCH.md`: Exhaustive architectural design for R1 ray scanning, card deselection state machine, card tag tooltips/popovers, and FLIP move sliding + 6 generalized animation archetypes.
-- `.agent/state/phases/10/10.1-PLAN.md`: Plan 10.1 (R1 Ray Scanning Engine & Clean Slate Deselection).
-- `.agent/state/phases/10/10.2-PLAN.md`: Plan 10.2 (Card Tag Tooltips & Mobile Tap-Popovers).
-- `.agent/state/phases/10/10.3-PLAN.md`: Plan 10.3 (Board Move Animation Engine & Theatrical Card FX).
-- `src/engine/cards/playbook36Handlers.ts`: Contains `r1_make_way` handler.
-- `src/hooks/useDeckChessGame.ts`: Contains `selectCardFromHand` card arm/disarm toggle.
-- `src/components/MoveStreamMobile.tsx` & `src/components/MoveTableDesktop.tsx`: Move log components receiving `<CardTagBadge />`.
-- `src/components/DeckChessBoard.tsx`: Target for FLIP move sliding and card animation FX.
-- `.agent/state/STORYBOARD.md`: Canonical 7-World Campaign & 36-Card specification.
+- `src/components/CardTagBadge.tsx`: Reusable tag badge with desktop hover tooltip & mobile tap popover.
+- `src/components/CardAnimationFX.tsx`: Theatrical manifestation banner & 6 generalized SVG FX archetypes.
+- `src/components/DeckChessBoard.tsx`: FLIP move sliding delta engine & FX container.
+- `src/hooks/useDeckChessGame.ts`: Deselection blank slate & `activeCardFx` trigger.
+- `scripts/verify-phase10-mechanics.ts`: 33-assertion R1 ray & deselection suite.
+- `scripts/verify-phase10-animations.ts`: 20-assertion animation engine & archetype suite.
+- `scripts/verify-phase10-card-tag-e2e.mjs`: Playwright E2E browser test for desktop tooltips and mobile popovers.
 
 ## Next Steps
 
-1. Resume session context (`@[.agent/workflows/resume.md]`)
-2. Execute Plan 10.1 (`@[.agent/workflows/execute.md] 10 1` or `@[.agent/workflows/execute.md] 10`)
-3. Execute Plans 10.2 and 10.3
-4. Verify Phase 10 (`@[.agent/workflows/verify.md] 10`)
+1. Plan Phase 11: Campaign Engine, Jester's Shop, Town Tavern Sandbox & World 1 (`@[.agent/workflows/plan.md] 11`)
+2. Execute Phase 11 (`@[.agent/workflows/execute.md] 11`)
