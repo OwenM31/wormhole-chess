@@ -967,4 +967,24 @@ Following review of the initial transport button variants, the player timeline i
 
 ---
 
-*Last updated: 2026-10-28*
+### [DECISION-039] Phase 10 Insertion: Gameplay Ergonomics, Card Tag Previews, R1 Ray Distance & Move Animation Engine
+
+**Date**: 2026-10-29  
+**Status**: Accepted  
+
+#### Context
+Prior to executing the 7-World Campaign (previously Phase 10), playtesting and user feedback identified four critical tactile refinements:
+1. `R1: Make Way` required immediately adjacent pawns, limiting its utility. Upgrading it to scan along open orthogonal lines allows a Rook to tell any friendly Pawn down the line to step aside perpendicular to an open square, clearing the file/rank for a charge.
+2. Deselecting an armed card preserved the selected piece and its standard moves, preventing immediate card switching and leaving lingering highlights. Deselecting should provide a clean "blank slate".
+3. Move records in `<MoveStreamMobile />` and `<MoveTableDesktop />` displayed piece-colored card tags (`[R1]`, `[N4]`) without interactive inspection. Desktop needs hover/focus tooltips and mobile needs non-intrusive tap popovers displaying card details without blocking the board.
+4. Pieces snapped instantly between squares. Standard chess moves need smooth sliding interpolation, and empowered card plays need a flashy theatrical presentation followed by generalized animation archetypes (`Charge`, `Arc Leap`, `Rift Teleport`, `Radiant Beam`, `Twin Displace`, `Shockwave Blast`).
+
+#### Decision
+Insert **Phase 10: Gameplay Ergonomics, Card Tag Previews, R1 Ray Distance & Move Animation Engine** before the Campaign, renumbering Campaign Engine, Castle Wings, and Throne Room to Phases 11–13.
+
+#### Consequences
+- Campaign puzzles and bots in Phase 11 will benefit from polished move animations, ergonomic card deselection, interactive move history card previews, and the enhanced R1 mechanics.
+
+---
+
+*Last updated: 2026-10-29*
