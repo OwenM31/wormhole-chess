@@ -8,23 +8,26 @@ updated: 2026-10-29T09:36:50-05:00
 
 - **Milestone**: v3.0 Parallel World Key Campaign, 36-Card Pyramid & Grandmaster Trials
 - **Phase**: Phase 10 — *Gameplay Ergonomics, Card Tag Previews, R1 Ray Distance & Move Animation Engine*
-- **Task**: Phase 10 inserted; Ready for Phase 10 Planning (`@[.agent/workflows/plan.md] 10` or `@[.agent/workflows/discuss-phase.md] 10`)
-- **Status**: Active (resumed 2026-10-29 09:36)
-- **Roadmap Status**: Phases 1–9 Complete & Verified; Phase 10 Next (Ergonomics, Card Tags & Animations); Phases 11–13 (Campaign Engine, Castle Wings & Throne Room)
+- **Task**: Planning complete (Plans 10.1, 10.2, 10.3 authored); Ready for execution (`@[.agent/workflows/execute.md] 10`)
+- **Status**: Ready for execution (planned 2026-10-29 09:40)
+- **Roadmap Status**: Phases 1–9 Complete & Verified; Phase 10 Ready for Execution; Phases 11–13 Next (Campaign Engine, Castle Wings & Throne Room)
 
 ## Last Session Summary
 
-1. **Inserted Phase 10**:
+1. **Phase 10 Planning Complete**:
+   - Authored `RESEARCH.md` detailing R1 ray distance algorithms, card deselection blank slate state machine, card tag tooltip/popover architecture, and FLIP move sliding + 6 generalized card animation archetypes.
+   - Authored `10.1-PLAN.md` (Wave 1: R1 Ray Scanning & Clean Slate Deselection).
+   - Authored `10.2-PLAN.md` (Wave 1: Card Tag Tooltips & Mobile Popovers).
+   - Authored `10.3-PLAN.md` (Wave 2: Board Move Animation Engine & Theatrical Card FX).
+2. **Inserted Phase 10 (`62abbe6`)**:
    - Inserted new Phase 10 for Gameplay Ergonomics, Card Tag Previews, R1 Ray Distance & Move Animation Engine.
    - Renumbered old Phases 10–12 to Phases 11–13 (Campaign Engine, Castle Wings, and Throne Room).
-2. **B7 (`Bishop's Blessing`) vs B6 (`Diagonal Launch`) Differentiation (`c522554`)**:
-   - Identified that `B7: Bishop's Blessing` (all 8 surrounding squares, any non-Bishop piece, all 4 diagonals, move or capture) was a strict mathematical superset of `B6: Diagonal Launch` (3 front squares, Pawns only, 2 forward diagonals, move or capture).
-   - Updated `B7: Bishop's Blessing` in `src/engine/cards/releaseRoster36.ts` and `src/engine/cards/playbook36Handlers.ts` so blessed allies slide diagonally **onto an empty square only (cannot capture)**, giving `B7` a universal positional-repositioning identity while keeping `B6: Diagonal Launch` as the offensive Pawn diagonal-capture launcher.
-   - Added empty-square-only and non-capture assertions to `scripts/verify-phase7-overhaul.ts` (146/146 passing) and `scripts/verify-36-playbook.ts` (170/170 passing), verified `scripts/verify-36-mechanics-edge-cases.ts` (43/43 passing) and `npm test`, and synced `STORYBOARD.md` and `DECISIONS.md`.
+3. **B7 (`Bishop's Blessing`) vs B6 (`Diagonal Launch`) Differentiation (`c522554`)**:
+   - Updated `B7: Bishop's Blessing` so blessed allies slide diagonally **onto an empty square only (cannot capture)**, giving `B7` a universal positional-repositioning identity while keeping `B6: Diagonal Launch` as the offensive Pawn diagonal-capture launcher.
 
 ## In-Progress Work
 
-- Files modified: `.agent/state/ROADMAP.md`, `.agent/state/STATE.md`.
+- Files modified: `.agent/state/phases/10/RESEARCH.md`, `.agent/state/phases/10/10.1-PLAN.md`, `.agent/state/phases/10/10.2-PLAN.md`, `.agent/state/phases/10/10.3-PLAN.md`.
 - Tests status: All existing regression suites passing 100% green (`verify-phase7-overhaul.ts`, `verify-36-playbook.ts`, `verify-36-mechanics-edge-cases.ts`, `npm test`).
 
 ## Blockers
@@ -49,6 +52,5 @@ updated: 2026-10-29T09:36:50-05:00
 
 ## Next Steps
 
-1. Plan Phase 10: Gameplay Ergonomics, Card Tag Previews, R1 Ray Distance & Move Animation Engine (`@[.agent/workflows/plan.md] 10`)
-2. Execute Phase 10 (`@[.agent/workflows/execute.md] 10`)
-3. Verify Phase 10 (`@[.agent/workflows/verify.md] 10`)
+1. Execute Phase 10: `@[.agent/workflows/execute.md] 10`
+2. Verify Phase 10: `@[.agent/workflows/verify.md] 10`
