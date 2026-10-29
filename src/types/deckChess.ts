@@ -95,6 +95,14 @@ export type EffectGenre =
   | 'Walls & Shields'
   | 'Spawning';
 
+export type CardAnimationArchetype =
+  | 'charge'
+  | 'leap'
+  | 'teleport'
+  | 'beam'
+  | 'displace'
+  | 'shockwave';
+
 export interface CardVisualTheme {
   color: string;
   hex: string;
@@ -125,6 +133,7 @@ export interface CardDefinition {
   card_description?: string;
   image_description?: string;
   visualTheme: CardVisualTheme;
+  animationArchetype?: CardAnimationArchetype;
 }
 
 export interface BoardPreviewArrow {

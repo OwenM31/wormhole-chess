@@ -255,6 +255,7 @@ export const PlayRoomPage: React.FC = () => {
                             lastMoveTo={deckGame.lastMoveHighlight?.to}
                             isViewingHistory={deckGame.isViewingHistory}
                             onReturnToLive={deckGame.jumpToLive}
+                            activeCardFx={deckGame.activeCardFx}
                           />
                         </TabletopArena>
                       </div>

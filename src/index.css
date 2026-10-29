@@ -64,3 +64,19 @@ code {
   background: linear-gradient(135deg, #9c7b60, var(--village-wood-warm));
   box-shadow: 0 0 15px rgba(140, 109, 83, 0.4);
 }
+
+/* FLIP Smooth Piece Movement Transition (180ms cubic-bezier) */
+@keyframes piece-slide {
+  from {
+    transform: translate(var(--slide-x, 0), var(--slide-y, 0));
+  }
+  to {
+    transform: translate(0, 0);
+  }
+}
+
+.animate-piece-slide {
+  animation: piece-slide 180ms cubic-bezier(0.2, 0, 0.2, 1) forwards;
+  will-change: transform;
+}
+

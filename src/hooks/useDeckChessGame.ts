@@ -125,6 +125,14 @@ export function useDeckChessGame({
   );
   const [viewIndex, setViewIndex] = useState<number | null>(null);
 
+  // Active Card Animation FX (Flash Play Banner & Archetype FX)
+  const [activeCardFx, setActiveCardFx] = useState<{
+    cardId: string;
+    from: string;
+    to: string;
+    extraSquare?: string;
+  } | null>(null);
+
   const activeMoveIndex = viewIndex !== null ? viewIndex : recordedTurns.length - 1;
   const isViewingHistory = viewIndex !== null && viewIndex < recordedTurns.length - 1;
 
@@ -402,6 +410,13 @@ export function useDeckChessGame({
           const empRes = engine.makeEmpoweredMove(emp);
           if (empRes.success) {
             playCardSound();
+            setActiveCardFx({
+              cardId: emp.cardId,
+              from: emp.from,
+              to: emp.to,
+              extraSquare: emp.extraSquare,
+            });
+            setTimeout(() => setActiveCardFx(null), 600);
             const cardName = emp.metadata?.cardName || emp.cardId;
             addLog(
               `AI Bot played [${cardName}] ➔ ${emp.to}`,
@@ -614,6 +629,13 @@ export function useDeckChessGame({
     }
 
     playCardSound();
+    setActiveCardFx({
+      cardId: move.cardId,
+      from: move.from,
+      to: move.to,
+      extraSquare: move.extraSquare,
+    });
+    setTimeout(() => setActiveCardFx(null), 600);
     if (isCapture) {
       setTimeout(playCaptureSound, 60);
     }
@@ -964,6 +986,7 @@ export function useDeckChessGame({
       initialStateSnapshotRef.current = engineRef.current.getState();
       setViewIndex(null);
       cancelPendingCardMove();
+      setActiveCardFx(null);
       setIsAiThinking(false);
       gameStartedAtRef.current = Date.now();
       hasRecordedRef.current = false;
@@ -1206,6 +1229,7 @@ export function useDeckChessGame({
     legalMovesForSelected,
     empoweredMoves: empoweredMovesForSelected,
     activeCardIdsForPiece,
+    activeCardFx,
 
     // Combat Log & Match Records
     combatLog,

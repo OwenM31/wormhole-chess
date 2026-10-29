@@ -46,7 +46,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Pawn has any piece directly in front.',
     effectText: 'Step 1 square diagonally forward onto an empty square.',
     description: 'Pawn blocked frontally: Step 1 square diagonally forward onto an empty square.',
-    visualTheme: PIECE_COLOR_THEMES.pawn
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+    animationArchetype: 'charge'
   },
   {
     id: 'p2_head_on',
@@ -59,7 +60,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Pawn has enemy Pawn directly in front.',
     effectText: 'Capture enemy Pawn straight ahead.',
     description: 'Enemy Pawn directly ahead: Capture that Pawn straight forward.',
-    visualTheme: PIECE_COLOR_THEMES.pawn
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+    animationArchetype: 'charge'
   },
   {
     id: 'p3_follow_me',
@@ -72,7 +74,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Two friendly Pawns are horizontally adjacent with empty squares directly in front.',
     effectText: 'Advance both friendly Pawns 1 square straight forward together.',
     description: 'Adjacent ally Pawns with open fronts: Advance both Pawns 1 square forward together.',
-    visualTheme: PIECE_COLOR_THEMES.pawn
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+    animationArchetype: 'shockwave'
   },
   {
     id: 'n1_adrenaline_jump',
@@ -85,7 +88,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Knight is under attack.',
     effectText: 'Jump 3 squares in one direction and 1 square perpendicular. (3x1 jump)',
     description: 'Knight under attack: Leap 3 squares orthogonal and 1 perpendicular (3x1 jump).',
-    visualTheme: PIECE_COLOR_THEMES.knight
+    visualTheme: PIECE_COLOR_THEMES.knight,
+    animationArchetype: 'leap'
   },
   {
     id: 'b1_let_me_through',
@@ -98,7 +102,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly Pawn sits on this Bishop\'s unobstructed forward diagonal.',
     effectText: 'Slide cleanly through that friendly Pawn to any unobstructed square beyond.',
     description: 'Friendly Pawn on forward diagonal: Phase cleanly through Pawn to square beyond.',
-    visualTheme: PIECE_COLOR_THEMES.bishop
+    visualTheme: PIECE_COLOR_THEMES.bishop,
+    animationArchetype: 'beam'
   },
   {
     id: 'n2_swap_with_me',
@@ -111,7 +116,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly piece occupies one of this Knight\'s L-jump squares.',
     effectText: 'Bounce off friendly piece to make a second full L-jump (move or capture).',
     description: 'Ally on L-jump landing: Bounce off ally square to make a second full L-jump.',
-    visualTheme: PIECE_COLOR_THEMES.knight
+    visualTheme: PIECE_COLOR_THEMES.knight,
+    animationArchetype: 'leap'
   },
   {
     id: 'r1_make_way',
@@ -124,7 +130,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: "First piece in Rook's orthogonal line of sight is an allied Pawn with an open square perpendicular to your line.",
     effectText: 'Pawn steps aside perpendicular to an open square, clearing the line for Rook to charge through to any open square along the path (or capture an enemy beyond).',
     description: 'Allied Pawn in line of sight steps aside, clearing the line for Rook to charge through.',
-    visualTheme: PIECE_COLOR_THEMES.rook
+    visualTheme: PIECE_COLOR_THEMES.rook,
+    animationArchetype: 'charge'
   },
 
   // --- WORLD 2: THE OUTER COURTYARD ---
@@ -139,7 +146,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Enemy Pawn lies on the 2-square straight leg of either L-jump path.',
     effectText: 'Jump to landing square (move or capture) and destroy enemy Pawns on that leg.',
     description: 'Enemy Pawn on straight leg of L-jump: Leap to landing and trample that Pawn.',
-    visualTheme: PIECE_COLOR_THEMES.knight
+    visualTheme: PIECE_COLOR_THEMES.knight,
+    animationArchetype: 'leap'
   },
   {
     id: 'r2_ive_got_your_back',
@@ -152,7 +160,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly non-King piece sits on same rank with square in front open or enemy.',
     effectText: 'Push friendly piece 1 square forward (move or capture) and slide Rook into vacated tile.',
     description: 'Ally on same rank: Push ally 1 square forward to move or capture, taking its vacated tile.',
-    visualTheme: PIECE_COLOR_THEMES.rook
+    visualTheme: PIECE_COLOR_THEMES.rook,
+    animationArchetype: 'charge'
   },
   {
     id: 'b2_pierce',
@@ -165,7 +174,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Exactly 1 enemy Pawn sits on unobstructed diagonal with squares beyond.',
     effectText: 'Destroy enemy Pawn, landing on empty square or capturing enemy beyond.',
     description: 'Enemy Pawn on diagonal: Destroy Pawn and land on empty tile or capture enemy beyond.',
-    visualTheme: PIECE_COLOR_THEMES.bishop
+    visualTheme: PIECE_COLOR_THEMES.bishop,
+    animationArchetype: 'beam'
   },
   {
     id: 'r3_cut_across',
@@ -178,7 +188,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Rook sits on one of two 8-square main diagonals (a1-h8 or a8-h1).',
     effectText: 'Step 1 square diagonally along main diagonal (empty or capture).',
     description: 'Rook on main diagonal: Step 1 square diagonally along that diagonal to move or capture.',
-    visualTheme: PIECE_COLOR_THEMES.rook
+    visualTheme: PIECE_COLOR_THEMES.rook,
+    animationArchetype: 'displace'
   },
 
   // --- WORLD 3: THE BARRACKS ---
@@ -193,7 +204,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Pawn can capture an enemy piece diagonally ahead and has an adjacent friendly Pawn.',
     effectText: 'Capture the enemy piece and move that adjacent friendly Pawn into vacated origin square.',
     description: 'Adjacent ally Pawn: Capture diagonally and step adjacent Pawn into origin square.',
-    visualTheme: PIECE_COLOR_THEMES.pawn
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+    animationArchetype: 'teleport'
   },
   {
     id: 'n4_pin_swap',
@@ -206,7 +218,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Knight is defended by any friendly piece.',
     effectText: 'Jump 2 squares diagonally in any direction to move or capture.',
     description: 'Defended Knight: Jump 2 squares diagonally in any direction to move or capture.',
-    visualTheme: PIECE_COLOR_THEMES.knight
+    visualTheme: PIECE_COLOR_THEMES.knight,
+    animationArchetype: 'leap'
   },
   {
     id: 'b3_ricochet',
@@ -219,7 +232,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Empty square on a-file or h-file lies along unobstructed diagonal.',
     effectText: 'Slide diagonally to edge and bounce 90 degrees inward along reflected diagonal (move or capture).',
     description: 'Unobstructed diagonal to edge: Slide to rim and bounce 90 degrees inward to move or capture.',
-    visualTheme: PIECE_COLOR_THEMES.bishop
+    visualTheme: PIECE_COLOR_THEMES.bishop,
+    animationArchetype: 'teleport'
   },
   {
     id: 'n6_flanking_support',
@@ -232,7 +246,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Knight is on file a, b, g, or h and you have another friendly Knight.',
     effectText: 'Make normal Knight jump, and move other friendly Knight into vacated square.',
     description: 'Flank Knight with second Knight: Jump outer Knight and teleport second Knight to origin.',
-    visualTheme: PIECE_COLOR_THEMES.knight
+    visualTheme: PIECE_COLOR_THEMES.knight,
+    animationArchetype: 'leap'
   },
   {
     id: 'k2_royal_knighting',
@@ -245,7 +260,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly Pawn is horizontally adjacent (1 square left or right on same rank) to King.',
     effectText: 'Remove friendly Pawn to graveyard and spawn a friendly Knight onto that exact square.',
     description: 'Pawn horizontally adjacent to King: Knight adjacent Pawn, transforming it into a Knight.',
-    visualTheme: PIECE_COLOR_THEMES.king
+    visualTheme: PIECE_COLOR_THEMES.king,
+    animationArchetype: 'shockwave'
   },
 
   // --- WORLD 4: THE CHAPEL ---
@@ -260,7 +276,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly non-Pawn, non-King piece in the 3 forward squares is under attack.',
     effectText: 'Swap places with that attacked friendly piece.',
     description: 'Ally ahead under attack: Heroically swap places with that attacked piece.',
-    visualTheme: PIECE_COLOR_THEMES.pawn
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+    animationArchetype: 'teleport'
   },
   {
     id: 'b4_change_color',
@@ -273,7 +290,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'At least 1 enemy piece is orthogonally adjacent to this Bishop.',
     effectText: 'Step 1 square orthogonally onto empty square or capture adjacent enemy.',
     description: 'Orthogonally adjacent enemy: Step 1 square orthogonally to move, capture, and switch color.',
-    visualTheme: PIECE_COLOR_THEMES.bishop
+    visualTheme: PIECE_COLOR_THEMES.bishop,
+    animationArchetype: 'shockwave'
   },
   {
     id: 'n5_get_to_the_king',
@@ -286,7 +304,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Knight can jump to an unthreatened square that forks enemy King and another enemy piece.',
     effectText: 'Jump to safe forking square, then make an immediate second L-jump.',
     description: 'Jump to safe forking square attacking King and enemy piece, then make a second L-jump.',
-    visualTheme: PIECE_COLOR_THEMES.knight
+    visualTheme: PIECE_COLOR_THEMES.knight,
+    animationArchetype: 'leap'
   },
   {
     id: 'b5_take_my_place',
@@ -299,7 +318,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'This Bishop is under attack by any enemy piece.',
     effectText: 'Swap places with friendly non-King piece along unobstructed diagonal.',
     description: 'Bishop under attack: Swap places with friendly piece along unobstructed diagonal.',
-    visualTheme: PIECE_COLOR_THEMES.bishop
+    visualTheme: PIECE_COLOR_THEMES.bishop,
+    animationArchetype: 'beam'
   },
   {
     id: 'b6_come_this_way',
@@ -312,7 +332,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly Pawn sits in the rank directly ahead of this Bishop.',
     effectText: 'Launch friendly Pawn along its forward diagonals to move or capture.',
     description: 'Pawn in rank ahead of Bishop: Launch Pawn diagonally forward to move or capture.',
-    visualTheme: PIECE_COLOR_THEMES.bishop
+    visualTheme: PIECE_COLOR_THEMES.bishop,
+    animationArchetype: 'beam'
   },
 
   // --- WORLD 5: THE ARMORY ---
@@ -327,7 +348,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Pawn is on Ranks 3, 4, or 5 with 2 empty squares directly in front.',
     effectText: 'Advance this Pawn 2 squares straight forward.',
     description: 'Pawn on Ranks 3-5 with open path: Sprint 2 squares straight forward.',
-    visualTheme: PIECE_COLOR_THEMES.pawn
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+    animationArchetype: 'shockwave'
   },
   {
     id: 'r4_move_in_unison',
@@ -340,7 +362,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Two friendly Rooks share unobstructed rank or file.',
     effectText: 'Move this Rook along line, and move second Rook into square this Rook vacated.',
     description: 'Connected Rooks: Move this Rook along line, pulling second Rook into vacated square.',
-    visualTheme: PIECE_COLOR_THEMES.rook
+    visualTheme: PIECE_COLOR_THEMES.rook,
+    animationArchetype: 'charge'
   },
   {
     id: 'q1_royal_summons',
@@ -353,7 +376,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly non-King piece lies in Queen line of sight at distance >= 2.',
     effectText: 'Pull friendly piece along ray onto empty square adjacent to Queen.',
     description: 'Ally in line of sight: Summon ally along ray onto empty square adjacent to Queen.',
-    visualTheme: PIECE_COLOR_THEMES.queen
+    visualTheme: PIECE_COLOR_THEMES.queen,
+    animationArchetype: 'beam'
   },
   {
     id: 'r5_catapult',
@@ -366,7 +390,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly piece is directly in front of Rook and enemy lies along ray beyond.',
     effectText: 'Launch front ally over open ray to capture enemy ahead (Rook stays in place).' ,
     description: 'Ally in front and enemy ahead: Launch ally along open ray to capture enemy target.',
-    visualTheme: PIECE_COLOR_THEMES.rook
+    visualTheme: PIECE_COLOR_THEMES.rook,
+    animationArchetype: 'displace'
   },
   {
     id: 'k1_conscription',
@@ -379,7 +404,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'King is on home back rank (Rank 1/8) with empty adjacent orthogonal square.',
     effectText: 'Spawn friendly Pawn onto each empty adjacent orthogonal square (up to 3 Pawns).',
     description: 'King on home back rank: Conscript friendly Pawns onto empty orthogonal squares.',
-    visualTheme: PIECE_COLOR_THEMES.king
+    visualTheme: PIECE_COLOR_THEMES.king,
+    animationArchetype: 'displace'
   },
 
   // --- WORLD 6: THE ROYAL COURT ---
@@ -394,7 +420,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly King is in this Pawn\'s 8 surrounding squares.',
     effectText: 'Slide this Pawn diagonally any unobstructed distance to move or capture.',
     description: 'Adjacent to friendly King: Slide Pawn diagonally any distance to move or capture.',
-    visualTheme: PIECE_COLOR_THEMES.pawn
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+    animationArchetype: 'charge'
   },
   {
     id: 'q2_the_queens_gambit',
@@ -407,7 +434,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly non-King unit in Queen line of sight is under attack by enemy non-King unit.',
     effectText: 'Sacrifice friendly unit to graveyard and move Queen onto attacking enemy unit square.',
     description: 'Ally attacked in Queen sight: Sacrifice ally and snap Queen to capture attacking enemy.',
-    visualTheme: PIECE_COLOR_THEMES.queen
+    visualTheme: PIECE_COLOR_THEMES.queen,
+    animationArchetype: 'beam'
   },
   {
     id: 'r6_garrison',
@@ -420,7 +448,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Rook is orthogonally adjacent to friendly King with square in front empty.',
     effectText: 'Spawn 1 friendly Pawn onto empty square 1 rank in front of Rook.',
     description: 'Orthogonally adjacent to King: Spawn friendly Pawn onto empty square 1 rank in front.',
-    visualTheme: PIECE_COLOR_THEMES.rook
+    visualTheme: PIECE_COLOR_THEMES.rook,
+    animationArchetype: 'teleport'
   },
   {
     id: 'q3_all_rise',
@@ -433,7 +462,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly Pawn is 1 square away along ray with squares beyond.',
     effectText: 'Push Pawn along ray to target square and slide Queen 1 square behind it.',
     description: 'Pawn 1 square away along ray: Push Pawn to target and slide Queen 1 square behind it.',
-    visualTheme: PIECE_COLOR_THEMES.queen
+    visualTheme: PIECE_COLOR_THEMES.queen,
+    animationArchetype: 'teleport'
   },
   {
     id: 'k3_royal_execution',
@@ -446,7 +476,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Enemy in King line of sight and friendly non-King piece is adjacent to King.',
     effectText: 'Launch adjacent friendly piece directly onto enemy piece to capture it.',
     description: 'Adjacent bodyguard and enemy in line of sight: Order bodyguard to strike and capture enemy.',
-    visualTheme: PIECE_COLOR_THEMES.king
+    visualTheme: PIECE_COLOR_THEMES.king,
+    animationArchetype: 'displace'
   },
 
   // --- WORLD 7: THE THRONE ROOM ---
@@ -461,7 +492,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Knight is on Ranks 5-8 with an empty rear-diagonal square.',
     effectText: 'Spawn a friendly Pawn onto an empty rear-diagonal square behind this Knight.',
     description: 'Knight on Ranks 5-8: Spawn reinforcing Pawn onto empty rear-diagonal square.',
-    visualTheme: PIECE_COLOR_THEMES.knight
+    visualTheme: PIECE_COLOR_THEMES.knight,
+    animationArchetype: 'leap'
   },
   {
     id: 'p8_call_reserves',
@@ -474,7 +506,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Pawn is on Ranks 5-7 with an empty rear-diagonal square.',
     effectText: 'Spawn a friendly Pawn onto an empty rear-diagonal square behind this Pawn.',
     description: 'Pawn on Ranks 5-7: Spawn reinforcing Pawn onto empty rear-diagonal square.',
-    visualTheme: PIECE_COLOR_THEMES.pawn
+    visualTheme: PIECE_COLOR_THEMES.pawn,
+    animationArchetype: 'shockwave'
   },
   {
     id: 'b7_bishops_blessing',
@@ -487,7 +520,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Friendly non-Bishop piece is in this Bishop\'s 8 surrounding squares.',
     effectText: 'Move adjacent ally along diagonals of its current square onto an empty square.',
     description: 'Adjacent friendly piece: Bless ally to slide diagonally onto an empty square.',
-    visualTheme: PIECE_COLOR_THEMES.bishop
+    visualTheme: PIECE_COLOR_THEMES.bishop,
+    animationArchetype: 'beam'
   },
   {
     id: 'q4_one_fell_swoop',
@@ -500,7 +534,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Queen supported from behind by R/B/Q along shared ray with enemy units ahead.',
     effectText: 'Move Queen to end of ray, capturing every enemy unit along path in a single sweep.',
     description: 'Supported from behind along ray: Charge Queen to end of ray, sweeping all enemies.',
-    visualTheme: PIECE_COLOR_THEMES.queen
+    visualTheme: PIECE_COLOR_THEMES.queen,
+    animationArchetype: 'shockwave'
   },
   {
     id: 'k4_banish',
@@ -513,7 +548,8 @@ export const CANONICAL_36_CARDS: CardDefinition[] = [
     conditionText: 'Enemy Pawn is in King\'s 8 surrounding squares.',
     effectText: 'Convert enemy Pawn in-place into friendly Pawn under your control.',
     description: 'Adjacent enemy Pawn: Convert enemy Pawn in-place into a friendly Pawn.',
-    visualTheme: PIECE_COLOR_THEMES.king
+    visualTheme: PIECE_COLOR_THEMES.king,
+    animationArchetype: 'shockwave'
   }
 ];
 

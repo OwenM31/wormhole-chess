@@ -9,6 +9,7 @@ import {
 } from '../types/deckChess';
 import { CANONICAL_36_CARDS, PIECE_COLOR_THEMES } from '../engine/cards/releaseRoster36';
 import { getCardById } from '../engine/cardGraph';
+import { CardAnimationFX, CardFxData } from './CardAnimationFX';
 
 export interface DeckChessBoardProps {
   fen: string;
@@ -38,6 +39,7 @@ export interface DeckChessBoardProps {
   lastMoveTo?: string | null;
   isViewingHistory?: boolean;
   onReturnToLive?: () => void;
+  activeCardFx?: CardFxData | null;
 }
 
 const CARD_MAP = new Map(CANONICAL_36_CARDS.map((c) => [c.id, c]));
@@ -194,6 +196,7 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
   lastMoveTo,
   isViewingHistory = false,
   onReturnToLive,
+  activeCardFx,
 }) => {
   // If pendingCardMove exists, render the resulting board state (previewFen)!
   const effectiveFen = pendingCardMove?.previewFen || fen;
@@ -231,6 +234,34 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
 
   const displayFiles = orientation === 'w' ? files : [...files].reverse();
   const displayRanks = orientation === 'w' ? ranks : [...ranks].reverse();
+
+  // FLIP Piece Sliding Calculation (180ms CSS transition on destination square)
+  const isSlideActive = Boolean(
+    lastMoveFrom &&
+      lastMoveTo &&
+      lastMoveFrom !== lastMoveTo &&
+      !isViewingHistory
+  );
+
+  const slideDelta = React.useMemo(() => {
+    if (!lastMoveFrom || !lastMoveTo || isViewingHistory) {
+      return { dx: 0, dy: 0 };
+    }
+    const fromF = lastMoveFrom.charCodeAt(0) - 'a'.charCodeAt(0);
+    const fromR = parseInt(lastMoveFrom[1], 10) - 1;
+    const toF = lastMoveTo.charCodeAt(0) - 'a'.charCodeAt(0);
+    const toR = parseInt(lastMoveTo[1], 10) - 1;
+
+    const fromCol = orientation === 'w' ? fromF : 7 - fromF;
+    const fromRow = orientation === 'w' ? 7 - fromR : fromR;
+    const toCol = orientation === 'w' ? toF : 7 - toF;
+    const toRow = orientation === 'w' ? 7 - toR : toR;
+
+    return {
+      dx: (fromCol - toCol) * 100,
+      dy: (fromRow - toRow) * 100,
+    };
+  }, [lastMoveFrom, lastMoveTo, orientation, isViewingHistory]);
 
   // Card details for active preview
   const activeCardDef = pendingCardMove
@@ -429,6 +460,9 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
             : 'grid grid-cols-8 grid-rows-8 w-full aspect-square rounded overflow-hidden border border-[rgba(139,126,116,0.2)] shadow-inner relative'
         }
       >
+        {/* Theatrical Card Play Banner and 6 FX Archetypes */}
+        <CardAnimationFX fx={activeCardFx || null} orientation={orientation} />
+
         {/* Under-Piece Board Preview Arrows (z-[6] strictly below z-10 piece SVGs) */}
         <svg
           data-testid="board-preview-arrows"
@@ -718,9 +752,27 @@ export const DeckChessBoard: React.FC<DeckChessBoardProps> = ({
                   </div>
                 )}
 
-                {/* Piece Visual */}
+                {/* Piece Visual (with FLIP sliding animation on destination square) */}
                 {piece && (
-                  <div className="relative z-10 flex items-center justify-center w-full h-full pointer-events-none">
+                  <div
+                    key={
+                      isSlideActive && squareName === lastMoveTo
+                        ? `slide_${squareName}_${lastMoveFrom}_${lastMoveTo}`
+                        : `piece_${squareName}`
+                    }
+                    data-testid={`piece-${squareName}`}
+                    className={`relative z-10 flex items-center justify-center w-full h-full pointer-events-none ${
+                      isSlideActive && squareName === lastMoveTo ? 'animate-piece-slide' : ''
+                    }`}
+                    style={
+                      isSlideActive && squareName === lastMoveTo
+                        ? ({
+                            '--slide-x': `${slideDelta.dx}%`,
+                            '--slide-y': `${slideDelta.dy}%`,
+                          } as React.CSSProperties)
+                        : undefined
+                    }
+                  >
                     <ChessPieceSvg type={piece.type} color={piece.color} />
                   </div>
                 )}

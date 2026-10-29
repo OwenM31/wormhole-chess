@@ -306,6 +306,7 @@ export const DeckBuilderPage: React.FC = () => {
                     lastMoveTo={game.lastMoveHighlight?.to}
                     isViewingHistory={game.isViewingHistory}
                     onReturnToLive={game.jumpToLive}
+                    activeCardFx={game.activeCardFx}
                   />
                 </TabletopArena>
               </div>
